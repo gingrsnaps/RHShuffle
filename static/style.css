@@ -1,0 +1,807 @@
+/* 
+ * RedHunllef Wager Race front-end
+ * Clean, modern "big tech" layout with fast, GPU-friendly effects only.
+ */
+
+:root {
+  --bg: #05050a;
+  --bg-elevated: #0e1017;
+  --bg-soft: #141825;
+  --bg-soft-alt: #111320;
+  --accent: #26c281;
+  --accent-soft: #1c8f5b;
+  --accent-glow: rgba(38, 194, 129, 0.35);
+  --danger: #ff4747;
+  --text: #f9fbff;
+  --text-muted: #a0a7b8;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --shadow-soft: 0 18px 60px rgba(0, 0, 0, 0.85);
+  --radius-lg: 26px;
+  --radius-md: 20px;
+  --radius-pill: 999px;
+  --transition-fast: 0.16s ease-out;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+               "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at top left, #1b2136 0, transparent 55%),
+    radial-gradient(circle at bottom right, #071114 0, transparent 60%),
+    var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Simple card fade animation */
+
+.fade-in {
+  animation: fadeInUp 0.35s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Layout ===== */
+
+.container {
+  width: min(1180px, 92%);
+  margin-inline: auto;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(16px);
+  background: linear-gradient(to bottom, rgba(5,5,10,0.96), rgba(5,5,10,0.78));
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 0.75rem;
+}
+
+/* Brand / logo */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  image-rendering: pixelated;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.9);
+  animation: logoBounce 2.2s ease-in-out infinite;
+}
+
+@keyframes logoBounce {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-4px); }
+  60%      { transform: translateY(0); }
+}
+
+.brand-title {
+  display: block;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  font-size: 0.95rem;
+}
+
+.brand-subtitle {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Header nav */
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  font-size: 0.9rem;
+}
+
+.header-nav a {
+  color: var(--text-muted);
+  font-weight: 500;
+  position: relative;
+  padding-block: 0.25rem;
+}
+
+.header-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  transform-origin: center;
+  transform: scaleX(0);
+  opacity: 0;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.header-nav a:hover {
+  color: var(--text);
+}
+
+.header-nav a:hover::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+/* ===== Buttons ===== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.35rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--transition-fast),
+              transform var(--transition-fast),
+              box-shadow var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--accent), #36ff96);
+  color: #02140b;
+  box-shadow: 0 12px 35px var(--accent-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 50px var(--accent-glow);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Kick watch pill inside status card */
+
+.watch-pill {
+  background: linear-gradient(120deg, var(--accent), #36ff96);
+  color: #02140b;
+  box-shadow: 0 14px 40px var(--accent-glow);
+  padding-inline: 1.6rem;
+}
+
+/* ===== Hero ===== */
+
+.hero {
+  padding-block: 2.2rem 2.7rem;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(310px, 1.25fr);
+  gap: 2.5rem;
+  align-items: stretch;
+}
+
+.hero-copy {
+  max-width: 540px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.09), transparent 45%);
+  color: var(--text-muted);
+  margin-bottom: 0.9rem;
+}
+
+.hero-heading {
+  font-size: clamp(1.8rem, 3.3vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.8rem;
+}
+
+.hero-body {
+  margin: 0 0 1.2rem;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
+.hero-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.hero-meta a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ===== Race status + countdown ===== */
+
+.race-status-card {
+  background: radial-gradient(circle at top left, rgba(38,194,129,0.18), transparent 45%),
+              radial-gradient(circle at bottom right, rgba(0,0,0,0.6), transparent 55%),
+              var(--bg-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+  padding: 1.1rem 1.2rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Live status pill */
+
+.live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: rgba(3, 5, 10, 0.92);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+  font-size: 0.86rem;
+}
+
+.live-status .dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #777;
+}
+
+.live-status.live .dot {
+  background: var(--danger);
+  box-shadow: 0 0 14px rgba(255,71,71,0.9);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.live-status.off .dot {
+  background: #555;
+}
+
+.live-status.unk .dot {
+  background: #777;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.25); }
+}
+
+.live-status .text {
+  font-weight: 700;
+}
+
+.viewer-chip {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: rgba(255,255,255,0.06);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Countdown card */
+
+.countdown-card {
+  background: radial-gradient(circle at top left, rgba(0,0,0,0.25), transparent 55%),
+              rgba(0,0,0,0.55);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0,0,0,0.9);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  padding: 0.9rem 0.8rem 0.95rem;
+}
+
+.countdown-label {
+  margin: 0 0 0.7rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.countdown-wrap {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.time-pill {
+  flex: 1 1 0;
+  min-width: 62px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.04), transparent 55%),
+              rgba(4,6,12,0.98);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-block: 0.55rem;
+}
+
+.time-pill span {
+  font-weight: 900;
+  font-size: clamp(1.15rem, 3.4vw, 1.6rem);
+  line-height: 1.05;
+}
+
+.time-pill label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+}
+
+.sep {
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  opacity: 0.6;
+}
+
+.countdown-note {
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ===== Sponsors ===== */
+
+.sponsors {
+  padding-block: 1.5rem 2.4rem;
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+}
+
+.section-subtitle {
+  margin: 0 0 1.2rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.section-title.centered,
+.section-subtitle.centered {
+  text-align: center;
+}
+
+.section-subtitle.small {
+  font-size: 0.86rem;
+}
+
+.sponsors-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.sponsor-btn {
+  background: radial-gradient(circle at top left, #ff5a5a, #d63a3a);
+  border-radius: var(--radius-pill);
+  padding: 0.7rem 1.6rem;
+  font-weight: 600;
+  box-shadow: 0 14px 40px rgba(214,58,58,0.4);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.sponsor-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 50px rgba(214,58,58,0.5);
+}
+
+/* ===== Race / leaderboard ===== */
+
+.race {
+  padding-block: 0.5rem 3rem;
+}
+
+.race-inner {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.85));
+  border-radius: 34px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+  padding: 1.6rem 1.5rem 2.1rem;
+}
+
+.race-header {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.helper-card {
+  margin-bottom: 1.1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.55);
+  border: 1px dashed rgba(255,255,255,0.18);
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+/* Podium – 2 | 1 | 3 */
+
+.podium-olympic {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.podium-seat {
+  position: relative;
+  padding: 1.1rem 1rem 1.2rem;
+  border-radius: 22px;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.04), transparent 55%),
+              var(--bg-soft-alt);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.85);
+  border: 1px solid var(--border-subtle);
+  transform: translateY(0);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+/* Center card (1st place) floats slightly higher and glows */
+.podium-seat.col-first {
+  transform: translateY(-6px);
+  border-color: rgba(255,215,0,0.55);
+  box-shadow: 0 20px 55px rgba(255,215,0,0.18);
+}
+
+.podium-seat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.95);
+  filter: brightness(1.05);
+}
+
+/* New header row inside the podium card so the rank and medal
+   never overlap. */
+
+.podium-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+/* Rank badge moved into the header row (no absolute positioning) */
+.rank-badge {
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: #000;
+  border: 2px solid #333;
+}
+
+/* Medal icon aligned to the right side of the header row */
+.crown {
+  font-size: 1.6rem;
+}
+
+/* Base typography within cards */
+
+.user {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.label.emphasized {
+  margin-top: 0.4rem;
+}
+
+/* Larger money display for the podium – this restores the “loud”
+   amounts from the earlier version. */
+.podium-seat .wager {
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin-bottom: 0.15rem;
+}
+
+.podium-seat .prize {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--accent);
+}
+
+/* Ranks 4–11 grid */
+
+.others-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.others-grid li {
+  position: relative;
+  padding: 0.9rem 0.9rem 1.05rem;
+  border-radius: 20px;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.03), transparent 55%),
+              var(--bg-soft-alt);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.85);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+
+.others-grid li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.95);
+  filter: brightness(1.03);
+}
+
+.others-grid .position {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #000;
+  border: 2px solid #333;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.others-grid .username {
+  margin-top: 1.2rem;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+
+/* Slightly larger money text for the grid cards as well */
+.others-grid .wager {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.others-grid .prize {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.legal-note {
+  margin-top: 1.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ===== Footer ===== */
+
+.footer {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-block: 1.6rem 2rem;
+  background: radial-gradient(circle at top center, rgba(255,255,255,0.03), transparent 60%),
+              rgba(2,3,7,0.96);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.footer-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  image-rendering: pixelated;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.86rem;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+}
+
+.footer-links a:hover {
+  color: var(--text);
+}
+
+.footer-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.footer-meta a {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+/* GingrSnaps credit in Kick green */
+.footer-meta a[href*="gingrsnaps"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== Responsive tweaks ===== */
+
+@media (max-width: 960px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Put the status card on top for mobile */
+  .race-status-card {
+    order: -1;
+  }
+
+  .header-inner {
+    flex-wrap: wrap;
+  }
+
+  .header-nav {
+    margin-left: auto;
+  }
+
+  .podium-olympic {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .others-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .status-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .watch-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .countdown-wrap {
+    gap: 0.4rem;
+  }
+
+  .time-pill {
+    min-width: 0;
+    padding-block: 0.5rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .others-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .race-inner {
+    padding-inline: 1.1rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "port": 8080,
+  "secret_key": "REPLACE_WITH_LONG_RANDOM_STRING",
+  "session_cookie_secure": true,
+
+  "admin_bootstrap_user": "gingrsnaps",
+  "admin_bootstrap_pass": "p@ssword123",
+  "reset_admin_store_on_start": false,
+
+  "shuffle_api_key": "###",
+  "start_time": 1770159600,
+  "end_time": 1770764400,
+  "refresh_seconds": 60,
+
+  "kick_channel_slug": "redhunllef",
+  "kick_client_id": "###",
+  "kick_client_secret": "###"
+}
+
+
+
