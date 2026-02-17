@@ -4,10 +4,10 @@
   "session_cookie_secure": true,
 
   "admin_bootstrap_user": "gingrsnaps",
-  "admin_bootstrap_pass": "p@ssword123",
+  "admin_bootstrap_pass": "enok2121",
   "reset_admin_store_on_start": false,
 
-  "shuffle_api_key": "###",
+  "shuffle_api_key": "05204562-cd13-4495-9141-f016f5d32f26",
   "start_time": 1771369200,
   "end_time": 1771974000,
   "refresh_seconds": 60,
@@ -16,7 +16,5 @@
   "kick_client_id": "###",
   "kick_client_secret": "###"
 }
-
-
 
 
