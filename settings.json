@@ -8,14 +8,15 @@
   "reset_admin_store_on_start": false,
 
   "shuffle_api_key": "f45f746d-b021-494d-b9b6-b47628ee5cc9",
-  "start_time": 1772578800,
-  "end_time": 1773183600,
+  "start_time": 1773183600,
+  "end_time": 1773788400,
   "refresh_seconds": 60,
 
   "kick_channel_slug": "redhunllef",
   "kick_client_id": "01K39PNSMPVX2PS4EEJ2K69EVF",
   "kick_client_secret": "47970da4c8790427e09eaebd1b7c8d522ef233c54bbd896514c7f562c66ca74e"
 }
+
 
 
 
