@@ -148,7 +148,7 @@
       li.className = 'fade-in';
       li.appendChild(textEl('span', 'position', `#${o.rank}`));
       li.appendChild(textEl('div', 'username', o.username));
-      li.appendChild(textEl('div', 'label emphasized', 'WEIGHTED WAGER'));
+      li.appendChild(textEl('div', 'label emphasized', 'TOTAL WAGER'));
       li.appendChild(textEl('div', 'wager', o.wagerStr));
       li.appendChild(textEl('div', 'label', 'PRIZE'));
       li.appendChild(textEl('div', 'prize', PRIZES[o.rank] || '$0.00'));
