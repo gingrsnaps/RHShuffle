@@ -1,6 +1,23 @@
 # -*- coding: utf-8 -*-
+"""
+Weighted wager race backend.
+
+Major changes from the previous version:
+- Uses Shuffle's weighted wager endpoint instead of the old stats endpoint.
+- Ranks users by weightedWagerAmount, not raw wagerAmount.
+- Keeps raw wager amount only as admin/audit context when the API provides it.
+- Aggregates duplicate rows by username using a configurable mode. Default is sum.
+- Removes broad CORS because the frontend is served by the same Flask app.
+- Stops writing admin_store.json on every public request.
+- Adds login rate limiting, a health endpoint, and CSV export for payout review.
+
+Important deployment note:
+Do not commit real Shuffle/Kick/admin secrets. Put them in environment variables.
+"""
 from __future__ import annotations
 
+import csv
+import io
 import json
 import logging
 import math
@@ -11,11 +28,10 @@ import threading
 import time
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import requests
-from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for, g
-from flask_cors import CORS
+from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for, g, Response
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -27,29 +43,32 @@ SETTINGS_PATH = os.getenv("SETTINGS_PATH", "settings.json")
 
 
 def load_settings() -> Dict[str, Any]:
-    """Loads settings.json if present. Environment variables always win."""
+    """Load settings.json if it exists. Environment variables still win later."""
     try:
         with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        return {}
     except Exception:
+        # Keep startup resilient if settings.json is malformed, but log once after app exists.
         return {}
 
 
 SETTINGS = load_settings()
 
 # -------------------------
-# Timezone (Eastern)
+# Timezone helpers
 # -------------------------
 try:
-    from zoneinfo import ZoneInfo  # py3.9+
+    from zoneinfo import ZoneInfo
     ET = ZoneInfo("America/New_York")
 except Exception:
     ET = None
 
 
 def fmt_et(epoch: int) -> str:
-    """Format epoch seconds in Eastern Time (EST/EDT). Falls back to UTC if zoneinfo unavailable."""
+    """Format epoch seconds in Eastern Time. Falls back to UTC if zoneinfo is unavailable."""
     if not epoch:
         return "—"
     try:
@@ -63,12 +82,28 @@ def fmt_et(epoch: int) -> str:
 
 
 # -------------------------
-# Config
+# Config helpers
 # -------------------------
 
+def _env_str(name: str, default: str = "") -> str:
+    val = os.getenv(name)
+    if val is None:
+        return str(default or "")
+    return val.strip()
+
+
+def _settings_str(name: str, default: str = "") -> str:
+    val = SETTINGS.get(name, default)
+    return str(val or "").strip()
+
+
+def _env_or_setting(env_name: str, setting_name: str, default: str = "") -> str:
+    return _env_str(env_name) or _settings_str(setting_name, default)
+
+
 def _env_int(name: str, default: int) -> int:
-    val = os.getenv(name, "")
-    if val.strip() == "":
+    val = os.getenv(name, "").strip()
+    if val == "":
         return int(default)
     try:
         return int(val)
@@ -83,49 +118,83 @@ def _env_bool(name: str, default: bool) -> bool:
     return v in ("1", "true", "yes", "on")
 
 
+def _settings_bool(name: str, default: bool) -> bool:
+    val = SETTINGS.get(name, default)
+    if isinstance(val, bool):
+        return val
+    return str(val).strip().lower() in ("1", "true", "yes", "on")
+
+
 PORT = _env_int("PORT", int(SETTINGS.get("port", 8080)))
 REFRESH_SECONDS = _env_int("REFRESH_SECONDS", int(SETTINGS.get("refresh_seconds", 60)))
 
 START_TIME = _env_int("START_TIME", int(SETTINGS.get("start_time", 0)))
-END_TIME   = _env_int("END_TIME",   int(SETTINGS.get("end_time",   0)))
+END_TIME = _env_int("END_TIME", int(SETTINGS.get("end_time", 0)))
 
-API_KEY = os.getenv("API_KEY", "").strip() or str(SETTINGS.get("shuffle_api_key", "")).strip()
+# Prefer SHUFFLE_API_KEY, but keep API_KEY for backward compatibility with your old deployment.
+API_KEY = _env_str("SHUFFLE_API_KEY") or _env_str("API_KEY") or _settings_str("shuffle_api_key")
 
-KICK_CHANNEL_SLUG  = os.getenv("KICK_CHANNEL_SLUG", "").strip() or str(SETTINGS.get("kick_channel_slug", "redhunllef")).strip()
-KICK_CLIENT_ID     = os.getenv("KICK_CLIENT_ID", "").strip() or str(SETTINGS.get("kick_client_id", "")).strip()
-KICK_CLIENT_SECRET = os.getenv("KICK_CLIENT_SECRET", "").strip() or str(SETTINGS.get("kick_client_secret", "")).strip()
+# Weighted endpoint by default. Keep this configurable so you can test if Shuffle changes naming.
+SHUFFLE_ENDPOINT_KIND = (_env_or_setting("SHUFFLE_ENDPOINT_KIND", "shuffle_endpoint_kind", "wager") or "wager").strip("/")
 
-SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", bool(SETTINGS.get("session_cookie_secure", False)))
+# Duplicate username handling:
+# - sum: safest when the endpoint returns multiple game/transaction rows per user.
+# - max: use only if Shuffle returns repeated aggregate rows and sum would double-count.
+SHUFFLE_AGGREGATION_MODE = (_env_or_setting("SHUFFLE_AGGREGATION_MODE", "shuffle_aggregation_mode", "sum") or "sum").lower()
+if SHUFFLE_AGGREGATION_MODE not in {"sum", "max"}:
+    SHUFFLE_AGGREGATION_MODE = "sum"
+
+# A hard guard against silently reverting to raw wager values.
+ALLOW_RAW_WAGER_FALLBACK = _env_bool(
+    "ALLOW_RAW_WAGER_FALLBACK",
+    _settings_bool("allow_raw_wager_fallback", False),
+)
+
+# If set, only include matching campaign/referral rows when the API exposes a campaign field.
+# If the API does not expose a campaign field, rows are included because the endpoint/key may already scope data.
+CAMPAIGN_CODE_FILTER = _env_or_setting("CAMPAIGN_CODE_FILTER", "campaign_code_filter", "Red")
+
+KICK_CHANNEL_SLUG = _env_or_setting("KICK_CHANNEL_SLUG", "kick_channel_slug", "redhunllef")
+KICK_CLIENT_ID = _env_or_setting("KICK_CLIENT_ID", "kick_client_id", "")
+KICK_CLIENT_SECRET = _env_or_setting("KICK_CLIENT_SECRET", "kick_client_secret", "")
+
+SESSION_COOKIE_SECURE = _env_bool(
+    "SESSION_COOKIE_SECURE",
+    _settings_bool("session_cookie_secure", False),
+)
 
 ADMIN_STORE_PATH = os.getenv("ADMIN_STORE_PATH", "admin_store.json")
 
 ACCESS_LOG_MAX = _env_int("ACCESS_LOG_MAX", 300)
-AUDIT_LOG_MAX  = _env_int("AUDIT_LOG_MAX", 250)
-
-# Full leaderboard rows to keep in memory for the admin panel
+AUDIT_LOG_MAX = _env_int("AUDIT_LOG_MAX", 250)
 FULL_LEADERBOARD_MAX = _env_int("FULL_LEADERBOARD_MAX", 300)
 
-# -------------------------
-# Super-admin
-# -------------------------
-# User management actions
-SUPERADMIN = "gingrsnaps"
+LOGIN_WINDOW_SECONDS = _env_int("LOGIN_WINDOW_SECONDS", 10 * 60)
+LOGIN_MAX_FAILURES = _env_int("LOGIN_MAX_FAILURES", 5)
+LOGIN_LOCK_SECONDS = _env_int("LOGIN_LOCK_SECONDS", 15 * 60)
 
-BOOTSTRAP_PASS = (os.getenv("ADMIN_BOOTSTRAP_PASS", "").strip()
-                  or str(SETTINGS.get("admin_bootstrap_pass", "")).strip()
-                  or secrets.token_urlsafe(18))
+# Admin bootstrap user is now configurable instead of hard-coded.
+SUPERADMIN = _env_or_setting("ADMIN_BOOTSTRAP_USER", "admin_bootstrap_user", "admin") or "admin"
+BOOTSTRAP_PASS = _env_or_setting("ADMIN_BOOTSTRAP_PASS", "admin_bootstrap_pass", "")
 
-RESET_ADMIN_STORE_ON_START = _env_bool("RESET_ADMIN_STORE_ON_START", bool(SETTINGS.get("reset_admin_store_on_start", False)))
+RESET_ADMIN_STORE_ON_START = _env_bool(
+    "RESET_ADMIN_STORE_ON_START",
+    _settings_bool("reset_admin_store_on_start", False),
+)
+RESET_BOOTSTRAP_PASSWORD_ON_START = _env_bool(
+    "RESET_BOOTSTRAP_PASSWORD_ON_START",
+    _settings_bool("reset_bootstrap_password_on_start", False),
+)
 
 # -------------------------
 # Flask app
 # -------------------------
+
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
+# Correctly honors HTTPS/proxy headers when deployed behind DigitalOcean/Cloudflare.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
-
-CORS(app)
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -134,38 +203,45 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(days=7),
 )
 
-# Console logging
 logging.basicConfig(level=logging.INFO)
 app.logger.setLevel(logging.INFO)
 
 _store_lock = threading.RLock()
+_access_log_lock = threading.RLock()
+_login_lock = threading.RLock()
 
-# In-memory store
+# Persistent admin/security store.
 STORE: Dict[str, Any] = {}
 
+# Access log is intentionally in memory only. Public /data polling should not hammer disk writes.
+ACCESS_LOG: List[dict] = []
+
+# Per-IP login failure tracker for basic brute-force protection.
+LOGIN_FAILURES: Dict[str, Dict[str, Any]] = {}
 
 # -------------------------
 # Store helpers
 # -------------------------
-def store_default() -> Dict[str, Any]:
-    """
-    Default store structure. We keep it additive so older stores survive.
-    NOTE: We do NOT seed any wager values for any username (no fake $25,000, etc.).
-    """
-    now = int(time.time())
-    return {
-        "version": 1,
-        "secret_key": secrets.token_hex(32),
-        "users": {
-            SUPERADMIN: {
-                "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
-                "created_at": now,
-                "created_by": "bootstrap",
-            }
-        },
-        "overrides": {},
 
-        "access_log": [],
+
+def store_default() -> Dict[str, Any]:
+    """Default persistent admin store. Does not seed fake leaderboard data."""
+    now = int(time.time())
+    users: Dict[str, Any] = {}
+
+    if BOOTSTRAP_PASS:
+        users[SUPERADMIN] = {
+            "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
+            "created_at": now,
+            "created_by": "bootstrap",
+        }
+
+    return {
+        "version": 2,
+        "secret_key": secrets.token_hex(32),
+        "users": users,
+        # Overrides are weighted-wager overrides, not raw wager overrides.
+        "overrides": {},
         "audit_log": [],
         "banned_ips": [],
         "health": {
@@ -174,6 +250,11 @@ def store_default() -> Dict[str, Any]:
             "last_error": None,
             "last_api_ms": None,
             "last_source": None,
+            "last_row_count": 0,
+            "last_weighted_row_count": 0,
+            "last_skipped_missing_weighted": 0,
+            "aggregation_mode": SHUFFLE_AGGREGATION_MODE,
+            "endpoint_kind": SHUFFLE_ENDPOINT_KIND,
         },
         "leaderboard_snapshots": {
             "prev_top11": [],
@@ -193,14 +274,24 @@ def store_save(store: Dict[str, Any]) -> None:
 
 
 def store_load_from_disk() -> Dict[str, Any]:
-    """Loads store from disk or returns defaults."""
+    """Load the persistent admin store or create a default one."""
     if RESET_ADMIN_STORE_ON_START:
         s = store_default()
+        if not s.get("users"):
+            raise RuntimeError(
+                "RESET_ADMIN_STORE_ON_START is enabled, but no ADMIN_BOOTSTRAP_PASS was provided. "
+                "Set ADMIN_BOOTSTRAP_PASS before resetting the admin store."
+            )
         store_save(s)
         return s
 
     if not os.path.exists(ADMIN_STORE_PATH):
         s = store_default()
+        if not s.get("users"):
+            raise RuntimeError(
+                "No admin_store.json exists and no ADMIN_BOOTSTRAP_PASS was provided. "
+                "Set ADMIN_BOOTSTRAP_USER and ADMIN_BOOTSTRAP_PASS once, start the app, then log in."
+            )
         store_save(s)
         return s
 
@@ -208,50 +299,75 @@ def store_load_from_disk() -> Dict[str, Any]:
         with open(ADMIN_STORE_PATH, "r", encoding="utf-8") as f:
             s = json.load(f)
         if not isinstance(s, dict):
-            raise ValueError("admin_store root not a dict")
+            raise ValueError("admin_store root is not a dict")
         return s
     except Exception:
         s = store_default()
+        if not s.get("users"):
+            raise RuntimeError(
+                "admin_store.json exists but could not be read, and no ADMIN_BOOTSTRAP_PASS was provided. "
+                "Fix the store file or set ADMIN_BOOTSTRAP_PASS to recreate it."
+            )
         store_save(s)
         return s
 
 
 def store_ensure_keys(s: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
-    """
-    Ensures required keys exist, without deleting unknown keys.
-    Returns (store, dirty_flag).
-    """
+    """Ensure required keys exist without deleting unknown keys."""
     dirty = False
 
-    def sd(k: str, v: Any):
+    def sd(k: str, v: Any) -> None:
         nonlocal dirty
         if k not in s:
             s[k] = v
             dirty = True
 
-    sd("version", 1)
+    sd("version", 2)
     sd("secret_key", secrets.token_hex(32))
     sd("users", {})
     sd("overrides", {})
-    sd("access_log", [])
     sd("audit_log", [])
     sd("banned_ips", [])
     sd("health", {})
     sd("leaderboard_snapshots", {})
     sd("updated_at", int(time.time()))
 
-    # health defaults
+    if not isinstance(s.get("users"), dict):
+        s["users"] = {}
+        dirty = True
+
+    # Only create the bootstrap user if needed and if a password is explicitly provided.
+    # The previous version reset the superadmin password every startup. This avoids surprise lockouts.
+    users = s["users"]
+    if SUPERADMIN not in users and BOOTSTRAP_PASS:
+        users[SUPERADMIN] = {
+            "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
+            "created_at": int(time.time()),
+            "created_by": "bootstrap",
+        }
+        dirty = True
+    elif SUPERADMIN in users and BOOTSTRAP_PASS and RESET_BOOTSTRAP_PASSWORD_ON_START:
+        users[SUPERADMIN]["pw_hash"] = generate_password_hash(BOOTSTRAP_PASS)
+        users[SUPERADMIN]["updated_at"] = int(time.time())
+        dirty = True
+
     h = s.get("health")
     if not isinstance(h, dict):
         s["health"] = {}
         h = s["health"]
         dirty = True
+
     for hk, hv in {
         "last_refresh_ok": None,
         "last_refresh_et": None,
         "last_error": None,
         "last_api_ms": None,
         "last_source": None,
+        "last_row_count": 0,
+        "last_weighted_row_count": 0,
+        "last_skipped_missing_weighted": 0,
+        "aggregation_mode": SHUFFLE_AGGREGATION_MODE,
+        "endpoint_kind": SHUFFLE_ENDPOINT_KIND,
     }.items():
         if hk not in h:
             h[hk] = hv
@@ -262,34 +378,17 @@ def store_ensure_keys(s: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
         s["leaderboard_snapshots"] = {}
         snaps = s["leaderboard_snapshots"]
         dirty = True
+
     for sk, sv in {"prev_top11": [], "last_top11": [], "updated_at": None}.items():
         if sk not in snaps:
             snaps[sk] = sv
             dirty = True
 
-    users = s.get("users") or {}
-    if not isinstance(users, dict):
-        s["users"] = {}
-        users = s["users"]
-        dirty = True
-
-    if SUPERADMIN not in users:
-        users[SUPERADMIN] = {
-            "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
-            "created_at": int(time.time()),
-            "created_by": "bootstrap",
-        }
-        dirty = True
-    else:
-        users[SUPERADMIN]["pw_hash"] = generate_password_hash(BOOTSTRAP_PASS)
-        dirty = True
-
-    s["users"] = users
     return s, dirty
 
 
 def store_init() -> None:
-    """Loads store into memory, ensures keys, persists if needed, sets app.secret_key."""
+    """Initialize persistent store and Flask session secret."""
     global STORE
     s = store_load_from_disk()
     s, dirty = store_ensure_keys(s)
@@ -299,17 +398,19 @@ def store_init() -> None:
 
 
 store_init()
-env_secret = os.getenv("SECRET_KEY", "").strip()
-settings_secret = str(SETTINGS.get("secret_key", "")).strip()
+
+# SECRET_KEY priority: env > settings > persistent store.
+env_secret = _env_str("SECRET_KEY")
+settings_secret = _settings_str("secret_key")
 if settings_secret.upper().startswith("REPLACE_") or len(settings_secret) < 16:
     settings_secret = ""
-
 app.secret_key = env_secret or settings_secret or str(STORE.get("secret_key") or secrets.token_hex(32))
 
+# -------------------------
+# Formatting, parsing, and auth helpers
+# -------------------------
 
-# -------------------------
-# Helpers: money, username masking, CSRF, auth
-# -------------------------
+
 def censor_username(u: str) -> str:
     """Public anonymity rule: first 2 chars + ******."""
     u = (u or "").strip()
@@ -317,26 +418,23 @@ def censor_username(u: str) -> str:
 
 
 def money(amount: float) -> str:
-    """Formats a float as $1,234.56."""
-    return f"${float(amount):,.2f}"
+    """Format a float as $1,234.56."""
+    try:
+        val = float(amount or 0)
+    except Exception:
+        val = 0.0
+    return f"${val:,.2f}"
 
 
-def parse_money_to_float(s: str) -> float:
-    """
-    Robust money parser used for admin override input AND delta math.
+def parse_money_to_float(s: Any) -> float:
+    """Parse '$25,000.00' or 25000 into a non-negative float."""
+    if isinstance(s, (int, float)):
+        try:
+            val = float(s)
+            return val if math.isfinite(val) and val >= 0 else 0.0
+        except Exception:
+            return 0.0
 
-    Accepts:
-      - 25000
-      - $25,000
-      - 25,000.00
-      - 25000.5
-
-    Behavior:
-      - Strips $/commas/spaces and any non-digit/non-dot characters.
-      - If NO decimal point is present, treats it as whole dollars (int).
-      - If multiple dots exist (e.g. '12.3.4'), collapses to '12.34'.
-      - Never throws. Returns 0.0 on invalid input.
-    """
     raw = str(s or "").strip()
     if not raw:
         return 0.0
@@ -346,23 +444,17 @@ def parse_money_to_float(s: str) -> float:
 
     if tmp.count(".") > 1:
         first, rest = tmp.split(".", 1)
-        rest = rest.replace(".", "")
-        tmp = first + "." + rest
+        tmp = first + "." + rest.replace(".", "")
 
     if not tmp or tmp == ".":
         return 0.0
 
     try:
-        if "." not in tmp:
-            val = float(int(tmp))
-        else:
-            val = float(tmp)
+        val = float(tmp)
     except Exception:
         return 0.0
 
-    if not math.isfinite(val) or val < 0:
-        return 0.0
-    return val
+    return val if math.isfinite(val) and val >= 0 else 0.0
 
 
 def csrf_token() -> str:
@@ -397,7 +489,6 @@ def login_required(fn):
 
 
 def client_ip() -> str:
-    """Trust request.remote_addr (ProxyFix x_for=1)."""
     return (request.remote_addr or "unknown").strip() or "unknown"
 
 
@@ -407,8 +498,44 @@ def _ua_trim(ua: str, n: int = 160) -> str:
 
 
 # -------------------------
+# Login rate limiting
+# -------------------------
+
+
+def login_locked(ip: str) -> Tuple[bool, int]:
+    """Return whether an IP is temporarily locked out from login attempts."""
+    now = int(time.time())
+    with _login_lock:
+        rec = LOGIN_FAILURES.get(ip) or {"failures": [], "locked_until": 0}
+        locked_until = int(rec.get("locked_until") or 0)
+        if locked_until > now:
+            return True, locked_until - now
+        return False, 0
+
+
+def login_record_failure(ip: str) -> None:
+    """Record failed login and lock IP if too many recent failures occur."""
+    now = int(time.time())
+    with _login_lock:
+        rec = LOGIN_FAILURES.setdefault(ip, {"failures": [], "locked_until": 0})
+        failures = [t for t in rec.get("failures", []) if now - int(t) <= LOGIN_WINDOW_SECONDS]
+        failures.append(now)
+        rec["failures"] = failures
+        if len(failures) >= LOGIN_MAX_FAILURES:
+            rec["locked_until"] = now + LOGIN_LOCK_SECONDS
+            app.logger.warning(f"[LOGIN_LOCK] ip={ip} seconds={LOGIN_LOCK_SECONDS}")
+
+
+def login_record_success(ip: str) -> None:
+    """Clear login failures after a successful login."""
+    with _login_lock:
+        LOGIN_FAILURES.pop(ip, None)
+
+
+# -------------------------
 # Observability
 # -------------------------
+
 
 def _append_rolling(lst: List[dict], entry: dict, max_len: int) -> List[dict]:
     lst.append(entry)
@@ -418,15 +545,7 @@ def _append_rolling(lst: List[dict], entry: dict, max_len: int) -> List[dict]:
 
 
 def audit(action: str, detail: Dict[str, Any]) -> None:
-    """
-    Add an admin audit log entry and print a single console line.
-
-    NOTE:
-    This function takes _store_lock and persists to disk.
-    Do NOT call audit() while already holding _store_lock unless you are using an RLock
-    and you are certain you won't create a write-order deadlock.
-    (We still avoid nested calls in override logic to be safe.)
-    """
+    """Persist admin/security audit events. This is intentionally disk-backed."""
     with _store_lock:
         entry = {
             "ts": int(time.time()),
@@ -445,10 +564,7 @@ def audit(action: str, detail: Dict[str, Any]) -> None:
 
 @app.before_request
 def obs_before_request():
-    """
-    - Start request timer (ms)
-    - Enforce banned IPs globally (except /static for less noise)
-    """
+    """Start request timer and enforce banned IPs globally."""
     g._t0 = time.time()
 
     if request.path.startswith("/static/"):
@@ -464,7 +580,7 @@ def obs_before_request():
 
 @app.after_request
 def obs_after_request(resp):
-    """Record rolling access log entries."""
+    """Record access logs in memory only. No disk write per request."""
     if request.path.startswith("/static/"):
         return resp
 
@@ -484,28 +600,38 @@ def obs_after_request(resp):
 
     app.logger.info(f"[ACCESS] {entry['ip']} {entry['method']} {entry['path']} -> {entry['status']} ({entry['ms']}ms)")
 
-    with _store_lock:
-        STORE["access_log"] = _append_rolling(STORE.get("access_log") or [], entry, ACCESS_LOG_MAX)
-        STORE["updated_at"] = int(time.time())
-        store_save(STORE)
+    with _access_log_lock:
+        global ACCESS_LOG
+        ACCESS_LOG = _append_rolling(ACCESS_LOG, entry, ACCESS_LOG_MAX)
 
     return resp
 
 
 # -------------------------
-# Shuffle fetch + cache
+# Shuffle weighted fetch + cache
 # -------------------------
-URL_RANGE = "https://affiliate.shuffle.com/stats/{API_KEY}?startTime={start}&endTime={end}"
-URL_LIFE  = "https://affiliate.shuffle.com/stats/{API_KEY}"
+
+URL_RANGE = "https://affiliate.shuffle.com/{kind}/{api_key}?startTime={start}&endTime={end}"
+URL_LIFE = "https://affiliate.shuffle.com/{kind}/{api_key}"
+
+WEIGHTING_RULES = [
+    {"range": "RTP ≤ 98%", "counts": "100% of wagered amount"},
+    {"range": "98% < RTP < 99%", "counts": "50% of wagered amount"},
+    {"range": "RTP ≥ 99%", "counts": "10% of wagered amount"},
+]
+
+USERNAME_KEYS = ("username", "displayName", "userName", "player", "name")
+WEIGHTED_KEYS = ("weightedWagerAmount", "weightedWager", "weightedAmount", "wagerWeighted")
+RAW_WAGER_KEYS = ("wagerAmount", "totalWagered", "wageredAmount", "rawWagerAmount")
+CAMPAIGN_KEYS = ("campaignCode", "campaign", "code", "referralCode", "affiliateCode")
 
 
 def sanitize_window() -> Tuple[int, int]:
-    """Ensures end <= now and start < end."""
+    """Ensure end <= now and start < end. If invalid, fall back to the last 14 days."""
     now = int(time.time())
     start = int(START_TIME or 0)
     end = int(END_TIME or 0)
 
-    # If missing or invalid window, fall back to last 14 days.
     if start <= 0 or end <= 0 or end <= start:
         end = now
         start = max(0, now - 14 * 24 * 3600)
@@ -516,64 +642,202 @@ def sanitize_window() -> Tuple[int, int]:
     return start, end
 
 
+def _extract_rows(payload: Any) -> List[dict]:
+    """
+    Extract row dictionaries from common API response shapes.
+
+    Supports:
+    - [ {...}, {...} ]
+    - { "data": [ ... ] }
+    - { "results": [ ... ] }
+    - { "leaderboard": [ ... ] }
+    - { "users": [ ... ] }
+    """
+    if isinstance(payload, list):
+        return [x for x in payload if isinstance(x, dict)]
+
+    if isinstance(payload, dict):
+        for key in ("data", "results", "leaderboard", "users", "items"):
+            val = payload.get(key)
+            if isinstance(val, list):
+                return [x for x in val if isinstance(x, dict)]
+
+    return []
+
+
+def _first_present(row: dict, keys: Iterable[str]) -> Any:
+    for key in keys:
+        if key in row:
+            return row.get(key)
+    return None
+
+
+def _row_campaign(row: dict) -> Optional[str]:
+    val = _first_present(row, CAMPAIGN_KEYS)
+    if val is None:
+        return None
+    return str(val).strip()
+
+
+def _campaign_allowed(row: dict) -> bool:
+    """
+    Apply campaign filter only if the row actually has a campaign-like field.
+    If not present, include the row because the endpoint/key may already be scoped.
+    """
+    wanted = (CAMPAIGN_CODE_FILTER or "").strip()
+    if not wanted:
+        return True
+    campaign = _row_campaign(row)
+    if campaign is None:
+        return True
+    return campaign.lower() == wanted.lower()
+
+
+def normalize_weighted_row(row: dict) -> Tuple[Optional[dict], Optional[str]]:
+    """
+    Convert one Shuffle API row into the internal shape used by the app.
+
+    Returns (normalized_row, skip_reason). A row is skipped if it has no username or no
+    weighted wager amount. Raw wager fallback is disabled by default on purpose.
+    """
+    username = str(_first_present(row, USERNAME_KEYS) or "").strip()
+    if not username:
+        return None, "missing_username"
+
+    if not _campaign_allowed(row):
+        return None, "campaign_filtered"
+
+    weighted_raw = _first_present(row, WEIGHTED_KEYS)
+    raw_wager_raw = _first_present(row, RAW_WAGER_KEYS)
+
+    weighted = parse_money_to_float(weighted_raw)
+    raw_wager = parse_money_to_float(raw_wager_raw)
+
+    has_weighted_key = weighted_raw is not None
+    if not has_weighted_key:
+        if ALLOW_RAW_WAGER_FALLBACK and raw_wager > 0:
+            weighted = raw_wager
+        else:
+            return None, "missing_weightedWagerAmount"
+
+    return {
+        "username": username,
+        "weightedWagerAmount": weighted,
+        "wagerAmount": raw_wager if raw_wager_raw is not None else None,
+        "campaignCode": _row_campaign(row),
+        "source": "shuffle",
+    }, None
+
+
 def fetch_from_shuffle() -> Tuple[List[dict], Dict[str, Any]]:
     """
-    Fetches wager stats from Shuffle (range preferred, lifetime fallback).
+    Fetch weighted wager rows from Shuffle.
 
-    Returns: (data_list, meta)
-      meta fields:
-        - ok: bool
-        - ms: int|None
-        - error: str|None
-        - source: "range"|"lifetime"|"none"
+    Returns:
+      (rows, meta)
+
+    meta intentionally never includes the API key.
     """
-    headers = {"User-Agent": "Shuffle-WagerRace/AdminPanel"}
+    if not API_KEY:
+        return [], {
+            "ok": False,
+            "ms": None,
+            "error": "Missing SHUFFLE_API_KEY/API_KEY.",
+            "source": "none",
+            "row_count": 0,
+        }
+
+    headers = {"User-Agent": "Shuffle-Weighted-WagerRace/AdminPanel"}
     start, end = sanitize_window()
 
     t0 = time.perf_counter()
     try:
-        r = requests.get(URL_RANGE.format(API_KEY=API_KEY, start=start, end=end), timeout=20, headers=headers)
+        range_url = URL_RANGE.format(kind=SHUFFLE_ENDPOINT_KIND, api_key=API_KEY, start=start, end=end)
+        r = requests.get(range_url, timeout=20, headers=headers)
         ms = int((time.perf_counter() - t0) * 1000)
 
+        # Some Shuffle endpoints may not accept start/end. If so, use the lifetime/current endpoint.
         if r.status_code == 400:
             t1 = time.perf_counter()
-            r2 = requests.get(URL_LIFE.format(API_KEY=API_KEY), timeout=20, headers=headers)
+            life_url = URL_LIFE.format(kind=SHUFFLE_ENDPOINT_KIND, api_key=API_KEY)
+            r2 = requests.get(life_url, timeout=20, headers=headers)
             ms2 = int((time.perf_counter() - t1) * 1000)
             r2.raise_for_status()
-            data = r2.json()
-            out = data if isinstance(data, list) else []
-            return out, {"ok": True, "ms": ms2, "error": None, "source": "lifetime"}
+            rows = _extract_rows(r2.json())
+            return rows, {
+                "ok": True,
+                "ms": ms2,
+                "error": None,
+                "source": "weighted_lifetime",
+                "row_count": len(rows),
+            }
 
         r.raise_for_status()
-        data = r.json()
-        if isinstance(data, dict) and isinstance(data.get("data"), list):
-            data = data["data"]
-        out = data if isinstance(data, list) else []
-        return out, {"ok": True, "ms": ms, "error": None, "source": "range"}
+        rows = _extract_rows(r.json())
+        return rows, {
+            "ok": True,
+            "ms": ms,
+            "error": None,
+            "source": "weighted_range",
+            "row_count": len(rows),
+        }
 
     except Exception as e:
         ms = int((time.perf_counter() - t0) * 1000)
-        return [], {"ok": False, "ms": ms, "error": str(e), "source": "none"}
+        return [], {
+            "ok": False,
+            "ms": ms,
+            "error": str(e),
+            "source": "none",
+            "row_count": 0,
+        }
 
 
-def dedupe_max_by_username(entries: List[dict]) -> Dict[str, dict]:
+def aggregate_by_username(entries: List[dict]) -> Dict[str, dict]:
     """
-    De-dupe by exact username; keep max wagerAmount.
-    This avoids duplicates from the API without fabricating any values.
+    Aggregate normalized rows by username.
+
+    Default mode is sum, because weighted wager endpoints often return more granular data.
+    Switch SHUFFLE_AGGREGATION_MODE=max only if you confirm the endpoint returns duplicate
+    aggregate rows that would otherwise double-count.
     """
     out: Dict[str, dict] = {}
+
     for e in entries or []:
         name = str(e.get("username", "")).strip()
         if not name:
             continue
-        try:
-            amt = float(e.get("wagerAmount", 0) or 0)
-        except Exception:
-            amt = 0.0
-        cc = e.get("campaignCode", "Red") or "Red"
+
+        weighted = parse_money_to_float(e.get("weightedWagerAmount"))
+        raw = e.get("wagerAmount")
+        raw_val = parse_money_to_float(raw) if raw is not None else None
+
         prev = out.get(name)
-        if prev is None or amt > float(prev.get("wagerAmount", 0) or 0):
-            out[name] = {"username": name, "wagerAmount": amt, "campaignCode": cc}
+        if prev is None:
+            out[name] = {
+                "username": name,
+                "weightedWagerAmount": weighted,
+                "wagerAmount": raw_val,
+                "campaignCode": e.get("campaignCode"),
+                "source": e.get("source", "shuffle"),
+                "row_count": 1,
+            }
+            continue
+
+        prev["row_count"] = int(prev.get("row_count") or 0) + 1
+
+        if SHUFFLE_AGGREGATION_MODE == "max":
+            if weighted > parse_money_to_float(prev.get("weightedWagerAmount")):
+                prev["weightedWagerAmount"] = weighted
+            if raw_val is not None:
+                old_raw = prev.get("wagerAmount")
+                prev["wagerAmount"] = max(parse_money_to_float(old_raw), raw_val) if old_raw is not None else raw_val
+        else:
+            prev["weightedWagerAmount"] = parse_money_to_float(prev.get("weightedWagerAmount")) + weighted
+            if raw_val is not None:
+                old_raw = prev.get("wagerAmount")
+                prev["wagerAmount"] = (parse_money_to_float(old_raw) if old_raw is not None else 0.0) + raw_val
+
     return out
 
 
@@ -581,10 +845,10 @@ _cache_lock = threading.Lock()
 _admin_cache_lock = threading.Lock()
 _force_refresh_lock = threading.Lock()
 
-# Public cache returned by /data (masked)
-DATA_CACHE: Dict[str, Any] = {"podium": [], "others": []}
+# Public cache returned by /data. Keep key name "wager" so old frontend shape still works.
+DATA_CACHE: Dict[str, Any] = {"podium": [], "others": [], "meta": {}}
 
-# Admin snapshot (full usernames)
+# Admin cache keeps full usernames and optional raw wager values.
 ADMIN_CACHE: Dict[str, Any] = {
     "top11": [],
     "full": [],
@@ -593,21 +857,21 @@ ADMIN_CACHE: Dict[str, Any] = {
 
 
 def compute_top11_deltas() -> List[Dict[str, Any]]:
-    """Compute Top-11 deltas from snapshots stored in STORE."""
+    """Compute Top-11 weighted deltas compared with the previous refresh tick."""
     with _store_lock:
-        snaps = (STORE.get("leaderboard_snapshots") or {})
+        snaps = STORE.get("leaderboard_snapshots") or {}
         last_top = snaps.get("last_top11") or []
         prev_top = snaps.get("prev_top11") or []
 
     prev_map: Dict[str, float] = {}
     for e in prev_top:
         u = str(e.get("username", "")).strip()
-        prev_map[u] = parse_money_to_float(e.get("wager"))
+        prev_map[u] = parse_money_to_float(e.get("weighted_wager", e.get("wager")))
 
     enriched: List[Dict[str, Any]] = []
     for e in last_top:
         u = str(e.get("username", "")).strip()
-        cur = parse_money_to_float(e.get("wager"))
+        cur = parse_money_to_float(e.get("weighted_wager", e.get("wager")))
         prev = prev_map.get(u, 0.0)
         d = cur - prev
 
@@ -626,15 +890,38 @@ def compute_top11_deltas() -> List[Dict[str, Any]]:
 
 def build_snapshots() -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[Dict[str, Any]], Dict[str, Any]]:
     """
-    Builds:
-    - Public payload: podium + others (masked usernames)
-    - Admin top 11: full usernames, sorted by wager desc
-    - Admin full leaderboard (up to FULL_LEADERBOARD_MAX), sorted by wager desc
-    - meta: health information from Shuffle fetch
-    """
-    base, meta = fetch_from_shuffle()
-    by_name = dedupe_max_by_username(base)
+    Build public and admin leaderboard snapshots from weighted wager data.
 
+    Public:
+      - masked usernames
+      - weighted wager display only
+
+    Admin:
+      - full usernames
+      - weighted wager
+      - raw wager, if the API provides it
+    """
+    raw_rows, meta = fetch_from_shuffle()
+
+    normalized: List[dict] = []
+    skipped_missing_weighted = 0
+    skipped_campaign = 0
+    skipped_username = 0
+
+    for row in raw_rows:
+        item, reason = normalize_weighted_row(row)
+        if item:
+            normalized.append(item)
+        elif reason == "missing_weightedWagerAmount":
+            skipped_missing_weighted += 1
+        elif reason == "campaign_filtered":
+            skipped_campaign += 1
+        elif reason == "missing_username":
+            skipped_username += 1
+
+    by_name = aggregate_by_username(normalized)
+
+    # Apply admin overrides as weighted wager totals.
     with _store_lock:
         overrides = dict(STORE.get("overrides") or {})
 
@@ -642,53 +929,79 @@ def build_snapshots() -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[Dict[s
         u = str(uname).strip()
         if not u:
             continue
-        try:
-            f = float(amt)
-        except Exception:
-            f = 0.0
-        by_name[u] = {"username": u, "wagerAmount": f, "campaignCode": "Red"}
+        weighted_override = parse_money_to_float(amt)
+        by_name[u] = {
+            "username": u,
+            "weightedWagerAmount": weighted_override,
+            "wagerAmount": None,
+            "campaignCode": CAMPAIGN_CODE_FILTER or None,
+            "source": "override",
+            "row_count": 1,
+        }
 
-    # Filter campaignCode=Red and rank by wager
-    entries = [e for e in by_name.values() if e.get("campaignCode") == "Red"]
+    entries = list(by_name.values())
+    entries.sort(key=lambda e: parse_money_to_float(e.get("weightedWagerAmount")), reverse=True)
 
-    def w(e: dict) -> float:
-        try:
-            return float(e.get("wagerAmount", 0) or 0)
-        except Exception:
-            return 0.0
-
-    entries.sort(key=w, reverse=True)
-
-    # Admin full list
     admin_full: List[Dict[str, Any]] = []
     for i, e in enumerate(entries[:FULL_LEADERBOARD_MAX], start=1):
         full = str(e.get("username", "Unknown"))
-        amt = w(e)
-        admin_full.append({"rank": i, "username": full, "wager": money(amt)})
+        weighted = parse_money_to_float(e.get("weightedWagerAmount"))
+        raw = e.get("wagerAmount")
+        raw_float = parse_money_to_float(raw) if raw is not None else None
+        admin_full.append({
+            "rank": i,
+            "username": full,
+            "weighted_wager": weighted,
+            # Keep old key as formatted string for template compatibility.
+            "wager": money(weighted),
+            "raw_wager": raw_float,
+            "raw_wager_str": money(raw_float) if raw_float is not None else "—",
+            "source": e.get("source", "shuffle"),
+            "row_count": int(e.get("row_count") or 1),
+        })
 
     admin_top11 = admin_full[:11]
 
-    # Public podium
     podium: List[dict] = []
     others: List[dict] = []
     for row in admin_top11:
         i = int(row["rank"])
-        full = row["username"]
-        wager_str = row["wager"]
-        pub = {"username": censor_username(full), "wager": wager_str}
+        public_row = {
+            "username": censor_username(row["username"]),
+            "wager": row["wager"],
+            "weighted_wager": row["wager"],
+        }
         if i <= 3:
-            podium.append(pub)
+            podium.append(public_row)
         else:
-            others.append({"rank": i, **pub})
+            others.append({"rank": i, **public_row})
 
-    public_payload = {"podium": podium, "others": others}
+    meta.update({
+        "weighted_row_count": len(normalized),
+        "skipped_missing_weighted": skipped_missing_weighted,
+        "skipped_campaign": skipped_campaign,
+        "skipped_username": skipped_username,
+        "aggregation_mode": SHUFFLE_AGGREGATION_MODE,
+        "endpoint_kind": SHUFFLE_ENDPOINT_KIND,
+        "campaign_code_filter": CAMPAIGN_CODE_FILTER,
+    })
+
+    public_payload = {
+        "podium": podium,
+        "others": others,
+        "meta": {
+            "updated_at": int(time.time()),
+            "label": "Weighted Wager",
+        },
+    }
     return public_payload, admin_top11, admin_full, meta
 
 
 def refresh_cache_once(reason: str = "tick") -> None:
     """
-    Refreshes caches and updates STORE health + snapshots.
-    If Shuffle is temporarily unreachable, keeps the old caches (but records health as FAIL).
+    Refresh caches and update persistent health/snapshots.
+
+    If Shuffle fails temporarily and we already have data, keep the old cache but mark health as failed.
     """
     public, admin_top11, admin_full, meta = build_snapshots()
     now = int(time.time())
@@ -696,20 +1009,28 @@ def refresh_cache_once(reason: str = "tick") -> None:
     with _admin_cache_lock:
         had_data = bool(ADMIN_CACHE.get("top11"))
 
+    # If refresh returned nothing after we already had data, avoid blanking the public leaderboard.
     if not admin_top11 and had_data:
         with _store_lock:
             STORE["health"]["last_refresh_ok"] = False
             STORE["health"]["last_refresh_et"] = fmt_et(now)
-            STORE["health"]["last_error"] = meta.get("error") or "Shuffle returned empty dataset"
+            STORE["health"]["last_error"] = meta.get("error") or "Shuffle returned no weighted leaderboard rows"
             STORE["health"]["last_api_ms"] = meta.get("ms")
             STORE["health"]["last_source"] = meta.get("source")
+            STORE["health"]["last_row_count"] = meta.get("row_count", 0)
+            STORE["health"]["last_weighted_row_count"] = meta.get("weighted_row_count", 0)
+            STORE["health"]["last_skipped_missing_weighted"] = meta.get("skipped_missing_weighted", 0)
+            STORE["health"]["aggregation_mode"] = SHUFFLE_AGGREGATION_MODE
+            STORE["health"]["endpoint_kind"] = SHUFFLE_ENDPOINT_KIND
             STORE["updated_at"] = now
             store_save(STORE)
 
-        app.logger.warning(f"[REFRESH] FAIL (kept old cache) source={meta.get('source')} ms={meta.get('ms')} err={meta.get('error')}")
+        app.logger.warning(
+            f"[REFRESH] FAIL kept_old_cache source={meta.get('source')} ms={meta.get('ms')} "
+            f"rows={meta.get('row_count')} weighted={meta.get('weighted_row_count')} err={meta.get('error')}"
+        )
         return
 
-    # Update in-memory caches
     with _cache_lock:
         DATA_CACHE.update(public)
 
@@ -718,13 +1039,17 @@ def refresh_cache_once(reason: str = "tick") -> None:
         ADMIN_CACHE["full"] = admin_full
         ADMIN_CACHE["last_refresh"] = now
 
-    # Update store health + snapshots for deltas
     with _store_lock:
-        STORE["health"]["last_refresh_ok"] = bool(meta.get("ok"))
+        STORE["health"]["last_refresh_ok"] = bool(meta.get("ok")) and bool(admin_top11)
         STORE["health"]["last_refresh_et"] = fmt_et(now)
         STORE["health"]["last_error"] = meta.get("error")
         STORE["health"]["last_api_ms"] = meta.get("ms")
         STORE["health"]["last_source"] = meta.get("source")
+        STORE["health"]["last_row_count"] = meta.get("row_count", 0)
+        STORE["health"]["last_weighted_row_count"] = meta.get("weighted_row_count", 0)
+        STORE["health"]["last_skipped_missing_weighted"] = meta.get("skipped_missing_weighted", 0)
+        STORE["health"]["aggregation_mode"] = SHUFFLE_AGGREGATION_MODE
+        STORE["health"]["endpoint_kind"] = SHUFFLE_ENDPOINT_KIND
 
         snaps = STORE.get("leaderboard_snapshots") or {}
         snaps["prev_top11"] = snaps.get("last_top11", [])
@@ -735,7 +1060,11 @@ def refresh_cache_once(reason: str = "tick") -> None:
         STORE["updated_at"] = now
         store_save(STORE)
 
-    app.logger.info(f"[REFRESH] ok={meta.get('ok')} reason={reason} source={meta.get('source')} ms={meta.get('ms')} top11={len(admin_top11)} full={len(admin_full)}")
+    app.logger.info(
+        f"[REFRESH] ok={meta.get('ok')} reason={reason} source={meta.get('source')} "
+        f"ms={meta.get('ms')} raw_rows={meta.get('row_count')} weighted_rows={meta.get('weighted_row_count')} "
+        f"top11={len(admin_top11)} full={len(admin_full)} aggregation={SHUFFLE_AGGREGATION_MODE}"
+    )
 
 
 def refresh_loop() -> None:
@@ -748,18 +1077,24 @@ def refresh_loop() -> None:
         time.sleep(max(5, int(REFRESH_SECONDS)))
 
 
-# Initial refresh + background thread
-refresh_cache_once(reason="startup")
+# Initial refresh + background thread. Startup should not fail only because Shuffle is down.
+try:
+    refresh_cache_once(reason="startup")
+except Exception as e:
+    app.logger.exception(f"[STARTUP_REFRESH] failed: {e}")
 threading.Thread(target=refresh_loop, daemon=True).start()
 
+# -------------------------
+# Kick endpoint placeholder
+# -------------------------
 
-# -------------------------
-# Kick endpoint
-# -------------------------
+
 def get_stream_status() -> Dict[str, Any]:
     """
-    Returns Kick status; if creds missing or Kick breaks, return safe defaults.
-    (You can expand this later without affecting the admin panel.)
+    Return Kick status.
+
+    Kept as a safe stub because live/viewer count was intentionally removed from the core logic.
+    You can expand this later without affecting weighted leaderboard correctness.
     """
     return {"live": False, "title": None, "viewers": None, "source": "disabled", "updated": int(time.time())}
 
@@ -767,6 +1102,7 @@ def get_stream_status() -> Dict[str, Any]:
 # -------------------------
 # Public routes
 # -------------------------
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -781,7 +1117,13 @@ def data():
 
 @app.route("/config")
 def config():
-    return jsonify({"start_time": START_TIME, "end_time": END_TIME, "refresh_seconds": REFRESH_SECONDS})
+    return jsonify({
+        "start_time": START_TIME,
+        "end_time": END_TIME,
+        "refresh_seconds": REFRESH_SECONDS,
+        "leaderboard_label": "Weighted Wager",
+        "weighting_rules": WEIGHTING_RULES,
+    })
 
 
 @app.route("/stream")
@@ -789,18 +1131,45 @@ def stream():
     return jsonify(get_stream_status())
 
 
+@app.route("/healthz")
+def healthz():
+    """Simple health endpoint for uptime checks and deployment monitoring."""
+    with _store_lock:
+        health = dict(STORE.get("health") or {})
+    with _admin_cache_lock:
+        full_count = len(ADMIN_CACHE.get("full") or [])
+        top_count = len(ADMIN_CACHE.get("top11") or [])
+        last_refresh = int(ADMIN_CACHE.get("last_refresh") or 0)
+
+    ok = bool(health.get("last_refresh_ok")) and top_count > 0
+    return jsonify({
+        "ok": ok,
+        "last_refresh_ok": health.get("last_refresh_ok"),
+        "last_refresh_et": health.get("last_refresh_et"),
+        "last_source": health.get("last_source"),
+        "last_error": health.get("last_error"),
+        "last_api_ms": health.get("last_api_ms"),
+        "leaderboard_count": full_count,
+        "top_count": top_count,
+        "last_refresh_epoch": last_refresh,
+        "endpoint_kind": SHUFFLE_ENDPOINT_KIND,
+        "aggregation_mode": SHUFFLE_AGGREGATION_MODE,
+    }), (200 if ok else 503)
+
+
 # -------------------------
 # Admin routes
 # -------------------------
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     """
     GET:
-      - if logged in -> admin panel
-      - else -> login form
+      - logged in: render admin panel
+      - logged out: render login form
 
-    POST (login):
-      - No CSRF check (cookie might not exist yet)
+    POST:
+      - login attempt, protected by per-IP rate limiting
     """
     csrf_token()
 
@@ -809,20 +1178,29 @@ def admin():
 
     error = None
     if request.method == "POST":
+        ip = client_ip()
+        locked, remaining = login_locked(ip)
+        if locked:
+            error = f"Too many failed login attempts. Try again in {max(1, remaining // 60)} minute(s)."
+            app.logger.warning(f"[LOGIN_RATE_LIMIT] ip={ip}")
+            return render_template("admin_login.html", csrf_token=csrf_token(), error=error)
+
         username = (request.form.get("username") or "").strip()
-        password = (request.form.get("password") or "")
+        password = request.form.get("password") or ""
 
         with _store_lock:
             urec = (STORE.get("users") or {}).get(username)
 
         if not urec or not check_password_hash(urec.get("pw_hash", ""), password):
+            login_record_failure(ip)
             error = "Invalid username or password."
-            app.logger.warning(f"[LOGIN_FAIL] ip={client_ip()} user={username}")
+            app.logger.warning(f"[LOGIN_FAIL] ip={ip} user={username}")
         else:
+            login_record_success(ip)
             session.permanent = True
             session["admin_user"] = username
             session["csrf_token"] = secrets.token_urlsafe(32)
-            app.logger.info(f"[LOGIN_OK] ip={client_ip()} user={username}")
+            app.logger.info(f"[LOGIN_OK] ip={ip} user={username}")
             audit("login_ok", {"user": username})
             return redirect(url_for("admin"))
 
@@ -838,16 +1216,18 @@ def admin_logout():
 
 
 def render_admin_panel():
-    """Renders admin panel with all the new panels/controls."""
+    """Render admin panel with weighted leaderboard, logs, and controls."""
     csrf_token()
 
     with _store_lock:
         overrides = dict(STORE.get("overrides") or {})
-        access_log = list(reversed(STORE.get("access_log") or []))
         audit_log = list(reversed(STORE.get("audit_log") or []))
         banned_ips = list(STORE.get("banned_ips") or [])
         health = dict(STORE.get("health") or {})
         admin_users = sorted(list((STORE.get("users") or {}).keys()))
+
+    with _access_log_lock:
+        access_log = list(reversed(ACCESS_LOG))
 
     with _admin_cache_lock:
         top11 = list(ADMIN_CACHE.get("top11") or [])
@@ -855,7 +1235,6 @@ def render_admin_panel():
         last_refresh = int(ADMIN_CACHE.get("last_refresh") or 0)
 
     next_refresh = last_refresh + int(REFRESH_SECONDS) if last_refresh else 0
-
     top11_with_deltas = compute_top11_deltas()
 
     return render_template(
@@ -863,17 +1242,20 @@ def render_admin_panel():
         csrf_token=csrf_token(),
         admin_user=admin_user(),
         is_superadmin=is_superadmin(),
+        superadmin_user=SUPERADMIN,
         refresh_seconds=REFRESH_SECONDS,
         start_et=fmt_et(int(START_TIME)),
         end_et=fmt_et(int(END_TIME)),
         last_refresh_et=fmt_et(last_refresh),
         next_refresh_et=fmt_et(next_refresh),
-
+        endpoint_kind=SHUFFLE_ENDPOINT_KIND,
+        aggregation_mode=SHUFFLE_AGGREGATION_MODE,
+        campaign_code_filter=CAMPAIGN_CODE_FILTER or "—",
+        weighting_rules=WEIGHTING_RULES,
         overrides=overrides,
         top11=top11,
         top11_with_deltas=top11_with_deltas,
         full_leaderboard=full,
-
         access_log=access_log,
         audit_log=audit_log,
         banned_ips=banned_ips,
@@ -888,27 +1270,51 @@ def _valid_admin_username(u: str) -> bool:
     return bool(re.fullmatch(r"[A-Za-z0-9_]{3,32}", u))
 
 
+@app.route("/admin/export.csv")
+@login_required
+def admin_export_csv():
+    """Export current full weighted leaderboard for payout verification."""
+    with _admin_cache_lock:
+        rows = list(ADMIN_CACHE.get("full") or [])
+        last_refresh = int(ADMIN_CACHE.get("last_refresh") or 0)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "rank",
+        "username",
+        "weighted_wager",
+        "raw_wager",
+        "source",
+        "row_count",
+        "last_refresh_et",
+    ])
+    for row in rows:
+        writer.writerow([
+            row.get("rank"),
+            row.get("username"),
+            f"{parse_money_to_float(row.get('weighted_wager')):.2f}",
+            "" if row.get("raw_wager") is None else f"{parse_money_to_float(row.get('raw_wager')):.2f}",
+            row.get("source", ""),
+            row.get("row_count", 1),
+            fmt_et(last_refresh),
+        ])
+
+    audit("export_csv", {"rows": len(rows)})
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=weighted_leaderboard_export.csv"},
+    )
+
+
 @app.route("/admin/action", methods=["POST"])
 @login_required
 def admin_action():
-    """
-    Admin action endpoint (CSRF protected). Supported actions:
-
-    Existing:
-      - set_override (still does NOT auto-refresh)
-
-    New:
-      - force_refresh (admin-only) pulls Shuffle immediately and updates /data cache
-      - ban_ip / unban_ip
-      - clear_access_log / clear_audit_log
-      - add_admin / remove_admin / set_admin_password (SUPERADMIN only)
-    """
+    """CSRF-protected admin actions."""
     require_csrf()
     action = (request.form.get("action") or "").strip()
 
-    # -------------------------
-    # override
-    # -------------------------
     if action == "set_override":
         username = (request.form.get("username") or "").strip()
         amount_raw = (request.form.get("amount") or "").strip()
@@ -937,22 +1343,14 @@ def admin_action():
                 after = new_amt
 
         if removed:
-            audit("override_remove", {"username": username, "before": before})
+            audit("weighted_override_remove", {"username": username, "before": before})
         else:
-            audit("override_set", {"username": username, "before": before, "after": after})
+            audit("weighted_override_set", {"username": username, "before": before, "after": after})
 
-        # IMPORTANT: preserve your original behavior: no immediate refresh.
         return redirect(url_for("admin"))
 
-    # -------------------------
-    # force refresh
-    # -------------------------
     if action == "force_refresh":
-        who = admin_user() or "unknown"
-        ip = client_ip()
-        app.logger.info(f"[ADMIN] force_refresh requested by {who} from {ip}")
         audit("force_refresh", {})
-
         started = time.time()
         with _force_refresh_lock:
             try:
@@ -962,9 +1360,6 @@ def admin_action():
                 app.logger.exception(f"[ADMIN] force_refresh failed: {e}")
         return redirect(url_for("admin"))
 
-    # -------------------------
-    # Security controls
-    # -------------------------
     if action == "ban_ip":
         ip = (request.form.get("ip") or "").strip()
         if ip:
@@ -989,10 +1384,9 @@ def admin_action():
         return redirect(url_for("admin"))
 
     if action == "clear_access_log":
-        with _store_lock:
-            STORE["access_log"] = []
-            STORE["updated_at"] = int(time.time())
-            store_save(STORE)
+        global ACCESS_LOG
+        with _access_log_lock:
+            ACCESS_LOG = []
         audit("clear_access_log", {})
         return redirect(url_for("admin"))
 
@@ -1004,16 +1398,13 @@ def admin_action():
         audit("clear_audit_log", {})
         return redirect(url_for("admin"))
 
-    # -------------------------
-    # Admin user management
-    # -------------------------
     if action in {"add_admin", "remove_admin", "set_admin_password"}:
         if not is_superadmin():
             abort(403)
 
         if action == "add_admin":
             new_user = (request.form.get("new_username") or "").strip()
-            new_pw = (request.form.get("new_password") or "")
+            new_pw = request.form.get("new_password") or ""
             if not _valid_admin_username(new_user):
                 audit("add_admin_reject", {"reason": "bad_username", "username": new_user})
                 return redirect(url_for("admin"))
@@ -1032,7 +1423,7 @@ def admin_action():
                 STORE["users"][new_user] = {
                     "pw_hash": generate_password_hash(new_pw),
                     "created_at": int(time.time()),
-                    "created_by": SUPERADMIN,
+                    "created_by": admin_user() or SUPERADMIN,
                 }
                 STORE["updated_at"] = int(time.time())
                 store_save(STORE)
@@ -1057,7 +1448,7 @@ def admin_action():
 
         if action == "set_admin_password":
             target = (request.form.get("pw_username") or "").strip()
-            pw = (request.form.get("pw_password") or "")
+            pw = request.form.get("pw_password") or ""
             if not target or not pw:
                 audit("set_admin_password_reject", {"reason": "missing_fields"})
                 return redirect(url_for("admin"))
@@ -1085,6 +1476,7 @@ def admin_action():
 # -------------------------
 # Errors
 # -------------------------
+
 @app.errorhandler(400)
 def bad_request(_e):
     return (
@@ -1092,8 +1484,8 @@ def bad_request(_e):
         "This is almost always cookies/sessions or CSRF mismatch.\n"
         "Fixes:\n"
         "1) Make sure cookies are enabled.\n"
-        "2) If you're using http:// (local), set SESSION_COOKIE_SECURE=0.\n"
-        "3) If you're using https://, set SESSION_COOKIE_SECURE=1.\n",
+        "2) If you're using http:// locally, set SESSION_COOKIE_SECURE=0.\n"
+        "3) If you're using https:// in production, set SESSION_COOKIE_SECURE=1.\n",
         400,
         {"Content-Type": "text/plain; charset=utf-8"},
     )
@@ -1117,4 +1509,3 @@ def nf(_e):
 if __name__ == "__main__":
     app.logger.info(f"Listening on http://0.0.0.0:{PORT}")
     app.run(host="0.0.0.0", port=PORT)
-

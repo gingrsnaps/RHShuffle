@@ -5,26 +5,22 @@
   <title>RedHunllef</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description"
-        content="Live Shuffle.com wager race leaderboard for RedHunllef." />
-  <!-- Favicon / static assets -->
+        content="Live weighted Shuffle.com wager race leaderboard for RedHunllef." />
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='redlogo.png') }}" />
-  <!-- Main stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
   <!-- ===================== HEADER ===================== -->
   <header class="header">
     <div class="container header-inner">
-      <!-- Brand block with bouncing pixel logo -->
       <a href="#top" class="brand" aria-label="RedHunllef home">
         <img src="{{ url_for('static', filename='redlogo.png') }}" alt="" class="logo" />
         <div class="brand-copy">
           <span class="brand-title">REDHUNLLEF</span>
-          <span class="brand-subtitle">Live Wager Races</span>
+          <span class="brand-subtitle"Live Wager Races</span>
         </div>
       </a>
 
-      <!-- Primary navigation -->
       <nav class="header-nav" aria-label="Primary">
         <a href="#leaderboard">Leaderboard</a>
         <a href="#sponsors">Sponsors</a>
@@ -37,7 +33,6 @@
     <!-- ===================== HERO ===================== -->
     <section class="hero">
       <div class="container hero-grid">
-        <!-- Hero copy & CTAs -->
         <div class="hero-copy">
           <p class="eyebrow">REAL-TIME WAGER RACE</p>
 
@@ -50,12 +45,9 @@
           </p>
 
           <div class="hero-actions">
-            <!-- Main CTA – big Kick button -->
             <a class="btn btn-primary" href="https://kick.com/redhunllef" target="_blank" rel="noopener">
               Watch on Kick
             </a>
-
-            <!-- Scroll helper -->
             <a class="btn btn-ghost" href="#leaderboard">
               View leaderboard
             </a>
@@ -72,47 +64,32 @@
         <!-- Live status + countdown card -->
         <aside class="race-status-card" aria-label="Stream status and race countdown">
           <div class="status-row">
-            <!-- Live pill controlled by /stream endpoint -->
             <div id="liveStatus" class="live-status unk" role="status" aria-live="polite">
               <span class="dot" aria-hidden="true"></span>
               <span class="text">Checking stream status…</span>
               <span class="viewer-chip" style="display:none"></span>
             </div>
 
-            <!-- Persistent Kick CTA specific to the status card -->
             <a class="btn watch-pill" href="https://kick.com/redhunllef" target="_blank" rel="noopener">
               Watch on Kick
             </a>
           </div>
 
-          <!-- Countdown driven from /config (END_TIME) -->
           <div class="countdown-card">
             <p class="countdown-label">RACE ENDS IN</p>
 
             <div id="countdown" class="countdown-wrap" aria-live="polite">
-              <div class="time-pill">
-                <span id="dd">00</span>
-                <label>Days</label>
-              </div>
+              <div class="time-pill"><span id="dd">00</span><label>Days</label></div>
               <div class="sep">:</div>
-              <div class="time-pill">
-                <span id="hh">00</span>
-                <label>Hours</label>
-              </div>
+              <div class="time-pill"><span id="hh">00</span><label>Hours</label></div>
               <div class="sep">:</div>
-              <div class="time-pill">
-                <span id="mm">00</span>
-                <label>Minutes</label>
-              </div>
+              <div class="time-pill"><span id="mm">00</span><label>Minutes</label></div>
               <div class="sep">:</div>
-              <div class="time-pill">
-                <span id="ss">00</span>
-                <label>Seconds</label>
-              </div>
+              <div class="time-pill"><span id="ss">00</span><label>Seconds</label></div>
             </div>
 
             <p class="countdown-note">
-              The leaderboard below follows this countdown timer.
+              The leaderboard below follows this configured race window.
             </p>
           </div>
         </aside>
@@ -145,7 +122,6 @@
           </p>
         </header>
 
-        <!-- Small info banner above cards -->
         <div class="helper-card">
           <p>
             <strong>No manual refresh needed.</strong>
@@ -153,17 +129,27 @@
           </p>
         </div>
 
-        <!-- Podium (1–3) – JS fills cards -->
-        <div id="podium" class="podium-olympic" aria-label="Top 3 leaderboard"></div>
+        <!-- Clear public explanation so players understand why raw wager may differ. -->
+        <div class="weighting-card" aria-label="Weighted wager rules">
+          <h3>How weighted wagers are counted</h3>
+          <ul>
+            <li><strong>RTP ≤ 98%</strong>: 100% of wagered amount counts.</li>
+            <li><strong>98% &lt; RTP &lt; 99%</strong>: 50% of wagered amount counts.</li>
+            <li><strong>RTP ≥ 99%</strong>: 10% of wagered amount counts.</li>
+          </ul>
+        </div>
 
-        <!-- 4–11 grid – JS builds list items -->
+        <div id="podium" class="podium-olympic" aria-label="Top 3 leaderboard"></div>
         <ul id="others-list" class="others-grid" aria-label="Ranks 4 to 11"></ul>
 
-        <!-- Legal note under the grid -->
         <p class="legal-note">
-The RedHunllef wager race uses live affiliate data from Shuffle.com. Rankings are based on <strong>total wagered amount</strong> during the configured time window. All displayed usernames are intentionally masked with asterisks to protect player privacy, while full usernames are logged server-side for auditing and prize verification.
-          
-Wager totals and payouts shown here are for informational purposes only and may be subject to independent verification, review, and adjustment by Shuffle.com and the event organizers.
+          The RedHunllef wager race uses live affiliate data from Shuffle.com. Rankings are based on
+          <strong>weighted wager amount</strong> during the configured time window. All displayed usernames are
+          intentionally masked with asterisks to protect player privacy, while full usernames are available
+          server-side to authorized admins for auditing and prize verification.
+          <br /><br />
+          Weighted totals and payouts shown here are for informational purposes only and may be subject to
+          independent verification, review, and adjustment by Shuffle.com and the event organizers.
         </p>
       </div>
     </section>
@@ -208,7 +194,6 @@ Wager totals and payouts shown here are for informational purposes only and may 
     </div>
   </footer>
 
-  <!-- JS bundle -->
   <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </body>
 </html>

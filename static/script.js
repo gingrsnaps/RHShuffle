@@ -1,5 +1,5 @@
 (() => {
-  // Shorthand query helper
+  // Small DOM helper.
   const $ = (sel, root = document) => root.querySelector(sel);
 
   const podiumEl   = $('#podium');
@@ -39,6 +39,17 @@
     return (n ?? 0).toLocaleString();
   }
 
+  function clearChildren(el) {
+    while (el && el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function textEl(tag, className, value) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    el.textContent = value;
+    return el;
+  }
+
   // -----------------------------------------
   // Podium (1–3)
   // -----------------------------------------
@@ -49,14 +60,14 @@
       wagerNum: moneyToNumber(e?.wager)
     }));
 
-    // Sort defensively by wager amount
+    // Sort defensively by weighted wager amount.
     norm.sort((a, b) => b.wagerNum - a.wagerNum);
 
     const first  = norm[0] || { username: '--', wagerStr: '$0.00' };
     const second = norm[1] || { username: '--', wagerStr: '$0.00' };
     const third  = norm[2] || { username: '--', wagerStr: '$0.00' };
 
-    // Render as Olympic layout: 2 | 1 | 3
+    // Render as Olympic layout: 2 | 1 | 3.
     const seats = [
       { place: 2, cls: 'col-second', medal: '🥈', entry: second },
       { place: 1, cls: 'col-first',  medal: '🥇', entry: first  },
@@ -64,23 +75,27 @@
     ];
 
     if (!podiumEl) return;
-    podiumEl.innerHTML = '';
+    clearChildren(podiumEl);
 
     seats.forEach(s => {
-      const el = document.createElement('article');
-      el.className = `podium-seat ${s.cls} fade-in`;
-      el.innerHTML = `
-        <div class="podium-head">
-          <span class="rank-badge">#${s.place}</span>
-          <span class="crown" aria-hidden="true">${s.medal}</span>
-        </div>
-        <div class="user">${s.entry.username}</div>
-        <div class="label">TOTAL WAGER</div>
-        <div class="wager">${s.entry.wagerStr}</div>
-        <div class="label">PRIZE</div>
-        <div class="prize">${PRIZES[s.place] || '$0.00'}</div>
-      `;
-      podiumEl.appendChild(el);
+      const card = document.createElement('article');
+      card.className = `podium-seat ${s.cls} fade-in`;
+
+      const head = document.createElement('div');
+      head.className = 'podium-head';
+      head.appendChild(textEl('span', 'rank-badge', `#${s.place}`));
+      const medal = textEl('span', 'crown', s.medal);
+      medal.setAttribute('aria-hidden', 'true');
+      head.appendChild(medal);
+
+      card.appendChild(head);
+      card.appendChild(textEl('div', 'user', s.entry.username));
+      card.appendChild(textEl('div', 'label', 'TOTAL WAGER'));
+      card.appendChild(textEl('div', 'wager', s.entry.wagerStr));
+      card.appendChild(textEl('div', 'label', 'PRIZE'));
+      card.appendChild(textEl('div', 'prize', PRIZES[s.place] || '$0.00'));
+
+      podiumEl.appendChild(card);
     });
   }
 
@@ -98,7 +113,7 @@
     }));
 
     if (others.length === 0) {
-      othersEl.innerHTML = '';
+      clearChildren(othersEl);
       return;
     }
 
@@ -111,7 +126,7 @@
       others = others.map((o, idx) => ({ ...o, rank: 4 + idx }));
     }
 
-    // 8 cards for ranks 4–11 desktop grid is 4x2.
+    // 8 cards for ranks 4–11. Pad empty cards so the layout does not jump.
     const desiredCards = 8;
     if (others.length < desiredCards) {
       const startRank = 4 + others.length;
@@ -126,16 +141,19 @@
       others = others.slice(0, desiredCards);
     }
 
-    othersEl.innerHTML = others.map(o => `
-      <li class="fade-in">
-        <span class="position">#${o.rank}</span>
-        <div class="username">${o.username}</div>
-        <div class="label emphasized">TOTAL WAGER</div>
-        <div class="wager">${o.wagerStr}</div>
-        <div class="label">PRIZE</div>
-        <div class="prize">${PRIZES[o.rank] || '$0.00'}</div>
-      </li>
-    `).join('');
+    clearChildren(othersEl);
+
+    others.forEach(o => {
+      const li = document.createElement('li');
+      li.className = 'fade-in';
+      li.appendChild(textEl('span', 'position', `#${o.rank}`));
+      li.appendChild(textEl('div', 'username', o.username));
+      li.appendChild(textEl('div', 'label emphasized', 'WEIGHTED WAGER'));
+      li.appendChild(textEl('div', 'wager', o.wagerStr));
+      li.appendChild(textEl('div', 'label', 'PRIZE'));
+      li.appendChild(textEl('div', 'prize', PRIZES[o.rank] || '$0.00'));
+      othersEl.appendChild(li);
+    });
   }
 
   // -----------------------------------------
@@ -148,7 +166,7 @@
       const j = await r.json();
       buildPodium(j.podium || []);
       buildOthers(j.others || []);
-      console.info('[leaderboard] updated', j);
+      console.info('[leaderboard] weighted data updated', j);
     } catch (e) {
       console.error('[leaderboard] failed', e);
     }
@@ -237,11 +255,9 @@
     fetchStream();
     initCountdown();
 
-    // Keep everything feeling live
     setInterval(fetchData, 60_000);
     setInterval(fetchStream, 60_000);
   }
 
   document.addEventListener('DOMContentLoaded', boot);
 })();
-

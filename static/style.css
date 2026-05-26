@@ -805,3 +805,30 @@ img {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ===== Weighted wager explanation ===== */
+.weighting-card {
+  margin: 0 0 1.2rem;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: radial-gradient(circle at top left, rgba(38,194,129,0.10), transparent 50%),
+              rgba(0,0,0,0.48);
+  border: 1px solid rgba(38,194,129,0.24);
+  color: var(--text-muted);
+}
+
+.weighting-card h3 {
+  margin: 0 0 0.45rem;
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+.weighting-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.weighting-card li {
+  margin: 0.28rem 0;
+  font-size: 0.86rem;
+}
