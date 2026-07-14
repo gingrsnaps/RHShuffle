@@ -14,8 +14,8 @@
   "allow_raw_wager_fallback": false,
   "campaign_code_filter": "Red",
 
-  "start_time": 1783461600,
-  "end_time": 1784066400,
+  "start_time": 1784066400,
+  "end_time": 1784671200,
   "refresh_seconds": 60,
 
   "kick_channel_slug": "redhunllef",
