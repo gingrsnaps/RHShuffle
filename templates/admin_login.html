@@ -25,7 +25,7 @@
       {% endif %}
 
       <form method="post" action="{{ url_for('admin') }}" autocomplete="on" class="admin-form-stack">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="login_csrf_token" value="{{ login_csrf_token() }}" />
         <label class="admin-field" for="username">
           <span>Username</span>
           <input id="username" name="username" required autocomplete="username" maxlength="32" />

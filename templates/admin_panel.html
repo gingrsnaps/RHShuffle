@@ -279,7 +279,7 @@
           <div>
             <p class="section-kicker">PARTICIPANTS</p>
             <h2>Leaderboard</h2>
-            <p class="muted">Copy usernames, review movement, and apply a fixed weighted-wager override when needed.</p>
+            <p class="muted">Copy usernames, compare raw and weighted wager totals, review movement, and apply a fixed weighted-wager override when needed.</p>
           </div>
           <a class="admin-button btn-gray" href="{{ url_for('admin_export_csv') }}">Export Leaderboard</a>
         </div>
@@ -287,13 +287,14 @@
         {% if top_with_deltas %}
         <div class="table-scroll">
           <table class="table management-table">
-            <thead><tr><th>Rank</th><th>Participant</th><th>Weighted wager</th><th>Change</th><th>Prize</th><th>Override</th></tr></thead>
+            <thead><tr><th>Rank</th><th>Participant</th><th>Weighted wager</th><th>Raw wager</th><th>Change</th><th>Prize</th><th>Override</th></tr></thead>
             <tbody>
               {% for e in top_with_deltas %}
               <tr>
                 <td class="sticky-rank">#{{ e.rank }}</td>
                 <td><div class="username-cell"><strong>{{ e.username }}</strong><button type="button" class="mini-button" data-copy="{{ e.username }}">Copy</button></div><small class="muted">Rank movement: {{ e.rank_change_label }}</small></td>
                 <td>{{ e.wager }}<small class="muted block">{{ e.delta_str }} since last refresh</small></td>
+                <td>{{ e.raw_wager_str or "—" }}</td>
                 <td>{{ e.rank_change_label }}</td>
                 <td><strong>{{ e.prize }}</strong></td>
                 <td>

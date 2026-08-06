@@ -40,6 +40,7 @@
           <div class="hero-actions">
             <a class="btn btn-primary" href="{{ site.stream_url }}" target="_blank" rel="noopener noreferrer">Watch on Kick</a>
             <a class="btn btn-ghost" href="#leaderboard">View leaderboard</a>
+            <button class="btn btn-ghost" id="copyRaceLink" type="button">Copy Wager Race Link</button>
           </div>
 
           <div class="hero-facts" aria-label="Race summary">
@@ -111,9 +112,9 @@
             <p>Game RTP determines how much of each wager contributes to race placement.</p>
           </div>
           <ul>
-            <li><strong>RTP ≥ 98%</strong><span>100% counts</span></li>
+            <li><strong>RTP ≤ 98%</strong><span>100% counts</span></li>
             <li><strong>RTP 98%–99%</strong><span>50% counts</span></li>
-            <li><strong>RTP ≤ 99%</strong><span>10% counts</span></li>
+            <li><strong>RTP ≥ 99%</strong><span>10% counts</span></li>
           </ul>
         </div>
 

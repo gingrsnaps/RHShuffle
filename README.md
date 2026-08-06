@@ -12,7 +12,7 @@ A single Flask application for a responsive Top 15 weighted Shuffle wager leader
 - See a clear Upcoming, Active, Ended, or Not Configured Wager Race banner.
 - Test Shuffle and Kick connections with one click and receive plain-language next steps.
 - See a setup checklist and last-update status.
-- Copy usernames, review rank movement, and apply weighted-wager overrides.
+- View raw and weighted wager totals together, copy usernames, review rank movement, and apply weighted-wager overrides.
 - Export the full leaderboard as `redhunllef_wager_race_leaderboard.csv`.
 - Download and restore safe JSON backups.
 - Change the current admin password.
@@ -58,12 +58,20 @@ A single Flask application for a responsive Top 15 weighted Shuffle wager leader
 3. For local HTTP testing in PowerShell:
 
    ```powershell
-   $env:SESSION_COOKIE_SECURE = "0"
+   $env:SESSION_COOKIE_SECURE = "auto"
    python wager_backend.py
    ```
 
 4. Open `http://localhost:8080`.
 5. Open `http://localhost:8080/admin` for the Wager Race Control Center.
+
+## Admin login
+
+The configured bootstrap account is read from `ADMIN_BOOTSTRAP_USER` / `ADMIN_BOOTSTRAP_PASS`, with `settings.json` as the fallback. Login names are matched without case sensitivity.
+
+Version 6 performs a one-time repair of the configured bootstrap account when upgrading an existing version-5 `admin_store.json`. This makes the stored password hash match the configured bootstrap password without deleting other admins, settings, overrides, or logs. Later password changes are preserved because the repair runs only during the version upgrade unless `RESET_BOOTSTRAP_PASSWORD_ON_START=1` is explicitly enabled.
+
+The login page uses a short-lived signed form token that does not depend on an existing browser session. The session cookie is marked Secure for HTTPS requests and is allowed on local HTTP, preventing the login/CSRF loop caused by Secure-only cookies. Authenticated admin actions continue to use session-bound CSRF protection.
 
 ## DigitalOcean App Platform
 
@@ -105,7 +113,8 @@ KICK_CLIENT_SECRET
 SUPERADMIN_USER
 ADMIN_BOOTSTRAP_USER
 ADMIN_BOOTSTRAP_PASS
-SESSION_COOKIE_SECURE=1
+SESSION_COOKIE_SECURE=auto
+REPAIR_BOOTSTRAP_LOGIN_ON_UPGRADE=1
 ```
 
 Environment variables override `settings.json`. Rotate any credential that has been shared in source files or chat before publishing the project.

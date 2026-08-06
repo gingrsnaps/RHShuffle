@@ -44,6 +44,8 @@ class CoreTests(unittest.TestCase):
         self.assertIn("Save Wager Race Settings", template)
         self.assertIn("Export Leaderboard", template)
         self.assertIn('name="new_password_confirm"', template)
+        self.assertIn('<th>Weighted wager</th><th>Raw wager</th>', template)
+        self.assertIn('{{ e.raw_wager_str or "—" }}', template)
 
     def test_superadmin_can_add_an_admin(self):
         username = "new_admin_test"
@@ -116,7 +118,7 @@ class CoreTests(unittest.TestCase):
         }
         migrated, dirty = self.backend.store_ensure_keys(old_store)
         self.assertTrue(dirty)
-        self.assertEqual(migrated["version"], 5)
+        self.assertEqual(migrated["version"], 6)
         self.assertEqual(migrated["leaderboard_snapshots"]["last_top15"], [{"rank": 1}])
         self.assertNotIn("https://", migrated["health"]["last_error"])
         self.assertNotEqual(
@@ -206,6 +208,37 @@ class CoreTests(unittest.TestCase):
         self.assertNotIn("payout_status", backup)
         self.assertNotIn("users", backup)
         self.assertNotIn("secret_key", backup)
+
+    def test_admin_lookup_is_case_insensitive(self):
+        canonical, record = self.backend.find_admin_account("TEST_ADMIN")
+        self.assertEqual(canonical, "test_admin")
+        self.assertIsInstance(record, dict)
+
+    def test_bootstrap_account_can_log_in(self):
+        with self.backend.app.test_client() as client:
+            get_response = client.get("/admin")
+            self.assertEqual(get_response.status_code, 200)
+            token = self.backend.login_csrf_token()
+            self.assertTrue(self.backend.validate_login_csrf(token))
+            response = client.post(
+                "/admin",
+                data={
+                    "login_csrf_token": token,
+                    "username": "TEST_ADMIN",
+                    "password": "this-is-a-secure-test-password",
+                },
+                follow_redirects=False,
+            )
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.headers.get("Location", "").rstrip("/"), "/admin")
+
+    def test_login_csrf_is_not_session_dependent(self):
+        token = self.backend.login_csrf_token()
+        self.assertTrue(self.backend.validate_login_csrf(token))
+        self.assertFalse(self.backend.validate_login_csrf("not-a-valid-token"))
+
+    def test_cookie_mode_defaults_to_supported_value(self):
+        self.assertIn(self.backend.SESSION_COOKIE_SECURE_MODE, {"auto", "always", "never"})
 
 
 if __name__ == "__main__":

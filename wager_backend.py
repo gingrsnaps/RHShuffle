@@ -30,6 +30,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from flask import (
     Flask,
     Response,
@@ -44,6 +45,7 @@ from flask import (
     session,
     url_for,
 )
+from flask.sessions import SecureCookieSessionInterface
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -210,10 +212,27 @@ KICK_CLIENT_SECRET = _env_or_setting("KICK_CLIENT_SECRET", "kick_client_secret",
 KICK_STATUS_TTL = max(15, _env_int("KICK_STATUS_TTL", _settings_int("kick_status_ttl", 30)))
 KICK_CHANNEL_TTL = max(300, _env_int("KICK_CHANNEL_TTL", _settings_int("kick_channel_ttl", 86400)))
 
-SESSION_COOKIE_SECURE = _env_bool(
-    "SESSION_COOKIE_SECURE",
-    _settings_bool("session_cookie_secure", False),
-)
+def _cookie_secure_mode() -> str:
+    """Return auto, always, or never for the admin session cookie.
+
+    ``auto`` makes local HTTP development work while still adding the Secure
+    attribute whenever Flask sees an HTTPS request. ProxyFix is applied before
+    the cookie is saved, so hosted HTTPS requests remain protected.
+    """
+    raw_env = os.getenv("SESSION_COOKIE_SECURE")
+    raw = raw_env if raw_env is not None else SETTINGS.get("session_cookie_secure", "auto")
+    if isinstance(raw, bool):
+        return "always" if raw else "never"
+    text = str(raw or "auto").strip().lower()
+    if text in {"1", "true", "yes", "on", "always"}:
+        return "always"
+    if text in {"0", "false", "no", "off", "never"}:
+        return "never"
+    return "auto"
+
+
+SESSION_COOKIE_SECURE_MODE = _cookie_secure_mode()
+SESSION_COOKIE_SECURE = SESSION_COOKIE_SECURE_MODE == "always"
 ADMIN_STORE_PATH = _resolve_app_path(os.getenv("ADMIN_STORE_PATH"), "admin_store.json")
 ACCESS_LOG_MAX = max(50, _env_int("ACCESS_LOG_MAX", _settings_int("access_log_max", 300)))
 AUDIT_LOG_MAX = max(50, _env_int("AUDIT_LOG_MAX", _settings_int("audit_log_max", 250)))
@@ -236,6 +255,10 @@ RESET_ADMIN_STORE_ON_START = _env_bool(
 RESET_BOOTSTRAP_PASSWORD_ON_START = _env_bool(
     "RESET_BOOTSTRAP_PASSWORD_ON_START",
     _settings_bool("reset_bootstrap_password_on_start", False),
+)
+REPAIR_BOOTSTRAP_LOGIN_ON_UPGRADE = _env_bool(
+    "REPAIR_BOOTSTRAP_LOGIN_ON_UPGRADE",
+    _settings_bool("repair_bootstrap_login_on_upgrade", True),
 )
 DISABLE_BACKGROUND_REFRESH = _env_bool("DISABLE_BACKGROUND_REFRESH", False)
 
@@ -386,6 +409,39 @@ def fmt_et(epoch: int) -> str:
 # Flask application and locks
 # ---------------------------------------------------------------------------
 
+
+class AdaptiveSecureCookieSessionInterface(SecureCookieSessionInterface):
+    """Use Secure cookies for HTTPS without breaking HTTP development.
+
+    A cookie marked ``Secure`` is never returned by browsers over plain HTTP.
+    Older deployments could therefore render the login page but lose the CSRF
+    session before the form was submitted. The effective flag now follows the
+    current request transport. ``SESSION_COOKIE_SECURE=never`` remains an
+    explicit opt-out for unusual development environments.
+    """
+
+    @staticmethod
+    def _request_uses_https() -> bool:
+        if not has_request_context():
+            return False
+        if request.is_secure:
+            return True
+        # ProxyFix normally turns this into request.is_secure. Keeping this
+        # fallback makes the app tolerant of a platform that forwards the
+        # header without applying the expected proxy configuration.
+        forwarded = str(request.headers.get("X-Forwarded-Proto") or "")
+        return forwarded.split(",", 1)[0].strip().lower() == "https"
+
+    def get_cookie_secure(self, app: Flask) -> bool:  # type: ignore[override]
+        mode = str(app.config.get("SESSION_COOKIE_SECURE_MODE", "auto")).lower()
+        if mode == "never":
+            return False
+        # Even when "always" was supplied, setting Secure on an HTTP response
+        # makes login impossible. Use Secure whenever the request is HTTPS and
+        # omit it only when the current request is actually plain HTTP.
+        return self._request_uses_https()
+
+
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 app.wsgi_app = ProxyFix(
@@ -397,14 +453,20 @@ app.wsgi_app = ProxyFix(
     x_prefix=PROXY_FIX_X_PREFIX,
 )
 app.config.update(
-    SESSION_COOKIE_NAME="redhunllef_admin",
+    # A versioned name avoids conflicts with an old Secure-only cookie that a
+    # browser may refuse to replace from a local HTTP origin.
+    SESSION_COOKIE_NAME="redhunllef_admin_v2",
+    SESSION_COOKIE_PATH="/",
+    SESSION_COOKIE_DOMAIN=None,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=SESSION_COOKIE_SECURE,
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_SECURE_MODE=SESSION_COOKIE_SECURE_MODE,
     PERMANENT_SESSION_LIFETIME=timedelta(days=7),
     SESSION_REFRESH_EACH_REQUEST=False,
     MAX_CONTENT_LENGTH=1 * 1024 * 1024,
 )
+app.session_interface = AdaptiveSecureCookieSessionInterface()
 
 logging.basicConfig(level=logging.INFO)
 app.logger.setLevel(logging.INFO)
@@ -421,7 +483,7 @@ _kick_status_lock = threading.RLock()
 _background_lock = threading.Lock()
 
 HTTP = requests.Session()
-HTTP.headers.update({"User-Agent": "RedHunllef-WagerRace/3.1"})
+HTTP.headers.update({"User-Agent": "RedHunllef-WagerRace/3.2"})
 
 STORE: Dict[str, Any] = {}
 ACCESS_LOG: List[dict] = []
@@ -486,7 +548,7 @@ def store_default() -> Dict[str, Any]:
             "created_by": "bootstrap",
         }
     return {
-        "version": 5,
+        "version": 6,
         "secret_key": secrets.token_hex(32),
         "users": users,
         "overrides": {},
@@ -566,7 +628,7 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
             store[key] = value
             dirty = True
 
-    ensure("version", 5)
+    ensure("version", 6)
     ensure("secret_key", secrets.token_hex(32))
 
     persistent_secret = str(store.get("secret_key") or "")
@@ -586,8 +648,8 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
     ensure("leaderboard_snapshots", {})
     ensure("updated_at", int(time.time()))
 
-    if store.get("version") != 5:
-        store["version"] = 5
+    if store.get("version") != 6:
+        store["version"] = 6
         dirty = True
 
     if not isinstance(store.get("users"), dict):
@@ -612,16 +674,33 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
         dirty = True
 
     users = store["users"]
-    if BOOTSTRAP_USER not in users and BOOTSTRAP_PASS:
+    bootstrap_key = next(
+        (key for key in users if str(key).casefold() == BOOTSTRAP_USER.casefold()),
+        None,
+    )
+    if bootstrap_key is None and BOOTSTRAP_PASS:
         users[BOOTSTRAP_USER] = {
             "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
             "created_at": int(time.time()),
             "created_by": "bootstrap",
         }
+        bootstrap_key = BOOTSTRAP_USER
         dirty = True
-    elif BOOTSTRAP_USER in users and BOOTSTRAP_PASS and RESET_BOOTSTRAP_PASSWORD_ON_START:
-        users[BOOTSTRAP_USER]["pw_hash"] = generate_password_hash(BOOTSTRAP_PASS)
-        users[BOOTSTRAP_USER]["updated_at"] = int(time.time())
+    elif bootstrap_key is not None and BOOTSTRAP_PASS and (
+        RESET_BOOTSTRAP_PASSWORD_ON_START
+        or (original_version < 6 and REPAIR_BOOTSTRAP_LOGIN_ON_UPGRADE)
+    ):
+        # Version 6 repairs the configured bootstrap login once. This resolves
+        # deployments that retained an older admin_store.json whose hash no
+        # longer matches the password supplied in settings/environment. The
+        # repair is migration-only unless the explicit reset flag is enabled.
+        record = users.get(bootstrap_key)
+        if not isinstance(record, dict):
+            record = {}
+            users[bootstrap_key] = record
+        record["pw_hash"] = generate_password_hash(BOOTSTRAP_PASS)
+        record["updated_at"] = int(time.time())
+        record["password_repaired_by_version"] = 6
         dirty = True
 
     health = store.get("health")
@@ -742,6 +821,7 @@ def censor_username(username: str) -> str:
 
 
 def csrf_token() -> str:
+    """Return the session-bound token used by authenticated admin actions."""
     token = session.get("csrf_token")
     if not token:
         token = secrets.token_urlsafe(32)
@@ -749,9 +829,35 @@ def csrf_token() -> str:
     return token
 
 
+def login_csrf_token() -> str:
+    """Return a short-lived signed login token that does not require a cookie.
+
+    The login page is the one place where a session cookie may not yet be
+    usable. A stateless signed token preserves login-CSRF protection while
+    avoiding the previous GET-cookie/POST-cookie dependency.
+    """
+    serializer = URLSafeTimedSerializer(str(app.secret_key), salt="admin-login-csrf-v2")
+    return serializer.dumps({"purpose": "admin-login"})
+
+
+def validate_login_csrf(value: str, max_age: int = 60 * 60) -> bool:
+    token = str(value or "").strip()
+    if not token:
+        return False
+    serializer = URLSafeTimedSerializer(str(app.secret_key), salt="admin-login-csrf-v2")
+    try:
+        payload = serializer.loads(token, max_age=max_age)
+    except (BadSignature, SignatureExpired, TypeError, ValueError):
+        return False
+    return isinstance(payload, dict) and payload.get("purpose") == "admin-login"
+
+
 @app.context_processor
 def inject_template_helpers() -> Dict[str, Any]:
-    return {"csrf_token": csrf_token}
+    return {
+        "csrf_token": csrf_token,
+        "login_csrf_token": login_csrf_token,
+    }
 
 
 def require_csrf() -> None:
@@ -769,6 +875,19 @@ def admin_user() -> Optional[str]:
 def is_superadmin() -> bool:
     """Only the configured gingrsnaps superadmin account can manage other admins."""
     return (admin_user() or "").casefold() == SUPERADMIN.casefold()
+
+
+def find_admin_account(username: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    """Find an admin account without making login capitalization-sensitive."""
+    requested = str(username or "").strip().casefold()
+    if not requested:
+        return None, None
+    with _store_lock:
+        users = STORE.get("users") or {}
+        for stored_username, record in users.items():
+            if str(stored_username).casefold() == requested and isinstance(record, dict):
+                return str(stored_username), dict(record)
+    return None, None
 
 
 def login_required(function):
@@ -1491,6 +1610,15 @@ def compute_top_deltas() -> List[Dict[str, Any]]:
         old_rank = previous_rank.get(username)
         rank_change = (old_rank - current_rank) if old_rank else None
         enriched = dict(entry)
+        raw_value = enriched.get("raw_wager")
+        raw_display = str(enriched.get("raw_wager_str") or "").strip()
+        enriched["raw_wager_str"] = (
+            raw_display
+            if raw_display
+            else money(raw_value)
+            if raw_value is not None
+            else "—"
+        )
         enriched["delta"] = delta
         enriched["delta_str"] = (
             "+" + money(delta)
@@ -2026,13 +2154,19 @@ def readyz():
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    csrf_token()
     if admin_user():
         return render_admin_panel()
 
     error = None
     if request.method == "POST":
-        require_csrf()
+        # Login uses a stateless signed token because the browser may not have
+        # accepted a session cookie yet. Authenticated actions remain protected
+        # by the stronger session-bound CSRF token.
+        if not validate_login_csrf(request.form.get("login_csrf_token") or ""):
+            error = "The login form expired or could not be verified. Please submit it again."
+            app.logger.warning("[LOGIN_CSRF_FAIL] ip=%s", client_ip())
+            return render_template("admin_login.html", error=error), 200
+
         ip = client_ip()
         locked, remaining = login_locked(ip)
         if locked:
@@ -2041,10 +2175,18 @@ def admin():
 
         username = str(request.form.get("username") or "").strip()
         password = str(request.form.get("password") or "")
-        with _store_lock:
-            record = (STORE.get("users") or {}).get(username)
+        canonical_username, record = find_admin_account(username)
+        valid_password = False
+        if record:
+            try:
+                valid_password = check_password_hash(
+                    str(record.get("pw_hash") or ""),
+                    password,
+                )
+            except (TypeError, ValueError):
+                valid_password = False
 
-        if not record or not check_password_hash(str(record.get("pw_hash") or ""), password):
+        if not canonical_username or not valid_password:
             login_record_failure(ip)
             error = "Invalid username or password."
             app.logger.warning("[LOGIN_FAIL] ip=%s user=%s", ip, username)
@@ -2052,9 +2194,9 @@ def admin():
             login_record_success(ip)
             session.clear()
             session.permanent = True
-            session["admin_user"] = username
+            session["admin_user"] = canonical_username
             session["csrf_token"] = secrets.token_urlsafe(32)
-            audit("login_ok", {"user": username})
+            audit("login_ok", {"user": canonical_username})
             return redirect(url_for("admin"))
 
     return render_template("admin_login.html", error=error)
@@ -2604,8 +2746,7 @@ def admin_action():
 def bad_request(_error):
     return (
         "Bad Request (400)\n\n"
-        "The request was rejected. Refresh the page and try again. "
-        "For local HTTP testing, set SESSION_COOKIE_SECURE=0.\n",
+        "The request could not be verified. Return to the previous page, refresh it, and try again.\n",
         400,
         {"Content-Type": "text/plain; charset=utf-8"},
     )
@@ -2629,5 +2770,6 @@ if __name__ == "__main__":
     app.logger.info("Project directory: %s", BASE_DIR)
     app.logger.info("Settings file: %s", SETTINGS_PATH)
     app.logger.info("Admin store: %s", ADMIN_STORE_PATH)
+    app.logger.info("Session cookie secure mode: %s", SESSION_COOKIE_SECURE_MODE)
     app.logger.info("Listening on http://0.0.0.0:%s", PORT)
     app.run(host="0.0.0.0", port=PORT)

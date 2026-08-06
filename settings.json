@@ -1,7 +1,7 @@
 {
   "port": 8080,
   "secret_key": "0b538bc33b89488aac36aab4a797fc9791b4ad952500d099348c4f3bef2eec87",
-  "session_cookie_secure": true,
+  "session_cookie_secure": "auto",
   "admin_bootstrap_user": "gingrsnaps",
   "superadmin_user": "gingrsnaps",
   "admin_bootstrap_pass": "enok2121",
@@ -52,5 +52,6 @@
   "stream_url": "https://kick.com/redhunllef",
   "community_name": "Discord",
   "community_url": "https://discord.gg/nhCbCZQEMK",
-  "responsible_gambling_url": "https://www.ncpgambling.org/responsible-gambling/"
+  "responsible_gambling_url": "https://www.ncpgambling.org/responsible-gambling/",
+  "repair_bootstrap_login_on_upgrade": true
 }

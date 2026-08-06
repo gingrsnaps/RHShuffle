@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "secret_key": "GENERATED_AT_FIRST_STARTUP",
   "users": {},
   "overrides": {},
