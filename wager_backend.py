@@ -27,6 +27,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import requests
 from flask import (
@@ -239,6 +240,117 @@ PROXY_FIX_X_HOST = max(0, _env_int("PROXY_FIX_X_HOST", _settings_int("proxy_fix_
 PROXY_FIX_X_PORT = max(0, _env_int("PROXY_FIX_X_PORT", _settings_int("proxy_fix_x_port", 1)))
 PROXY_FIX_X_PREFIX = max(0, _env_int("PROXY_FIX_X_PREFIX", _settings_int("proxy_fix_x_prefix", 0)))
 
+SITE_NAME = _settings_str("site_name", "RedHunllef") or "RedHunllef"
+RACE_TITLE = _settings_str("race_title", "RedHunllef Wager Race") or "RedHunllef Wager Race"
+RACE_DESCRIPTION = _settings_str(
+    "race_description",
+    "Track the top weighted wagerers for RedHunllef's active race.",
+)
+SPONSOR_NAME = _settings_str("sponsor_name", "Shuffle.com") or "Shuffle.com"
+SPONSOR_URL = _settings_str("sponsor_url", "https://shuffle.com/?r=Red")
+STREAM_URL = _settings_str("stream_url", f"https://kick.com/{KICK_CHANNEL_SLUG}")
+COMMUNITY_NAME = _settings_str("community_name", "Discord") or "Discord"
+COMMUNITY_URL = _settings_str("community_url", "https://discord.gg/nhCbCZQEMK")
+RESPONSIBLE_GAMBLING_URL = _settings_str(
+    "responsible_gambling_url",
+    "https://www.ncpgambling.org/responsible-gambling/",
+)
+
+
+def default_site_settings() -> Dict[str, Any]:
+    return {
+        "site_name": SITE_NAME,
+        "race_title": RACE_TITLE,
+        "race_description": RACE_DESCRIPTION,
+        "start_time": START_TIME,
+        "end_time": END_TIME,
+        "refresh_seconds": REFRESH_SECONDS,
+        "leaderboard_size": LEADERBOARD_SIZE,
+        "prizes": {str(rank): float(PRIZES.get(rank, 0)) for rank in range(1, LEADERBOARD_SIZE + 1)},
+        "kick_channel_slug": KICK_CHANNEL_SLUG,
+        "campaign_code_filter": CAMPAIGN_CODE_FILTER,
+        "sponsor_name": SPONSOR_NAME,
+        "sponsor_url": SPONSOR_URL,
+        "stream_url": STREAM_URL,
+        "community_name": COMMUNITY_NAME,
+        "community_url": COMMUNITY_URL,
+        "responsible_gambling_url": RESPONSIBLE_GAMBLING_URL,
+    }
+
+
+def normalize_site_settings(value: Any) -> Dict[str, Any]:
+    source = value if isinstance(value, dict) else {}
+    defaults = default_site_settings()
+    output = dict(defaults)
+
+    for key in (
+        "site_name",
+        "race_title",
+        "race_description",
+        "kick_channel_slug",
+        "campaign_code_filter",
+        "sponsor_name",
+        "sponsor_url",
+        "stream_url",
+        "community_name",
+        "community_url",
+        "responsible_gambling_url",
+    ):
+        if key in source:
+            output[key] = str(source.get(key) or "").strip()
+
+    output["start_time"] = max(0, _coerce_int(source.get("start_time"), defaults["start_time"]))
+    output["end_time"] = max(0, _coerce_int(source.get("end_time"), defaults["end_time"]))
+    output["refresh_seconds"] = max(
+        15,
+        min(3600, _coerce_int(source.get("refresh_seconds"), defaults["refresh_seconds"])),
+    )
+    output["leaderboard_size"] = 15
+
+    raw_prizes = source.get("prizes")
+    prizes: Dict[str, float] = {}
+    for rank in range(1, 16):
+        raw = raw_prizes.get(str(rank)) if isinstance(raw_prizes, dict) else defaults["prizes"].get(str(rank))
+        try:
+            amount = float(raw)
+        except (TypeError, ValueError):
+            amount = float(DEFAULT_PRIZES.get(rank, 0))
+        if not math.isfinite(amount) or amount < 0:
+            amount = float(DEFAULT_PRIZES.get(rank, 0))
+        prizes[str(rank)] = amount
+    output["prizes"] = prizes
+
+    if not output["stream_url"] and output["kick_channel_slug"]:
+        output["stream_url"] = f"https://kick.com/{output['kick_channel_slug']}"
+    return output
+
+
+def apply_site_settings(value: Dict[str, Any]) -> None:
+    global SITE_NAME, RACE_TITLE, RACE_DESCRIPTION
+    global START_TIME, END_TIME, REFRESH_SECONDS, LEADERBOARD_SIZE, PRIZES
+    global KICK_CHANNEL_SLUG, CAMPAIGN_CODE_FILTER
+    global SPONSOR_NAME, SPONSOR_URL, STREAM_URL
+    global COMMUNITY_NAME, COMMUNITY_URL, RESPONSIBLE_GAMBLING_URL
+
+    clean = normalize_site_settings(value)
+    SITE_NAME = clean["site_name"] or "RedHunllef"
+    RACE_TITLE = clean["race_title"] or f"{SITE_NAME} Wager Race"
+    RACE_DESCRIPTION = clean["race_description"]
+    START_TIME = int(clean["start_time"])
+    END_TIME = int(clean["end_time"])
+    REFRESH_SECONDS = int(clean["refresh_seconds"])
+    LEADERBOARD_SIZE = 15
+    PRIZES = {rank: float(clean["prizes"].get(str(rank), 0)) for rank in range(1, 16)}
+    KICK_CHANNEL_SLUG = clean["kick_channel_slug"]
+    CAMPAIGN_CODE_FILTER = clean["campaign_code_filter"]
+    SPONSOR_NAME = clean["sponsor_name"] or "Sponsor"
+    SPONSOR_URL = clean["sponsor_url"]
+    STREAM_URL = clean["stream_url"]
+    COMMUNITY_NAME = clean["community_name"] or "Community"
+    COMMUNITY_URL = clean["community_url"]
+    RESPONSIBLE_GAMBLING_URL = clean["responsible_gambling_url"]
+
+
 # ---------------------------------------------------------------------------
 # Time formatting
 # ---------------------------------------------------------------------------
@@ -369,10 +481,12 @@ def store_default() -> Dict[str, Any]:
             "created_by": "bootstrap",
         }
     return {
-        "version": 3,
+        "version": 4,
         "secret_key": secrets.token_hex(32),
         "users": users,
         "overrides": {},
+        "payout_status": {},
+        "site_settings": default_site_settings(),
         "audit_log": [],
         "banned_ips": [],
         "health": _default_health(),
@@ -448,7 +562,7 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
             store[key] = value
             dirty = True
 
-    ensure("version", 3)
+    ensure("version", 4)
     ensure("secret_key", secrets.token_hex(32))
 
     persistent_secret = str(store.get("secret_key") or "")
@@ -461,14 +575,16 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
         dirty = True
     ensure("users", {})
     ensure("overrides", {})
+    ensure("payout_status", {})
+    ensure("site_settings", default_site_settings())
     ensure("audit_log", [])
     ensure("banned_ips", [])
     ensure("health", _default_health())
     ensure("leaderboard_snapshots", {})
     ensure("updated_at", int(time.time()))
 
-    if store.get("version") != 3:
-        store["version"] = 3
+    if store.get("version") != 4:
+        store["version"] = 4
         dirty = True
 
     if not isinstance(store.get("users"), dict):
@@ -476,6 +592,14 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
         dirty = True
     if not isinstance(store.get("overrides"), dict):
         store["overrides"] = {}
+        dirty = True
+    if not isinstance(store.get("payout_status"), dict):
+        store["payout_status"] = {}
+        dirty = True
+
+    normalized_site = normalize_site_settings(store.get("site_settings"))
+    if store.get("site_settings") != normalized_site:
+        store["site_settings"] = normalized_site
         dirty = True
     if not isinstance(store.get("audit_log"), list):
         store["audit_log"] = []
@@ -550,6 +674,7 @@ def store_init() -> None:
 
 
 store_init()
+apply_site_settings(dict(STORE.get("site_settings") or {}))
 
 _env_secret = _env_str("SECRET_KEY")
 _settings_secret = _settings_str("secret_key")
@@ -736,6 +861,103 @@ def _normalized_ip(value: str) -> Optional[str]:
         return str(ipaddress.ip_address(str(value or "").strip()))
     except ValueError:
         return None
+
+
+def _valid_public_url(value: str, *, allow_blank: bool = False) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return allow_blank
+    try:
+        parsed = urlparse(text)
+    except ValueError:
+        return False
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def epoch_to_datetime_local(epoch: int) -> str:
+    if not epoch:
+        return ""
+    try:
+        if ET:
+            return datetime.fromtimestamp(int(epoch), tz=ET).strftime("%Y-%m-%dT%H:%M")
+        return datetime.utcfromtimestamp(int(epoch)).strftime("%Y-%m-%dT%H:%M")
+    except (TypeError, ValueError, OverflowError, OSError):
+        return ""
+
+
+def datetime_local_to_epoch(value: str) -> Tuple[Optional[int], Optional[str]]:
+    text = str(value or "").strip()
+    if not text:
+        return None, "Choose both a race start and end time."
+    try:
+        parsed = datetime.strptime(text, "%Y-%m-%dT%H:%M")
+        if ET:
+            parsed = parsed.replace(tzinfo=ET)
+        return int(parsed.timestamp()), None
+    except ValueError:
+        return None, "Use the date and time picker instead of typing a custom date format."
+
+
+def race_state(now: Optional[int] = None) -> str:
+    current = int(now or time.time())
+    if START_TIME and current < START_TIME:
+        return "upcoming"
+    if END_TIME and current >= END_TIME:
+        return "ended"
+    if START_TIME and END_TIME:
+        return "active"
+    return "unconfigured"
+
+
+def public_site_settings() -> Dict[str, Any]:
+    return {
+        "site_name": SITE_NAME,
+        "race_title": RACE_TITLE,
+        "race_description": RACE_DESCRIPTION,
+        "sponsor_name": SPONSOR_NAME,
+        "sponsor_url": SPONSOR_URL,
+        "stream_url": STREAM_URL,
+        "community_name": COMMUNITY_NAME,
+        "community_url": COMMUNITY_URL,
+        "responsible_gambling_url": RESPONSIBLE_GAMBLING_URL,
+    }
+
+
+def reset_kick_caches() -> None:
+    with _kick_token_lock:
+        KICK_TOKEN_CACHE.update({"access_token": "", "expires_at": 0})
+    with _kick_channel_lock:
+        KICK_CHANNEL_CACHE.update({"slug": "", "broadcaster_user_id": None, "expires_at": 0})
+    with _kick_status_lock:
+        KICK_STATUS_CACHE.update({
+            "value": {
+                "live": None,
+                "available": False,
+                "stale": False,
+                "title": None,
+                "viewers": None,
+                "viewer_count_hidden": False,
+                "category": None,
+                "started_at": None,
+                "source": "kick_api",
+                "updated": 0,
+            },
+            "expires_at": 0,
+            "last_success": 0,
+        })
+
+
+def build_safe_backup() -> Dict[str, Any]:
+    with _store_lock:
+        return {
+            "backup_version": 1,
+            "generated_at": int(time.time()),
+            "generated_at_et": fmt_et(int(time.time())),
+            "site_settings": normalize_site_settings(STORE.get("site_settings")),
+            "overrides": dict(STORE.get("overrides") or {}),
+            "payout_status": dict(STORE.get("payout_status") or {}),
+            "leaderboard_snapshots": dict(STORE.get("leaderboard_snapshots") or {}),
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -1076,7 +1298,12 @@ def aggregate_by_username(entries: List[dict]) -> Dict[str, dict]:
     return output
 
 
-def _public_payload_from_top(top: List[Dict[str, Any]], *, stale: bool = False) -> Dict[str, Any]:
+def _public_payload_from_top(
+    top: List[Dict[str, Any]],
+    *,
+    stale: bool = False,
+    updated_at: Optional[int] = None,
+) -> Dict[str, Any]:
     podium: List[dict] = []
     others: List[dict] = []
     for row in top[:LEADERBOARD_SIZE]:
@@ -1096,13 +1323,14 @@ def _public_payload_from_top(top: List[Dict[str, Any]], *, stale: bool = False) 
         "podium": podium,
         "others": others,
         "meta": {
-            "updated_at": int(time.time()),
+            "updated_at": int(updated_at or time.time()),
             "label": "Weighted Wager",
             "leaderboard_size": LEADERBOARD_SIZE,
             "stale": stale,
+            "race_state": race_state(),
+            "has_data": bool(top),
         },
     }
-
 
 def build_snapshots() -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[Dict[str, Any]], Dict[str, Any]]:
     raw_rows, meta = fetch_from_shuffle()
@@ -1139,7 +1367,11 @@ def build_snapshots() -> Tuple[Dict[str, Any], List[Dict[str, Any]], List[Dict[s
             "row_count": 1,
         }
 
-    entries = list(by_name.values())
+    entries = [
+        item
+        for item in by_name.values()
+        if parse_money_to_float(item.get("weightedWagerAmount")) >= 0.01
+    ]
     entries.sort(
         key=lambda item: parse_money_to_float(item.get("weightedWagerAmount")),
         reverse=True,
@@ -1186,7 +1418,7 @@ def seed_cache_from_store() -> None:
     if not stored_top:
         return
     with _cache_lock:
-        DATA_CACHE.update(_public_payload_from_top(stored_top, stale=True))
+        DATA_CACHE.update(_public_payload_from_top(stored_top, stale=True, updated_at=updated_at))
     with _admin_cache_lock:
         ADMIN_CACHE["top"] = stored_top
         ADMIN_CACHE["full"] = stored_top
@@ -1198,10 +1430,15 @@ def compute_top_deltas() -> List[Dict[str, Any]]:
         snapshots = STORE.get("leaderboard_snapshots") or {}
         current = list(snapshots.get("last_top15") or [])
         previous = list(snapshots.get("prev_top15") or [])
+        payout_status = dict(STORE.get("payout_status") or {})
     previous_map = {
         str(entry.get("username") or ""): parse_money_to_float(
             entry.get("weighted_wager", entry.get("wager"))
         )
+        for entry in previous
+    }
+    previous_rank = {
+        str(entry.get("username") or ""): int(entry.get("rank") or 0)
         for entry in previous
     }
     output: List[Dict[str, Any]] = []
@@ -1209,6 +1446,9 @@ def compute_top_deltas() -> List[Dict[str, Any]]:
         username = str(entry.get("username") or "")
         current_value = parse_money_to_float(entry.get("weighted_wager", entry.get("wager")))
         delta = current_value - previous_map.get(username, 0.0)
+        current_rank = int(entry.get("rank") or 0)
+        old_rank = previous_rank.get(username)
+        rank_change = (old_rank - current_rank) if old_rank else None
         enriched = dict(entry)
         enriched["delta"] = delta
         enriched["delta_str"] = (
@@ -1218,9 +1458,22 @@ def compute_top_deltas() -> List[Dict[str, Any]]:
             if delta < 0
             else "+$0.00"
         )
+        enriched["rank_change"] = rank_change
+        enriched["rank_change_label"] = (
+            "New"
+            if old_rank is None
+            else f"↑ {rank_change}"
+            if rank_change and rank_change > 0
+            else f"↓ {abs(rank_change)}"
+            if rank_change and rank_change < 0
+            else "—"
+        )
+        payout = payout_status.get(username) or {}
+        status = str(payout.get("status") or "pending")
+        enriched["payout_status"] = status if status in {"pending", "verified", "paid"} else "pending"
+        enriched["prize"] = money(PRIZES.get(current_rank, 0))
         output.append(enriched)
     return output
-
 
 def refresh_cache_once(reason: str = "tick") -> None:
     public, top, full, meta = build_snapshots()
@@ -1628,7 +1881,13 @@ start_background_refresh()
 
 @app.route("/")
 def index():
-    return render_template("index.html", leaderboard_size=LEADERBOARD_SIZE)
+    return render_template(
+        "index.html",
+        leaderboard_size=LEADERBOARD_SIZE,
+        site=public_site_settings(),
+        total_prize=money(sum(PRIZES.values())),
+        refresh_seconds=REFRESH_SECONDS,
+    )
 
 
 @app.route("/data")
@@ -1639,6 +1898,7 @@ def data():
             "others": list(DATA_CACHE.get("others") or []),
             "meta": dict(DATA_CACHE.get("meta") or {}),
         }
+    payload["meta"]["race_state"] = race_state()
     return jsonify(payload)
 
 
@@ -1648,11 +1908,14 @@ def config():
         {
             "start_time": START_TIME,
             "end_time": END_TIME,
+            "server_time": int(time.time()),
+            "race_state": race_state(),
             "refresh_seconds": REFRESH_SECONDS,
             "leaderboard_size": LEADERBOARD_SIZE,
             "leaderboard_label": "Weighted Wager",
             "weighting_rules": WEIGHTING_RULES,
             "prizes": {str(rank): money(PRIZES.get(rank, 0)) for rank in range(1, LEADERBOARD_SIZE + 1)},
+            "total_prize": money(sum(PRIZES.values())),
         }
     )
 
@@ -1687,6 +1950,7 @@ def healthz():
             "ok": True,
             "status": status,
             "process": "running",
+            "race_state": race_state(),
             "shuffle": {
                 "ok": shuffle_ok,
                 "last_refresh_ok": shuffle_health.get("last_refresh_ok"),
@@ -1767,14 +2031,48 @@ def admin_logout():
     return redirect(url_for("admin"))
 
 
+def _admin_setup_checklist(
+    *,
+    health: Dict[str, Any],
+    kick_health: Dict[str, Any],
+    top_count: int,
+    current_user_record: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    site = normalize_site_settings(STORE.get("site_settings"))
+    dates_ok = bool(site["start_time"] and site["end_time"] and site["end_time"] > site["start_time"])
+    prizes_ok = len(site.get("prizes") or {}) == 15 and all(
+        parse_money_to_float((site.get("prizes") or {}).get(str(rank))) >= 0
+        for rank in range(1, 16)
+    )
+    links_ok = all(
+        _valid_public_url(site.get(key, ""), allow_blank=key in {"community_url", "responsible_gambling_url"})
+        for key in ("sponsor_url", "stream_url", "community_url", "responsible_gambling_url")
+    )
+    password_changed = bool(current_user_record.get("updated_at")) or current_user_record.get("created_by") != "bootstrap"
+    return [
+        {"label": "Shuffle credentials configured", "ok": bool(SHUFFLE_API_KEY)},
+        {"label": "Kick credentials configured", "ok": bool(KICK_CLIENT_ID and KICK_CLIENT_SECRET)},
+        {"label": "Race dates configured", "ok": dates_ok},
+        {"label": "All 15 prizes configured", "ok": prizes_ok},
+        {"label": "Public links are valid", "ok": links_ok},
+        {"label": "Shuffle data connected", "ok": bool(health.get("last_refresh_ok")) and top_count > 0},
+        {"label": "Kick live status connected", "ok": kick_health.get("ok") is True},
+        {"label": "Admin password changed", "ok": password_changed},
+    ]
+
+
 def render_admin_panel():
     csrf_token()
     with _store_lock:
         overrides = dict(STORE.get("overrides") or {})
+        payout_status = dict(STORE.get("payout_status") or {})
         audit_log = list(reversed(STORE.get("audit_log") or []))
         banned_ips = list(STORE.get("banned_ips") or [])
         health = dict(STORE.get("health") or {})
-        admin_users = sorted((STORE.get("users") or {}).keys())
+        users = dict(STORE.get("users") or {})
+        admin_users = sorted(users.keys())
+        site_settings = normalize_site_settings(STORE.get("site_settings"))
+        current_user_record = dict(users.get(admin_user() or "") or {})
     with _access_log_lock:
         access_log = list(reversed(ACCESS_LOG))
     with _admin_cache_lock:
@@ -1784,7 +2082,28 @@ def render_admin_panel():
     with _kick_status_lock:
         kick_health = dict(KICK_HEALTH)
 
+    top_with_deltas = compute_top_deltas()
+    payout_map = {name: str((record or {}).get("status") or "pending") for name, record in payout_status.items()}
+    full_enriched = []
+    for row in full:
+        item = dict(row)
+        rank = int(item.get("rank") or 0)
+        item["prize"] = money(PRIZES.get(rank, 0)) if rank <= LEADERBOARD_SIZE else "—"
+        item["payout_status"] = payout_map.get(str(item.get("username") or ""), "pending")
+        full_enriched.append(item)
+
+    checklist = _admin_setup_checklist(
+        health=health,
+        kick_health=kick_health,
+        top_count=len(top),
+        current_user_record=current_user_record,
+    )
     next_refresh = last_refresh + REFRESH_SECONDS if last_refresh else 0
+    last_refresh_age = max(0, int(time.time()) - last_refresh) if last_refresh else None
+    shuffle_connected = bool(health.get("last_refresh_ok")) and bool(top)
+    kick_connected = kick_health.get("ok") is True
+    public_connected = bool(top) and last_refresh_age is not None and last_refresh_age <= max(180, REFRESH_SECONDS * 3)
+
     return render_template(
         "admin_panel.html",
         admin_user=admin_user(),
@@ -1794,17 +2113,21 @@ def render_admin_panel():
         leaderboard_size=LEADERBOARD_SIZE,
         start_et=fmt_et(START_TIME),
         end_et=fmt_et(END_TIME),
+        start_input=epoch_to_datetime_local(START_TIME),
+        end_input=epoch_to_datetime_local(END_TIME),
         last_refresh_et=fmt_et(last_refresh),
         next_refresh_et=fmt_et(next_refresh),
+        last_refresh_age=last_refresh_age,
         endpoint_kind=SHUFFLE_ENDPOINT_KIND,
         aggregation_mode=SHUFFLE_AGGREGATION_MODE,
         campaign_code_filter=CAMPAIGN_CODE_FILTER or "—",
         weighting_rules=WEIGHTING_RULES,
-        prizes={rank: money(PRIZES.get(rank, 0)) for rank in range(1, LEADERBOARD_SIZE + 1)},
+        prizes={rank: PRIZES.get(rank, 0) for rank in range(1, LEADERBOARD_SIZE + 1)},
+        total_prize=money(sum(PRIZES.values())),
         overrides=overrides,
         top=top,
-        top_with_deltas=compute_top_deltas(),
-        full_leaderboard=full,
+        top_with_deltas=top_with_deltas,
+        full_leaderboard=full_enriched,
         access_log=access_log,
         audit_log=audit_log,
         banned_ips=banned_ips,
@@ -1812,6 +2135,14 @@ def render_admin_panel():
         kick_health=kick_health,
         admin_users=admin_users,
         min_password_length=MIN_ADMIN_PASSWORD_LENGTH,
+        site_settings=site_settings,
+        setup_checklist=checklist,
+        setup_complete=all(item["ok"] for item in checklist),
+        shuffle_connected=shuffle_connected,
+        kick_connected=kick_connected,
+        public_connected=public_connected,
+        race_state=race_state(),
+        public_url=url_for("index", _external=True),
     )
 
 
@@ -1821,6 +2152,8 @@ def admin_export_csv():
     with _admin_cache_lock:
         rows = list(ADMIN_CACHE.get("full") or [])
         last_refresh = int(ADMIN_CACHE.get("last_refresh") or 0)
+    with _store_lock:
+        payout_status = dict(STORE.get("payout_status") or {})
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -1830,18 +2163,25 @@ def admin_export_csv():
             "username",
             "weighted_wager",
             "raw_wager",
+            "prize",
+            "payout_status",
             "source",
             "row_count",
             "last_refresh_et",
         ]
     )
     for row in rows:
+        rank = int(row.get("rank") or 0)
+        username = str(row.get("username") or "")
+        payout = payout_status.get(username) or {}
         writer.writerow(
             [
-                row.get("rank"),
-                row.get("username"),
+                rank,
+                username,
                 f"{parse_money_to_float(row.get('weighted_wager')):.2f}",
                 "" if row.get("raw_wager") is None else f"{parse_money_to_float(row.get('raw_wager')):.2f}",
+                f"{float(PRIZES.get(rank, 0)):.2f}" if rank <= LEADERBOARD_SIZE else "",
+                payout.get("status", "pending") if rank <= LEADERBOARD_SIZE else "",
                 row.get("source", ""),
                 row.get("row_count", 1),
                 fmt_et(last_refresh),
@@ -1855,18 +2195,154 @@ def admin_export_csv():
     )
 
 
+@app.route("/admin/backup.json")
+@login_required
+def admin_backup():
+    payload = build_safe_backup()
+    audit("download_backup", {"backup_version": payload.get("backup_version")})
+    stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    return Response(
+        json.dumps(payload, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": f"attachment; filename=redhunllef-backup-{stamp}.json"},
+    )
+
+
+def _redirect_admin(anchor: str = ""):
+    target = url_for("admin")
+    if anchor:
+        target += f"#{anchor}"
+    return redirect(target)
+
+
 @app.route("/admin/action", methods=["POST"])
 @login_required
 def admin_action():
     require_csrf()
     action = str(request.form.get("action") or "").strip()
 
+    if action == "save_event_settings":
+        start_epoch, start_error = datetime_local_to_epoch(request.form.get("start_et", ""))
+        end_epoch, end_error = datetime_local_to_epoch(request.form.get("end_et", ""))
+        if start_error or end_error or start_epoch is None or end_epoch is None:
+            flash(start_error or end_error or "Choose valid race dates.", "error")
+            return _redirect_admin("event-settings")
+        if end_epoch <= start_epoch:
+            flash("Race end time must be later than the start time.", "error")
+            return _redirect_admin("event-settings")
+
+        refresh = _coerce_int(request.form.get("refresh_seconds"), REFRESH_SECONDS)
+        if refresh < 15 or refresh > 3600:
+            flash("Refresh frequency must be between 15 and 3,600 seconds.", "error")
+            return _redirect_admin("event-settings")
+
+        slug = str(request.form.get("kick_channel_slug") or "").strip().lower()
+        if not re.fullmatch(r"[a-z0-9_-]{2,50}", slug):
+            flash("Kick channel names may use letters, numbers, underscores, and hyphens.", "error")
+            return _redirect_admin("event-settings")
+
+        site_name = _trim(request.form.get("site_name"), 60).strip()
+        race_title = _trim(request.form.get("race_title"), 100).strip()
+        race_description = _trim(request.form.get("race_description"), 240).strip()
+        sponsor_name = _trim(request.form.get("sponsor_name"), 60).strip()
+        community_name = _trim(request.form.get("community_name"), 60).strip()
+        campaign_filter = _trim(request.form.get("campaign_code_filter"), 64).strip()
+        if not all((site_name, race_title, sponsor_name)):
+            flash("Site name, race title, and sponsor name are required.", "error")
+            return _redirect_admin("event-settings")
+
+        urls = {
+            "sponsor_url": str(request.form.get("sponsor_url") or "").strip(),
+            "stream_url": str(request.form.get("stream_url") or "").strip(),
+            "community_url": str(request.form.get("community_url") or "").strip(),
+            "responsible_gambling_url": str(request.form.get("responsible_gambling_url") or "").strip(),
+        }
+        for key, value in urls.items():
+            if not _valid_public_url(value, allow_blank=key in {"community_url", "responsible_gambling_url"}):
+                flash(f"Enter a valid http or https URL for {key.replace('_', ' ')}.", "error")
+                return _redirect_admin("event-settings")
+
+        prizes: Dict[str, float] = {}
+        for rank in range(1, 16):
+            amount, error = parse_money_strict(str(request.form.get(f"prize_{rank}") or ""))
+            if error or amount is None:
+                flash(f"Prize #{rank}: {error or 'Enter a valid amount.'}", "error")
+                return _redirect_admin("event-settings")
+            prizes[str(rank)] = amount
+
+        new_settings = {
+            "site_name": site_name,
+            "race_title": race_title,
+            "race_description": race_description,
+            "start_time": start_epoch,
+            "end_time": end_epoch,
+            "refresh_seconds": refresh,
+            "leaderboard_size": 15,
+            "prizes": prizes,
+            "kick_channel_slug": slug,
+            "campaign_code_filter": campaign_filter,
+            "sponsor_name": sponsor_name,
+            "sponsor_url": urls["sponsor_url"],
+            "stream_url": urls["stream_url"] or f"https://kick.com/{slug}",
+            "community_name": community_name or "Community",
+            "community_url": urls["community_url"],
+            "responsible_gambling_url": urls["responsible_gambling_url"],
+        }
+        with _store_lock:
+            old_slug = str((STORE.get("site_settings") or {}).get("kick_channel_slug") or "")
+            STORE["site_settings"] = normalize_site_settings(new_settings)
+            STORE["updated_at"] = int(time.time())
+            store_save(STORE)
+            saved = dict(STORE["site_settings"])
+        apply_site_settings(saved)
+        if old_slug != KICK_CHANNEL_SLUG:
+            reset_kick_caches()
+
+        refresh_messages = []
+        with _force_refresh_lock:
+            try:
+                refresh_cache_once(reason="settings_save")
+                refresh_messages.append("leaderboard refreshed")
+            except Exception as exc:
+                app.logger.exception("[SETTINGS] refresh failed: %s", exc)
+                refresh_messages.append("leaderboard refresh needs attention")
+            try:
+                kick_result = refresh_kick_status(force=True)
+                refresh_messages.append("Kick checked" if kick_result.get("available") else "Kick needs attention")
+            except Exception as exc:
+                app.logger.exception("[SETTINGS] Kick check failed: %s", exc)
+                refresh_messages.append("Kick needs attention")
+        audit("save_event_settings", {"start_time": start_epoch, "end_time": end_epoch, "prize_total": sum(prizes.values())})
+        flash(f"Event settings saved successfully; {', '.join(refresh_messages)}.", "success")
+        return _redirect_admin("event-settings")
+
+    if action == "test_shuffle":
+        rows, meta = fetch_from_shuffle()
+        if meta.get("ok"):
+            flash(f"Shuffle connection successful. Received {len(rows)} row(s) from {meta.get('source')} in {meta.get('ms')} ms.", "success")
+        else:
+            flash(f"Shuffle connection failed: {meta.get('error') or 'Unknown error.'}", "error")
+        audit("test_shuffle", {"ok": bool(meta.get("ok")), "rows": len(rows)})
+        return _redirect_admin("connections")
+
+    if action == "test_kick":
+        result = refresh_kick_status(force=True)
+        if result.get("available"):
+            state = "live" if result.get("live") else "offline"
+            flash(f"Kick connection successful. The channel is currently {state}.", "success")
+        else:
+            with _kick_status_lock:
+                error = KICK_HEALTH.get("last_error")
+            flash(f"Kick connection failed: {error or 'Unknown error.'}", "error")
+        audit("test_kick", {"available": bool(result.get("available")), "live": result.get("live")})
+        return _redirect_admin("connections")
+
     if action == "set_override":
         username = str(request.form.get("username") or "").strip()
         amount_text = str(request.form.get("amount") or "").strip()
         if not username or len(username) > 64:
             flash("Enter a valid username up to 64 characters.", "error")
-            return redirect(url_for("admin"))
+            return _redirect_admin("leaderboard-management")
 
         if amount_text == "":
             with _store_lock:
@@ -1876,23 +2352,38 @@ def admin_action():
                 store_save(STORE)
             audit("weighted_override_remove", {"username": username, "before": before})
             flash(f"Removed the weighted override for {username}.", "success")
-            return redirect(url_for("admin"))
+            return _redirect_admin("leaderboard-management")
 
         amount, error = parse_money_strict(amount_text)
         if error or amount is None:
             flash(error or "Invalid override amount.", "error")
-            return redirect(url_for("admin"))
+            return _redirect_admin("leaderboard-management")
         with _store_lock:
             before = (STORE.get("overrides") or {}).get(username)
             STORE.setdefault("overrides", {})[username] = amount
             STORE["updated_at"] = int(time.time())
             store_save(STORE)
-        audit(
-            "weighted_override_set",
-            {"username": username, "before": before, "after": amount},
-        )
+        audit("weighted_override_set", {"username": username, "before": before, "after": amount})
         flash(f"Set {username}'s weighted override to {money(amount)}.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("leaderboard-management")
+
+    if action == "set_payout_status":
+        username = str(request.form.get("username") or "").strip()
+        status = str(request.form.get("payout_status") or "pending").strip().lower()
+        if not username or status not in {"pending", "verified", "paid"}:
+            flash("Choose a valid participant and payout status.", "error")
+            return _redirect_admin("leaderboard-management")
+        with _store_lock:
+            STORE.setdefault("payout_status", {})[username] = {
+                "status": status,
+                "updated_at": int(time.time()),
+                "updated_by": admin_user(),
+            }
+            STORE["updated_at"] = int(time.time())
+            store_save(STORE)
+        audit("set_payout_status", {"username": username, "status": status})
+        flash(f"Marked {username}'s payout as {status}.", "success")
+        return _redirect_admin("leaderboard-management")
 
     if action == "force_refresh":
         with _force_refresh_lock:
@@ -1900,13 +2391,93 @@ def admin_action():
             refresh_kick_status(force=True)
         audit("force_refresh", {})
         flash("Leaderboard and Kick status refreshed.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("connections")
+
+    if action == "change_own_password":
+        username = admin_user() or ""
+        current_password = str(request.form.get("current_password") or "")
+        new_password = str(request.form.get("new_password") or "")
+        confirm_password = str(request.form.get("confirm_password") or "")
+        if new_password != confirm_password:
+            flash("The new password and confirmation do not match.", "error")
+            return _redirect_admin("account-security")
+        if not _valid_password(new_password):
+            flash(f"Passwords must be {MIN_ADMIN_PASSWORD_LENGTH}–256 characters.", "error")
+            return _redirect_admin("account-security")
+        with _store_lock:
+            record = (STORE.get("users") or {}).get(username)
+            if not record or not check_password_hash(str(record.get("pw_hash") or ""), current_password):
+                flash("Current password is incorrect.", "error")
+                return _redirect_admin("account-security")
+            record["pw_hash"] = generate_password_hash(new_password)
+            record["updated_at"] = int(time.time())
+            STORE["users"][username] = record
+            STORE["updated_at"] = int(time.time())
+            store_save(STORE)
+        session["csrf_token"] = secrets.token_urlsafe(32)
+        audit("change_own_password", {"user": username})
+        flash("Your password was changed successfully.", "success")
+        return _redirect_admin("account-security")
+
+    if action == "restore_backup":
+        uploaded = request.files.get("backup_file")
+        if not uploaded or not uploaded.filename:
+            flash("Choose a JSON backup file to restore.", "error")
+            return _redirect_admin("backup-restore")
+        try:
+            payload = json.loads(uploaded.read().decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            flash("The selected file is not a valid JSON backup.", "error")
+            return _redirect_admin("backup-restore")
+        if not isinstance(payload, dict) or _coerce_int(payload.get("backup_version"), 0) != 1:
+            flash("This backup format is not supported.", "error")
+            return _redirect_admin("backup-restore")
+
+        site = normalize_site_settings(payload.get("site_settings"))
+        raw_overrides = payload.get("overrides") if isinstance(payload.get("overrides"), dict) else {}
+        clean_overrides = {
+            _trim(username, 64).strip(): parse_money_to_float(amount)
+            for username, amount in raw_overrides.items()
+            if _trim(username, 64).strip()
+        }
+        raw_payout = payload.get("payout_status") if isinstance(payload.get("payout_status"), dict) else {}
+        clean_payout = {}
+        for username, record in raw_payout.items():
+            name = _trim(username, 64).strip()
+            status = str((record or {}).get("status") or "pending") if isinstance(record, dict) else "pending"
+            if name and status in {"pending", "verified", "paid"}:
+                clean_payout[name] = {
+                    "status": status,
+                    "updated_at": int(time.time()),
+                    "updated_by": admin_user(),
+                }
+        raw_snapshots = payload.get("leaderboard_snapshots")
+        clean_snapshots = raw_snapshots if isinstance(raw_snapshots, dict) else {}
+        if not isinstance(clean_snapshots.get("last_top15"), list):
+            clean_snapshots["last_top15"] = []
+        if not isinstance(clean_snapshots.get("prev_top15"), list):
+            clean_snapshots["prev_top15"] = []
+        clean_snapshots["updated_at"] = _coerce_int(clean_snapshots.get("updated_at"), 0) or None
+
+        with _store_lock:
+            STORE["site_settings"] = site
+            STORE["overrides"] = clean_overrides
+            STORE["payout_status"] = clean_payout
+            STORE["leaderboard_snapshots"] = clean_snapshots
+            STORE["updated_at"] = int(time.time())
+            store_save(STORE)
+        apply_site_settings(site)
+        reset_kick_caches()
+        seed_cache_from_store()
+        audit("restore_backup", {"overrides": len(clean_overrides), "payouts": len(clean_payout)})
+        flash("Backup restored. Admin accounts and passwords were left unchanged.", "success")
+        return _redirect_admin("backup-restore")
 
     if action == "ban_ip":
         normalized = _normalized_ip(str(request.form.get("ip") or ""))
         if not normalized:
             flash("Enter a valid IPv4 or IPv6 address.", "error")
-            return redirect(url_for("admin"))
+            return _redirect_admin("advanced-administration")
         with _store_lock:
             banned = STORE.setdefault("banned_ips", [])
             if normalized not in banned:
@@ -1915,20 +2486,18 @@ def admin_action():
             store_save(STORE)
         audit("ban_ip", {"ip": normalized})
         flash(f"Banned {normalized}.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("advanced-administration")
 
     if action == "unban_ip":
         normalized = _normalized_ip(str(request.form.get("ip") or ""))
         if normalized:
             with _store_lock:
-                STORE["banned_ips"] = [
-                    value for value in STORE.get("banned_ips", []) if value != normalized
-                ]
+                STORE["banned_ips"] = [value for value in STORE.get("banned_ips", []) if value != normalized]
                 STORE["updated_at"] = int(time.time())
                 store_save(STORE)
             audit("unban_ip", {"ip": normalized})
             flash(f"Unbanned {normalized}.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("advanced-administration")
 
     if action == "clear_access_log":
         global ACCESS_LOG
@@ -1936,7 +2505,7 @@ def admin_action():
             ACCESS_LOG = []
         audit("clear_access_log", {})
         flash("Access log cleared.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("advanced-administration")
 
     if action == "clear_audit_log":
         if not is_superadmin():
@@ -1947,7 +2516,7 @@ def admin_action():
             store_save(STORE)
         audit("clear_audit_log", {})
         flash("Audit log cleared.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("advanced-administration")
 
     if action in {"add_admin", "remove_admin", "set_admin_password"}:
         if not is_superadmin():
@@ -1958,15 +2527,15 @@ def admin_action():
             password = str(request.form.get("new_password") or "")
             if not _valid_admin_username(username):
                 flash("Admin usernames must be 3–32 letters, numbers, or underscores.", "error")
-                return redirect(url_for("admin"))
+                return _redirect_admin("advanced-administration")
             if not _valid_password(password):
                 flash(f"Passwords must be {MIN_ADMIN_PASSWORD_LENGTH}–256 characters.", "error")
-                return redirect(url_for("admin"))
+                return _redirect_admin("advanced-administration")
             with _store_lock:
                 users = STORE.setdefault("users", {})
                 if username in users:
                     flash("That admin user already exists.", "error")
-                    return redirect(url_for("admin"))
+                    return _redirect_admin("advanced-administration")
                 users[username] = {
                     "pw_hash": generate_password_hash(password),
                     "created_at": int(time.time()),
@@ -1976,13 +2545,13 @@ def admin_action():
                 store_save(STORE)
             audit("add_admin_ok", {"username": username})
             flash(f"Added admin user {username}.", "success")
-            return redirect(url_for("admin"))
+            return _redirect_admin("advanced-administration")
 
         if action == "remove_admin":
             username = str(request.form.get("rm_username") or "").strip()
             if not username or username == SUPERADMIN:
                 flash("The configured superadmin cannot be removed.", "error")
-                return redirect(url_for("admin"))
+                return _redirect_admin("advanced-administration")
             with _store_lock:
                 existed = username in (STORE.get("users") or {})
                 STORE.setdefault("users", {}).pop(username, None)
@@ -1990,18 +2559,18 @@ def admin_action():
                 store_save(STORE)
             audit("remove_admin", {"username": username, "existed": existed})
             flash(f"Removed admin user {username}." if existed else "Admin user was not found.", "success")
-            return redirect(url_for("admin"))
+            return _redirect_admin("advanced-administration")
 
         username = str(request.form.get("pw_username") or "").strip()
         password = str(request.form.get("pw_password") or "")
         if not username or not _valid_password(password):
             flash(f"Select an existing user and use a {MIN_ADMIN_PASSWORD_LENGTH}–256 character password.", "error")
-            return redirect(url_for("admin"))
+            return _redirect_admin("advanced-administration")
         with _store_lock:
             users = STORE.get("users") or {}
             if username not in users:
                 flash("That admin user does not exist.", "error")
-                return redirect(url_for("admin"))
+                return _redirect_admin("advanced-administration")
             users[username]["pw_hash"] = generate_password_hash(password)
             users[username]["updated_at"] = int(time.time())
             STORE["users"] = users
@@ -2009,7 +2578,7 @@ def admin_action():
             store_save(STORE)
         audit("set_admin_password_ok", {"username": username})
         flash(f"Updated the password for {username}.", "success")
-        return redirect(url_for("admin"))
+        return _redirect_admin("advanced-administration")
 
     flash("Unknown admin action.", "error")
     return redirect(url_for("admin"))
@@ -2042,7 +2611,7 @@ def forbidden(_error):
 
 @app.errorhandler(404)
 def not_found(_error):
-    return render_template("404.html"), 404
+    return render_template("404.html", site=public_site_settings()), 404
 
 
 if __name__ == "__main__":

@@ -66,7 +66,7 @@ class CoreTests(unittest.TestCase):
         }
         migrated, dirty = self.backend.store_ensure_keys(old_store)
         self.assertTrue(dirty)
-        self.assertEqual(migrated["version"], 3)
+        self.assertEqual(migrated["version"], 4)
         self.assertEqual(migrated["leaderboard_snapshots"]["last_top15"], [{"rank": 1}])
         self.assertNotIn("https://", migrated["health"]["last_error"])
         self.assertNotEqual(
@@ -118,6 +118,31 @@ class CoreTests(unittest.TestCase):
         finally:
             self.backend.KICK_TOKEN_CACHE.clear()
             self.backend.KICK_TOKEN_CACHE.update(previous)
+
+    def test_race_state_transitions(self):
+        old_start = self.backend.START_TIME
+        old_end = self.backend.END_TIME
+        try:
+            self.backend.START_TIME = 100
+            self.backend.END_TIME = 200
+            self.assertEqual(self.backend.race_state(50), "upcoming")
+            self.assertEqual(self.backend.race_state(150), "active")
+            self.assertEqual(self.backend.race_state(250), "ended")
+        finally:
+            self.backend.START_TIME = old_start
+            self.backend.END_TIME = old_end
+
+    def test_public_url_validation(self):
+        self.assertTrue(self.backend._valid_public_url("https://kick.com/redhunllef"))
+        self.assertFalse(self.backend._valid_public_url("javascript:alert(1)"))
+        self.assertTrue(self.backend._valid_public_url("", allow_blank=True))
+
+    def test_safe_backup_excludes_accounts_and_secrets(self):
+        backup = self.backend.build_safe_backup()
+        self.assertIn("site_settings", backup)
+        self.assertIn("payout_status", backup)
+        self.assertNotIn("users", backup)
+        self.assertNotIn("secret_key", backup)
 
 
 if __name__ == "__main__":

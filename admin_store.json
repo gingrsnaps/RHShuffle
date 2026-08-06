@@ -1,32 +1,56 @@
 {
-  "version": 3,
-  "secret_key": "bb7a26dd0920369291a412792ea18c5d96b2635cfea2a3baeb0954ed6237c248",
+  "version": 4,
+  "secret_key": "d1ac400b143dbf65bf957514b02345a4042f77dce707f7afc3f925b753a955af",
   "users": {
     "gingrsnaps": {
-      "pw_hash": "scrypt:32768:8:1$iS76PlOmCaceIzCS$f80bd37ebcb22913087598c311c0ff2635e4aca0bfbb0e5c703cece83f152d6a5ebd1b663a36ddbddd2c49cdb4702fa2dc8b77a71ba7d5cdbf003a3a1fe03d58",
-      "created_at": 1785990318,
+      "pw_hash": "scrypt:32768:8:1$KE9tZVj2x18907lL$6c3a7012a002d2b051a2b9d82377587385a008f86281805b2107617bb7a08b3031f8ce9e2ced0a91275abf061e917a92b416dd9caa43b473b0a76ade836299f2",
+      "created_at": 1785992045,
       "created_by": "bootstrap"
     }
   },
   "overrides": {},
-  "audit_log": [
-    {
-      "ts": 1785990351,
-      "ts_et": "Aug 06, 2026 04:25:51 AM UTC",
-      "admin_user": "gingrsnaps",
-      "ip": "127.0.0.1",
-      "action": "login_ok",
-      "detail": {
-        "user": "gingrsnaps"
-      }
-    }
-  ],
+  "payout_status": {},
+  "site_settings": {
+    "site_name": "RedHunllef",
+    "race_title": "RedHunllef Wager Race",
+    "race_description": "Track the top weighted wagerers for RedHunllef's active race.",
+    "start_time": 1785880800,
+    "end_time": 1786485600,
+    "refresh_seconds": 60,
+    "leaderboard_size": 15,
+    "prizes": {
+      "1": 1800.0,
+      "2": 1200.0,
+      "3": 800.0,
+      "4": 450.0,
+      "5": 200.0,
+      "6": 150.0,
+      "7": 90.0,
+      "8": 80.0,
+      "9": 70.0,
+      "10": 60.0,
+      "11": 20.0,
+      "12": 20.0,
+      "13": 20.0,
+      "14": 20.0,
+      "15": 20.0
+    },
+    "kick_channel_slug": "redhunllef",
+    "campaign_code_filter": "Red",
+    "sponsor_name": "Shuffle.com",
+    "sponsor_url": "https://shuffle.com/?r=Red",
+    "stream_url": "https://kick.com/redhunllef",
+    "community_name": "Discord",
+    "community_url": "https://discord.gg/nhCbCZQEMK",
+    "responsible_gambling_url": "https://www.ncpgambling.org/responsible-gambling/"
+  },
+  "audit_log": [],
   "banned_ips": [],
   "health": {
     "last_refresh_ok": true,
-    "last_refresh_et": "Aug 06, 2026 04:25:19 AM UTC",
+    "last_refresh_et": "Aug 06, 2026 04:54:06 AM UTC",
     "last_error": null,
-    "last_api_ms": 1102,
+    "last_api_ms": 1403,
     "last_source": "weighted_range",
     "last_row_count": 764,
     "last_weighted_row_count": 764,
@@ -40,30 +64,30 @@
       {
         "rank": 1,
         "username": "swisscheez",
-        "weighted_wager": 25758.775574012536,
-        "wager": "$25,758.78",
-        "raw_wager": 26472.6157426562,
-        "raw_wager_str": "$26,472.62",
+        "weighted_wager": 47574.775574012536,
+        "wager": "$47,574.78",
+        "raw_wager": 48288.61574265619,
+        "raw_wager_str": "$48,288.62",
         "source": "shuffle",
         "row_count": 1
       },
       {
         "rank": 2,
-        "username": "RedLovesMe",
-        "weighted_wager": 9003.289044140445,
-        "wager": "$9,003.29",
-        "raw_wager": 19832.209758154157,
-        "raw_wager_str": "$19,832.21",
+        "username": "lightningmcqueen",
+        "weighted_wager": 9899.207012944857,
+        "wager": "$9,899.21",
+        "raw_wager": 12426.451165162856,
+        "raw_wager_str": "$12,426.45",
         "source": "shuffle",
         "row_count": 1
       },
       {
         "rank": 3,
-        "username": "lightningmcqueen",
-        "weighted_wager": 8876.199006004286,
-        "wager": "$8,876.20",
-        "raw_wager": 10949.593034614285,
-        "raw_wager_str": "$10,949.59",
+        "username": "RedLovesMe",
+        "weighted_wager": 9003.289044140445,
+        "wager": "$9,003.29",
+        "raw_wager": 19832.209758154157,
+        "raw_wager_str": "$19,832.21",
         "source": "shuffle",
         "row_count": 1
       },
@@ -100,20 +124,20 @@
       {
         "rank": 7,
         "username": "Nathanfr",
-        "weighted_wager": 1392.5834496808986,
-        "wager": "$1,392.58",
-        "raw_wager": 1953.4944968089987,
-        "raw_wager_str": "$1,953.49",
+        "weighted_wager": 1466.2834496808987,
+        "wager": "$1,466.28",
+        "raw_wager": 2027.1944968089988,
+        "raw_wager_str": "$2,027.19",
         "source": "shuffle",
         "row_count": 1
       },
       {
         "rank": 8,
         "username": "NeverEnoughllef",
-        "weighted_wager": 1382.2407540894235,
-        "wager": "$1,382.24",
-        "raw_wager": 2090.6643719663994,
-        "raw_wager_str": "$2,090.66",
+        "weighted_wager": 1382.2634743088036,
+        "wager": "$1,382.26",
+        "raw_wager": 2090.8915741601995,
+        "raw_wager_str": "$2,090.89",
         "source": "shuffle",
         "row_count": 1
       },
@@ -130,10 +154,10 @@
       {
         "rank": 10,
         "username": "SupraboigameZz",
-        "weighted_wager": 727.2696678415879,
-        "wager": "$727.27",
-        "raw_wager": 4002.313635891068,
-        "raw_wager_str": "$4,002.31",
+        "weighted_wager": 817.9457871515879,
+        "wager": "$817.95",
+        "raw_wager": 4909.074828991068,
+        "raw_wager_str": "$4,909.07",
         "source": "shuffle",
         "row_count": 1
       },
@@ -188,7 +212,7 @@
         "row_count": 1
       }
     ],
-    "updated_at": 1785990319
+    "updated_at": 1785992046
   },
-  "updated_at": 1785990351
+  "updated_at": 1785992046
 }

@@ -2,24 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Admin · RedHunllef</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · {{ site_settings.site_name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#05050a" />
+  <meta name="color-scheme" content="dark" />
   <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}" sizes="any" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body class="admin-page">
   <header class="header">
     <div class="container header-inner">
-      <a href="{{ url_for('index') }}" class="brand" aria-label="RedHunllef home">
+      <a href="{{ url_for('index') }}" class="brand" aria-label="{{ site_settings.site_name }} home">
         <img src="{{ url_for('static', filename='redlogo.png') }}" alt="" class="logo" />
         <div class="brand-copy">
-          <span class="brand-title">REDHUNLLEF</span>
-          <span class="brand-subtitle">Weighted Admin</span>
+          <span class="brand-title">{{ site_settings.site_name|upper }}</span>
+          <span class="brand-subtitle">Simple Race Admin</span>
         </div>
       </a>
 
       <nav class="header-nav admin-nav" aria-label="Admin navigation">
-        <a href="{{ url_for('index') }}#leaderboard">Public Site</a>
+        <a href="{{ url_for('index') }}#leaderboard" target="_blank" rel="noopener">Public Site</a>
         <form method="post" action="{{ url_for('admin_logout') }}" class="nav-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <button type="submit" class="nav-button">Logout</button>
@@ -34,14 +36,17 @@
         <div>
           <p class="section-kicker">CONTROL CENTER</p>
           <h1>Wager Race Administration</h1>
-          <p>Logged in as <strong>{{ admin_user }}</strong>. Changes are recorded in the audit log.</p>
+          <p>Logged in as <strong>{{ admin_user }}</strong>. Everyday controls are shown first; technical controls are collapsed below.</p>
         </div>
         <div class="admin-heading-actions">
-          <a class="admin-button btn-gray" href="{{ url_for('admin_export_csv') }}">Export CSV</a>
+          <button class="admin-button btn-gray" type="button" data-copy="{{ public_url }}">Copy race link</button>
+          <a class="admin-button btn-gray" href="{{ url_for('index') }}" target="_blank" rel="noopener">Preview website</a>
+          <a class="admin-button btn-gray" href="{{ url_for('admin_export_csv') }}">Payout CSV</a>
+          <a class="admin-button btn-gray" href="{{ url_for('admin_backup') }}">Download backup</a>
           <form method="post" action="{{ url_for('admin_action') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="hidden" name="action" value="force_refresh" />
-            <button class="admin-button btn-green" type="submit">Force Refresh</button>
+            <button class="admin-button btn-green" type="submit">Refresh now</button>
           </form>
         </div>
       </div>
@@ -50,391 +55,333 @@
         {% if messages %}
           <div class="flash-stack" aria-live="polite">
             {% for category, message in messages %}
-              <div class="flash flash-{{ category }}">{{ message }}</div>
+              <div class="flash-message flash-{{ category }}">{{ message }}</div>
             {% endfor %}
           </div>
         {% endif %}
       {% endwith %}
 
-      <section class="admin-card">
-        <div class="admin-card-header">
+      <section class="admin-card setup-card" id="connections">
+        <div class="section-heading-row">
           <div>
-            <p class="admin-card-kicker">SYSTEM</p>
-            <h2>Overview</h2>
+            <p class="section-kicker">AT A GLANCE</p>
+            <h2>Connection status</h2>
+            <p class="muted">Green means the service is working. Yellow or red includes a plain-language explanation.</p>
           </div>
-          <span class="status-pill">Refresh every {{ refresh_seconds }}s</span>
+          <span class="setup-badge {{ 'is-complete' if setup_complete else 'needs-attention' }}">
+            {{ 'Race setup complete' if setup_complete else 'Setup needs attention' }}
+          </span>
         </div>
 
-        <div class="admin-metrics-grid">
-          <article class="metric-card">
-            <span class="metric-label">Race window</span>
-            <strong>{{ start_et }}</strong>
-            <span class="metric-arrow">to</span>
-            <strong>{{ end_et }}</strong>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">Last refresh</span>
-            <strong>{{ last_refresh_et }}</strong>
-            <span class="metric-note">Next: {{ next_refresh_et }}</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">Shuffle source</span>
-            <strong>/{{ endpoint_kind }}</strong>
-            <span class="metric-note">{{ aggregation_mode }} aggregation · filter {{ campaign_code_filter }}</span>
-          </article>
-          <article class="metric-card">
-            <span class="metric-label">Paid placements</span>
-            <strong>Top {{ leaderboard_size }}</strong>
-            <span class="metric-note">$5,000 total prize pool</span>
-          </article>
-        </div>
-
-        <div class="health-grid">
-          <article class="health-card">
-            <div class="health-card-title">
-              <h3>Shuffle health</h3>
-              <span class="health-dot {% if health.last_refresh_ok %}health-ok{% else %}health-bad{% endif %}"></span>
+        <div class="status-card-grid">
+          <article class="status-card {{ 'status-good' if shuffle_connected else 'status-bad' }}">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+              <h3>Shuffle data</h3>
+              <p>{{ 'Connected and receiving leaderboard data.' if shuffle_connected else (health.last_error or 'Not connected yet. Test the connection below.') }}</p>
+              <small>Last check: {{ health.last_refresh_et or 'Never' }}</small>
             </div>
-            <dl class="health-list">
-              <div><dt>Last refresh OK</dt><dd>{{ health.last_refresh_ok }}</dd></div>
-              <div><dt>API time</dt><dd>{{ health.last_api_ms }} ms</dd></div>
-              <div><dt>Source</dt><dd>{{ health.last_source }}</dd></div>
-              <div><dt>API rows</dt><dd>{{ health.last_row_count }}</dd></div>
-              <div><dt>Weighted rows</dt><dd>{{ health.last_weighted_row_count }}</dd></div>
-              <div><dt>Missing weighted skipped</dt><dd>{{ health.last_skipped_missing_weighted }}</dd></div>
-            </dl>
-            {% if health.last_error %}
-              <p class="health-error"><strong>Last error:</strong> {{ health.last_error }}</p>
-            {% endif %}
           </article>
-
-          <article class="health-card">
-            <div class="health-card-title">
-              <h3>Kick health</h3>
-              <span class="health-dot {% if kick_health.ok %}health-ok{% else %}health-bad{% endif %}"></span>
+          <article class="status-card {{ 'status-good' if kick_connected else 'status-bad' }}">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+              <h3>Kick live status</h3>
+              <p>{{ 'Connected. Live status is available.' if kick_connected else (kick_health.last_error or 'Not connected yet. Test the connection below.') }}</p>
+              <small>Last check: {{ kick_health.last_check_et or 'Never' }}</small>
             </div>
-            <dl class="health-list">
-              <div><dt>Last check OK</dt><dd>{{ kick_health.ok }}</dd></div>
-              <div><dt>Last check</dt><dd>{{ kick_health.last_check_et }}</dd></div>
-              <div><dt>API time</dt><dd>{{ kick_health.last_api_ms }} ms</dd></div>
-              <div><dt>Live</dt><dd>{{ kick_health.live }}</dd></div>
-              <div><dt>Source</dt><dd>{{ kick_health.source }}</dd></div>
-            </dl>
-            {% if kick_health.last_error %}
-              <p class="health-error"><strong>Last error:</strong> {{ kick_health.last_error }}</p>
-            {% endif %}
+          </article>
+          <article class="status-card {{ 'status-good' if public_connected else 'status-warning' }}">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+              <h3>Public leaderboard</h3>
+              <p>{{ 'The public leaderboard is current.' if public_connected else 'The site is running, but the leaderboard may be waiting for data or showing saved results.' }}</p>
+              <small>Last updated: {{ last_refresh_et }}</small>
+            </div>
           </article>
         </div>
 
-        <div class="weight-box">
-          <div>
-            <h3>Weighted wager rules</h3>
-            <p>These rules determine placement, not the raw wager column.</p>
-          </div>
-          <ul>
-            {% for rule in weighting_rules %}
-              <li><strong>{{ rule.range }}</strong><span>{{ rule.counts }}</span></li>
-            {% endfor %}
-          </ul>
+        <div class="connection-actions">
+          <form method="post" action="{{ url_for('admin_action') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="test_shuffle" />
+            <button class="admin-button btn-gray" type="submit">Test Shuffle connection</button>
+          </form>
+          <form method="post" action="{{ url_for('admin_action') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="test_kick" />
+            <button class="admin-button btn-gray" type="submit">Test Kick connection</button>
+          </form>
         </div>
 
-        <div class="prize-admin-grid" aria-label="Prize schedule">
-          {% for rank, prize in prizes.items() %}
-            <div><span>#{{ rank }}</span><strong>{{ prize }}</strong></div>
+        <div class="setup-checklist">
+          {% for item in setup_checklist %}
+            <div class="check-item {{ 'check-ok' if item.ok else 'check-missing' }}">
+              <span aria-hidden="true">{{ '✓' if item.ok else '!' }}</span>
+              <span>{{ item.label }}</span>
+            </div>
           {% endfor %}
         </div>
       </section>
 
-      <section class="admin-card">
-        <div class="admin-card-header">
+      <section class="admin-card" id="event-settings">
+        <div class="section-heading-row">
           <div>
-            <p class="admin-card-kicker">LEADERBOARD</p>
-            <h2>Current Top {{ leaderboard_size }}</h2>
+            <p class="section-kicker">RACE SETUP</p>
+            <h2>Event settings</h2>
+            <p class="muted">Use normal dates, dollar amounts, and links. Times are interpreted in Eastern Time.</p>
           </div>
-          <span class="status-pill">Full usernames</span>
+          <div class="summary-pills">
+            <span class="pill">{{ total_prize }} prize pool</span>
+            <span class="pill">{{ leaderboard_size }} paid places</span>
+            <span class="pill">{{ race_state|capitalize }}</span>
+          </div>
         </div>
-        <p class="admin-help">Deltas compare each player's weighted amount with the previous successful refresh.</p>
 
-        {% if not top_with_deltas %}
-          <p class="empty-state">Waiting for a successful leaderboard refresh.</p>
-        {% else %}
-          <div class="table-scroll">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>User</th>
-                  <th>Weighted Wager</th>
-                  <th>Raw Wager</th>
-                  <th>Weighted Δ</th>
-                  <th>Prize</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for entry in top_with_deltas %}
-                  <tr>
-                    <td><span class="rank-table-badge">#{{ entry.rank }}</span></td>
-                    <td>{{ entry.username }}</td>
-                    <td class="money-cell">{{ entry.wager }}</td>
-                    <td>{{ entry.raw_wager_str }}</td>
-                    <td>{{ entry.delta_str }}</td>
-                    <td class="prize-cell">{{ prizes.get(entry.rank, '$0.00') }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% endif %}
+        <form method="post" action="{{ url_for('admin_action') }}" class="event-settings-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="action" value="save_event_settings" />
 
-        <details class="admin-details">
-          <summary>Show full leaderboard ({{ full_leaderboard|length }} loaded)</summary>
-          {% if full_leaderboard %}
-            <div class="table-scroll details-table-scroll">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>User</th>
-                    <th>Weighted Wager</th>
-                    <th>Raw Wager</th>
-                    <th>Source</th>
-                    <th>Rows</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for entry in full_leaderboard %}
-                    <tr>
-                      <td>#{{ entry.rank }}</td>
-                      <td>{{ entry.username }}</td>
-                      <td>{{ entry.wager }}</td>
-                      <td>{{ entry.raw_wager_str }}</td>
-                      <td>{{ entry.source }}</td>
-                      <td>{{ entry.row_count }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+          <div class="form-section">
+            <h3>Public page text</h3>
+            <div class="form-grid form-grid-2">
+              <label class="admin-field"><span>Site name</span><input name="site_name" value="{{ site_settings.site_name }}" required maxlength="60" /><small>Shown in the header and footer.</small></label>
+              <label class="admin-field"><span>Race title</span><input name="race_title" value="{{ site_settings.race_title }}" required maxlength="100" /><small>The large title visitors see.</small></label>
             </div>
-          {% else %}
-            <p class="empty-state">No leaderboard data is loaded.</p>
-          {% endif %}
-        </details>
+            <label class="admin-field"><span>Race description</span><textarea name="race_description" rows="3" maxlength="240">{{ site_settings.race_description }}</textarea><small>One short sentence explaining the event.</small></label>
+          </div>
+
+          <div class="form-section">
+            <h3>Schedule</h3>
+            <div class="form-grid form-grid-3">
+              <label class="admin-field"><span>Start date and time (ET)</span><input type="datetime-local" name="start_et" value="{{ start_input }}" required /></label>
+              <label class="admin-field"><span>End date and time (ET)</span><input type="datetime-local" name="end_et" value="{{ end_input }}" required /></label>
+              <label class="admin-field"><span>Update every</span><div class="input-with-suffix"><input type="number" name="refresh_seconds" value="{{ refresh_seconds }}" min="15" max="3600" required /><span>seconds</span></div><small>60 seconds is recommended.</small></label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Placement prizes</h3>
+            <p class="muted small">Enter all 15 prizes. The total updates after saving.</p>
+            <div class="prize-input-grid">
+              {% for rank in range(1, 16) %}
+                <label class="admin-field compact-field"><span>#{{ rank }}</span><div class="input-with-prefix"><span>$</span><input name="prize_{{ rank }}" value="{{ '%.2f'|format(prizes[rank]) }}" inputmode="decimal" required /></div></label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Channels and links</h3>
+            <div class="form-grid form-grid-2">
+              <label class="admin-field"><span>Kick channel name</span><input name="kick_channel_slug" value="{{ site_settings.kick_channel_slug }}" required /><small>Example: redhunllef</small></label>
+              <label class="admin-field"><span>Shuffle campaign code</span><input name="campaign_code_filter" value="{{ site_settings.campaign_code_filter }}" maxlength="64" /><small>Leave blank only if the API key already scopes the data.</small></label>
+              <label class="admin-field"><span>Kick stream link</span><input type="url" name="stream_url" value="{{ site_settings.stream_url }}" required /></label>
+              <label class="admin-field"><span>Sponsor name</span><input name="sponsor_name" value="{{ site_settings.sponsor_name }}" required maxlength="60" /></label>
+              <label class="admin-field"><span>Sponsor link</span><input type="url" name="sponsor_url" value="{{ site_settings.sponsor_url }}" required /></label>
+              <label class="admin-field"><span>Community name</span><input name="community_name" value="{{ site_settings.community_name }}" maxlength="60" /></label>
+              <label class="admin-field"><span>Community link</span><input type="url" name="community_url" value="{{ site_settings.community_url }}" /></label>
+              <label class="admin-field"><span>Responsible-gambling link</span><input type="url" name="responsible_gambling_url" value="{{ site_settings.responsible_gambling_url }}" /></label>
+            </div>
+          </div>
+
+          <div class="sticky-save-bar">
+            <div><strong>Ready to save?</strong><span>All fields are checked before anything changes.</span></div>
+            <button class="admin-button btn-green" type="submit">Save event settings</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-card" id="leaderboard-management">
+        <div class="section-heading-row">
+          <div>
+            <p class="section-kicker">PARTICIPANTS</p>
+            <h2>Leaderboard and payouts</h2>
+            <p class="muted">Copy usernames, review movement, set a fixed override, and mark payouts as pending, verified, or paid.</p>
+          </div>
+        </div>
+
+        {% if top_with_deltas %}
+        <div class="table-scroll">
+          <table class="table management-table">
+            <thead><tr><th>Rank</th><th>Participant</th><th>Weighted wager</th><th>Change</th><th>Prize</th><th>Payout</th><th>Override</th></tr></thead>
+            <tbody>
+              {% for e in top_with_deltas %}
+              <tr>
+                <td class="sticky-rank">#{{ e.rank }}</td>
+                <td><div class="username-cell"><strong>{{ e.username }}</strong><button type="button" class="mini-button" data-copy="{{ e.username }}">Copy</button></div><small class="muted">Rank movement: {{ e.rank_change_label }}</small></td>
+                <td>{{ e.wager }}<small class="muted block">{{ e.delta_str }} since last refresh</small></td>
+                <td>{{ e.rank_change_label }}</td>
+                <td><strong>{{ e.prize }}</strong></td>
+                <td>
+                  <form method="post" action="{{ url_for('admin_action') }}" class="inline-control-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="action" value="set_payout_status" />
+                    <input type="hidden" name="username" value="{{ e.username }}" />
+                    <select name="payout_status" aria-label="Payout status for {{ e.username }}">
+                      <option value="pending" {{ 'selected' if e.payout_status == 'pending' else '' }}>Pending</option>
+                      <option value="verified" {{ 'selected' if e.payout_status == 'verified' else '' }}>Verified</option>
+                      <option value="paid" {{ 'selected' if e.payout_status == 'paid' else '' }}>Paid</option>
+                    </select>
+                    <button class="mini-button" type="submit">Save</button>
+                  </form>
+                </td>
+                <td>
+                  <form method="post" action="{{ url_for('admin_action') }}" class="inline-control-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="action" value="set_override" />
+                    <input type="hidden" name="username" value="{{ e.username }}" />
+                    <input name="amount" value="{{ overrides.get(e.username, '') }}" placeholder="Amount" inputmode="decimal" aria-label="Override amount for {{ e.username }}" />
+                    <button class="mini-button" type="submit">Apply</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <div class="empty-state"><h3>Waiting for the first leaderboard update</h3><p>Use “Test Shuffle connection” above, then “Refresh now.”</p></div>
+        {% endif %}
       </section>
 
       <div class="admin-two-column">
-        <section class="admin-card">
-          <div class="admin-card-header">
-            <div>
-              <p class="admin-card-kicker">MANUAL CONTROL</p>
-              <h2>Weighted override</h2>
-            </div>
-          </div>
-          <p class="admin-help">
-            Set an exact user's fixed weighted amount. Leave the amount blank to remove an existing override.
-          </p>
-          <form method="post" action="{{ url_for('admin_action') }}" class="admin-form-grid">
+        <section class="admin-card" id="account-security">
+          <p class="section-kicker">YOUR ACCOUNT</p>
+          <h2>Change my password</h2>
+          <p class="muted">This changes only your current admin account.</p>
+          <form method="post" action="{{ url_for('admin_action') }}" class="stack-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="action" value="set_override" />
-            <label class="admin-field">
-              <span>Exact username</span>
-              <input name="username" required maxlength="64" placeholder="Username" />
-            </label>
-            <label class="admin-field">
-              <span>Weighted amount</span>
-              <input name="amount" inputmode="decimal" placeholder="$25,000.00" />
-            </label>
-            <button class="admin-button btn-green form-submit" type="submit">Apply Override</button>
+            <input type="hidden" name="action" value="change_own_password" />
+            <label class="admin-field"><span>Current password</span><div class="password-wrap"><input type="password" name="current_password" required autocomplete="current-password" /><button type="button" class="password-toggle" aria-label="Show password">Show</button></div></label>
+            <label class="admin-field"><span>New password</span><div class="password-wrap"><input type="password" name="new_password" required minlength="{{ min_password_length }}" autocomplete="new-password" /><button type="button" class="password-toggle" aria-label="Show password">Show</button></div><small>Use at least {{ min_password_length }} characters.</small></label>
+            <label class="admin-field"><span>Confirm new password</span><div class="password-wrap"><input type="password" name="confirm_password" required minlength="{{ min_password_length }}" autocomplete="new-password" /><button type="button" class="password-toggle" aria-label="Show password">Show</button></div></label>
+            <button class="admin-button btn-green" type="submit">Change password</button>
           </form>
-
-          {% if overrides %}
-            <div class="compact-list">
-              {% for username, amount in overrides.items() %}
-                <div><span>{{ username }}</span><strong>${{ '%.2f'|format(amount) }}</strong></div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="empty-state compact-empty">No overrides are active.</p>
-          {% endif %}
         </section>
 
-        <section class="admin-card">
-          <div class="admin-card-header">
-            <div>
-              <p class="admin-card-kicker">SECURITY</p>
-              <h2>IP bans</h2>
-            </div>
+        <section class="admin-card" id="backup-restore">
+          <p class="section-kicker">SAFETY NET</p>
+          <h2>Backup and restore</h2>
+          <p class="muted">Backups include event settings, overrides, payout status, and saved leaderboard snapshots. Admin passwords are never included.</p>
+          <div class="backup-actions">
+            <a class="admin-button btn-gray" href="{{ url_for('admin_backup') }}">Download backup</a>
+            <form method="post" action="{{ url_for('admin_action') }}" enctype="multipart/form-data" data-confirm="Restore this backup? Current event settings, overrides, payout status, and snapshots will be replaced.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <input type="hidden" name="action" value="restore_backup" />
+              <label class="admin-field"><span>Restore a JSON backup</span><input type="file" name="backup_file" accept="application/json,.json" required /></label>
+              <button class="admin-button btn-red" type="submit">Restore backup</button>
+            </form>
           </div>
-          <p class="admin-help">Banned addresses receive a 403 response before application routes run.</p>
-          <form method="post" action="{{ url_for('admin_action') }}" class="admin-inline-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="action" value="ban_ip" />
-            <label class="admin-field grow-field">
-              <span>IPv4 or IPv6 address</span>
-              <input name="ip" required placeholder="203.0.113.25" />
-            </label>
-            <button class="admin-button btn-red" type="submit">Ban IP</button>
-          </form>
-
-          {% if banned_ips %}
-            <div class="compact-list">
-              {% for ip in banned_ips %}
-                <div>
-                  <code>{{ ip }}</code>
-                  <form method="post" action="{{ url_for('admin_action') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <input type="hidden" name="action" value="unban_ip" />
-                    <input type="hidden" name="ip" value="{{ ip }}" />
-                    <button class="mini-button" type="submit">Unban</button>
-                  </form>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="empty-state compact-empty">No IP addresses are banned.</p>
-          {% endif %}
         </section>
       </div>
 
-      {% if is_superadmin %}
-        <section class="admin-card">
-          <div class="admin-card-header">
-            <div>
-              <p class="admin-card-kicker">SUPERADMIN</p>
-              <h2>Admin user management</h2>
+      <details class="advanced-panel" id="advanced-administration">
+        <summary><span>Advanced administration</span><small>IP bans, admins, raw data, and logs</small></summary>
+        <div class="advanced-content">
+          <section class="admin-card">
+            <h2>Technical health</h2>
+            <div class="technical-grid">
+              <div><span>Race window</span><strong>{{ start_et }} → {{ end_et }}</strong></div>
+              <div><span>Next refresh</span><strong>{{ next_refresh_et }}</strong></div>
+              <div><span>Shuffle endpoint</span><strong>/{{ endpoint_kind }}</strong></div>
+              <div><span>Aggregation</span><strong>{{ aggregation_mode }}</strong></div>
+              <div><span>Campaign filter</span><strong>{{ campaign_code_filter }}</strong></div>
+              <div><span>Kick API time</span><strong>{{ kick_health.last_api_ms if kick_health.last_api_ms is not none else '—' }} ms</strong></div>
             </div>
-            <span class="status-pill">{{ superadmin_user }}</span>
-          </div>
-          <p class="admin-help">
-            Passwords must be at least {{ min_password_length }} characters. The superadmin can reset any admin password, including its own.
-          </p>
+          </section>
 
-          <div class="admin-two-column admin-user-columns">
-            <form method="post" action="{{ url_for('admin_action') }}" class="admin-subcard admin-form-stack">
+          <section class="admin-card">
+            <h2>Manual override</h2>
+            <form method="post" action="{{ url_for('admin_action') }}" class="admin-row">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <input type="hidden" name="action" value="add_admin" />
-              <h3>Add administrator</h3>
-              <label class="admin-field">
-                <span>Username</span>
-                <input name="new_username" autocomplete="off" maxlength="32" placeholder="new_admin" />
-              </label>
-              <label class="admin-field">
-                <span>Password</span>
-                <input name="new_password" type="password" autocomplete="new-password" minlength="{{ min_password_length }}" />
-              </label>
-              <button class="admin-button btn-green" type="submit">Add Admin</button>
+              <input type="hidden" name="action" value="set_override" />
+              <input name="username" placeholder="Exact username" required />
+              <input name="amount" placeholder="$25,000 or blank to remove" />
+              <button class="admin-button btn-green" type="submit">Apply</button>
             </form>
+          </section>
 
-            <form method="post" action="{{ url_for('admin_action') }}" class="admin-subcard admin-form-stack">
+          <section class="admin-card">
+            <h2>IP bans</h2>
+            <form method="post" action="{{ url_for('admin_action') }}" class="admin-row">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <input type="hidden" name="action" value="set_admin_password" />
-              <h3>Reset password</h3>
-              <label class="admin-field">
-                <span>Existing username</span>
-                <input name="pw_username" autocomplete="off" maxlength="32" placeholder="existing_admin" />
-              </label>
-              <label class="admin-field">
-                <span>New password</span>
-                <input name="pw_password" type="password" autocomplete="new-password" minlength="{{ min_password_length }}" />
-              </label>
-              <button class="admin-button btn-green" type="submit">Set Password</button>
+              <input type="hidden" name="action" value="ban_ip" />
+              <input name="ip" placeholder="IPv4 or IPv6 address" required />
+              <button class="admin-button btn-red" type="submit">Ban IP</button>
             </form>
-          </div>
+            {% if banned_ips %}
+            <div class="chip-list">
+              {% for ip in banned_ips %}
+              <form method="post" action="{{ url_for('admin_action') }}" data-confirm="Unban {{ ip }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="action" value="unban_ip" />
+                <input type="hidden" name="ip" value="{{ ip }}" />
+                <button type="submit" class="chip-button">{{ ip }} ×</button>
+              </form>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </section>
 
-          <div class="admin-user-list">
-            {% for username in admin_users %}
-              <div>
-                <span>
-                  <strong>{{ username }}</strong>
-                  {% if username == superadmin_user %}<small>superadmin</small>{% endif %}
-                </span>
-                {% if username != superadmin_user %}
-                  <form method="post" action="{{ url_for('admin_action') }}">
+          {% if is_superadmin %}
+          <section class="admin-card">
+            <h2>Admin users</h2>
+            <div class="admin-two-column">
+              <form method="post" action="{{ url_for('admin_action') }}" class="stack-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="action" value="add_admin" />
+                <label class="admin-field"><span>New username</span><input name="new_username" required /></label>
+                <label class="admin-field"><span>Temporary password</span><input type="password" name="new_password" minlength="{{ min_password_length }}" required /></label>
+                <button class="admin-button btn-green" type="submit">Add admin</button>
+              </form>
+              <form method="post" action="{{ url_for('admin_action') }}" class="stack-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="action" value="set_admin_password" />
+                <label class="admin-field"><span>Existing username</span><select name="pw_username">{% for user in admin_users %}<option value="{{ user }}">{{ user }}</option>{% endfor %}</select></label>
+                <label class="admin-field"><span>New password</span><input type="password" name="pw_password" minlength="{{ min_password_length }}" required /></label>
+                <button class="admin-button btn-green" type="submit">Reset password</button>
+              </form>
+            </div>
+            <div class="chip-list">
+              {% for user in admin_users %}
+                {% if user == superadmin_user %}
+                  <span class="chip-static">{{ user }} · superadmin</span>
+                {% else %}
+                  <form method="post" action="{{ url_for('admin_action') }}" data-confirm="Remove admin user {{ user }}?">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <input type="hidden" name="action" value="remove_admin" />
-                    <input type="hidden" name="rm_username" value="{{ username }}" />
-                    <button class="mini-button mini-button-danger" type="submit">Remove</button>
+                    <input type="hidden" name="rm_username" value="{{ user }}" />
+                    <button type="submit" class="chip-button">{{ user }} ×</button>
                   </form>
                 {% endif %}
-              </div>
-            {% endfor %}
-          </div>
-        </section>
-      {% endif %}
-
-      <section class="admin-card">
-        <div class="admin-card-header admin-log-header">
-          <div>
-            <p class="admin-card-kicker">OBSERVABILITY</p>
-            <h2>Access log</h2>
-          </div>
-          <form method="post" action="{{ url_for('admin_action') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="action" value="clear_access_log" />
-            <button class="admin-button btn-gray" type="submit">Clear Access Log</button>
-          </form>
-        </div>
-
-        {% if access_log %}
-          <div class="log-scroll">
-            <table class="table log-table">
-              <thead><tr><th>Time (ET)</th><th>IP</th><th>Method</th><th>Path</th><th>Status</th><th>ms</th><th>User-Agent</th></tr></thead>
-              <tbody>
-                {% for entry in access_log %}
-                  <tr>
-                    <td>{{ entry.ts_et }}</td>
-                    <td><code>{{ entry.ip }}</code></td>
-                    <td>{{ entry.method }}</td>
-                    <td><code>{{ entry.path }}</code></td>
-                    <td>{{ entry.status }}</td>
-                    <td>{{ entry.ms }}</td>
-                    <td class="muted-cell">{{ entry.ua }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="empty-state">No access entries are currently stored.</p>
-        {% endif %}
-      </section>
-
-      <section class="admin-card">
-        <div class="admin-card-header admin-log-header">
-          <div>
-            <p class="admin-card-kicker">AUDIT</p>
-            <h2>Persistent admin audit log</h2>
-          </div>
-          {% if is_superadmin %}
-            <form method="post" action="{{ url_for('admin_action') }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <input type="hidden" name="action" value="clear_audit_log" />
-              <button class="admin-button btn-gray" type="submit">Clear Audit Log</button>
-            </form>
+              {% endfor %}
+            </div>
+          </section>
           {% endif %}
-        </div>
 
-        {% if audit_log %}
-          <div class="log-scroll">
-            <table class="table log-table">
-              <thead><tr><th>Time (ET)</th><th>Admin</th><th>IP</th><th>Action</th><th>Detail</th></tr></thead>
-              <tbody>
-                {% for entry in audit_log %}
-                  <tr>
-                    <td>{{ entry.ts_et }}</td>
-                    <td>{{ entry.admin_user }}</td>
-                    <td><code>{{ entry.ip }}</code></td>
-                    <td><code>{{ entry.action }}</code></td>
-                    <td class="muted-cell"><code>{{ entry.detail }}</code></td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="empty-state">No admin actions have been recorded.</p>
-        {% endif %}
-      </section>
+          <section class="admin-card">
+            <h2>Full leaderboard data</h2>
+            <div class="table-scroll log-scroll">
+              <table class="table"><thead><tr><th>Rank</th><th>User</th><th>Weighted</th><th>Raw</th><th>Prize</th><th>Payout</th><th>Source</th><th>Rows</th></tr></thead><tbody>
+                {% for e in full_leaderboard %}<tr><td>#{{ e.rank }}</td><td>{{ e.username }}</td><td>{{ e.wager }}</td><td>{{ e.raw_wager_str }}</td><td>{{ e.prize }}</td><td>{{ e.payout_status }}</td><td>{{ e.source }}</td><td>{{ e.row_count }}</td></tr>{% endfor %}
+              </tbody></table>
+            </div>
+          </section>
+
+          <section class="admin-card">
+            <div class="section-heading-row"><h2>Access log</h2><form method="post" action="{{ url_for('admin_action') }}" data-confirm="Clear the in-memory access log?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}" /><input type="hidden" name="action" value="clear_access_log" /><button class="mini-button" type="submit">Clear</button></form></div>
+            <div class="table-scroll log-scroll"><table class="table"><thead><tr><th>Time</th><th>IP</th><th>Method</th><th>Path</th><th>Status</th><th>ms</th><th>User agent</th></tr></thead><tbody>{% for e in access_log %}<tr><td>{{ e.ts_et }}</td><td>{{ e.ip }}</td><td>{{ e.method }}</td><td>{{ e.path }}</td><td>{{ e.status }}</td><td>{{ e.ms }}</td><td>{{ e.ua }}</td></tr>{% endfor %}</tbody></table></div>
+          </section>
+
+          <section class="admin-card">
+            <div class="section-heading-row"><h2>Audit log</h2>{% if is_superadmin %}<form method="post" action="{{ url_for('admin_action') }}" data-confirm="Clear the persistent audit log?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}" /><input type="hidden" name="action" value="clear_audit_log" /><button class="mini-button" type="submit">Clear</button></form>{% endif %}</div>
+            <div class="table-scroll log-scroll"><table class="table"><thead><tr><th>Time</th><th>Admin</th><th>IP</th><th>Action</th><th>Detail</th></tr></thead><tbody>{% for e in audit_log %}<tr><td>{{ e.ts_et }}</td><td>{{ e.admin_user }}</td><td>{{ e.ip }}</td><td>{{ e.action }}</td><td><code>{{ e.detail }}</code></td></tr>{% endfor %}</tbody></table></div>
+          </section>
+        </div>
+      </details>
     </div>
   </main>
+
+  <div class="toast" id="adminToast" role="status" aria-live="polite" hidden>Copied.</div>
+  <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
 </body>
 </html>

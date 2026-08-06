@@ -1,7 +1,18 @@
 # RedHunllef Wager Race
 
-A Flask website that displays a masked Top 15 weighted Shuffle wager leaderboard, fixed placement prizes, a race countdown, and cached Kick live status.
+A single Flask application for a responsive Top 15 weighted Shuffle wager leaderboard with Kick live status and a simple, nontechnical administration panel.
 
+## What the admin panel can do
+
+- Edit the race start and end with normal Eastern Time date pickers.
+- Edit all 15 prize amounts, public text, sponsor links, Kick channel, community link, and refresh interval.
+- Test the Shuffle and Kick connections with one click.
+- See plain-language connection cards and a setup checklist.
+- Copy usernames, review rank movement, apply weighted-wager overrides, and mark payouts as Pending, Verified, or Paid.
+- Download a payout CSV.
+- Download and restore safe JSON backups.
+- Change the current admin password.
+- Access IP bans, additional admin accounts, raw leaderboard data, and logs under Advanced administration.
 
 ## Project structure
 
@@ -17,6 +28,7 @@ A Flask website that displays a masked Top 15 weighted Shuffle wager leaderboard
 │   ├── redlogo.ico
 │   ├── redlogo.png
 │   ├── script.js
+│   ├── admin.js
 │   └── style.css
 ├── templates/
 │   ├── 404.html
@@ -27,7 +39,7 @@ A Flask website that displays a masked Top 15 weighted Shuffle wager leaderboard
     └── test_core.py
 ```
 
-## Setup
+## Local setup
 
 1. Install Python 3.10 or newer.
 2. Install dependencies:
@@ -36,56 +48,58 @@ A Flask website that displays a masked Top 15 weighted Shuffle wager leaderboard
    pip install -r requirements.txt
    ```
 
-3. `settings.json` already contains the credentials supplied for this project so the application can run without additional secret configuration. Environment variables still take priority and are safer for production.
-4. The Kick client ID and client secret are used only by the Flask server to obtain an app access token; they are never sent to browser JavaScript. Because the credentials are now present in source text, rotate them before placing the project in a public repository.
-5. To override the values locally with environment variables, set them before starting:
+3. For local HTTP testing in PowerShell:
 
    ```powershell
-   $env:SECRET_KEY = "replace-with-a-long-random-value"
-   $env:SHUFFLE_API_KEY = "replace-with-your-key"
-   $env:KICK_CLIENT_ID = "replace-with-your-client-id"
-   $env:KICK_CLIENT_SECRET = "replace-with-your-client-secret"
-   $env:ADMIN_BOOTSTRAP_USER = "gingrsnaps"
-   $env:ADMIN_BOOTSTRAP_PASS = "replace-with-a-strong-password"
    $env:SESSION_COOKIE_SECURE = "0"
    python wager_backend.py
    ```
 
-   On macOS/Linux, use `export NAME=value` instead.
+4. Open `http://localhost:8080`.
+5. Open `http://localhost:8080/admin` for administration.
 
-6. Open `http://localhost:8080`. The admin page is `/admin`.
+## DigitalOcean App Platform
 
-## Production
-
-Use one Gunicorn worker because the application keeps its refresh cache and login limiter in memory:
-
-```bash
-gunicorn --workers 1 --threads 8 --timeout 120 --bind 0.0.0.0:$PORT wager_backend:app
-```
-
-`Procfile` contains the same command for platforms that support it.
-
-Keep `SESSION_COOKIE_SECURE=1` behind HTTPS. Confirm the `PROXY_FIX_*` values match the number of trusted reverse proxies between visitors and Flask. An incorrect value can break IP bans and login rate limiting.
-
-For DigitalOcean App Platform, use the included `Procfile` command or set the run command to:
+Use the included `Procfile`, or set the run command to:
 
 ```bash
 gunicorn --workers 1 --threads 8 --timeout 120 --bind 0.0.0.0:$PORT wager_backend:app
 ```
 
-For better security, add the secret values through **Settings → Environment Variables**, mark them encrypted, and then remove those secret values from `settings.json`. The included `settings.json` contains them only because the complete ready-to-run configuration was explicitly requested.
+Keep one Gunicorn worker. The application uses an in-memory refresh cache, Kick token cache, and login limiter. Multiple workers would create separate copies of that state.
 
-`admin_store.json` contains admin accounts, overrides, audit history, and saved leaderboard snapshots. Back it up and **do not overwrite it** when deploying this update. The package contains `admin_store.example.json` only; a fresh deployment creates the real store automatically after `ADMIN_BOOTSTRAP_USER` and `ADMIN_BOOTSTRAP_PASS` are set. Existing version-2 stores are migrated from Top 11 to Top 15 automatically.
+The hosting health-check path should be `/healthz`. It remains HTTP 200 when an external API is temporarily unavailable. `/readyz` is the stricter diagnostic endpoint.
 
-To rotate the password of an existing bootstrap/superadmin account, set `RESET_BOOTSTRAP_PASSWORD_ON_START=1` for one deployment, verify the new login, and immediately return it to `0`. On an ephemeral hosting filesystem, point `ADMIN_STORE_PATH` to persistent storage or the file will reset after redeployment.
+## Persistence
 
-## Health checks
+`admin_store.json` contains:
 
-Use `/healthz` for the hosting platform. It is a process-liveness endpoint and returns HTTP 200 even when Shuffle or Kick is temporarily unavailable; the JSON body reports `status: "degraded"` in that situation. This prevents an external API problem from causing an endless deployment restart loop.
+- Admin accounts and password hashes
+- Event settings saved through the admin panel
+- Weighted-wager overrides
+- Payout statuses
+- Audit history
+- Saved leaderboard snapshots
 
-Use `/readyz` for a strict diagnostic check. It returns HTTP 503 until a current leaderboard has been loaded successfully.
+Do not overwrite an existing `admin_store.json` during deployment. On hosting platforms with an ephemeral filesystem, mount persistent storage and point `ADMIN_STORE_PATH` to it.
 
-Configuration files and `admin_store.json` are resolved relative to `wager_backend.py`, so the application works even when Python or Gunicorn is launched from a different working directory.
+The safe backup downloaded through the admin panel intentionally excludes admin accounts, password hashes, the Flask secret, IP bans, access logs, and audit logs. Restoring a backup cannot replace the current admin password.
+
+## Credentials
+
+For a production deployment, store these as encrypted environment variables instead of committing them to `settings.json`:
+
+```text
+SECRET_KEY
+SHUFFLE_API_KEY
+KICK_CLIENT_ID
+KICK_CLIENT_SECRET
+ADMIN_BOOTSTRAP_USER
+ADMIN_BOOTSTRAP_PASS
+SESSION_COOKIE_SECURE=1
+```
+
+Environment variables override `settings.json`. Rotate any credential that has been shared in source files or chat before publishing the project.
 
 ## Tests
 
