@@ -1,0 +1,26 @@
+{
+  "version": 3,
+  "secret_key": "GENERATED_OR_REPLACED_AT_FIRST_SECURE_DEPLOYMENT",
+  "users": {},
+  "overrides": {},
+  "audit_log": [],
+  "banned_ips": [],
+  "health": {
+    "last_refresh_ok": null,
+    "last_refresh_et": null,
+    "last_error": null,
+    "last_api_ms": null,
+    "last_source": null,
+    "last_row_count": 0,
+    "last_weighted_row_count": 0,
+    "last_skipped_missing_weighted": 0,
+    "aggregation_mode": "sum",
+    "endpoint_kind": "wager"
+  },
+  "leaderboard_snapshots": {
+    "prev_top15": [],
+    "last_top15": [],
+    "updated_at": null
+  },
+  "updated_at": 0
+}

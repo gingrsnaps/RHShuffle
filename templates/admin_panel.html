@@ -4,66 +4,10 @@
   <meta charset="utf-8" />
   <title>Admin · RedHunllef</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='redlogo.png') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}" sizes="any" />
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <style>
-    .admin-shell { padding: 2.2rem 0 3rem; }
-    .admin-card { padding: 1rem 1rem 1.1rem; border-radius: 20px; background: rgba(0,0,0,0.45);
-                  border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 14px 36px rgba(0,0,0,0.70); }
-    .admin-card + .admin-card { margin-top: 1rem; }
-
-    .admin-row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
-    .admin-row input { padding: .65rem .75rem; border-radius: 12px; border: 1px solid rgba(255,255,255,.12);
-                       background: rgba(0,0,0,.25); color:#fff; min-width: 220px; }
-    .admin-row button, .admin-row a.admin-button { padding: .7rem .9rem; border-radius: 12px; border: 0; cursor: pointer; font-weight: 900; }
-    .btn-green { background: #53fc18; color: #111; }
-    .btn-red { background: #ff3b3b; color: #111; }
-    .btn-gray { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.12); }
-
-    .table { width: 100%; border-collapse: collapse; margin-top: .8rem; }
-    .table th, .table td { padding: .55rem .5rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; vertical-align: top; }
-    .table th { opacity: .85; font-weight: 900; }
-
-    .muted { opacity:.75; }
-    .pill { display:inline-block; padding:.18rem .55rem; border-radius:999px; background:#000;
-            border:1px solid rgba(255,255,255,0.14); }
-
-    details { margin-top: .8rem; }
-    details summary { cursor: pointer; font-weight: 900; }
-    code { background: rgba(0,0,0,0.35); padding: .08rem .35rem; border-radius: 8px; }
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
-    .grid3 { display:grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
-    @media (max-width: 900px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
-
-    .weight-box { margin-top:.85rem; padding:.8rem .9rem; border-radius:16px; background:rgba(83,252,24,.08); border:1px solid rgba(83,252,24,.25); }
-    .weight-box h4 { margin:.1rem 0 .45rem; }
-    .weight-box ul { margin:.35rem 0 0 1rem; padding:0; color:rgba(255,255,255,.82); }
-    .weight-box li { margin:.25rem 0; }
-
-    .log-scroll {
-      max-height: 520px;
-      overflow: auto;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: .2rem .2rem;
-      margin-top: .6rem;
-      background: rgba(0,0,0,0.18);
-    }
-
-    .log-scroll .table thead th {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: rgba(10,10,10,0.92);
-      backdrop-filter: blur(6px);
-    }
-
-    .log-scroll .table th, .log-scroll .table td {
-      padding: .45rem .5rem;
-    }
-  </style>
 </head>
-<body>
+<body class="admin-page">
   <header class="header">
     <div class="container header-inner">
       <a href="{{ url_for('index') }}" class="brand" aria-label="RedHunllef home">
@@ -74,125 +18,147 @@
         </div>
       </a>
 
-      <nav class="header-nav" aria-label="Primary">
+      <nav class="header-nav admin-nav" aria-label="Admin navigation">
         <a href="{{ url_for('index') }}#leaderboard">Public Site</a>
-        <a href="{{ url_for('admin_logout') }}">Logout</a>
+        <form method="post" action="{{ url_for('admin_logout') }}" class="nav-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="nav-button">Logout</button>
+        </form>
       </nav>
     </div>
   </header>
 
   <main class="admin-shell">
-    <div class="container">
+    <div class="container admin-container">
+      <div class="admin-page-heading">
+        <div>
+          <p class="section-kicker">CONTROL CENTER</p>
+          <h1>Wager Race Administration</h1>
+          <p>Logged in as <strong>{{ admin_user }}</strong>. Changes are recorded in the audit log.</p>
+        </div>
+        <div class="admin-heading-actions">
+          <a class="admin-button btn-gray" href="{{ url_for('admin_export_csv') }}">Export CSV</a>
+          <form method="post" action="{{ url_for('admin_action') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="force_refresh" />
+            <button class="admin-button btn-green" type="submit">Force Refresh</button>
+          </form>
+        </div>
+      </div>
 
-      <!-- Overview / refresh control -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack" aria-live="polite">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
       <section class="admin-card">
-        <h3 style="margin:0 0 .35rem;">Overview</h3>
-        <p class="muted" style="margin:.2rem 0 .6rem;">
-          Logged in as <strong>{{ admin_user }}</strong>.
-          Refresh tick: <strong>{{ refresh_seconds }}s</strong>.
-          Overrides apply on the <strong>next</strong> tick unless you force refresh.
-        </p>
-
-        <div class="grid2">
+        <div class="admin-card-header">
           <div>
-            <p class="muted small" style="margin:.2rem 0;">
-              Race window (ET): <span class="pill">{{ start_et }}</span> → <span class="pill">{{ end_et }}</span>
-            </p>
-            <p class="muted small" style="margin:.2rem 0;">
-              Last refresh (ET): <span class="pill">{{ last_refresh_et }}</span>
-            </p>
-            <p class="muted small" style="margin:.2rem 0;">
-              Next refresh (ET): <span class="pill">{{ next_refresh_et }}</span>
-            </p>
-            <p class="muted small" style="margin:.2rem 0;">
-              Endpoint: <span class="pill">/{{ endpoint_kind }}</span>
-              &nbsp; Aggregation: <span class="pill">{{ aggregation_mode }}</span>
-              &nbsp; Campaign filter: <span class="pill">{{ campaign_code_filter }}</span>
-            </p>
+            <p class="admin-card-kicker">SYSTEM</p>
+            <h2>Overview</h2>
           </div>
+          <span class="status-pill">Refresh every {{ refresh_seconds }}s</span>
+        </div>
 
-          <div>
-            <h4 style="margin:.2rem 0 .35rem;">Health</h4>
-            <p class="muted small" style="margin:.2rem 0;">
-              Last refresh OK: <span class="pill">{{ health.last_refresh_ok }}</span>
-              &nbsp; API ms: <span class="pill">{{ health.last_api_ms }}</span>
-              &nbsp; Source: <span class="pill">{{ health.last_source }}</span>
-            </p>
-            <p class="muted small" style="margin:.2rem 0;">
-              API rows: <span class="pill">{{ health.last_row_count }}</span>
-              &nbsp; weighted rows used: <span class="pill">{{ health.last_weighted_row_count }}</span>
-              &nbsp; missing weighted skipped: <span class="pill">{{ health.last_skipped_missing_weighted }}</span>
-            </p>
+        <div class="admin-metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Race window</span>
+            <strong>{{ start_et }}</strong>
+            <span class="metric-arrow">to</span>
+            <strong>{{ end_et }}</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Last refresh</span>
+            <strong>{{ last_refresh_et }}</strong>
+            <span class="metric-note">Next: {{ next_refresh_et }}</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Shuffle source</span>
+            <strong>/{{ endpoint_kind }}</strong>
+            <span class="metric-note">{{ aggregation_mode }} aggregation · filter {{ campaign_code_filter }}</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Paid placements</span>
+            <strong>Top {{ leaderboard_size }}</strong>
+            <span class="metric-note">$5,000 total prize pool</span>
+          </article>
+        </div>
+
+        <div class="health-grid">
+          <article class="health-card">
+            <div class="health-card-title">
+              <h3>Shuffle health</h3>
+              <span class="health-dot {% if health.last_refresh_ok %}health-ok{% else %}health-bad{% endif %}"></span>
+            </div>
+            <dl class="health-list">
+              <div><dt>Last refresh OK</dt><dd>{{ health.last_refresh_ok }}</dd></div>
+              <div><dt>API time</dt><dd>{{ health.last_api_ms }} ms</dd></div>
+              <div><dt>Source</dt><dd>{{ health.last_source }}</dd></div>
+              <div><dt>API rows</dt><dd>{{ health.last_row_count }}</dd></div>
+              <div><dt>Weighted rows</dt><dd>{{ health.last_weighted_row_count }}</dd></div>
+              <div><dt>Missing weighted skipped</dt><dd>{{ health.last_skipped_missing_weighted }}</dd></div>
+            </dl>
             {% if health.last_error %}
-              <p class="muted small" style="margin:.2rem 0;">
-                Last error: <code>{{ health.last_error }}</code>
-              </p>
+              <p class="health-error"><strong>Last error:</strong> {{ health.last_error }}</p>
             {% endif %}
-          </div>
+          </article>
+
+          <article class="health-card">
+            <div class="health-card-title">
+              <h3>Kick health</h3>
+              <span class="health-dot {% if kick_health.ok %}health-ok{% else %}health-bad{% endif %}"></span>
+            </div>
+            <dl class="health-list">
+              <div><dt>Last check OK</dt><dd>{{ kick_health.ok }}</dd></div>
+              <div><dt>Last check</dt><dd>{{ kick_health.last_check_et }}</dd></div>
+              <div><dt>API time</dt><dd>{{ kick_health.last_api_ms }} ms</dd></div>
+              <div><dt>Live</dt><dd>{{ kick_health.live }}</dd></div>
+              <div><dt>Source</dt><dd>{{ kick_health.source }}</dd></div>
+            </dl>
+            {% if kick_health.last_error %}
+              <p class="health-error"><strong>Last error:</strong> {{ kick_health.last_error }}</p>
+            {% endif %}
+          </article>
         </div>
 
         <div class="weight-box">
-          <h4>Weighted wager rules</h4>
+          <div>
+            <h3>Weighted wager rules</h3>
+            <p>These rules determine placement, not the raw wager column.</p>
+          </div>
           <ul>
             {% for rule in weighting_rules %}
-              <li><strong>{{ rule.range }}</strong>: {{ rule.counts }}.</li>
+              <li><strong>{{ rule.range }}</strong><span>{{ rule.counts }}</span></li>
             {% endfor %}
           </ul>
         </div>
 
-        <form method="post" action="{{ url_for('admin_action') }}" style="margin-top:.85rem;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <input type="hidden" name="action" value="force_refresh" />
-          <div class="admin-row">
-            <button class="btn-green" type="submit"
-                    title="Immediately pulls Shuffle weighted wager data and updates the server cache used by /data">
-              Force Refresh Now
-            </button>
-            <a class="admin-button btn-gray" href="{{ url_for('admin_export_csv') }}">Export CSV</a>
-            <span class="muted small">
-              CSV export includes full usernames for payout verification.
-            </span>
-          </div>
-        </form>
+        <div class="prize-admin-grid" aria-label="Prize schedule">
+          {% for rank, prize in prizes.items() %}
+            <div><span>#{{ rank }}</span><strong>{{ prize }}</strong></div>
+          {% endfor %}
+        </div>
       </section>
 
-      <!-- Top 11 -->
       <section class="admin-card">
-        <h3 style="margin:0;">Current Top 11</h3>
-        <p class="muted small" style="margin:.2rem 0 0;">
-          Deltas are computed against the previous refresh tick using weighted wager amount.
-        </p>
+        <div class="admin-card-header">
+          <div>
+            <p class="admin-card-kicker">LEADERBOARD</p>
+            <h2>Current Top {{ leaderboard_size }}</h2>
+          </div>
+          <span class="status-pill">Full usernames</span>
+        </div>
+        <p class="admin-help">Deltas compare each player's weighted amount with the previous successful refresh.</p>
 
-        {% if not top11_with_deltas %}
-          <p class="muted" style="margin-top:.6rem;">Waiting for refresh…</p>
+        {% if not top_with_deltas %}
+          <p class="empty-state">Waiting for a successful leaderboard refresh.</p>
         {% else %}
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>User</th>
-                <th>Weighted Wager</th>
-                <th>Raw Wager</th>
-                <th>Weighted Δ Since Last Tick</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for e in top11_with_deltas %}
-                <tr>
-                  <td>#{{ e.rank }}</td>
-                  <td>{{ e.username }}</td>
-                  <td>{{ e.wager }}</td>
-                  <td>{{ e.raw_wager_str }}</td>
-                  <td>{{ e.delta_str }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% endif %}
-
-        <details>
-          <summary>Show full leaderboard (up to {{ full_leaderboard|length }})</summary>
-          {% if full_leaderboard %}
+          <div class="table-scroll">
             <table class="table">
               <thead>
                 <tr>
@@ -200,231 +166,272 @@
                   <th>User</th>
                   <th>Weighted Wager</th>
                   <th>Raw Wager</th>
-                  <th>Source</th>
-                  <th>Rows</th>
+                  <th>Weighted Δ</th>
+                  <th>Prize</th>
                 </tr>
               </thead>
               <tbody>
-                {% for e in full_leaderboard %}
+                {% for entry in top_with_deltas %}
                   <tr>
-                    <td>#{{ e.rank }}</td>
-                    <td>{{ e.username }}</td>
-                    <td>{{ e.wager }}</td>
-                    <td>{{ e.raw_wager_str }}</td>
-                    <td>{{ e.source }}</td>
-                    <td>{{ e.row_count }}</td>
+                    <td><span class="rank-table-badge">#{{ entry.rank }}</span></td>
+                    <td>{{ entry.username }}</td>
+                    <td class="money-cell">{{ entry.wager }}</td>
+                    <td>{{ entry.raw_wager_str }}</td>
+                    <td>{{ entry.delta_str }}</td>
+                    <td class="prize-cell">{{ prizes.get(entry.rank, '$0.00') }}</td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
+          </div>
+        {% endif %}
+
+        <details class="admin-details">
+          <summary>Show full leaderboard ({{ full_leaderboard|length }} loaded)</summary>
+          {% if full_leaderboard %}
+            <div class="table-scroll details-table-scroll">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>User</th>
+                    <th>Weighted Wager</th>
+                    <th>Raw Wager</th>
+                    <th>Source</th>
+                    <th>Rows</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for entry in full_leaderboard %}
+                    <tr>
+                      <td>#{{ entry.rank }}</td>
+                      <td>{{ entry.username }}</td>
+                      <td>{{ entry.wager }}</td>
+                      <td>{{ entry.raw_wager_str }}</td>
+                      <td>{{ entry.source }}</td>
+                      <td>{{ entry.row_count }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           {% else %}
-            <p class="muted">No leaderboard loaded yet.</p>
+            <p class="empty-state">No leaderboard data is loaded.</p>
           {% endif %}
         </details>
       </section>
 
-      <!-- Overrides -->
-      <section class="admin-card">
-        <h3 style="margin-top:0;">Set a weighted wager override</h3>
-        <p class="muted small" style="margin-top:-.3rem;">
-          Exact username + a <strong>fixed weighted wager amount</strong>.
-          Example: <span class="pill">$25,000</span> or <span class="pill">25000</span>.
-          Leave amount blank to remove the override.
-          Overrides affect the weighted leaderboard, not raw wager.
-        </p>
-
-        <form method="post" action="{{ url_for('admin_action') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <input type="hidden" name="action" value="set_override" />
-          <div class="admin-row">
-            <input name="username" placeholder="Exact username" required />
-            <input name="amount" placeholder="$25,000 or 25000 (blank removes)" />
-            <button class="btn-green" type="submit">Apply</button>
+      <div class="admin-two-column">
+        <section class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <p class="admin-card-kicker">MANUAL CONTROL</p>
+              <h2>Weighted override</h2>
+            </div>
           </div>
-        </form>
+          <p class="admin-help">
+            Set an exact user's fixed weighted amount. Leave the amount blank to remove an existing override.
+          </p>
+          <form method="post" action="{{ url_for('admin_action') }}" class="admin-form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="set_override" />
+            <label class="admin-field">
+              <span>Exact username</span>
+              <input name="username" required maxlength="64" placeholder="Username" />
+            </label>
+            <label class="admin-field">
+              <span>Weighted amount</span>
+              <input name="amount" inputmode="decimal" placeholder="$25,000.00" />
+            </label>
+            <button class="admin-button btn-green form-submit" type="submit">Apply Override</button>
+          </form>
 
-        {% if overrides %}
-          <h4 style="margin-top:1.1rem;">Current weighted overrides</h4>
-          <table class="table">
-            <thead><tr><th>User</th><th>Weighted Override</th></tr></thead>
-            <tbody>
-              {% for k, v in overrides.items() %}
-                <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+          {% if overrides %}
+            <div class="compact-list">
+              {% for username, amount in overrides.items() %}
+                <div><span>{{ username }}</span><strong>${{ '%.2f'|format(amount) }}</strong></div>
               {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="muted" style="margin-top:.8rem;">No overrides set.</p>
-        {% endif %}
-      </section>
+            </div>
+          {% else %}
+            <p class="empty-state compact-empty">No overrides are active.</p>
+          {% endif %}
+        </section>
 
-      <!-- Security: banned IPs -->
-      <section class="admin-card">
-        <h3 style="margin-top:0;">IP bans</h3>
-        <p class="muted small" style="margin-top:-.3rem;">
-          Banned IPs are blocked before any routes run (403). Use carefully.
-        </p>
-
-        <form method="post" action="{{ url_for('admin_action') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-          <input type="hidden" name="action" value="ban_ip" />
-          <div class="admin-row">
-            <input name="ip" placeholder="IP to ban (e.g. 1.2.3.4)" />
-            <button class="btn-red" type="submit">Ban IP</button>
+        <section class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <p class="admin-card-kicker">SECURITY</p>
+              <h2>IP bans</h2>
+            </div>
           </div>
-        </form>
+          <p class="admin-help">Banned addresses receive a 403 response before application routes run.</p>
+          <form method="post" action="{{ url_for('admin_action') }}" class="admin-inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="ban_ip" />
+            <label class="admin-field grow-field">
+              <span>IPv4 or IPv6 address</span>
+              <input name="ip" required placeholder="203.0.113.25" />
+            </label>
+            <button class="admin-button btn-red" type="submit">Ban IP</button>
+          </form>
 
-        {% if banned_ips %}
-          <table class="table">
-            <thead><tr><th>IP</th><th>Action</th></tr></thead>
-            <tbody>
+          {% if banned_ips %}
+            <div class="compact-list">
               {% for ip in banned_ips %}
-                <tr>
-                  <td>{{ ip }}</td>
-                  <td>
-                    <form method="post" action="{{ url_for('admin_action') }}" style="display:inline;">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                      <input type="hidden" name="action" value="unban_ip" />
-                      <input type="hidden" name="ip" value="{{ ip }}" />
-                      <button class="btn-gray" type="submit">Unban</button>
-                    </form>
-                  </td>
-                </tr>
+                <div>
+                  <code>{{ ip }}</code>
+                  <form method="post" action="{{ url_for('admin_action') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="action" value="unban_ip" />
+                    <input type="hidden" name="ip" value="{{ ip }}" />
+                    <button class="mini-button" type="submit">Unban</button>
+                  </form>
+                </div>
               {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="muted" style="margin-top:.8rem;">No IPs banned.</p>
-        {% endif %}
-      </section>
+            </div>
+          {% else %}
+            <p class="empty-state compact-empty">No IP addresses are banned.</p>
+          {% endif %}
+        </section>
+      </div>
 
-      <!-- SUPERADMIN: user management -->
       {% if is_superadmin %}
-      <section class="admin-card">
-        <h3 style="margin-top:0;">Admin user management ({{ superadmin_user }} only)</h3>
-        <p class="muted small" style="margin-top:-.3rem;">
-          Only <strong>{{ superadmin_user }}</strong> can add, remove, or reset admin users.
-        </p>
+        <section class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <p class="admin-card-kicker">SUPERADMIN</p>
+              <h2>Admin user management</h2>
+            </div>
+            <span class="status-pill">{{ superadmin_user }}</span>
+          </div>
+          <p class="admin-help">
+            Passwords must be at least {{ min_password_length }} characters. The superadmin can reset any admin password, including its own.
+          </p>
 
-        <div class="grid2">
-          <div>
-            <h4 style="margin:.2rem 0 .35rem;">Add admin</h4>
-            <form method="post" action="{{ url_for('admin_action') }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <div class="admin-two-column admin-user-columns">
+            <form method="post" action="{{ url_for('admin_action') }}" class="admin-subcard admin-form-stack">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <input type="hidden" name="action" value="add_admin" />
-              <div class="admin-row">
-                <input name="new_username" placeholder="new_admin (A-Z,0-9,_)" />
-                <input name="new_password" placeholder="password" />
-                <button class="btn-green" type="submit">Add</button>
-              </div>
+              <h3>Add administrator</h3>
+              <label class="admin-field">
+                <span>Username</span>
+                <input name="new_username" autocomplete="off" maxlength="32" placeholder="new_admin" />
+              </label>
+              <label class="admin-field">
+                <span>Password</span>
+                <input name="new_password" type="password" autocomplete="new-password" minlength="{{ min_password_length }}" />
+              </label>
+              <button class="admin-button btn-green" type="submit">Add Admin</button>
             </form>
-          </div>
 
-          <div>
-            <h4 style="margin:.2rem 0 .35rem;">Reset password</h4>
-            <form method="post" action="{{ url_for('admin_action') }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <form method="post" action="{{ url_for('admin_action') }}" class="admin-subcard admin-form-stack">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <input type="hidden" name="action" value="set_admin_password" />
-              <div class="admin-row">
-                <input name="pw_username" placeholder="existing_admin" />
-                <input name="pw_password" placeholder="new password" />
-                <button class="btn-green" type="submit">Set</button>
-              </div>
+              <h3>Reset password</h3>
+              <label class="admin-field">
+                <span>Existing username</span>
+                <input name="pw_username" autocomplete="off" maxlength="32" placeholder="existing_admin" />
+              </label>
+              <label class="admin-field">
+                <span>New password</span>
+                <input name="pw_password" type="password" autocomplete="new-password" minlength="{{ min_password_length }}" />
+              </label>
+              <button class="admin-button btn-green" type="submit">Set Password</button>
             </form>
           </div>
-        </div>
 
-        <h4 style="margin:1rem 0 .35rem;">Existing admin users</h4>
-        <table class="table">
-          <thead><tr><th>User</th><th>Action</th></tr></thead>
-          <tbody>
-            {% for u in admin_users %}
-              <tr>
-                <td>{{ u }}</td>
-                <td>
-                  {% if u != superadmin_user %}
-                    <form method="post" action="{{ url_for('admin_action') }}" style="display:inline;">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-                      <input type="hidden" name="action" value="remove_admin" />
-                      <input type="hidden" name="rm_username" value="{{ u }}" />
-                      <button class="btn-red" type="submit">Remove</button>
-                    </form>
-                  {% else %}
-                    <span class="muted">superadmin</span>
-                  {% endif %}
-                </td>
-              </tr>
+          <div class="admin-user-list">
+            {% for username in admin_users %}
+              <div>
+                <span>
+                  <strong>{{ username }}</strong>
+                  {% if username == superadmin_user %}<small>superadmin</small>{% endif %}
+                </span>
+                {% if username != superadmin_user %}
+                  <form method="post" action="{{ url_for('admin_action') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="action" value="remove_admin" />
+                    <input type="hidden" name="rm_username" value="{{ username }}" />
+                    <button class="mini-button mini-button-danger" type="submit">Remove</button>
+                  </form>
+                {% endif %}
+              </div>
             {% endfor %}
-          </tbody>
-        </table>
-      </section>
+          </div>
+        </section>
       {% endif %}
 
-      <!-- Access log -->
       <section class="admin-card">
-        <div class="admin-row" style="justify-content:space-between;">
-          <h3 style="margin:0;">Access log (memory only, most recent first)</h3>
-          <form method="post" action="{{ url_for('admin_action') }}" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <div class="admin-card-header admin-log-header">
+          <div>
+            <p class="admin-card-kicker">OBSERVABILITY</p>
+            <h2>Access log</h2>
+          </div>
+          <form method="post" action="{{ url_for('admin_action') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="hidden" name="action" value="clear_access_log" />
-            <button class="btn-gray" type="submit">Clear access log</button>
+            <button class="admin-button btn-gray" type="submit">Clear Access Log</button>
           </form>
         </div>
 
         {% if access_log %}
-          <div class="log-scroll" aria-label="Access log scroll region">
-            <table class="table">
+          <div class="log-scroll">
+            <table class="table log-table">
               <thead><tr><th>Time (ET)</th><th>IP</th><th>Method</th><th>Path</th><th>Status</th><th>ms</th><th>User-Agent</th></tr></thead>
               <tbody>
-                {% for e in access_log %}
+                {% for entry in access_log %}
                   <tr>
-                    <td>{{ e.ts_et }}</td>
-                    <td>{{ e.ip }}</td>
-                    <td>{{ e.method }}</td>
-                    <td><code>{{ e.path }}</code></td>
-                    <td>{{ e.status }}</td>
-                    <td>{{ e.ms }}</td>
-                    <td class="muted">{{ e.ua }}</td>
+                    <td>{{ entry.ts_et }}</td>
+                    <td><code>{{ entry.ip }}</code></td>
+                    <td>{{ entry.method }}</td>
+                    <td><code>{{ entry.path }}</code></td>
+                    <td>{{ entry.status }}</td>
+                    <td>{{ entry.ms }}</td>
+                    <td class="muted-cell">{{ entry.ua }}</td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         {% else %}
-          <p class="muted" style="margin-top:.8rem;">No access logs yet.</p>
+          <p class="empty-state">No access entries are currently stored.</p>
         {% endif %}
       </section>
 
-      <!-- Audit log -->
       <section class="admin-card">
-        <div class="admin-row" style="justify-content:space-between;">
-          <h3 style="margin:0;">Admin audit log (persistent, most recent first)</h3>
-          <form method="post" action="{{ url_for('admin_action') }}" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-            <input type="hidden" name="action" value="clear_audit_log" />
-            <button class="btn-gray" type="submit">Clear audit log</button>
-          </form>
+        <div class="admin-card-header admin-log-header">
+          <div>
+            <p class="admin-card-kicker">AUDIT</p>
+            <h2>Persistent admin audit log</h2>
+          </div>
+          {% if is_superadmin %}
+            <form method="post" action="{{ url_for('admin_action') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <input type="hidden" name="action" value="clear_audit_log" />
+              <button class="admin-button btn-gray" type="submit">Clear Audit Log</button>
+            </form>
+          {% endif %}
         </div>
 
         {% if audit_log %}
-          <div class="log-scroll" aria-label="Audit log scroll region">
-            <table class="table">
+          <div class="log-scroll">
+            <table class="table log-table">
               <thead><tr><th>Time (ET)</th><th>Admin</th><th>IP</th><th>Action</th><th>Detail</th></tr></thead>
               <tbody>
-                {% for e in audit_log %}
+                {% for entry in audit_log %}
                   <tr>
-                    <td>{{ e.ts_et }}</td>
-                    <td>{{ e.admin_user }}</td>
-                    <td>{{ e.ip }}</td>
-                    <td><code>{{ e.action }}</code></td>
-                    <td class="muted"><code>{{ e.detail }}</code></td>
+                    <td>{{ entry.ts_et }}</td>
+                    <td>{{ entry.admin_user }}</td>
+                    <td><code>{{ entry.ip }}</code></td>
+                    <td><code>{{ entry.action }}</code></td>
+                    <td class="muted-cell"><code>{{ entry.detail }}</code></td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         {% else %}
-          <p class="muted" style="margin-top:.8rem;">No admin actions yet.</p>
+          <p class="empty-state">No admin actions have been recorded.</p>
         {% endif %}
       </section>
     </div>

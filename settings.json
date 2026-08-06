@@ -18,7 +18,35 @@
   "end_time": 1786485600,
   "refresh_seconds": 60,
 
+  "leaderboard_size": 15,
+  "full_leaderboard_max": 300,
+  "prizes": {
+    "1": 1800,
+    "2": 1200,
+    "3": 800,
+    "4": 450,
+    "5": 200,
+    "6": 150,
+    "7": 90,
+    "8": 80,
+    "9": 70,
+    "10": 60,
+    "11": 20,
+    "12": 20,
+    "13": 20,
+    "14": 20,
+    "15": 20
+  },
+
   "kick_channel_slug": "redhunllef",
   "kick_client_id": "01K39PNSMPVX2PS4EEJ2K69EVF",
-  "kick_client_secret": "47970da4c8790427e09eaebd1b7c8d522ef233c54bbd896514c7f562c66ca74e"
+  "kick_client_secret": "47970da4c8790427e09eaebd1b7c8d522ef233c54bbd896514c7f562c66ca74e",
+  "kick_status_ttl": 30,
+  "kick_channel_ttl": 86400,
+
+  "proxy_fix_x_for": 1,
+  "proxy_fix_x_proto": 1,
+  "proxy_fix_x_host": 1,
+  "proxy_fix_x_port": 1,
+  "proxy_fix_x_prefix": 0
 }

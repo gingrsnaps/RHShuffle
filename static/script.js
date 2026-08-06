@@ -1,262 +1,296 @@
 (() => {
-  // Small DOM helper.
-  const $ = (sel, root = document) => root.querySelector(sel);
+  'use strict';
 
-  const podiumEl   = $('#podium');
-  const othersEl   = $('#others-list');
-  const liveEl     = $('#liveStatus');
+  const $ = (selector, root = document) => root.querySelector(selector);
+
+  const podiumEl = $('#podium');
+  const othersEl = $('#others-list');
+  const liveEl = $('#liveStatus');
   const viewerChip = liveEl?.querySelector('.viewer-chip');
   const statusText = liveEl?.querySelector('.text');
-
-  const dd = $('#dd'), hh = $('#hh'), mm = $('#mm'), ss = $('#ss');
+  const dataStatus = $('#dataStatus');
+  const dd = $('#dd');
+  const hh = $('#hh');
+  const mm = $('#mm');
+  const ss = $('#ss');
   const yearOut = $('#year');
 
-  // ------------------------------
-  // Prize table
-  // ------------------------------
-  const PRIZES = {
-    1: '$1,500.00',
-    2: '$1,000.00',
-    3: '$600.00',
-    4: '$350.00',
+  const FALLBACK_PRIZES = {
+    1: '$1,800.00',
+    2: '$1,200.00',
+    3: '$800.00',
+    4: '$450.00',
     5: '$200.00',
     6: '$150.00',
-    7: '$75.00',
-    8: '$60.00',
-    9: '$40.00',
-    10: '$25.00',
-    11: '$0.00'
+    7: '$90.00',
+    8: '$80.00',
+    9: '$70.00',
+    10: '$60.00',
+    11: '$20.00',
+    12: '$20.00',
+    13: '$20.00',
+    14: '$20.00',
+    15: '$20.00'
   };
 
-  function moneyToNumber(s) {
-    if (typeof s === 'number') return s;
-    if (!s) return 0;
-    const n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
-    return Number.isNaN(n) ? 0 : n;
+  let prizes = { ...FALLBACK_PRIZES };
+  let leaderboardSize = 15;
+  let refreshSeconds = 60;
+  let endTime = 0;
+  let countdownTimer = null;
+  let leaderboardTimer = null;
+  let streamTimer = null;
+
+  function moneyToNumber(value) {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+    const parsed = Number.parseFloat(String(value).replace(/[^0-9.]/g, ''));
+    return Number.isNaN(parsed) ? 0 : parsed;
   }
 
-  function fmtInt(n) {
-    return (n ?? 0).toLocaleString();
+  function formatInteger(value) {
+    return Number(value ?? 0).toLocaleString();
   }
 
-  function clearChildren(el) {
-    while (el && el.firstChild) el.removeChild(el.firstChild);
+  function clearChildren(element) {
+    while (element?.firstChild) element.removeChild(element.firstChild);
   }
 
-  function textEl(tag, className, value) {
-    const el = document.createElement(tag);
-    if (className) el.className = className;
-    el.textContent = value;
-    return el;
+  function textElement(tag, className, value) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    element.textContent = value;
+    return element;
   }
 
-  // -----------------------------------------
-  // Podium (1–3)
-  // -----------------------------------------
-  function buildPodium(podiumRaw) {
-    const norm = (podiumRaw || []).map(e => ({
-      username: e?.username ?? '--',
-      wagerStr: e?.wager ?? '$0.00',
-      wagerNum: moneyToNumber(e?.wager)
-    }));
+  function normalizeLeaderboardEntry(entry, rank = null) {
+    return {
+      rank,
+      username: entry?.username ?? '--',
+      wagerStr: entry?.wager ?? '$0.00',
+      wagerNum: moneyToNumber(entry?.wager)
+    };
+  }
 
-    // Sort defensively by weighted wager amount.
-    norm.sort((a, b) => b.wagerNum - a.wagerNum);
+  function buildPodium(rawEntries) {
+    if (!podiumEl) return;
 
-    const first  = norm[0] || { username: '--', wagerStr: '$0.00' };
-    const second = norm[1] || { username: '--', wagerStr: '$0.00' };
-    const third  = norm[2] || { username: '--', wagerStr: '$0.00' };
+    const entries = (rawEntries || [])
+      .map((entry) => normalizeLeaderboardEntry(entry))
+      .sort((a, b) => b.wagerNum - a.wagerNum);
 
-    // Render as Olympic layout: 2 | 1 | 3.
+    const first = entries[0] || normalizeLeaderboardEntry(null);
+    const second = entries[1] || normalizeLeaderboardEntry(null);
+    const third = entries[2] || normalizeLeaderboardEntry(null);
+
     const seats = [
-      { place: 2, cls: 'col-second', medal: '🥈', entry: second },
-      { place: 1, cls: 'col-first',  medal: '🥇', entry: first  },
-      { place: 3, cls: 'col-third',  medal: '🥉', entry: third  }
+      { place: 2, className: 'col-second', medal: '🥈', entry: second },
+      { place: 1, className: 'col-first', medal: '🥇', entry: first },
+      { place: 3, className: 'col-third', medal: '🥉', entry: third }
     ];
 
-    if (!podiumEl) return;
     clearChildren(podiumEl);
-
-    seats.forEach(s => {
+    seats.forEach((seat) => {
       const card = document.createElement('article');
-      card.className = `podium-seat ${s.cls} fade-in`;
+      card.className = `podium-seat ${seat.className} fade-in`;
 
       const head = document.createElement('div');
       head.className = 'podium-head';
-      head.appendChild(textEl('span', 'rank-badge', `#${s.place}`));
-      const medal = textEl('span', 'crown', s.medal);
+      head.appendChild(textElement('span', 'rank-badge', `#${seat.place}`));
+      const medal = textElement('span', 'crown', seat.medal);
       medal.setAttribute('aria-hidden', 'true');
       head.appendChild(medal);
 
       card.appendChild(head);
-      card.appendChild(textEl('div', 'user', s.entry.username));
-      card.appendChild(textEl('div', 'label', 'TOTAL WAGER'));
-      card.appendChild(textEl('div', 'wager', s.entry.wagerStr));
-      card.appendChild(textEl('div', 'label', 'PRIZE'));
-      card.appendChild(textEl('div', 'prize', PRIZES[s.place] || '$0.00'));
-
+      card.appendChild(textElement('div', 'user', seat.entry.username));
+      card.appendChild(textElement('div', 'label', 'WEIGHTED WAGER'));
+      card.appendChild(textElement('div', 'wager', seat.entry.wagerStr));
+      card.appendChild(textElement('div', 'label', 'PRIZE'));
+      card.appendChild(textElement('div', 'prize', prizes[seat.place] || '$0.00'));
       podiumEl.appendChild(card);
     });
   }
 
-  // -----------------------------------------
-  // Placements 4–11 grid
-  // -----------------------------------------
-  function buildOthers(othersRaw) {
+  function buildOthers(rawEntries) {
     if (!othersEl) return;
 
-    let others = (othersRaw || []).map(e => ({
-      rank: (typeof e?.rank === 'number') ? e.rank : null,
-      username: e?.username ?? '--',
-      wagerStr: e?.wager ?? '$0.00',
-      wagerNum: moneyToNumber(e?.wager)
+    let entries = (rawEntries || []).map((entry) => ({
+      ...normalizeLeaderboardEntry(entry, Number.isInteger(entry?.rank) ? entry.rank : null)
     }));
 
-    if (others.length === 0) {
-      clearChildren(othersEl);
-      return;
-    }
-
-    const hasRank = others.some(o => o.rank !== null);
-
-    if (hasRank) {
-      others.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+    const hasRanks = entries.some((entry) => entry.rank !== null);
+    if (hasRanks) {
+      entries.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
     } else {
-      others.sort((a, b) => b.wagerNum - a.wagerNum);
-      others = others.map((o, idx) => ({ ...o, rank: 4 + idx }));
+      entries.sort((a, b) => b.wagerNum - a.wagerNum);
+      entries = entries.map((entry, index) => ({ ...entry, rank: 4 + index }));
     }
 
-    // 8 cards for ranks 4–11. Pad empty cards so the layout does not jump.
-    const desiredCards = 8;
-    if (others.length < desiredCards) {
-      const startRank = 4 + others.length;
-      const pad = Array.from({ length: desiredCards - others.length }, (_, i) => ({
-        rank: startRank + i,
-        username: '--',
-        wagerStr: '$0.00',
-        wagerNum: 0
-      }));
-      others = others.concat(pad);
-    } else if (others.length > desiredCards) {
-      others = others.slice(0, desiredCards);
+    const desiredCards = Math.max(0, leaderboardSize - 3);
+    if (entries.length < desiredCards) {
+      const occupiedRanks = new Set(entries.map((entry) => entry.rank));
+      for (let rank = 4; rank <= leaderboardSize; rank += 1) {
+        if (!occupiedRanks.has(rank)) {
+          entries.push({
+            rank,
+            username: '--',
+            wagerStr: '$0.00',
+            wagerNum: 0
+          });
+        }
+      }
+      entries.sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
     }
+    entries = entries.slice(0, desiredCards);
 
     clearChildren(othersEl);
-
-    others.forEach(o => {
-      const li = document.createElement('li');
-      li.className = 'fade-in';
-      li.appendChild(textEl('span', 'position', `#${o.rank}`));
-      li.appendChild(textEl('div', 'username', o.username));
-      li.appendChild(textEl('div', 'label emphasized', 'TOTAL WAGER'));
-      li.appendChild(textEl('div', 'wager', o.wagerStr));
-      li.appendChild(textEl('div', 'label', 'PRIZE'));
-      li.appendChild(textEl('div', 'prize', PRIZES[o.rank] || '$0.00'));
-      othersEl.appendChild(li);
+    entries.forEach((entry) => {
+      const item = document.createElement('li');
+      item.className = 'leaderboard-card fade-in';
+      item.appendChild(textElement('span', 'position', `#${entry.rank}`));
+      item.appendChild(textElement('div', 'username', entry.username));
+      item.appendChild(textElement('div', 'label emphasized', 'WEIGHTED WAGER'));
+      item.appendChild(textElement('div', 'wager', entry.wagerStr));
+      item.appendChild(textElement('div', 'label', 'PRIZE'));
+      item.appendChild(textElement('div', 'prize', prizes[entry.rank] || '$0.00'));
+      othersEl.appendChild(item);
     });
   }
 
-  // -----------------------------------------
-  // Fetch leaderboard data and render
-  // -----------------------------------------
-  async function fetchData() {
+  function setDataStatus(message, state = 'ok') {
+    if (!dataStatus) return;
+    dataStatus.textContent = message;
+    dataStatus.dataset.state = state;
+  }
+
+  async function fetchLeaderboard() {
     try {
-      const r = await fetch('/data', { cache: 'no-store' });
-      if (!r.ok) throw new Error(`data status ${r.status}`);
-      const j = await r.json();
-      buildPodium(j.podium || []);
-      buildOthers(j.others || []);
-      console.info('[leaderboard] weighted data updated', j);
-    } catch (e) {
-      console.error('[leaderboard] failed', e);
+      const response = await fetch('/data', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`data status ${response.status}`);
+      const payload = await response.json();
+      buildPodium(payload.podium || []);
+      buildOthers(payload.others || []);
+      setDataStatus(
+        payload.meta?.stale
+          ? 'Showing the most recently saved leaderboard while the data source reconnects.'
+          : `Leaderboard updated automatically every ${refreshSeconds} seconds.`,
+        payload.meta?.stale ? 'warning' : 'ok'
+      );
+    } catch (error) {
+      console.error('[leaderboard] failed', error);
+      setDataStatus('Leaderboard update is temporarily unavailable. Existing results remain displayed.', 'error');
     }
   }
 
-  // -----------------------------------------
-  // Live status badge + viewers
-  // -----------------------------------------
+  function setLiveClass(className) {
+    liveEl?.classList.remove('live', 'off', 'unk');
+    liveEl?.classList.add(className);
+  }
+
   async function fetchStream() {
     if (!liveEl || !statusText || !viewerChip) return;
 
     try {
-      const r = await fetch('/stream', { cache: 'no-store' });
-      if (!r.ok) throw new Error(`stream status ${r.status}`);
-      const j = await r.json();
-      const live = !!j.live;
-      const viewers = j.viewers ?? null;
+      const response = await fetch('/stream', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`stream status ${response.status}`);
+      const payload = await response.json();
 
-      liveEl.classList.remove('live', 'off', 'unk');
+      viewerChip.hidden = true;
+      viewerChip.textContent = '';
+      liveEl.removeAttribute('title');
 
-      if (live) {
-        liveEl.classList.add('live');
+      if (!payload.available) {
+        setLiveClass('unk');
+        statusText.textContent = payload.stale ? 'Live status delayed' : 'Status unavailable';
+        return;
+      }
+
+      if (payload.live) {
+        setLiveClass('live');
         statusText.textContent = 'Live on Kick';
-        if (typeof viewers === 'number') {
-          viewerChip.style.display = 'inline-flex';
-          viewerChip.textContent = `${fmtInt(viewers)} watching`;
-        } else {
-          viewerChip.style.display = 'none';
+        if (typeof payload.viewers === 'number') {
+          viewerChip.hidden = false;
+          viewerChip.textContent = `${formatInteger(payload.viewers)} watching`;
         }
+        const details = [payload.title, payload.category].filter(Boolean).join(' · ');
+        if (details) liveEl.title = details;
       } else {
-        liveEl.classList.add('off');
+        setLiveClass('off');
         statusText.textContent = 'Currently offline';
-        viewerChip.style.display = 'none';
       }
-
-      console.info('[stream] status', j);
-    } catch (e) {
-      console.warn('[stream] failed', e);
-      liveEl.classList.remove('live', 'off');
-      liveEl.classList.add('unk');
+    } catch (error) {
+      console.warn('[stream] failed', error);
+      setLiveClass('unk');
       statusText.textContent = 'Status unavailable';
-      viewerChip.style.display = 'none';
+      viewerChip.hidden = true;
     }
   }
 
-  // -----------------------------------------
-  // Countdown timer (based on END_TIME)
-  // -----------------------------------------
-  async function initCountdown() {
+  function startCountdown() {
     if (!dd || !hh || !mm || !ss) return;
+    if (countdownTimer) window.clearInterval(countdownTimer);
 
+    const tick = () => {
+      const now = Math.floor(Date.now() / 1000);
+      let remaining = Math.max(0, endTime - now);
+      const days = Math.floor(remaining / 86400);
+      remaining -= days * 86400;
+      const hours = Math.floor(remaining / 3600);
+      remaining -= hours * 3600;
+      const minutes = Math.floor(remaining / 60);
+      remaining -= minutes * 60;
+
+      dd.textContent = String(days).padStart(2, '0');
+      hh.textContent = String(hours).padStart(2, '0');
+      mm.textContent = String(minutes).padStart(2, '0');
+      ss.textContent = String(remaining).padStart(2, '0');
+    };
+
+    tick();
+    countdownTimer = window.setInterval(tick, 1000);
+  }
+
+  async function loadConfig() {
     try {
-      const r = await fetch('/config', { cache: 'no-store' });
-      if (!r.ok) throw new Error(`config status ${r.status}`);
-      const j = await r.json();
-      const end = Number(j.end_time) || 0;
-
-      function tick() {
-        const now = Math.floor(Date.now() / 1000);
-        let delta = Math.max(0, end - now);
-
-        const d = Math.floor(delta / 86400); delta -= d * 86400;
-        const h = Math.floor(delta / 3600);  delta -= h * 3600;
-        const m = Math.floor(delta / 60);    delta -= m * 60;
-        const s = delta;
-
-        dd.textContent = String(d).padStart(2, '0');
-        hh.textContent = String(h).padStart(2, '0');
-        mm.textContent = String(m).padStart(2, '0');
-        ss.textContent = String(s).padStart(2, '0');
+      const response = await fetch('/config', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`config status ${response.status}`);
+      const payload = await response.json();
+      endTime = Number(payload.end_time) || 0;
+      leaderboardSize = Math.max(3, Number(payload.leaderboard_size) || 15);
+      refreshSeconds = Math.max(15, Number(payload.refresh_seconds) || 60);
+      if (payload.prizes && typeof payload.prizes === 'object') {
+        prizes = { ...FALLBACK_PRIZES, ...payload.prizes };
       }
+    } catch (error) {
+      console.warn('[config] failed; using safe defaults', error);
+    }
+    startCountdown();
+  }
 
-      tick();
-      setInterval(tick, 1000);
-    } catch (e) {
-      console.warn('[countdown] failed', e);
+  function scheduleRefreshes() {
+    if (leaderboardTimer) window.clearInterval(leaderboardTimer);
+    if (streamTimer) window.clearInterval(streamTimer);
+
+    if (podiumEl || othersEl) {
+      leaderboardTimer = window.setInterval(fetchLeaderboard, refreshSeconds * 1000);
+    }
+    if (liveEl) {
+      streamTimer = window.setInterval(fetchStream, Math.min(refreshSeconds, 60) * 1000);
     }
   }
 
-  // -----------------------------------------
-  // Boot
-  // -----------------------------------------
-  function boot() {
+  async function boot() {
     if (yearOut) yearOut.textContent = new Date().getFullYear();
-    fetchData();
-    fetchStream();
-    initCountdown();
 
-    setInterval(fetchData, 60_000);
-    setInterval(fetchStream, 60_000);
+    const needsConfig = Boolean(podiumEl || othersEl || (dd && hh && mm && ss));
+    if (needsConfig) await loadConfig();
+
+    const jobs = [];
+    if (podiumEl || othersEl) jobs.push(fetchLeaderboard());
+    if (liveEl) jobs.push(fetchStream());
+    await Promise.allSettled(jobs);
+
+    if (jobs.length) scheduleRefreshes();
   }
 
   document.addEventListener('DOMContentLoaded', boot);
