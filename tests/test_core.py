@@ -1,5 +1,6 @@
 import importlib
 import os
+from pathlib import Path
 import tempfile
 import time
 import unittest
@@ -11,6 +12,7 @@ class CoreTests(unittest.TestCase):
     def setUpClass(cls):
         cls.temp_dir = tempfile.TemporaryDirectory()
         os.environ["ADMIN_STORE_PATH"] = os.path.join(cls.temp_dir.name, "admin_store.json")
+        os.environ["SUPERADMIN_USER"] = "test_admin"
         os.environ["ADMIN_BOOTSTRAP_USER"] = "test_admin"
         os.environ["ADMIN_BOOTSTRAP_PASS"] = "this-is-a-secure-test-password"
         os.environ["SECRET_KEY"] = "test-secret-key-that-is-long-enough-for-unit-tests-only"
@@ -21,6 +23,54 @@ class CoreTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.temp_dir.cleanup()
+
+    def test_configured_superadmin_can_manage_admins(self):
+        with self.backend.app.test_request_context("/admin"):
+            self.backend.session["admin_user"] = "TEST_ADMIN"
+            self.assertTrue(self.backend.is_superadmin())
+            self.backend.session["admin_user"] = "ordinary_admin"
+            self.assertFalse(self.backend.is_superadmin())
+
+    def test_admin_template_has_admin_management_without_payout_column(self):
+        template = (Path(self.backend.BASE_DIR) / "templates" / "admin_panel.html").read_text(encoding="utf-8")
+        backend_source = (Path(self.backend.BASE_DIR) / "wager_backend.py").read_text(encoding="utf-8")
+        self.assertIn('id="admin-users"', template)
+        self.assertIn('name="action" value="add_admin"', template)
+        self.assertNotIn('<th>Payout</th>', template)
+        self.assertNotIn('name="payout_status"', template)
+        self.assertNotIn('"payout_status",\n            "source"', backend_source)
+        self.assertNotIn("set_payout_status", backend_source)
+        self.assertIn("Wager Race Control Center", template)
+        self.assertIn("Save Wager Race Settings", template)
+        self.assertIn("Export Leaderboard", template)
+        self.assertIn('name="new_password_confirm"', template)
+
+    def test_superadmin_can_add_an_admin(self):
+        username = "new_admin_test"
+        with self.backend._store_lock:
+            self.backend.STORE.setdefault("users", {}).pop(username, None)
+            self.backend.store_save(self.backend.STORE)
+
+        with self.backend.app.test_client() as client:
+            with client.session_transaction() as session_data:
+                session_data["admin_user"] = "test_admin"
+                session_data["csrf_token"] = "test-csrf-token"
+            response = client.post(
+                "/admin/action",
+                data={
+                    "csrf_token": "test-csrf-token",
+                    "action": "add_admin",
+                    "new_username": username,
+                    "new_password": "a-valid-new-admin-password",
+                    "new_password_confirm": "a-valid-new-admin-password",
+                },
+                follow_redirects=False,
+            )
+        self.assertEqual(response.status_code, 302)
+        with self.backend._store_lock:
+            self.assertIn(username, self.backend.STORE.get("users", {}))
+            self.backend.STORE["users"].pop(username, None)
+            self.backend.store_save(self.backend.STORE)
 
     def test_prize_schedule_has_fifteen_places(self):
         self.assertEqual(self.backend.LEADERBOARD_SIZE, 15)
@@ -66,7 +116,7 @@ class CoreTests(unittest.TestCase):
         }
         migrated, dirty = self.backend.store_ensure_keys(old_store)
         self.assertTrue(dirty)
-        self.assertEqual(migrated["version"], 4)
+        self.assertEqual(migrated["version"], 5)
         self.assertEqual(migrated["leaderboard_snapshots"]["last_top15"], [{"rank": 1}])
         self.assertNotIn("https://", migrated["health"]["last_error"])
         self.assertNotEqual(
@@ -132,6 +182,19 @@ class CoreTests(unittest.TestCase):
             self.backend.START_TIME = old_start
             self.backend.END_TIME = old_end
 
+    def test_admin_race_banner(self):
+        old_start = self.backend.START_TIME
+        old_end = self.backend.END_TIME
+        try:
+            self.backend.START_TIME = 100
+            self.backend.END_TIME = 200
+            self.assertEqual(self.backend.admin_race_banner(50)["title"], "Upcoming")
+            self.assertEqual(self.backend.admin_race_banner(150)["title"], "Active")
+            self.assertEqual(self.backend.admin_race_banner(250)["title"], "Ended")
+        finally:
+            self.backend.START_TIME = old_start
+            self.backend.END_TIME = old_end
+
     def test_public_url_validation(self):
         self.assertTrue(self.backend._valid_public_url("https://kick.com/redhunllef"))
         self.assertFalse(self.backend._valid_public_url("javascript:alert(1)"))
@@ -140,7 +203,7 @@ class CoreTests(unittest.TestCase):
     def test_safe_backup_excludes_accounts_and_secrets(self):
         backup = self.backend.build_safe_backup()
         self.assertIn("site_settings", backup)
-        self.assertIn("payout_status", backup)
+        self.assertNotIn("payout_status", backup)
         self.assertNotIn("users", backup)
         self.assertNotIn("secret_key", backup)
 

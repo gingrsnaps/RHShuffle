@@ -1,18 +1,25 @@
 # RedHunllef Wager Race
 
-A single Flask application for a responsive Top 15 weighted Shuffle wager leaderboard with Kick live status and a simple, nontechnical administration panel.
+A single Flask application for a responsive Top 15 weighted Shuffle wager leaderboard with Kick live status and a nontechnical **Wager Race Control Center**.
 
-## What the admin panel can do
+## What the Wager Race admin can do
 
-- Edit the race start and end with normal Eastern Time date pickers.
-- Edit all 15 prize amounts, public text, sponsor links, Kick channel, community link, and refresh interval.
-- Test the Shuffle and Kick connections with one click.
-- See plain-language connection cards and a setup checklist.
-- Copy usernames, review rank movement, apply weighted-wager overrides, and mark payouts as Pending, Verified, or Paid.
-- Download a payout CSV.
+- Edit the Wager Race start and end with normal Eastern Time date pickers.
+- Use quick schedule controls: **Start now**, **End in 7 days**, **End in 14 days**, and **Use previous duration**.
+- Edit all 15 prize amounts and see the total prize pool update immediately.
+- Restore the standard 15-place prize schedule with one confirmation.
+- Edit public text, sponsor links, Kick channel, community link, campaign code, and refresh interval.
+- See a clear Upcoming, Active, Ended, or Not Configured Wager Race banner.
+- Test Shuffle and Kick connections with one click and receive plain-language next steps.
+- See a setup checklist and last-update status.
+- Copy usernames, review rank movement, and apply weighted-wager overrides.
+- Export the full leaderboard as `redhunllef_wager_race_leaderboard.csv`.
 - Download and restore safe JSON backups.
 - Change the current admin password.
-- Access IP bans, additional admin accounts, raw leaderboard data, and logs under Advanced administration.
+- Warn before leaving with unsaved Wager Race settings.
+- Navigate the long admin page through desktop section links or a mobile **Jump to section** selector.
+- The configured `gingrsnaps` Superadmin can add Admin users, confirm temporary passwords, reset passwords, and remove non-Superadmin accounts.
+- Access IP bans, raw leaderboard data, and logs under **Advanced administration**.
 
 ## Project structure
 
@@ -56,7 +63,7 @@ A single Flask application for a responsive Top 15 weighted Shuffle wager leader
    ```
 
 4. Open `http://localhost:8080`.
-5. Open `http://localhost:8080/admin` for administration.
+5. Open `http://localhost:8080/admin` for the Wager Race Control Center.
 
 ## DigitalOcean App Platform
 
@@ -68,32 +75,34 @@ gunicorn --workers 1 --threads 8 --timeout 120 --bind 0.0.0.0:$PORT wager_backen
 
 Keep one Gunicorn worker. The application uses an in-memory refresh cache, Kick token cache, and login limiter. Multiple workers would create separate copies of that state.
 
-The hosting health-check path should be `/healthz`. It remains HTTP 200 when an external API is temporarily unavailable. `/readyz` is the stricter diagnostic endpoint.
+Use `/healthz` for the hosting health check. It remains HTTP 200 when an external API is temporarily unavailable. `/readyz` is the stricter diagnostic endpoint.
 
 ## Persistence
 
 `admin_store.json` contains:
 
 - Admin accounts and password hashes
-- Event settings saved through the admin panel
+- Wager Race settings saved through the admin panel
 - Weighted-wager overrides
-- Payout statuses
 - Audit history
 - Saved leaderboard snapshots
 
-Do not overwrite an existing `admin_store.json` during deployment. On hosting platforms with an ephemeral filesystem, mount persistent storage and point `ADMIN_STORE_PATH` to it.
+Do not overwrite an existing `admin_store.json` during deployment. Existing stores are migrated automatically, and obsolete payout-status data is removed because payout tracking is no longer part of the project.
+
+On hosting platforms with an ephemeral filesystem, mount persistent storage and point `ADMIN_STORE_PATH` to it.
 
 The safe backup downloaded through the admin panel intentionally excludes admin accounts, password hashes, the Flask secret, IP bans, access logs, and audit logs. Restoring a backup cannot replace the current admin password.
 
 ## Credentials
 
-For a production deployment, store these as encrypted environment variables instead of committing them to `settings.json`:
+For production, store these as encrypted environment variables instead of committing them to `settings.json`:
 
 ```text
 SECRET_KEY
 SHUFFLE_API_KEY
 KICK_CLIENT_ID
 KICK_CLIENT_SECRET
+SUPERADMIN_USER
 ADMIN_BOOTSTRAP_USER
 ADMIN_BOOTSTRAP_PASS
 SESSION_COOKIE_SECURE=1

@@ -17,7 +17,7 @@
         <img src="{{ url_for('static', filename='redlogo.png') }}" alt="" class="logo" />
         <div class="brand-copy">
           <span class="brand-title">{{ site.site_name|upper }}</span>
-          <span class="brand-subtitle">Live Wager Races</span>
+          <span class="brand-subtitle">Wager Race</span>
         </div>
       </a>
 
@@ -40,7 +40,7 @@
           <div class="hero-actions">
             <a class="btn btn-primary" href="{{ site.stream_url }}" target="_blank" rel="noopener noreferrer">Watch on Kick</a>
             <a class="btn btn-ghost" href="#leaderboard">View leaderboard</a>
-            <button class="btn btn-ghost" id="copyRaceLink" type="button">Copy race link</button>
+            <button class="btn btn-ghost" id="copyRaceLink" type="button">Copy Wager Race Link</button>
           </div>
 
           <div class="hero-facts" aria-label="Race summary">
@@ -126,7 +126,7 @@
           <strong>weighted wager amount</strong> during the configured time window. Displayed usernames are masked
           with asterisks to protect player privacy, while full usernames remain available to authorized administrators.
           <br /><br />
-          Weighted totals and payouts shown here are informational and may be independently verified, reviewed, or adjusted.
+          Weighted totals and prize amounts shown here are informational and may be independently verified, reviewed, or adjusted.
         </p>
       </div>
     </section>
@@ -163,7 +163,7 @@
     </div>
   </footer>
 
-  <div class="toast" id="copyToast" role="status" aria-live="polite" hidden>Race link copied.</div>
+  <div class="toast" id="copyToast" role="status" aria-live="polite" hidden>Wager Race link copied.</div>
   <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </body>
 </html>

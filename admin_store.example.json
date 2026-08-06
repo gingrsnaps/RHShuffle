@@ -1,9 +1,8 @@
 {
-  "version": 4,
+  "version": 5,
   "secret_key": "GENERATED_AT_FIRST_STARTUP",
   "users": {},
   "overrides": {},
-  "payout_status": {},
   "site_settings": {
     "site_name": "RedHunllef",
     "race_title": "RedHunllef Wager Race",

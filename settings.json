@@ -3,6 +3,7 @@
   "secret_key": "0b538bc33b89488aac36aab4a797fc9791b4ad952500d099348c4f3bef2eec87",
   "session_cookie_secure": true,
   "admin_bootstrap_user": "gingrsnaps",
+  "superadmin_user": "gingrsnaps",
   "admin_bootstrap_pass": "enok2121",
   "reset_admin_store_on_start": false,
   "reset_bootstrap_password_on_start": false,

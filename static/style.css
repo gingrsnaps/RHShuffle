@@ -2517,13 +2517,6 @@ summary {
   font-size: 0.72rem;
 }
 
-select[data-status="verified"] {
-  border-color: rgba(255, 189, 82, 0.42);
-}
-
-select[data-status="paid"] {
-  border-color: rgba(69, 243, 157, 0.48);
-}
 
 .stack-form {
   display: grid;
@@ -2735,4 +2728,188 @@ select[data-status="paid"] {
   .inline-control-form {
     min-width: 170px;
   }
+}
+
+
+/* ========================================================================== */
+/* Wager Race administration quality-of-life enhancements                     */
+/* ========================================================================== */
+
+[id] { scroll-margin-top: 9rem; }
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: .45rem;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  vertical-align: middle;
+}
+
+.role-superadmin {
+  color: #071308;
+  background: #53fc18;
+}
+
+.role-admin {
+  color: var(--text);
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.more-actions { position: relative; }
+.more-actions summary { list-style: none; }
+.more-actions summary::-webkit-details-marker { display: none; }
+.more-actions[open] summary { border-color: rgba(83,252,24,.55); }
+.more-actions-menu {
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + .55rem);
+  right: 0;
+  min-width: 225px;
+  padding: .5rem;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  background: rgba(10,12,18,.98);
+  box-shadow: 0 22px 60px rgba(0,0,0,.6);
+}
+.more-actions-menu a,
+.more-actions-menu button {
+  display: block;
+  width: 100%;
+  padding: .7rem .75rem;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.more-actions-menu a:hover,
+.more-actions-menu button:hover { background: rgba(255,255,255,.08); }
+
+.race-state-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  background: rgba(0,0,0,.36);
+  box-shadow: 0 14px 34px rgba(0,0,0,.25);
+}
+.race-state-banner > div { display: flex; align-items: center; gap: .85rem; }
+.race-state-banner h2 { margin: .05rem 0 .18rem; font-size: 1.15rem; }
+.race-state-banner p { margin: 0; color: var(--text-muted); }
+.race-state-indicator {
+  width: .85rem;
+  height: .85rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #777;
+  box-shadow: 0 0 0 5px rgba(255,255,255,.05);
+}
+.race-state-upcoming .race-state-indicator { background: #ffd166; box-shadow: 0 0 0 5px rgba(255,209,102,.12); }
+.race-state-active .race-state-indicator { background: #53fc18; box-shadow: 0 0 0 5px rgba(83,252,24,.12); }
+.race-state-ended .race-state-indicator { background: #8b94a7; box-shadow: 0 0 0 5px rgba(139,148,167,.12); }
+.race-state-unconfigured .race-state-indicator { background: #ff6262; box-shadow: 0 0 0 5px rgba(255,98,98,.12); }
+
+.admin-section-nav {
+  position: sticky;
+  top: 73px;
+  z-index: 34;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 1rem;
+  padding: .55rem;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  background: rgba(5,5,10,.92);
+  backdrop-filter: blur(16px);
+}
+.section-nav-links { display: flex; align-items: center; justify-content: center; gap: .2rem; flex-wrap: wrap; }
+.section-nav-links a {
+  padding: .48rem .72rem;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: .84rem;
+  font-weight: 700;
+}
+.section-nav-links a:hover { color: var(--text); background: rgba(255,255,255,.07); }
+.section-jump-label { display: none; width: 100%; }
+.section-jump-label span { display: block; margin-bottom: .35rem; font-size: .75rem; color: var(--text-muted); }
+.section-jump-label select { width: 100%; }
+
+.status-action-form { margin-top: .65rem; }
+.status-action-form .mini-button { width: auto; }
+
+.form-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .65rem;
+}
+.form-section-heading h3,
+.form-section-heading p { margin-top: 0; }
+.quick-action-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .45rem; }
+
+.input-invalid {
+  border-color: #ff6262 !important;
+  box-shadow: 0 0 0 3px rgba(255,98,98,.12) !important;
+}
+.pill-error { color: #ffd7d7 !important; border-color: rgba(255,98,98,.5) !important; }
+
+.sticky-save-bar.has-unsaved-changes {
+  border-color: rgba(255,209,102,.55);
+  box-shadow: 0 12px 40px rgba(255,209,102,.08);
+}
+.sticky-save-bar.has-unsaved-changes #saveStateTitle { color: #ffd166; }
+
+.admin-user-list {
+  display: grid;
+  gap: .55rem;
+  margin-top: 1rem;
+}
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .72rem .8rem;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,.2);
+}
+.admin-user-row > div { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.danger-outline { color: #ff9a9a; border-color: rgba(255,98,98,.35) !important; }
+.danger-outline:hover { background: rgba(255,98,98,.12) !important; }
+
+@media (max-width: 900px) {
+  .admin-section-nav { top: 67px; justify-content: stretch; }
+  .section-nav-links { display: none; }
+  .section-jump-label { display: block; }
+  .form-section-heading { flex-direction: column; }
+  .quick-action-row { justify-content: flex-start; }
+}
+
+@media (max-width: 700px) {
+  [id] { scroll-margin-top: 8rem; }
+  .race-state-banner { align-items: stretch; flex-direction: column; }
+  .race-state-banner .mini-button { width: 100%; text-align: center; }
+  .more-actions { width: 100%; }
+  .more-actions summary { width: 100%; text-align: center; }
+  .more-actions-menu { position: static; margin-top: .45rem; width: 100%; }
+  .admin-user-row { align-items: flex-start; flex-direction: column; }
+  .admin-user-row form,
+  .admin-user-row button { width: 100%; }
+  .quick-action-row,
+  .quick-action-row .mini-button { width: 100%; }
 }

@@ -222,7 +222,12 @@ LOGIN_MAX_FAILURES = max(2, _env_int("LOGIN_MAX_FAILURES", 5))
 LOGIN_LOCK_SECONDS = max(60, _env_int("LOGIN_LOCK_SECONDS", 15 * 60))
 MIN_ADMIN_PASSWORD_LENGTH = max(12, _env_int("MIN_ADMIN_PASSWORD_LENGTH", 12))
 
-SUPERADMIN = _env_or_setting("ADMIN_BOOTSTRAP_USER", "admin_bootstrap_user", "admin") or "admin"
+SUPERADMIN = (
+    _env_or_setting("SUPERADMIN_USER", "superadmin_user", "gingrsnaps") or "gingrsnaps"
+).strip()
+BOOTSTRAP_USER = (
+    _env_or_setting("ADMIN_BOOTSTRAP_USER", "admin_bootstrap_user", SUPERADMIN) or SUPERADMIN
+).strip()
 BOOTSTRAP_PASS = _env_or_setting("ADMIN_BOOTSTRAP_PASS", "admin_bootstrap_pass", "")
 RESET_ADMIN_STORE_ON_START = _env_bool(
     "RESET_ADMIN_STORE_ON_START",
@@ -475,17 +480,16 @@ def store_default() -> Dict[str, Any]:
     now = int(time.time())
     users: Dict[str, Any] = {}
     if BOOTSTRAP_PASS:
-        users[SUPERADMIN] = {
+        users[BOOTSTRAP_USER] = {
             "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
             "created_at": now,
             "created_by": "bootstrap",
         }
     return {
-        "version": 4,
+        "version": 5,
         "secret_key": secrets.token_hex(32),
         "users": users,
         "overrides": {},
-        "payout_status": {},
         "site_settings": default_site_settings(),
         "audit_log": [],
         "banned_ips": [],
@@ -562,7 +566,7 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
             store[key] = value
             dirty = True
 
-    ensure("version", 4)
+    ensure("version", 5)
     ensure("secret_key", secrets.token_hex(32))
 
     persistent_secret = str(store.get("secret_key") or "")
@@ -575,7 +579,6 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
         dirty = True
     ensure("users", {})
     ensure("overrides", {})
-    ensure("payout_status", {})
     ensure("site_settings", default_site_settings())
     ensure("audit_log", [])
     ensure("banned_ips", [])
@@ -583,8 +586,8 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
     ensure("leaderboard_snapshots", {})
     ensure("updated_at", int(time.time()))
 
-    if store.get("version") != 4:
-        store["version"] = 4
+    if store.get("version") != 5:
+        store["version"] = 5
         dirty = True
 
     if not isinstance(store.get("users"), dict):
@@ -593,8 +596,8 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
     if not isinstance(store.get("overrides"), dict):
         store["overrides"] = {}
         dirty = True
-    if not isinstance(store.get("payout_status"), dict):
-        store["payout_status"] = {}
+    if "payout_status" in store:
+        store.pop("payout_status", None)
         dirty = True
 
     normalized_site = normalize_site_settings(store.get("site_settings"))
@@ -609,16 +612,16 @@ def store_ensure_keys(store: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
         dirty = True
 
     users = store["users"]
-    if SUPERADMIN not in users and BOOTSTRAP_PASS:
-        users[SUPERADMIN] = {
+    if BOOTSTRAP_USER not in users and BOOTSTRAP_PASS:
+        users[BOOTSTRAP_USER] = {
             "pw_hash": generate_password_hash(BOOTSTRAP_PASS),
             "created_at": int(time.time()),
             "created_by": "bootstrap",
         }
         dirty = True
-    elif SUPERADMIN in users and BOOTSTRAP_PASS and RESET_BOOTSTRAP_PASSWORD_ON_START:
-        users[SUPERADMIN]["pw_hash"] = generate_password_hash(BOOTSTRAP_PASS)
-        users[SUPERADMIN]["updated_at"] = int(time.time())
+    elif BOOTSTRAP_USER in users and BOOTSTRAP_PASS and RESET_BOOTSTRAP_PASSWORD_ON_START:
+        users[BOOTSTRAP_USER]["pw_hash"] = generate_password_hash(BOOTSTRAP_PASS)
+        users[BOOTSTRAP_USER]["updated_at"] = int(time.time())
         dirty = True
 
     health = store.get("health")
@@ -764,7 +767,8 @@ def admin_user() -> Optional[str]:
 
 
 def is_superadmin() -> bool:
-    return (admin_user() or "") == SUPERADMIN
+    """Only the configured gingrsnaps superadmin account can manage other admins."""
+    return (admin_user() or "").casefold() == SUPERADMIN.casefold()
 
 
 def login_required(function):
@@ -909,6 +913,45 @@ def race_state(now: Optional[int] = None) -> str:
     return "unconfigured"
 
 
+def _human_duration(seconds: int) -> str:
+    seconds = max(0, int(seconds))
+    days, remainder = divmod(seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes = remainder // 60
+    parts = []
+    if days:
+        parts.append(f"{days} day{'s' if days != 1 else ''}")
+    if hours and len(parts) < 2:
+        parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+    if minutes and len(parts) < 2:
+        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+    return ", ".join(parts) or "less than a minute"
+
+
+def admin_race_banner(now: Optional[int] = None) -> Dict[str, str]:
+    current = int(time.time()) if now is None else int(now)
+    state = race_state(current)
+    if state == "unconfigured":
+        return {
+            "title": "Schedule not configured",
+            "detail": "Choose a start and end time in Wager Race Settings.",
+        }
+    if state == "upcoming":
+        return {
+            "title": "Upcoming",
+            "detail": f"Begins {fmt_et(START_TIME)} · {_human_duration(START_TIME - current)} from now.",
+        }
+    if state == "active":
+        return {
+            "title": "Active",
+            "detail": f"Ends {fmt_et(END_TIME)} · {_human_duration(END_TIME - current)} remaining.",
+        }
+    return {
+        "title": "Ended",
+        "detail": f"Ended {fmt_et(END_TIME)} · the final leaderboard remains available for review.",
+    }
+
+
 def public_site_settings() -> Dict[str, Any]:
     return {
         "site_name": SITE_NAME,
@@ -955,7 +998,6 @@ def build_safe_backup() -> Dict[str, Any]:
             "generated_at_et": fmt_et(int(time.time())),
             "site_settings": normalize_site_settings(STORE.get("site_settings")),
             "overrides": dict(STORE.get("overrides") or {}),
-            "payout_status": dict(STORE.get("payout_status") or {}),
             "leaderboard_snapshots": dict(STORE.get("leaderboard_snapshots") or {}),
         }
 
@@ -1430,7 +1472,6 @@ def compute_top_deltas() -> List[Dict[str, Any]]:
         snapshots = STORE.get("leaderboard_snapshots") or {}
         current = list(snapshots.get("last_top15") or [])
         previous = list(snapshots.get("prev_top15") or [])
-        payout_status = dict(STORE.get("payout_status") or {})
     previous_map = {
         str(entry.get("username") or ""): parse_money_to_float(
             entry.get("weighted_wager", entry.get("wager"))
@@ -1468,9 +1509,6 @@ def compute_top_deltas() -> List[Dict[str, Any]]:
             if rank_change and rank_change < 0
             else "—"
         )
-        payout = payout_status.get(username) or {}
-        status = str(payout.get("status") or "pending")
-        enriched["payout_status"] = status if status in {"pending", "verified", "paid"} else "pending"
         enriched["prize"] = money(PRIZES.get(current_rank, 0))
         output.append(enriched)
     return output
@@ -1886,6 +1924,7 @@ def index():
         leaderboard_size=LEADERBOARD_SIZE,
         site=public_site_settings(),
         total_prize=money(sum(PRIZES.values())),
+        default_prizes={rank: DEFAULT_PRIZES.get(rank, 0) for rank in range(1, LEADERBOARD_SIZE + 1)},
         refresh_seconds=REFRESH_SECONDS,
     )
 
@@ -2052,7 +2091,7 @@ def _admin_setup_checklist(
     return [
         {"label": "Shuffle credentials configured", "ok": bool(SHUFFLE_API_KEY)},
         {"label": "Kick credentials configured", "ok": bool(KICK_CLIENT_ID and KICK_CLIENT_SECRET)},
-        {"label": "Race dates configured", "ok": dates_ok},
+        {"label": "Wager Race dates configured", "ok": dates_ok},
         {"label": "All 15 prizes configured", "ok": prizes_ok},
         {"label": "Public links are valid", "ok": links_ok},
         {"label": "Shuffle data connected", "ok": bool(health.get("last_refresh_ok")) and top_count > 0},
@@ -2065,7 +2104,6 @@ def render_admin_panel():
     csrf_token()
     with _store_lock:
         overrides = dict(STORE.get("overrides") or {})
-        payout_status = dict(STORE.get("payout_status") or {})
         audit_log = list(reversed(STORE.get("audit_log") or []))
         banned_ips = list(STORE.get("banned_ips") or [])
         health = dict(STORE.get("health") or {})
@@ -2083,13 +2121,11 @@ def render_admin_panel():
         kick_health = dict(KICK_HEALTH)
 
     top_with_deltas = compute_top_deltas()
-    payout_map = {name: str((record or {}).get("status") or "pending") for name, record in payout_status.items()}
     full_enriched = []
     for row in full:
         item = dict(row)
         rank = int(item.get("rank") or 0)
         item["prize"] = money(PRIZES.get(rank, 0)) if rank <= LEADERBOARD_SIZE else "—"
-        item["payout_status"] = payout_map.get(str(item.get("username") or ""), "pending")
         full_enriched.append(item)
 
     checklist = _admin_setup_checklist(
@@ -2124,6 +2160,7 @@ def render_admin_panel():
         weighting_rules=WEIGHTING_RULES,
         prizes={rank: PRIZES.get(rank, 0) for rank in range(1, LEADERBOARD_SIZE + 1)},
         total_prize=money(sum(PRIZES.values())),
+        default_prizes={rank: DEFAULT_PRIZES.get(rank, 0) for rank in range(1, LEADERBOARD_SIZE + 1)},
         overrides=overrides,
         top=top,
         top_with_deltas=top_with_deltas,
@@ -2142,6 +2179,7 @@ def render_admin_panel():
         kick_connected=kick_connected,
         public_connected=public_connected,
         race_state=race_state(),
+        race_banner=admin_race_banner(),
         public_url=url_for("index", _external=True),
     )
 
@@ -2152,9 +2190,6 @@ def admin_export_csv():
     with _admin_cache_lock:
         rows = list(ADMIN_CACHE.get("full") or [])
         last_refresh = int(ADMIN_CACHE.get("last_refresh") or 0)
-    with _store_lock:
-        payout_status = dict(STORE.get("payout_status") or {})
-
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(
@@ -2164,7 +2199,6 @@ def admin_export_csv():
             "weighted_wager",
             "raw_wager",
             "prize",
-            "payout_status",
             "source",
             "row_count",
             "last_refresh_et",
@@ -2173,7 +2207,6 @@ def admin_export_csv():
     for row in rows:
         rank = int(row.get("rank") or 0)
         username = str(row.get("username") or "")
-        payout = payout_status.get(username) or {}
         writer.writerow(
             [
                 rank,
@@ -2181,7 +2214,6 @@ def admin_export_csv():
                 f"{parse_money_to_float(row.get('weighted_wager')):.2f}",
                 "" if row.get("raw_wager") is None else f"{parse_money_to_float(row.get('raw_wager')):.2f}",
                 f"{float(PRIZES.get(rank, 0)):.2f}" if rank <= LEADERBOARD_SIZE else "",
-                payout.get("status", "pending") if rank <= LEADERBOARD_SIZE else "",
                 row.get("source", ""),
                 row.get("row_count", 1),
                 fmt_et(last_refresh),
@@ -2191,7 +2223,7 @@ def admin_export_csv():
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=weighted_leaderboard_export.csv"},
+        headers={"Content-Disposition": "attachment; filename=redhunllef_wager_race_leaderboard.csv"},
     )
 
 
@@ -2225,21 +2257,21 @@ def admin_action():
         start_epoch, start_error = datetime_local_to_epoch(request.form.get("start_et", ""))
         end_epoch, end_error = datetime_local_to_epoch(request.form.get("end_et", ""))
         if start_error or end_error or start_epoch is None or end_epoch is None:
-            flash(start_error or end_error or "Choose valid race dates.", "error")
-            return _redirect_admin("event-settings")
+            flash(start_error or end_error or "Choose valid Wager Race dates.", "error")
+            return _redirect_admin("wager-race-settings")
         if end_epoch <= start_epoch:
-            flash("Race end time must be later than the start time.", "error")
-            return _redirect_admin("event-settings")
+            flash("Wager Race end time must be later than the start time.", "error")
+            return _redirect_admin("wager-race-settings")
 
         refresh = _coerce_int(request.form.get("refresh_seconds"), REFRESH_SECONDS)
         if refresh < 15 or refresh > 3600:
             flash("Refresh frequency must be between 15 and 3,600 seconds.", "error")
-            return _redirect_admin("event-settings")
+            return _redirect_admin("wager-race-settings")
 
         slug = str(request.form.get("kick_channel_slug") or "").strip().lower()
         if not re.fullmatch(r"[a-z0-9_-]{2,50}", slug):
             flash("Kick channel names may use letters, numbers, underscores, and hyphens.", "error")
-            return _redirect_admin("event-settings")
+            return _redirect_admin("wager-race-settings")
 
         site_name = _trim(request.form.get("site_name"), 60).strip()
         race_title = _trim(request.form.get("race_title"), 100).strip()
@@ -2249,7 +2281,7 @@ def admin_action():
         campaign_filter = _trim(request.form.get("campaign_code_filter"), 64).strip()
         if not all((site_name, race_title, sponsor_name)):
             flash("Site name, race title, and sponsor name are required.", "error")
-            return _redirect_admin("event-settings")
+            return _redirect_admin("wager-race-settings")
 
         urls = {
             "sponsor_url": str(request.form.get("sponsor_url") or "").strip(),
@@ -2260,14 +2292,14 @@ def admin_action():
         for key, value in urls.items():
             if not _valid_public_url(value, allow_blank=key in {"community_url", "responsible_gambling_url"}):
                 flash(f"Enter a valid http or https URL for {key.replace('_', ' ')}.", "error")
-                return _redirect_admin("event-settings")
+                return _redirect_admin("wager-race-settings")
 
         prizes: Dict[str, float] = {}
         for rank in range(1, 16):
             amount, error = parse_money_strict(str(request.form.get(f"prize_{rank}") or ""))
             if error or amount is None:
                 flash(f"Prize #{rank}: {error or 'Enter a valid amount.'}", "error")
-                return _redirect_admin("event-settings")
+                return _redirect_admin("wager-race-settings")
             prizes[str(rank)] = amount
 
         new_settings = {
@@ -2313,8 +2345,8 @@ def admin_action():
                 app.logger.exception("[SETTINGS] Kick check failed: %s", exc)
                 refresh_messages.append("Kick needs attention")
         audit("save_event_settings", {"start_time": start_epoch, "end_time": end_epoch, "prize_total": sum(prizes.values())})
-        flash(f"Event settings saved successfully; {', '.join(refresh_messages)}.", "success")
-        return _redirect_admin("event-settings")
+        flash(f"Wager Race settings saved successfully; {', '.join(refresh_messages)}.", "success")
+        return _redirect_admin("wager-race-settings")
 
     if action == "test_shuffle":
         rows, meta = fetch_from_shuffle()
@@ -2367,23 +2399,6 @@ def admin_action():
         flash(f"Set {username}'s weighted override to {money(amount)}.", "success")
         return _redirect_admin("leaderboard-management")
 
-    if action == "set_payout_status":
-        username = str(request.form.get("username") or "").strip()
-        status = str(request.form.get("payout_status") or "pending").strip().lower()
-        if not username or status not in {"pending", "verified", "paid"}:
-            flash("Choose a valid participant and payout status.", "error")
-            return _redirect_admin("leaderboard-management")
-        with _store_lock:
-            STORE.setdefault("payout_status", {})[username] = {
-                "status": status,
-                "updated_at": int(time.time()),
-                "updated_by": admin_user(),
-            }
-            STORE["updated_at"] = int(time.time())
-            store_save(STORE)
-        audit("set_payout_status", {"username": username, "status": status})
-        flash(f"Marked {username}'s payout as {status}.", "success")
-        return _redirect_admin("leaderboard-management")
 
     if action == "force_refresh":
         with _force_refresh_lock:
@@ -2440,17 +2455,6 @@ def admin_action():
             for username, amount in raw_overrides.items()
             if _trim(username, 64).strip()
         }
-        raw_payout = payload.get("payout_status") if isinstance(payload.get("payout_status"), dict) else {}
-        clean_payout = {}
-        for username, record in raw_payout.items():
-            name = _trim(username, 64).strip()
-            status = str((record or {}).get("status") or "pending") if isinstance(record, dict) else "pending"
-            if name and status in {"pending", "verified", "paid"}:
-                clean_payout[name] = {
-                    "status": status,
-                    "updated_at": int(time.time()),
-                    "updated_by": admin_user(),
-                }
         raw_snapshots = payload.get("leaderboard_snapshots")
         clean_snapshots = raw_snapshots if isinstance(raw_snapshots, dict) else {}
         if not isinstance(clean_snapshots.get("last_top15"), list):
@@ -2462,14 +2466,13 @@ def admin_action():
         with _store_lock:
             STORE["site_settings"] = site
             STORE["overrides"] = clean_overrides
-            STORE["payout_status"] = clean_payout
             STORE["leaderboard_snapshots"] = clean_snapshots
             STORE["updated_at"] = int(time.time())
             store_save(STORE)
         apply_site_settings(site)
         reset_kick_caches()
         seed_cache_from_store()
-        audit("restore_backup", {"overrides": len(clean_overrides), "payouts": len(clean_payout)})
+        audit("restore_backup", {"overrides": len(clean_overrides)})
         flash("Backup restored. Admin accounts and passwords were left unchanged.", "success")
         return _redirect_admin("backup-restore")
 
@@ -2525,17 +2528,21 @@ def admin_action():
         if action == "add_admin":
             username = str(request.form.get("new_username") or "").strip()
             password = str(request.form.get("new_password") or "")
+            password_confirm = str(request.form.get("new_password_confirm") or "")
+            if password != password_confirm:
+                flash("The temporary password and confirmation do not match.", "error")
+                return _redirect_admin("admin-users")
             if not _valid_admin_username(username):
                 flash("Admin usernames must be 3–32 letters, numbers, or underscores.", "error")
-                return _redirect_admin("advanced-administration")
+                return _redirect_admin("admin-users")
             if not _valid_password(password):
                 flash(f"Passwords must be {MIN_ADMIN_PASSWORD_LENGTH}–256 characters.", "error")
-                return _redirect_admin("advanced-administration")
+                return _redirect_admin("admin-users")
             with _store_lock:
                 users = STORE.setdefault("users", {})
                 if username in users:
                     flash("That admin user already exists.", "error")
-                    return _redirect_admin("advanced-administration")
+                    return _redirect_admin("admin-users")
                 users[username] = {
                     "pw_hash": generate_password_hash(password),
                     "created_at": int(time.time()),
@@ -2545,13 +2552,13 @@ def admin_action():
                 store_save(STORE)
             audit("add_admin_ok", {"username": username})
             flash(f"Added admin user {username}.", "success")
-            return _redirect_admin("advanced-administration")
+            return _redirect_admin("admin-users")
 
         if action == "remove_admin":
             username = str(request.form.get("rm_username") or "").strip()
-            if not username or username == SUPERADMIN:
+            if not username or username.casefold() == SUPERADMIN.casefold():
                 flash("The configured superadmin cannot be removed.", "error")
-                return _redirect_admin("advanced-administration")
+                return _redirect_admin("admin-users")
             with _store_lock:
                 existed = username in (STORE.get("users") or {})
                 STORE.setdefault("users", {}).pop(username, None)
@@ -2559,18 +2566,22 @@ def admin_action():
                 store_save(STORE)
             audit("remove_admin", {"username": username, "existed": existed})
             flash(f"Removed admin user {username}." if existed else "Admin user was not found.", "success")
-            return _redirect_admin("advanced-administration")
+            return _redirect_admin("admin-users")
 
         username = str(request.form.get("pw_username") or "").strip()
         password = str(request.form.get("pw_password") or "")
+        password_confirm = str(request.form.get("pw_password_confirm") or "")
+        if password != password_confirm:
+            flash("The new password and confirmation do not match.", "error")
+            return _redirect_admin("admin-users")
         if not username or not _valid_password(password):
             flash(f"Select an existing user and use a {MIN_ADMIN_PASSWORD_LENGTH}–256 character password.", "error")
-            return _redirect_admin("advanced-administration")
+            return _redirect_admin("admin-users")
         with _store_lock:
             users = STORE.get("users") or {}
             if username not in users:
                 flash("That admin user does not exist.", "error")
-                return _redirect_admin("advanced-administration")
+                return _redirect_admin("admin-users")
             users[username]["pw_hash"] = generate_password_hash(password)
             users[username]["updated_at"] = int(time.time())
             STORE["users"] = users
@@ -2578,7 +2589,7 @@ def admin_action():
             store_save(STORE)
         audit("set_admin_password_ok", {"username": username})
         flash(f"Updated the password for {username}.", "success")
-        return _redirect_admin("advanced-administration")
+        return _redirect_admin("admin-users")
 
     flash("Unknown admin action.", "error")
     return redirect(url_for("admin"))
