@@ -81,3 +81,54 @@ test('admin boss updates preserve difficulty draft and restart confirmation',asy
  await p.advance(5000);assert.equal(input.value,'5000000');assert.equal(confirm.checked,true);
  assert.equal(p.w.document.querySelector('footer'),null);p.close();
 });
+
+test('a successful background poll cannot erase an attack error',async()=>{
+ const p=page();await flush();
+ p.respond(async(url,options)=>options.method==='POST'?response({error:'Your shared connection is cooling down.'},429):response(p.value));
+ p.w.document.querySelector('#attackButton').click();await flush();
+ await p.advance(5000);await p.advance(5000);
+ const error=p.w.document.querySelector('#bossError');
+ assert.equal(error.hidden,false);assert.match(error.textContent,/shared connection/);
+ p.w.document.querySelector('#dismissBossError').click();assert.equal(error.hidden,true);p.close();
+});
+
+test('unchanged contributor rows survive polls and mobile styles share attack controls',async()=>{
+ const p=page();await flush();
+ p.value.state.leaders=[{name:'Raider ABCDEF12',damage:150,attacks:1,you:false}];await p.advance(5000);
+ const row=p.w.document.querySelector('#bossLeaders li');await p.advance(5000);
+ assert.strictEqual(p.w.document.querySelector('#bossLeaders li'),row);
+ const style=p.w.document.querySelector('#dockStyle');style.value='magic';style.dispatchEvent(new p.w.Event('change'));
+ assert.equal(p.w.document.querySelector('[data-style="magic"]').getAttribute('aria-pressed'),'true');
+ let sent;p.respond(async(url,options)=>{if(options.method==='POST'){sent=JSON.parse(options.body);return response({error:'Fixture rejection'},400);}return response(p.value);});
+ p.w.document.querySelector('#dockAttack').click();await flush();assert.equal(sent.style,'magic');p.close();
+});
+
+test('copy link supplies selectable text if clipboard access is unavailable',async()=>{
+ const p=page();await flush();p.w.document.querySelector('#copyRaidLink').click();await flush();
+ const field=p.w.document.querySelector('#shareUrl');assert.equal(field.hidden,false);
+ assert.equal(field.value,'https://example.test/play');assert.equal(field.selectionEnd,field.value.length);p.close();
+});
+
+test('same-raid updates cannot refill health even with a newer version or clock',async()=>{
+ const p=page();await flush();
+ p.value.state.hp-=150;p.value.state.total_damage=150;p.value.state.total_attacks=1;p.value.state.version++;
+ await p.advance(5000);const hp=p.value.state.hp;
+ p.value.state.hp+=150;p.value.state.total_damage=0;p.value.state.total_attacks=0;
+ for(const versionBump of [0,10]){
+  p.value.state.version+=versionBump;p.value.state.server_time+=5;
+  await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,hp);
+  assert.equal(p.w.document.querySelector('#bossDamage').textContent,'150');
+ }
+ p.close();
+});
+
+test('victory stays at zero until a different raid starts',async()=>{
+ const p=page();await flush();
+ p.value.state.hp=0;p.value.state.total_damage=p.value.state.max_hp;p.value.state.status='victory';p.value.state.version++;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,0);
+ p.value.state.hp=p.value.state.max_hp;p.value.state.total_damage=0;p.value.state.status='waiting';p.value.state.version++;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,0);
+ p.value.state.raid_id='new-host-started-raid';p.value.state.server_time+=10;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.max_hp);
+ p.close();
+});

@@ -123,7 +123,7 @@ class BossTests(unittest.TestCase):
         self.assertEqual(self.b.export()['total_attacks'],1)
         # A tiny isolated raid verifies final damage clamping and victory receipts.
         value=fresh_raid(health=50)
-        with self.r.store.connection(transaction=True) as conn:self.b._write(conn,value)
+        with self.r.store.connection(transaction=True) as conn:self.b._write(conn,value,new_raid=True)
         self.b.loaded_at=0
         final=self.hit(request_id='victory-receipt')
         self.assertEqual(final['hit']['damage'],50)
@@ -137,6 +137,57 @@ class BossTests(unittest.TestCase):
         self.hit(); self.b.control('pause',self.b.status()['raid_id'])
         self.assertEqual(self.r.store.admin(),before)
         self.assertEqual(self.r.store.live('shuffle'),snapshot)
+
+    def test_health_never_regenerates_during_idle_time_daily_reset_or_pause(self):
+        hit = self.hit()
+        saved = self.b.export()
+        for elapsed in (60, 601, DAY + 1, 7 * DAY):
+            self.time.return_value = self.start + elapsed
+            self.b.loaded_at = 0
+            view = self.b.status('a', '192.0.2.1')
+            self.assertEqual(view['hp'], hit['state']['hp'])
+            self.assertEqual(view['total_damage'], 150)
+            self.assertEqual(self.b.export(), saved)
+        self.assertEqual(view['you']['remaining'], 40)
+        self.b.control('pause', saved['id'])
+        self.time.return_value += DAY
+        self.b.control('resume', saved['id'])
+        self.assertEqual(self.b.status()['hp'], saved['hp'])
+        # Reloaded HTML must not briefly label a damaged boss as 100% health.
+        page = self.app.test_client().get('/play')
+        self.assertIn(f'id="bossPercent">{saved["hp"] / saved["max_hp"] * 100:.2f}%</span>', page.text)
+
+    def test_cold_app_restart_retains_all_committed_damage(self):
+        self.hit()
+        self.time.return_value += 60
+        self.hit()
+        saved = self.b.export()
+        self.r.store.close()
+        restarted = create_app(self.root, testing=True)
+        self.addCleanup(restarted.extensions['runtime'].store.close)
+        restored = restarted.extensions['boss']
+        self.assertEqual(restored.export(), saved)
+        self.assertEqual(restored.status()['hp'], DEFAULT_HP - 300)
+
+    def test_storage_refuses_health_increases_and_implicit_new_raids(self):
+        self.hit()
+        saved = self.b.export()
+        healed = copy.deepcopy(saved)
+        healed['hp'] += 1
+        healed['total_damage'] -= 1
+        healed['version'] += 1
+        next(iter(healed['players'].values()))['damage'] -= 1
+        validate_boss(healed)  # Structurally valid, but it reverses committed damage.
+        with self.assertRaises(BossError) as rejected:
+            with self.r.store.connection(transaction=True) as conn:
+                self.b._write(conn, healed)
+        self.assertEqual(rejected.exception.code, 'progress_reversal')
+        self.assertEqual(self.b.export(), saved)
+        with self.assertRaises(BossError) as rejected:
+            with self.r.store.connection(transaction=True) as conn:
+                self.b._write(conn, fresh_raid())
+        self.assertEqual(rejected.exception.code, 'new_raid_required')
+        self.assertEqual(self.b.export(), saved)
 
     def test_pause_resume_restart_and_stale_raid(self):
         first=self.hit(); raid=first['state']['raid_id']

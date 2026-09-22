@@ -20,6 +20,21 @@ The original `wager_backend.py` launcher serves the game and existing wager site
   do not secretly change the damage rules or punish players who joined late.
 - Victory remains visible. The host chooses when to start another raid.
 
+The server rejects any attempt to heal the same raid or reverse its committed
+damage. Health is always maximum HP minus saved cumulative damage. Cooldowns,
+weakness changes and daily resets affect attacks only. The browser also rejects
+healing snapshots, and the initial page percentage reflects saved health.
+Process restarts retain progress when the same data file is preserved. Losing
+that file through a container replacement is a separate recovery concern below.
+
+The mobile attack dock offers the same controls and cooldown while you scroll.
+Cosmetic milestones at 25%, 50%, and 75% damage change the arena and celebrate
+progress. Badges recognize your first hit, ten bursts (100 hits), and three
+distinct raid days. They grant no damage advantage. Victory's expandable recap
+lists every contributor by raid alias; the ordinary live board shows the Top 10.
+Use **Copy raid link** to invite the community. Errors remain until dismissed,
+retried, or resolved; a routine poll cannot erase an unsuccessful attack message.
+
 ## Why it should last several days
 
 With matching hits, every full ten-attack sequence deals 1,600 damage.
@@ -76,6 +91,11 @@ recorded locally; it is not a remote backup.
 planned deployment.** It includes the boss ID, HP, players, network hashes,
 receipts, allowances, timestamps, history, and account/session state. The
 ordinary race-only backup does not contain the game.
+
+The recovery panel tracks when an export was generated and the progress since
+then. Generation does not prove you saved the file off-host. Its review form
+checks a recovery JSON file and shows account/race/boss totals without importing
+anything. See `COMMUNITY_UPDATE.md` for the full recovery and storage explanation.
 
 On a fresh App Platform instance, `private/recovery.seed.json` is imported
 before the original seed. Existing local state always wins; a recovery file

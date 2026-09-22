@@ -26,7 +26,9 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
-from boss import BossError, CommunityBoss, DEFAULT_HP
+from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
+from presentation import changes, checkpoint_status, export_marker
+from store_schema import upgrade_store
 from race import calculate, empty, phase, token
 from race_support import (DEFAULT_PRIZES, WEIGHTING_RULES, TEXT_LIMITS, URL_FIELDS,
                           canonical_site, clean_overrides, clean_snapshots, csv_text,
@@ -65,6 +67,7 @@ def create_app(root=None, testing=False):
     app.extensions["settings"] = config
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
+    review_signer = URLSafeTimedSerializer(app.secret_key, salt="race-review-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
     dummy_hash = generate_password_hash(secrets.token_hex(16))
@@ -91,7 +94,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status):
@@ -138,12 +141,14 @@ def create_app(root=None, testing=False):
             "Cache-Control":"public, max-age=31536000, immutable" if request.path.startswith("/static/") and request.args.get("v") == assets else "no-store"})
         if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
+        if request.path == "/public-state" and response.status_code in {200, 304}:
+            response.headers["Cache-Control"] = "public, no-cache"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -153,7 +158,8 @@ def create_app(root=None, testing=False):
     def context():
         return dict(release=RELEASE, asset_version=assets, csrf=csrf, money=money, fmt_et=fmt_et,
                     local_input=local_input, tabs=TABS, weighting=WEIGHTING_RULES,
-                    local_storage=not runtime.store.pg, hosted_local=config.production and not runtime.store.pg)
+                    local_storage=not runtime.store.pg, hosted_local=config.production and not runtime.store.pg,
+                    boss_rules=boss_rules())
 
     @app.errorhandler(StoreError)
     def storage_error(error):
@@ -178,7 +184,23 @@ def create_app(root=None, testing=False):
 
     @app.get("/")
     def index():
-        return render_template("index.html", data=runtime.public())
+        return render_template("index.html", data=public_snapshot())
+
+    def public_snapshot():
+        value = runtime.public()
+        value["boss"] = boss.summary()
+        return value
+
+    @app.get("/public-state")
+    def public_state():
+        # The representation excludes the moving clock, so its strong ETag
+        # really describes identical bytes. Both 200 and 304 carry fresh time.
+        value = public_snapshot()
+        server_time = value.pop("server_time")
+        response = jsonify(value)
+        response.set_etag(token(value))
+        response.headers["X-Server-Time"] = str(server_time)
+        return response.make_conditional(request)
 
     def guest():
         if not hasattr(g, "guest"):
@@ -198,6 +220,15 @@ def create_app(root=None, testing=False):
     @app.get("/play/api/state")
     def boss_state():
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
+
+    @app.get("/play/api/contributors")
+    def boss_contributors():
+        # Keep a host restart from mixing one raid's ID with another's recap.
+        with boss.lock:
+            current = boss.summary()
+            if request.args.get("raid_id") != current["raid_id"] or current["status"] != "victory":
+                return json_error("The victory recap belongs to a completed raid. Refresh to see the current raid.", 409)
+            return jsonify(ok=True, raid_id=current["raid_id"], contributors=boss.contributors())
 
     @app.post("/play/api/attack")
     def boss_attack():
@@ -241,11 +272,17 @@ def create_app(root=None, testing=False):
         ok = value["freshness"]["state"] in {"current", "partial"} or value["site"]["race_state"] == "upcoming"
         return jsonify(ok=ok, data_state=value["freshness"]["state"]), 200 if ok else 503
 
-    def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200):
+    def recovery_status():
+        with runtime.lock:
+            return checkpoint_status(runtime.store.checkpoint(), runtime.admin, runtime.shuffle["rows"], boss.summary())
+
+    def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200,
+                     change_review=None, review_token=None, recovery_review=None):
         tab = tab or request.args.get("tab", "overview")
         if tab not in TABS:
             tab = "overview"
         values = runtime.status()
+        values["checkpoint"] = recovery_status() if g.superadmin else None
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
         form.update(start_et=local_input(form["start_time"]), end_et=local_input(form["end_time"]))
@@ -256,7 +293,9 @@ def create_app(root=None, testing=False):
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
-                               boss_data=boss.status() if tab == "boss" else None), status
+                               boss_data=boss.status() if tab == "boss" else None,
+                               change_review=change_review, review_token=review_token,
+                               recovery_review=recovery_review), status
 
     @app.post("/admin/boss/action")
     @protected
@@ -315,6 +354,7 @@ def create_app(root=None, testing=False):
     @protected
     def status():
         value = runtime.status()
+        value["checkpoint"] = recovery_status() if g.superadmin else None
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
         if request.args.get("tab", "players") == "players":
@@ -356,8 +396,33 @@ def create_app(root=None, testing=False):
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
             value["community_boss"] = boss.export()
+            marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
+            value["recovery_export"] = marker
+            runtime.store.checkpoint(marker)
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=recovery.seed.json"})
+
+    @app.post("/admin/recovery-preview")
+    @protected
+    def recovery_preview():
+        require_csrf()
+        if not g.superadmin:
+            abort(403)
+        try:
+            upload = request.files.get("recovery")
+            if not upload:
+                raise ValueError("Choose a private recovery JSON file.")
+            value, _ = upgrade_store(json.load(upload), config.site, {})
+            if not value["users"]:
+                raise ValueError("The recovery file contains no administrator accounts.")
+            game = validate_boss(value["community_boss"]) if value.get("community_boss") is not None else None
+            review = dict(accounts=len(value["users"]), overrides=len(value["overrides"]),
+                          history=len(value["race_history"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
+                          start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
+                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]))
+            return render_admin("settings", recovery_review=review)
+        except (ValueError, RuntimeError, UnicodeDecodeError) as exc:
+            return render_admin("settings", errors={"recovery":str(exc)}, status=422)
 
     @app.get("/admin/export.csv")
     @protected
@@ -437,8 +502,15 @@ def create_app(root=None, testing=False):
                     return render_admin("race", dict(request.form), errors, status=422)
                 site["prizes"] = {k: str(money_input(v)) for k, v in site["prizes"].items()}
                 changed_race = race_key(site) != race_key(candidate["site_settings"])
-                if changed_race and request.form.get("confirm_race") != "yes":
-                    return render_admin("race", dict(request.form), confirm_race=True)
+                review = changes(candidate["site_settings"], site)
+                expected_review = dict(user=g.user, revision=expected, site=site)
+                try:
+                    confirmed = request.form.get("confirm_race") == "yes" and review_signer.loads(request.form.get("review_token", ""), max_age=900) == expected_review
+                except BadSignature:
+                    confirmed = False
+                if review and not confirmed:
+                    return render_admin("race", dict(request.form), confirm_race=True, change_review=review,
+                                        review_token=review_signer.dumps(expected_review))
                 if changed_race:
                     old = safe_backup()
                     if candidate["site_settings"]["start_time"]:
@@ -497,7 +569,9 @@ def create_app(root=None, testing=False):
                         raise ValueError("Too many pending restores. Wait ten minutes and try again.")
                     previews[identifier] = dict(value=value, user=g.user, expires=time.time()+600, revision=expected)
                 return render_admin("settings", restore=dict(token=identifier, start=fmt_et(value["site_settings"]["start_time"]),
-                                    end=fmt_et(value["site_settings"]["end_time"]), rows=len(value["leaderboard_snapshots"]["last_top15"])))
+                                    end=fmt_et(value["site_settings"]["end_time"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
+                                    overrides=len(value["overrides"]), history=len(value["race_history"]),
+                                    changes=changes(g.admin["site_settings"], value["site_settings"])))
             elif action_name == "restore":
                 with auth_lock:
                     preview = previews.get(request.form.get("restore_token"))

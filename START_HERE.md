@@ -1,6 +1,6 @@
 # RedHunllef — start here
 
-Release **2026.09.22-boss**. No PostgreSQL service or DATABASE_URL is needed.
+Release **2026.09.22-no-regen**. No PostgreSQL service or DATABASE_URL is needed.
 Extract the complete folder. Install dependencies once:
 
 ```bash
@@ -45,11 +45,11 @@ there is no account-creation script or separate worker to run.
 The original seed saves August 4–11, 2026, 6 PM Eastern. To publish your desired
 schedule: **Race → Save race settings → Confirm and publish race** in the bottom
 bar. Verify **Published window**. Both providers update automatically every
-60 seconds. Read **Live update progress** for actual provider outcomes.
+60 seconds. Expand **Live connections** for actual provider outcomes.
 
 The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
 and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.22-boss**.
+the release label must show **2026.09.22-no-regen**.
 
 Open **/play** or click **Join the boss fight** on the homepage. In-game
 instructions explain attacks, weaknesses, Crimson burst, and the daily allowance.
@@ -63,3 +63,14 @@ attack receipts, and cooldowns. App Platform can lose changes after the last
 checkpoint if it replaces the container. No extra launch command is required.
 
 The Admin footer link is removed. Bookmark **/admin** for your dashboard.
+
+Boss health never regenerates. Every confirmed hit remains in the saved raid
+across refreshes, daily resets and process restarts with the same data. Only
+starting a new raid creates a fresh boss. The initial percentage now reflects
+saved HP immediately. Save recovery before App Platform redeploys: losing the
+local data file is separate from in-game health regeneration.
+
+This update adds mobile attack controls, cosmetic milestones and badges, the
+full victory contributor list, a live homepage boss invitation, compact admin
+connections, side-by-side change review, and recovery checkpoint tracking.
+See `docs/COMMUNITY_UPDATE.md` for all changes. No new process is needed.

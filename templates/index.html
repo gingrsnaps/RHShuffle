@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
-{% block attributes %}data-page="public" data-feed="/data" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
+{% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
 <main id="main" class="shell">
 <section class="hero"><div><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
 <aside class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside></section>
-<section class="play-invite panel" aria-labelledby="inviteTitle"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="60" height="60"><div><p class="eyebrow">ONE BOSS. THE WHOLE COMMUNITY.</p><h2 id="inviteTitle">Red needs a raid party.</h2><p>Pick a weapon. Land a hit. Help bring down the Crimson Hunllef together.</p></div><a class="button primary" href="/play">Join the boss fight <span aria-hidden="true">→</span></a></section>
+<section class="play-invite panel" aria-labelledby="inviteTitle">
+<img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="52" height="52">
+<div class="invite-copy"><p class="eyebrow">ONE BOSS. THE WHOLE COMMUNITY.</p><h2 id="inviteTitle">{{ 'The crew conquered Crimson.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
+<p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p>
+<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Community boss health"></progress></div>
+<a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Join the boss fight' }}</span> <span aria-hidden="true">→</span></a>
+</section>
 <section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
 <p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>

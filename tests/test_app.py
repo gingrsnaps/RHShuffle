@@ -60,6 +60,11 @@ class AppTests(unittest.TestCase):
             self.r.check("shuffle")
 
     def action(self, name, **values):
+        if name == 'save_race' and values.get('confirm_race') == 'yes' and 'review_token' not in values:
+            preview = self.action(name, **{k:v for k,v in values.items() if k != 'confirm_race'})
+            match = re.search('name="review_token" value="([^"]+)"', preview.text)
+            if match:
+                values['review_token'] = match.group(1)
         return self.client.post("/admin/action", data={"csrf":"test-token", "action":name, "tab":"settings",
                                                        "revision":self.r.revision, **values})
 

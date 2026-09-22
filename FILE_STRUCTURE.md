@@ -1,4 +1,4 @@
-# File structure — 2026.09.22-boss
+# File structure — 2026.09.22-no-regen
 
 Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
 
@@ -18,8 +18,10 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `boss.py` | Server-authoritative shared raid, atomic attacks, guest/network limits, recovery validation. |
 | `config.py` | Credential precedence, deployment configuration, fixed update interval. |
 | `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
+| `docs/COMMUNITY_UPDATE.md` | Approved community improvements, performance changes, upgrade notes and storage options. |
 | `docs/VALIDATION.md` | Test record and explicit verification limits. |
 | `integrations.py` | Bounded provider requests, response validation, Kick token renewal. |
+| `presentation.py` | Side-by-side change reviews and validated private recovery checkpoint summaries. |
 | `private/admin_store.seed.json` | Original account/password hash and saved state, unchanged. |
 | `private/settings.json` | Original configured Shuffle/Kick credentials and settings, unchanged. |
 | `race.py` | Source normalization, exact rankings, overrides, Code Red list, freshness. |
@@ -44,15 +46,19 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `templates/admin_settings.html` | Rendered admin settings template. |
 | `templates/base.html` | Rendered base template. |
 | `templates/boss.html` | Rendered boss template. |
+| `templates/change_review.html` | Rendered change review template. |
 | `templates/error.html` | Rendered error template. |
+| `templates/icons.html` | Rendered icons template. |
 | `templates/index.html` | Rendered index template. |
 | `templates/login.html` | Rendered login template. |
 | `templates/macros.html` | Rendered macros template. |
+| `templates/recovery_panel.html` | Rendered recovery panel template. |
 | `tests/package.json` | Optional development test dependency; no Node runtime needed by the site. |
 | `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
 | `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
 | `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
 | `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
+| `tests/test_community.py` | Conditional HTTP, signed review, badges, legacy preservation and recovery metadata regressions. |
 | `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
 | `tests/test_postgres.py` | Integration tests for a dedicated disposable PostgreSQL database. |
 | `wager_backend.py` | Only launch script; Waitress, routes, native login, admin actions, session protection. |

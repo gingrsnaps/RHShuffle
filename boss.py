@@ -21,9 +21,29 @@ COOLDOWN = 60
 DAILY_ATTACKS = 40
 DAY = 86400
 WARD_SECONDS = 600
+POLL_SECONDS = 5
+BASE_DAMAGE, WEAK_DAMAGE, BURST_EVERY, BURST_BONUS = 100, 150, 10, 100
+MAX_HIT = WEAK_DAMAGE + BURST_BONUS
 STYLES = {"blade": "Blade", "bow": "Bow", "magic": "Magic"}
 MAX_PLAYERS, MAX_NETWORKS = 2000, 4000
 TOKEN = re.compile(r"[a-f0-9]{64}\Z")
+
+
+def rules():
+    """One contract for server validation, page instructions, and browser labels."""
+    return dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, raid_day=DAY,
+                poll_seconds=POLL_SECONDS, ward_seconds=WARD_SECONDS, default_hp=DEFAULT_HP,
+                damage=BASE_DAMAGE, weak_damage=WEAK_DAMAGE, burst_every=BURST_EVERY,
+                burst_bonus=BURST_BONUS, styles=dict(STYLES))
+
+
+def badges(player):
+    hits, days = player.get("attacks", 0), player.get("active_days", 0)
+    return [dict(id=key, label=label, description=description, earned=earned) for key, label, description, earned in (
+        ("first", "First strike", "Land your first hit.", hits >= 1),
+        ("burst", "Crimson veteran", f"Land {10 * BURST_EVERY} hits for ten Crimson bursts.", hits >= 10 * BURST_EVERY),
+        ("loyal", "Three-day crew", "Land a hit on three different raid days.", days >= 3),
+    )]
 
 
 class BossError(ValueError):
@@ -80,12 +100,14 @@ def validate_boss(value):
     for player in players.values():
         _integer(player.get("attacks"), 1)
         _integer(player.get("damage"), 1, maximum)
+        if "active_days" in player:
+            _integer(player["active_days"], 1, player["attacks"])
         receipt = player.get("last_hit")
         if not isinstance(receipt, dict) or not isinstance(receipt.get("style"), str) or receipt["style"] not in STYLES:
             raise ValueError("The community boss recovery has an invalid attack receipt.")
         if not isinstance(player.get("request_id"), str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", player["request_id"]):
             raise ValueError("The community boss recovery has an invalid request receipt.")
-        _integer(receipt.get("damage"), 1, 250)
+        _integer(receipt.get("damage"), 1, MAX_HIT)
         _integer(receipt.get("at"))
         if type(receipt.get("weakness")) is not bool or type(receipt.get("burst")) is not bool:
             raise ValueError("The community boss recovery has an invalid attack bonus.")
@@ -97,7 +119,7 @@ def validate_boss(value):
     for hit in recent:
         if not isinstance(hit, dict) or not re.fullmatch(r"Raider [A-F0-9]{8}", str(hit.get("name", ""))) or not isinstance(hit.get("style"), str) or hit["style"] not in STYLES:
             raise ValueError("The community boss recovery has an invalid recent hit.")
-        _integer(hit.get("damage"), 1, 250)
+        _integer(hit.get("damage"), 1, MAX_HIT)
         _integer(hit.get("at"))
     for entry in history:
         if not isinstance(entry, dict) or entry.get("outcome") not in {"Victory", "Restarted"}:
@@ -146,7 +168,24 @@ class CommunityBoss:
             raise ValueError("Community boss state is missing. Restore the private recovery checkpoint.")
         return validate_boss(json.loads(row[0]))
 
-    def _write(self, conn, state):
+    def _write(self, conn, state, *, previous=None, new_raid=False):
+        """Only a deliberate new raid may replenish health.
+
+        Callers already hold the storage transaction. Compare against the row
+        read inside that transaction, never an older viewer/cache snapshot.
+        """
+        previous = self._read(conn, locked=True) if previous is None else previous
+        if state["id"] != previous["id"]:
+            if not new_raid:
+                raise BossError("Starting a new boss requires the host's new-raid action.", "new_raid_required", 409)
+        elif (state["max_hp"] != previous["max_hp"] or state["hp"] > previous["hp"]
+              or state["total_damage"] < previous["total_damage"]
+              or state["total_attacks"] < previous["total_attacks"]
+              or state["version"] < previous["version"]):
+            LOG.error("BOSS Blocked a progress reversal. Saved damage and health were not changed.")
+            raise BossError("Boss progress cannot move backwards. Existing damage was preserved.", "progress_reversal", 409)
+        if state["hp"] != state["max_hp"] - state["total_damage"]:
+            raise BossError("Boss health does not match saved damage. Existing progress was preserved.", "invalid_health", 409)
         self.store.query(conn, "UPDATE rh_boss SET document=? WHERE name=?",
                          (json.dumps(state, separators=(",", ":"), allow_nan=False), self.store.key))
 
@@ -154,7 +193,7 @@ class CommunityBoss:
         # Most 5-second viewer polls use memory, not another SQLite read. A
         # periodic reload also picks up writes from another process during tests
         # or a short deployment overlap. Local mode still requires one instance.
-        if force or time.monotonic() - self.loaded_at >= 5:
+        if force or time.monotonic() - self.loaded_at >= POLL_SECONDS:
             with self.store.connection() as conn:
                 self.state = self._read(conn)
             self.loaded_at = time.monotonic()
@@ -181,14 +220,36 @@ class CommunityBoss:
                     finished_at=state["finished_at"], day=day + 1, resets_at=reset,
                     total_damage=state["total_damage"], total_attacks=state["total_attacks"], raiders=len(state["players"]),
                     weakness=weakness, weakness_label=STYLES[weakness], ward_changes_at=(int(now) // WARD_SECONDS + 1) * WARD_SECONDS,
-                    rules=dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, damage=100, weak_damage=150, burst_every=10, burst_bonus=100),
+                    rules=rules(),
+                    milestones=[dict(percent=p, label=label, reached=state["total_damage"] * 100 >= state["max_hp"] * p)
+                                for p, label in ((25, "Armor cracked"), (50, "The crew rallies"), (75, "Final stand"), (100, "Crimson conquered"))],
                     you=dict(name=_name(player_key) if guest else "Spectator", damage=player.get("damage", 0),
                              attacks=player.get("attacks", 0), remaining=remaining, ready_at=ready,
-                             burst_in=10 - player.get("attacks", 0) % 10,
+                             burst_in=BURST_EVERY - player.get("attacks", 0) % BURST_EVERY,
+                             active_days=player.get("active_days", 1 if player else 0), badges=badges(player),
                              last_request=player.get("request_id", ""), last_hit=copy.deepcopy(player.get("last_hit")),
                              can_attack=bool(guest and status in {"waiting", "active"} and remaining and now >= ready)),
                     leaders=[dict(name=_name(key), damage=p["damage"], attacks=p["attacks"], you=key == player_key) for key, p in leaders],
                     recent=copy.deepcopy(state["recent"]), history=copy.deepcopy(state["history"]))
+
+    def summary(self):
+        """Small anonymous homepage projection: no guest, receipt, or network data."""
+        with self.lock:
+            self._load()
+            state = self.state
+            status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
+            return dict(raid_id=state["id"], hp=state["hp"], max_hp=state["max_hp"],
+                        status=status, raiders=len(state["players"]), total_attacks=state["total_attacks"],
+                        total_damage=state["total_damage"], version=state["version"])
+
+    def contributors(self):
+        """Victory recap includes every contributor, using only raid aliases."""
+        with self.lock:
+            self._load()
+            if self.state["hp"]:
+                return []
+            return [dict(name=_name(key), damage=p["damage"], attacks=p["attacks"])
+                    for key, p in sorted(self.state["players"].items(), key=lambda item: (-item[1]["damage"], item[0]))]
 
     def status(self, guest=None, address=None):
         with self.lock:
@@ -221,7 +282,7 @@ class CommunityBoss:
                     raise BossError("The host paused the raid." if state["paused"] and state["hp"] else "The community has already defeated this boss.", view["status"], 409)
                 if not view["you"]["can_attack"]:
                     retry = max(1, math.ceil(view["you"]["ready_at"] - now))
-                    message = "Your browser or shared connection has used today's 40 attacks. Return next raid day." if not view["you"]["remaining"] else "Your browser or shared connection is cooling down. Wait for the timer."
+                    message = f"Your browser or shared connection has used today's {DAILY_ATTACKS} attacks. Return next raid day." if not view["you"]["remaining"] else "Your browser or shared connection is cooling down. Wait for the timer."
                     raise BossError(message, "daily_limit" if not view["you"]["remaining"] else "cooldown", 429, retry)
                 day = view["day"] - 1
                 state["networks"] = {key: p for key, p in state["networks"].items() if p["day"] >= day - 1}
@@ -229,9 +290,13 @@ class CommunityBoss:
                     raise BossError("This raid has reached its player capacity. The host can start a new raid.", "capacity", 409)
                 player = state["players"].setdefault(pk, dict(attacks=0, damage=0))
                 network = state["networks"].setdefault(nk, {})
-                burst = (player["attacks"] + 1) % 10 == 0
+                # Older saves cannot reconstruct every past participation day.
+                # Credit one known day, then count future distinct days exactly.
+                active_days = player.get("active_days", 1 if player["attacks"] else 0)
+                player["active_days"] = active_days + int(player.get("day") != day)
+                burst = (player["attacks"] + 1) % BURST_EVERY == 0
                 weak = style == view["weakness"]
-                damage = min(state["hp"], (150 if weak else 100) + (100 if burst else 0))
+                damage = min(state["hp"], (WEAK_DAMAGE if weak else BASE_DAMAGE) + (BURST_BONUS if burst else 0))
                 hit = dict(style=style, damage=damage, weakness=weak, burst=burst, at=int(now))
                 for record in (player, network):
                     record.update(used=(record.get("used", 0) if record.get("day") == day else 0) + 1,
@@ -240,18 +305,22 @@ class CommunityBoss:
                 # the server-enforced cooldown.
                 player.update(attacks=player["attacks"] + 1, damage=player["damage"] + damage,
                               request_id=request_id, last_hit=hit)
-                state.update(hp=state["hp"] - damage, total_damage=state["total_damage"] + damage,
+                # Cumulative committed damage is never reset by cooldowns,
+                # weakness rotations, midnight, idle time, or source refreshes.
+                total_damage = state["total_damage"] + damage
+                state.update(hp=state["max_hp"] - total_damage, total_damage=total_damage,
                              total_attacks=state["total_attacks"] + 1, version=state["version"] + 1,
                              started_at=state["started_at"] or int(now))
                 state["recent"] = [dict(name=_name(pk), **hit)] + state["recent"][:11]
                 if not state["hp"]:
                     state["finished_at"] = int(now)
-                self._write(conn, state)
+                self._write(conn, state, previous=self.state)
             self.state, self.loaded_at = state, time.monotonic()
             if state["finished_at"]:
                 LOG.info("BOSS Victory; %s attacks from %s raider profiles.", state["total_attacks"], len(state["players"]))
             elif state["total_attacks"] == 1:
-                LOG.info("BOSS Shared raid started; HP=%s, cooldown=60s, daily attacks=40.", state["max_hp"])
+                LOG.info("BOSS Shared raid started; HP=%s, cooldown=%ss, daily attacks=%s; health regeneration=off.",
+                         state["max_hp"], COOLDOWN, DAILY_ATTACKS)
             return dict(ok=True, duplicate=False, hit=hit, state=self._project(state, guest, address, now))
 
     def control(self, action, raid_id, health=DEFAULT_HP):
@@ -264,6 +333,7 @@ class CommunityBoss:
                 state = self._read(conn, locked=True)
                 if state["id"] != raid_id:
                     raise BossError("Another raid has started. Reload before changing it.", "new_raid", 409)
+                previous = copy.deepcopy(state)
                 if action == "restart":
                     self.store.backup_in(conn, "before-boss-restart", {"community_boss": state})
                     history = state["history"]
@@ -274,6 +344,6 @@ class CommunityBoss:
                     state = fresh_raid(health=health, history=history)
                 else:
                     state["paused"], state["version"] = action == "pause", state["version"] + 1
-                self._write(conn, state)
+                self._write(conn, state, previous=previous, new_raid=action == "restart")
             self.state, self.loaded_at = state, time.monotonic()
         LOG.info("BOSS Host action: %s.", action)

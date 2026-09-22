@@ -225,3 +225,28 @@ test('a manual refresh during an in-flight status read schedules an immediate fo
     assert.match(p.window.document.getElementById('toast').textContent,/Refresh finished\. See the update result/);
   } finally {p.close();}
 });
+
+test('conditional public updates reuse the cached body and take a fresh server clock',async()=>{
+  const p=page('public');await flush();let reads=0;
+  const payload=structuredClone(p.feed);delete payload.server_time;
+  p.respond(async()=>{
+    reads++;
+    return reads===1?{status:200,ok:true,headers:new Map([['content-type','application/json'],['ETag','"same-public-state"'],['X-Server-Time',String(p.feed.server_time+60)]]),json:async()=>payload}:
+      {status:304,ok:false,headers:new Map([['ETag','"same-public-state"'],['X-Server-Time',String(p.feed.server_time+120)]]),json:async()=>{throw Error('304 has no JSON body');}};
+  });
+  await p.advance(60000);const before=p.window.document.querySelector('#countdown').textContent;
+  await p.advance(60000);await p.tick();
+  assert.equal(p.calls.at(-1).options.headers['If-None-Match'],'"same-public-state"');
+  assert.equal(p.window.document.querySelector('#networkError').hidden,true);
+  assert.notEqual(p.window.document.querySelector('#countdown').textContent,before);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('homepage invitation follows boss health and paused or completed status',async()=>{
+  const p=page('public');await flush();p.feed.boss.hp=1200000;p.feed.boss.status='paused';p.feed.boss.raiders=37;
+  await p.advance(60000);
+  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/pause|View/i);
+  assert.match(p.window.document.querySelector('#inviteProgress').textContent,/37/);
+  p.feed.boss.hp=0;p.feed.boss.status='victory';await p.advance(60000);
+  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);p.close();
+});

@@ -1,6 +1,966 @@
 /* A small CSS arena using the original logo; no canvas engine or image bundle. */
-.boss-page{padding-top:40px}.boss-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:30px}.boss-heading h1{font-size:clamp(2.3rem,4vw,3.6rem);margin:16px 0}.boss-heading .lead{max-width:520px;margin-bottom:0}.boss-heading>a{white-space:nowrap;margin-bottom:5px}.boss-live{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.72rem;margin-bottom:16px}.boss-live>span:first-child{color:var(--accent)}.raid-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px}.arena{padding:24px 28px;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#671c253d,transparent 65%),#191216}.arena-heading,.boss-name-row,.hp-label,.combo-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.arena-heading .eyebrow{font-size:.6rem}.boss-stage{height:280px;display:grid;place-items:center;position:relative;isolation:isolate}.boss-sprite{object-fit:contain;width:190px;height:190px;image-rendering:pixelated;filter:drop-shadow(0 15px 25px #ff24243d);z-index:1;animation:boss-hover 4s ease-in-out infinite}.rune-ring{position:absolute;border:1px solid #bb35375c;border-radius:50%;width:254px;height:254px;box-shadow:0 0 45px #ff323210,inset 0 0 38px #f33b3810}.rune-ring.inner{width:220px;height:220px;border-style:dashed;opacity:.55;animation:ring-turn 80s linear infinite}.arena-rune{position:absolute;color:#ff666d;font-size:22px;opacity:.65}.rune-one{left:15%;top:30%}.rune-two{right:14%;bottom:23%}.boss-shadow{position:absolute;bottom:20px;background:#0006;width:145px;height:18px;border-radius:50%;filter:blur(6px)}.boss-name-row{margin-top:8px}.boss-name-row h2{font-size:1.6rem}.boss-name-row .eyebrow{font-size:.57rem;margin-bottom:4px}.hp-label{font-size:.77rem;margin:10px 0 8px;font-variant-numeric:tabular-nums}.hp-label>span{color:var(--muted)}.health-bar{appearance:none;-webkit-appearance:none;width:100%;height:12px;border:none;border-radius:8px;background:#382128;overflow:hidden;display:block;accent-color:#ff3a47}.health-bar::-webkit-progress-bar{background:#382128;border-radius:8px}.health-bar::-webkit-progress-value{background:linear-gradient(90deg,#b91732,#ff4a51);border-radius:8px;transition:width .45s}.health-bar::-moz-progress-bar{background:linear-gradient(90deg,#b91732,#ff4a51);border-radius:8px}.boss-story{color:var(--muted);font-size:.75rem;margin:14px 0 20px;min-height:2.8em}.raid-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);padding-top:18px;gap:14px}.raid-stats strong,.personal-stats strong{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums;letter-spacing:-.035em}.raid-stats span,.personal-stats span{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}.attack-panel{padding:26px}.attack-panel>.row{align-items:flex-start}.attack-panel .eyebrow{font-size:.59rem}.attack-panel h2{font-size:1.65rem;margin-top:5px}.weakness-box{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid #73402f;background:linear-gradient(105deg,#40261d,#291c19);border-radius:10px;margin:22px 0 17px}.weakness-symbol{font-size:2.1rem;color:#ffcd86}.weakness-box small,.weakness-box strong,.weakness-box div>span{display:block}.weakness-box small{font-size:.56rem;letter-spacing:.13em;color:#e3b777}.weakness-box strong{font-size:.93rem;color:#ffe5c1;margin:3px 0}.weakness-box div>span{font-size:.65rem;color:#c5ae99}.strike-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.strike-options button{border:1px solid var(--line);border-radius:10px;background:#21161c;color:var(--text);padding:12px 6px;position:relative}.strike-options button[aria-pressed=true]{border-color:var(--accent);background:#481f2b;box-shadow:inset 0 0 0 1px var(--accent)}.strike-options button.is-weak:after{content:'WEAK';position:absolute;right:5px;top:5px;font-size:.42rem;letter-spacing:.05em;color:#ffd397}.strike-options button>span{display:block;font-size:1.65rem;line-height:1.2;margin:4px 0 7px;color:#ffd5d7}.strike-options strong{display:block;font-size:.8rem}.strike-options small{display:block;font-size:.55rem;color:var(--muted);margin-top:4px}.combo-row{font-size:.65rem;margin:20px 0 8px}.combo-row>span{color:var(--muted)}.burst-meter{display:flex;gap:4px}.burst-meter span{height:5px;flex:1;background:#462632;border-radius:2px}.burst-meter span.filled{background:var(--accent);box-shadow:0 0 8px #ff2d2d25}.attack-button{width:100%;min-height:53px;font-size:.98rem;margin-top:22px}.attack-button:disabled{cursor:default;opacity:.6}.attack-hint{text-align:center;color:var(--muted);font-size:.64rem;margin:9px 0 0}.hit-result{min-height:2.8em;font-size:.78rem;text-align:center;color:var(--accent);margin:16px 0}.personal-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);padding-top:14px;gap:15px}.raider-name{color:var(--muted);font-size:.62rem;margin:14px 0 5px}.raider-name strong{color:#eed5dd}.attack-panel>#raidReset{font-size:.6rem;margin-bottom:0}.hit-float{position:absolute;z-index:3;top:30%;left:50%;font-size:2.4rem;font-weight:850;color:#ffe7ae;opacity:0;pointer-events:none;text-shadow:0 3px 12px #270008}.boss-stage.struck .hit-float{animation:damage-pop .8s ease-out}.boss-stage.struck .boss-sprite{animation:boss-hit .45s ease-out}.boss-stage.victory .boss-sprite{filter:grayscale(.8);opacity:.6;animation:none;transform:rotate(-9deg)}.arena:has(.victory){border-color:#a6753e}.instructions{padding:28px;margin-top:24px;scroll-margin-top:95px}.instruction-grid{list-style:none;counter-reset:steps;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:0;margin:24px 0}.instruction-grid li{counter-increment:steps}.instruction-grid li:before{content:'0' counter(steps);display:block;color:var(--accent);font-size:.8rem;font-weight:750;margin-bottom:10px}.instruction-grid strong{font-size:.93rem}.instruction-grid p{color:var(--muted);font-size:.79rem;margin:9px 0 0}.instruction-grid b{color:#f0d9de;font-weight:550}.raid-fineprint{border-top:1px solid var(--line);padding-top:18px;display:grid;gap:10px}.raid-fineprint p{font-size:.71rem;color:var(--muted);margin:0}.raid-fineprint strong{color:#e9cdd4}.raid-bottom{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}.raid-list{padding:25px}.raid-list h2{font-size:1.45rem}.combat-list{list-style:none;padding:0;margin:19px 0}.combat-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #35232b;padding:11px 0;font-size:.76rem}.combat-list li:last-child{border:0}.combat-list strong{font-size:.8rem;font-weight:600}.combat-list small{display:block;color:var(--muted);font-size:.61rem;margin-top:3px}.combat-list .score{color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}.combat-list .self strong{color:#ffb8bf}.raid-history{margin-top:22px;padding:18px 24px;font-size:.82rem}.boss-restart{display:grid;gap:18px;max-width:500px;margin-top:22px}.boss-confirm{display:flex;align-items:flex-start;gap:10px;font-size:.78rem}.boss-confirm input{width:18px;min-height:18px;margin-top:2px;accent-color:var(--action)}
-@keyframes boss-hover{50%{transform:translateY(-8px)}}@keyframes ring-turn{to{transform:rotate(360deg)}}@keyframes boss-hit{25%{transform:translateX(-9px) rotate(-4deg)}60%{transform:translateX(6px) rotate(3deg)}}@keyframes damage-pop{0%{opacity:1;transform:translate(-50%,0) scale(.8)}25%{opacity:1;transform:translate(-50%,-15px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-65px) scale(1)}}
-@media(max-width:850px){.raid-layout{grid-template-columns:1fr 1fr;gap:16px}.arena{padding:21px}.attack-panel{padding:21px}.boss-stage{height:255px}.boss-sprite{width:165px;height:165px}.rune-ring{width:215px;height:215px}.rune-ring.inner{width:185px;height:185px}.boss-name-row{align-items:flex-start;flex-direction:column;gap:0}.arena-heading{flex-wrap:wrap}.arena-heading .badge{font-size:.61rem}.instructions{padding:23px}.instruction-grid{gap:20px}.raid-stats strong{font-size:1.1rem}}
-@media(max-width:650px){.boss-page{padding-top:28px}.boss-heading{display:block;margin-bottom:22px}.boss-heading .lead{font-size:.87rem;margin-bottom:15px}.boss-heading h1{font-size:2.6rem}.boss-live{flex-direction:column;gap:4px;font-size:.66rem}.raid-layout,.raid-bottom{grid-template-columns:1fr}.arena{padding:20px}.boss-stage{height:245px}.boss-name-row{flex-direction:row;align-items:center;gap:10px}.boss-name-row h2{font-size:1.5rem}.arena-heading{flex-wrap:nowrap}.attack-panel{padding:24px}.raid-stats strong{font-size:1.25rem}.instruction-grid{grid-template-columns:1fr;gap:22px}.instructions .section-title{align-items:flex-start;flex-direction:column}.instruction-grid li:before{float:left;margin:0 15px 35px 0}.raid-list{padding:22px}.raid-bottom{gap:16px}.hp-label{font-size:.73rem}.boss-heading .text-link{font-size:.8rem}}
-@media(prefers-reduced-motion:reduce){.boss-sprite,.rune-ring.inner,.boss-stage.struck .hit-float,.boss-stage.struck .boss-sprite{animation:none!important}.health-bar::-webkit-progress-value{transition:none}}
+.boss-page {
+  padding-top: 40px;
+}
+.boss-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+.boss-heading h1 {
+  font-size: clamp(2.3rem, 4vw, 3.6rem);
+  margin: 16px 0;
+}
+.boss-heading .lead {
+  max-width: 520px;
+  margin-bottom: 0;
+}
+.boss-heading > a {
+  white-space: nowrap;
+  margin-bottom: 5px;
+}
+.boss-live {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-bottom: 16px;
+}
+.boss-live > span:first-child {
+  color: var(--accent);
+}
+.raid-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 22px;
+}
+.arena {
+  padding: 24px 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 30%, #671c253d, transparent 65%), #191216;
+}
+.arena-heading,
+.boss-name-row,
+.hp-label,
+.combo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.arena-heading .eyebrow {
+  font-size: 0.6rem;
+}
+.boss-stage {
+  height: 280px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  isolation: isolate;
+}
+.boss-sprite {
+  object-fit: contain;
+  width: 190px;
+  height: 190px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 15px 25px #ff24243d);
+  z-index: 1;
+  animation: boss-hover 4s ease-in-out infinite;
+}
+.rune-ring {
+  position: absolute;
+  border: 1px solid #bb35375c;
+  border-radius: 50%;
+  width: 254px;
+  height: 254px;
+  box-shadow:
+    0 0 45px #ff323210,
+    inset 0 0 38px #f33b3810;
+}
+.rune-ring.inner {
+  width: 220px;
+  height: 220px;
+  border-style: dashed;
+  opacity: 0.55;
+  animation: ring-turn 80s linear infinite;
+}
+.arena-rune {
+  position: absolute;
+  color: #ff666d;
+  font-size: 22px;
+  opacity: 0.65;
+}
+.rune-one {
+  left: 15%;
+  top: 30%;
+}
+.rune-two {
+  right: 14%;
+  bottom: 23%;
+}
+.boss-shadow {
+  position: absolute;
+  bottom: 20px;
+  background: #0006;
+  width: 145px;
+  height: 18px;
+  border-radius: 50%;
+  filter: blur(6px);
+}
+.boss-name-row {
+  margin-top: 8px;
+}
+.boss-name-row h2 {
+  font-size: 1.6rem;
+}
+.boss-name-row .eyebrow {
+  font-size: 0.57rem;
+  margin-bottom: 4px;
+}
+.hp-label {
+  font-size: 0.77rem;
+  margin: 10px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.hp-label > span {
+  color: var(--muted);
+}
+.health-bar {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #382128;
+  overflow: hidden;
+  display: block;
+  accent-color: #ff3a47;
+}
+.health-bar::-webkit-progress-bar {
+  background: #382128;
+  border-radius: 8px;
+}
+.health-bar::-webkit-progress-value {
+  background: linear-gradient(90deg, #b91732, #ff4a51);
+  border-radius: 8px;
+  transition: width 0.45s;
+}
+.health-bar::-moz-progress-bar {
+  background: linear-gradient(90deg, #b91732, #ff4a51);
+  border-radius: 8px;
+}
+.boss-story {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin: 14px 0 20px;
+  min-height: 2.8em;
+}
+.raid-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  gap: 14px;
+}
+.raid-stats strong,
+.personal-stats strong {
+  display: block;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+.raid-stats span,
+.personal-stats span {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.attack-panel {
+  padding: 26px;
+}
+.attack-panel > .row {
+  align-items: flex-start;
+}
+.attack-panel .eyebrow {
+  font-size: 0.59rem;
+}
+.attack-panel h2 {
+  font-size: 1.65rem;
+  margin-top: 5px;
+}
+.weakness-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #73402f;
+  background: linear-gradient(105deg, #40261d, #291c19);
+  border-radius: 10px;
+  margin: 22px 0 17px;
+}
+.weakness-symbol {
+  font-size: 2.1rem;
+  color: #ffcd86;
+}
+.weakness-box small,
+.weakness-box strong,
+.weakness-box div > span {
+  display: block;
+}
+.weakness-box small {
+  font-size: 0.56rem;
+  letter-spacing: 0.13em;
+  color: #e3b777;
+}
+.weakness-box strong {
+  font-size: 0.93rem;
+  color: #ffe5c1;
+  margin: 3px 0;
+}
+.weakness-box div > span {
+  font-size: 0.65rem;
+  color: #c5ae99;
+}
+.strike-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.strike-options button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #21161c;
+  color: var(--text);
+  padding: 12px 6px;
+  position: relative;
+}
+.strike-options button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #481f2b;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.strike-options button.is-weak:after {
+  content: "WEAK";
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  font-size: 0.42rem;
+  letter-spacing: 0.05em;
+  color: #ffd397;
+}
+.strike-options button > span {
+  display: block;
+  font-size: 1.65rem;
+  line-height: 1.2;
+  margin: 4px 0 7px;
+  color: #ffd5d7;
+}
+.strike-options strong {
+  display: block;
+  font-size: 0.8rem;
+}
+.strike-options small {
+  display: block;
+  font-size: 0.55rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.combo-row {
+  font-size: 0.65rem;
+  margin: 20px 0 8px;
+}
+.combo-row > span {
+  color: var(--muted);
+}
+.burst-meter {
+  display: flex;
+  gap: 4px;
+}
+.burst-meter span {
+  height: 5px;
+  flex: 1;
+  background: #462632;
+  border-radius: 2px;
+}
+.burst-meter span.filled {
+  background: var(--accent);
+  box-shadow: 0 0 8px #ff2d2d25;
+}
+.attack-button {
+  width: 100%;
+  min-height: 53px;
+  font-size: 0.98rem;
+  margin-top: 22px;
+}
+.attack-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.attack-hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.64rem;
+  margin: 9px 0 0;
+}
+.hit-result {
+  min-height: 2.8em;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--accent);
+  margin: 16px 0;
+}
+.personal-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  gap: 15px;
+}
+.raider-name {
+  color: var(--muted);
+  font-size: 0.62rem;
+  margin: 14px 0 5px;
+}
+.raider-name strong {
+  color: #eed5dd;
+}
+.attack-panel > #raidReset {
+  font-size: 0.6rem;
+  margin-bottom: 0;
+}
+.hit-float {
+  position: absolute;
+  z-index: 3;
+  top: 30%;
+  left: 50%;
+  font-size: 2.4rem;
+  font-weight: 850;
+  color: #ffe7ae;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 3px 12px #270008;
+}
+.boss-stage.struck .hit-float {
+  animation: damage-pop 0.8s ease-out;
+}
+.boss-stage.struck .boss-sprite {
+  animation: boss-hit 0.45s ease-out;
+}
+.boss-stage.victory .boss-sprite {
+  filter: grayscale(0.8);
+  opacity: 0.6;
+  animation: none;
+  transform: rotate(-9deg);
+}
+.arena:has(.victory) {
+  border-color: #a6753e;
+}
+.instructions {
+  padding: 28px;
+  margin-top: 24px;
+  scroll-margin-top: 95px;
+}
+.instruction-grid {
+  list-style: none;
+  counter-reset: steps;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  padding: 0;
+  margin: 24px 0;
+}
+.instruction-grid li {
+  counter-increment: steps;
+}
+.instruction-grid li:before {
+  content: "0" counter(steps);
+  display: block;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 750;
+  margin-bottom: 10px;
+}
+.instruction-grid strong {
+  font-size: 0.93rem;
+}
+.instruction-grid p {
+  color: var(--muted);
+  font-size: 0.79rem;
+  margin: 9px 0 0;
+}
+.instruction-grid b {
+  color: #f0d9de;
+  font-weight: 550;
+}
+.raid-fineprint {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+.raid-fineprint p {
+  font-size: 0.71rem;
+  color: var(--muted);
+  margin: 0;
+}
+.raid-fineprint strong {
+  color: #e9cdd4;
+}
+.raid-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 24px;
+}
+.raid-list {
+  padding: 25px;
+}
+.raid-list h2 {
+  font-size: 1.45rem;
+}
+.combat-list {
+  list-style: none;
+  padding: 0;
+  margin: 19px 0;
+}
+.combat-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #35232b;
+  padding: 11px 0;
+  font-size: 0.76rem;
+}
+.combat-list li:last-child {
+  border: 0;
+}
+.combat-list strong {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.combat-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.61rem;
+  margin-top: 3px;
+}
+.combat-list .score {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.combat-list .self strong {
+  color: #ffb8bf;
+}
+.raid-history {
+  margin-top: 22px;
+  padding: 18px 24px;
+  font-size: 0.82rem;
+}
+.boss-restart {
+  display: grid;
+  gap: 18px;
+  max-width: 500px;
+  margin-top: 22px;
+}
+.boss-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+.boss-confirm input {
+  width: 18px;
+  min-height: 18px;
+  margin-top: 2px;
+  accent-color: var(--action);
+}
+@keyframes boss-hover {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes ring-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes boss-hit {
+  25% {
+    transform: translateX(-9px) rotate(-4deg);
+  }
+  60% {
+    transform: translateX(6px) rotate(3deg);
+  }
+}
+@keyframes damage-pop {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(0.8);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -15px) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -65px) scale(1);
+  }
+}
+@media (max-width: 850px) {
+  .raid-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .arena {
+    padding: 21px;
+  }
+  .attack-panel {
+    padding: 21px;
+  }
+  .boss-stage {
+    height: 255px;
+  }
+  .boss-sprite {
+    width: 165px;
+    height: 165px;
+  }
+  .rune-ring {
+    width: 215px;
+    height: 215px;
+  }
+  .rune-ring.inner {
+    width: 185px;
+    height: 185px;
+  }
+  .boss-name-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+  }
+  .arena-heading {
+    flex-wrap: wrap;
+  }
+  .arena-heading .badge {
+    font-size: 0.61rem;
+  }
+  .instructions {
+    padding: 23px;
+  }
+  .instruction-grid {
+    gap: 20px;
+  }
+  .raid-stats strong {
+    font-size: 1.1rem;
+  }
+}
+@media (max-width: 650px) {
+  .boss-page {
+    padding-top: 28px;
+  }
+  .boss-heading {
+    display: block;
+    margin-bottom: 22px;
+  }
+  .boss-heading .lead {
+    font-size: 0.87rem;
+    margin-bottom: 15px;
+  }
+  .boss-heading h1 {
+    font-size: 2.6rem;
+  }
+  .boss-live {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.66rem;
+  }
+  .raid-layout,
+  .raid-bottom {
+    grid-template-columns: 1fr;
+  }
+  .arena {
+    padding: 20px;
+  }
+  .boss-stage {
+    height: 245px;
+  }
+  .boss-name-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .boss-name-row h2 {
+    font-size: 1.5rem;
+  }
+  .arena-heading {
+    flex-wrap: nowrap;
+  }
+  .attack-panel {
+    padding: 24px;
+  }
+  .raid-stats strong {
+    font-size: 1.25rem;
+  }
+  .instruction-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .instructions .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .instruction-grid li:before {
+    float: left;
+    margin: 0 15px 35px 0;
+  }
+  .raid-list {
+    padding: 22px;
+  }
+  .raid-bottom {
+    gap: 16px;
+  }
+  .hp-label {
+    font-size: 0.73rem;
+  }
+  .boss-heading .text-link {
+    font-size: 0.8rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boss-sprite,
+  .rune-ring.inner,
+  .boss-stage.struck .hit-float,
+  .boss-stage.struck .boss-sprite {
+    animation: none !important;
+  }
+  .health-bar::-webkit-progress-value {
+    transition: none;
+  }
+}
+
+/* Milestones and badges are cosmetic; the server's damage rules stay fixed. */
+.boss-stage[data-milestone="25"] .rune-ring {
+  border-color: #d6485799;
+}
+.boss-stage[data-milestone="50"] .rune-ring {
+  border-color: #ff647599;
+  box-shadow:
+    0 0 55px #ff303033,
+    inset 0 0 45px #ff404026;
+}
+.boss-stage[data-milestone="75"] .rune-ring {
+  border-color: #ffab8aaa;
+  box-shadow:
+    0 0 65px #ff32324d,
+    inset 0 0 45px #f336363d;
+}
+.boss-stage[data-milestone="100"] .rune-ring {
+  border-color: #ffce83aa;
+  box-shadow: 0 0 50px #ffd07a24;
+}
+.milestone-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 15px 0;
+}
+.milestone-rail li {
+  font-size: 0.7rem;
+  color: var(--muted);
+  border-left: 2px solid #653141;
+  padding-left: 8px;
+}
+.milestone-rail li > span {
+  display: block;
+}
+.milestone-rail strong {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+.milestone-rail small {
+  display: block;
+  font-size: 0.66rem;
+  margin: 4px 0;
+  min-height: 2.7em;
+}
+.milestone-rail .score {
+  font-size: 0.64rem;
+}
+.milestone-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: #4b2630;
+  border: 1px solid #ff8b89;
+  border-radius: 12px;
+  padding: 15px 18px;
+  margin-bottom: 18px;
+  font-size: 0.91rem;
+}
+.dismiss-error {
+  display: block;
+  margin: -11px 0 18px;
+  color: var(--accent);
+  padding-left: 0;
+}
+.raid-recognition,
+.victory-recap {
+  padding: 25px;
+  margin-top: 24px;
+}
+.raid-recognition h2,
+.victory-recap h2 {
+  font-size: 1.45rem;
+}
+.share-tools {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 7px;
+}
+.share-tools input {
+  max-width: 330px;
+}
+.share-tools #shareResult {
+  max-width: 300px;
+  text-align: right;
+}
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 14px;
+}
+.badge-grid li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #20171d;
+}
+.badge-grid li.earned {
+  border-color: #ba7154;
+  background: linear-gradient(120deg, #442822, #27191d);
+}
+.badge-grid strong {
+  font-size: 0.82rem;
+  display: block;
+}
+.badge-grid small {
+  display: block;
+  font-size: 0.73rem;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.badge-grid .score {
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+.badge-grid .earned .score {
+  color: #ffd18b;
+}
+.victory-recap {
+  border-color: #b6874d;
+  background: linear-gradient(120deg, #3c291c, #251920);
+}
+.victory-recap > p {
+  color: #e5c5a2;
+}
+.victory-recap details {
+  padding-top: 15px;
+  border-top: 1px solid #7b503f;
+}
+.victory-recap #allContributors {
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 10px;
+}
+.personal-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.personal-stats strong {
+  font-size: 1.2rem;
+}
+.personal-stats span,
+.raid-stats span {
+  font-size: 0.75rem;
+}
+.raider-name {
+  font-size: 0.75rem;
+}
+.attack-panel > #raidReset {
+  font-size: 0.72rem;
+}
+.attack-hint {
+  font-size: 0.75rem;
+}
+.attack-panel .eyebrow,
+.arena-heading .eyebrow {
+  font-size: 0.66rem;
+}
+.strike-options small {
+  font-size: 0.65rem;
+}
+.strike-options strong {
+  font-size: 0.87rem;
+}
+.weakness-box small {
+  font-size: 0.65rem;
+}
+.weakness-box div > span,
+.combo-row {
+  font-size: 0.75rem;
+}
+.raid-fineprint p,
+.combat-list small {
+  font-size: 0.78rem;
+}
+.combat-list li {
+  font-size: 0.85rem;
+}
+.combat-list strong {
+  font-size: 0.88rem;
+}
+.boss-story {
+  font-size: 0.84rem;
+}
+.instruction-grid p {
+  font-size: 0.9rem;
+}
+.boss-live {
+  font-size: 0.78rem;
+}
+.raid-list .eyebrow {
+  font-size: 0.7rem;
+}
+.mobile-attack-dock {
+  display: none;
+}
+.strike-options .ui-icon {
+  display: block;
+  margin: 0 auto;
+}
+.boss-page .footer {
+  padding-bottom: 30px;
+}
+@media (max-width: 800px) {
+  .badge-grid {
+    grid-template-columns: 1fr;
+  }
+  .badge-grid small {
+    margin-top: 4px;
+  }
+  .raid-recognition .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .share-tools {
+    align-items: flex-start;
+  }
+  .share-tools #shareResult {
+    text-align: left;
+  }
+}
+@media (max-width: 650px) {
+  body[data-page="boss"] {
+    padding-bottom: 116px;
+  }
+  .mobile-attack-dock {
+    display: flex;
+    position: fixed;
+    z-index: 6;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 13px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: #22141cf5;
+    border-top: 1px solid #a95361;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -8px 25px #0005;
+  }
+  .mobile-attack-dock > div {
+    width: 125px;
+    flex-shrink: 0;
+  }
+  .mobile-attack-dock label {
+    font-size: 0.66rem;
+    display: block;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .mobile-attack-dock select {
+    padding: 6px 9px;
+    min-height: 34px;
+    font-size: 0.8rem;
+  }
+  .mobile-attack-dock small {
+    font-size: 0.64rem;
+    color: var(--muted);
+    display: block;
+    margin-top: 4px;
+  }
+  .mobile-attack-dock .button {
+    flex: 1;
+    white-space: normal;
+    min-height: 49px;
+    padding: 10px 8px;
+    font-size: 0.78rem;
+  }
+  .milestone-rail {
+    gap: 5px;
+  }
+  .milestone-rail small {
+    font-size: 0.65rem;
+  }
+  .milestone-rail li {
+    padding-left: 5px;
+  }
+  .personal-stats strong {
+    font-size: 1.15rem;
+  }
+  .raid-recognition,
+  .victory-recap {
+    padding: 22px;
+  }
+  .badge-grid strong {
+    font-size: 0.87rem;
+  }
+  .badge-grid small {
+    font-size: 0.8rem;
+  }
+  .attack-panel .eyebrow {
+    font-size: 0.62rem;
+  }
+  .attack-panel {
+    padding: 22px;
+  }
+  .raid-fineprint p {
+    font-size: 0.8rem;
+  }
+  .combat-list small {
+    font-size: 0.72rem;
+  }
+  .boss-heading .lead {
+    font-size: 0.94rem;
+  }
+}

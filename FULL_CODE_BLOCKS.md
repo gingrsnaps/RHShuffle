@@ -1,6 +1,6 @@
 # RedHunllef — complete configured source
 
-Release **2026.09.22-boss**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
+Release **2026.09.22-no-regen**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
 
 Start with README.md and FILE_STRUCTURE.md. The only launch command is `python wager_backend.py`. FULL_CODE_BLOCKS.md is this generated document and is not recursively repeated inside itself.
 
@@ -85,7 +85,54 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
-# Changes — 2026.09.22-boss
+# Changes — 2026.09.22-no-regen
+
+No-regeneration guard: the server rejects same-raid writes that increase HP,
+change maximum HP, reverse damage/attack totals, or roll back the version. A
+different boss requires the explicit new-raid control. Attack health is derived
+from cumulative committed damage, with no timed or daily regeneration.
+
+Health display: render the correct initial percentage instead of a temporary
+100% label. Ignore inconsistent healing snapshots even when their version/clock
+is newer. Cooldowns and daily allowances still reset normally; boss HP does not.
+
+Regression checks cover a week of inactivity, daily reset, pause/resume, a cold
+app restart retaining its saved file, rejected healing writes, and zero HP after
+victory. All 86 Python and 35 DOM/CSS checks pass; four optional PostgreSQL tests
+skip. Prior features, credentials and sole launcher are retained. Disk loss on
+App Platform still requires a recovery checkpoint or durable hosting.
+
+## Previous community update — 2026.09.22-community
+
+Community polish: add a live homepage boss invitation, mobile attack dock,
+quarter-health milestones, arena transitions, first-hit/ten-burst/three-day
+badges, copy-link fallback, and a victory recap including every contributor.
+All rewards are cosmetic; the multi-day damage rules are unchanged.
+
+Reliability: successful polls no longer erase attack errors. Main and mobile
+controls share receipts, cooldowns and retries. Lists preserve unchanged nodes;
+animation uses the browser animation API without forced layout reads. Public
+snapshots use conditional ETags and a fresh server-time header; private feeds
+remain no-store. Game rules are centralized and JS/CSS are readable source.
+
+Administration: compact expandable connection status, overview shortcuts,
+side-by-side signed change review, and readable recovery-file validation.
+Track generated exports and progress since export without changing the admin
+revision. Recovery metadata is validated separately from accounts/game state.
+Existing local progress and original credentials are preserved.
+
+Verification: 83 Python tests and 33 DOM/CSS checks pass; 4 optional PostgreSQL
+tests skip. Chromium verifies native login, source refresh, reviewed race
+publication, the 100-user Code Red list, recovery downloads/review, and shared
+boss damage across desktop/mobile players. Live external provider connectivity
+and a deployed DigitalOcean instance remain unverified.
+
+The sole launcher is still `python wager_backend.py`. There is no new production
+dependency or required remote database. Recovery exports remain manual; their
+generation does not confirm off-host storage. Full details are in
+`docs/COMMUNITY_UPDATE.md` and `docs/VALIDATION.md`.
+
+## Previous community boss release — 2026.09.22-boss
 
 Community game: add `/play` with a shared boss, signed guest profiles, atomic
 attacks, one-minute cooldowns, 40-hit raid-day allowances, rotating weaknesses,
@@ -160,7 +207,7 @@ is always live, with stale-cache preservation only during provider failures.
 ## FILE_STRUCTURE.md
 
 ```markdown
-# File structure — 2026.09.22-boss
+# File structure — 2026.09.22-no-regen
 
 Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
 
@@ -180,8 +227,10 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `boss.py` | Server-authoritative shared raid, atomic attacks, guest/network limits, recovery validation. |
 | `config.py` | Credential precedence, deployment configuration, fixed update interval. |
 | `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
+| `docs/COMMUNITY_UPDATE.md` | Approved community improvements, performance changes, upgrade notes and storage options. |
 | `docs/VALIDATION.md` | Test record and explicit verification limits. |
 | `integrations.py` | Bounded provider requests, response validation, Kick token renewal. |
+| `presentation.py` | Side-by-side change reviews and validated private recovery checkpoint summaries. |
 | `private/admin_store.seed.json` | Original account/password hash and saved state, unchanged. |
 | `private/settings.json` | Original configured Shuffle/Kick credentials and settings, unchanged. |
 | `race.py` | Source normalization, exact rankings, overrides, Code Red list, freshness. |
@@ -206,15 +255,19 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `templates/admin_settings.html` | Rendered admin settings template. |
 | `templates/base.html` | Rendered base template. |
 | `templates/boss.html` | Rendered boss template. |
+| `templates/change_review.html` | Rendered change review template. |
 | `templates/error.html` | Rendered error template. |
+| `templates/icons.html` | Rendered icons template. |
 | `templates/index.html` | Rendered index template. |
 | `templates/login.html` | Rendered login template. |
 | `templates/macros.html` | Rendered macros template. |
+| `templates/recovery_panel.html` | Rendered recovery panel template. |
 | `tests/package.json` | Optional development test dependency; no Node runtime needed by the site. |
 | `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
 | `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
 | `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
 | `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
+| `tests/test_community.py` | Conditional HTTP, signed review, badges, legacy preservation and recovery metadata regressions. |
 | `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
 | `tests/test_postgres.py` | Integration tests for a dedicated disposable PostgreSQL database. |
 | `wager_backend.py` | Only launch script; Waitress, routes, native login, admin actions, session protection. |
@@ -233,18 +286,63 @@ web: python wager_backend.py
 ````markdown
 # RedHunllef Wager Race + Community Boss
 
-Release **2026.09.22-boss**. Run the complete app with **`python wager_backend.py`**.
+Release **2026.09.22-no-regen**. Run the complete app with **`python wager_backend.py`**.
 No PostgreSQL service, database connection string, account-creation script, or
 separate update worker is required. Python's built-in SQLite creates a local
 file automatically. The red theme, original credentials, original Superadmin,
 public Top 15, private Code Red list, and automatic 60-second updates remain.
+
+## Boss health never regenerates
+
+Every confirmed hit reduces the current raid's saved health. Cooldowns, weakness
+rotations, daily allowance resets, inactivity, page refreshes and process restarts
+with the same saved data do not restore HP. The server now explicitly rejects
+same-raid writes that increase health or reverse damage. Remaining health is
+calculated from maximum health minus cumulative committed damage.
+
+The browser rejects same-raid updates that increase HP even if they carry a
+newer timestamp/version. It retains the last confirmed state and disables fresh
+attacks if valid updates stop arriving. Initial HTML renders the actual health
+percentage, removing the previous brief “100%” label during page loading.
+The host's confirmed **Start a new raid** action creates a different boss.
+
+A loss of local files on App Platform is a storage reset, not regeneration.
+This patch cannot recover damage absent from both the saved file and your latest
+recovery checkpoint. Keep one instance, preserve `data/` on persistent hosts,
+and save a private recovery checkpoint before redeploying. Existing configuration
+and game state are not reset by installing these application files.
+
+## Included community improvements
+
+- A shorter homepage with live boss health, raider count, and a play button that
+  reflects an active, paused, or completed raid.
+- Fixed mobile attack controls: choose a style, see your remaining allowance,
+  and attack without scrolling back up. They share the main button's cooldown
+  and safe retry receipt.
+- Cosmetic 25%, 50%, and 75% milestones, arena changes, a victory recap with
+  every contributor, first-hit/ten-burst/three-day badges, and a copy-link button.
+- Attack errors stay visible until dismissed, retried, or resolved by a
+  confirmed receipt. Ordinary successful polls cannot erase them.
+- Compact connection summaries in the dashboard. Expand **Live connections**
+  to see timings and provider controls; new failures open the details automatically.
+- Side-by-side review before publishing changed dates, prizes, text, links,
+  channel, or campaign. Confirmation is signed, expires after 15 minutes, and
+  applies only to the exact changes reviewed.
+- Private recovery export tracking, progress since the last export, and a
+  read-only recovery-file review with account/race/game totals.
+- Conditional public updates, retained unchanged game rows, animation without
+  forced layout reads, shared game-rule constants, and readable JS/CSS source.
+
+See [docs/COMMUNITY_UPDATE.md](docs/COMMUNITY_UPDATE.md) for implementation and
+upgrade details. Cosmetic rewards do not increase damage or shorten the raid.
 
 ## Community boss: ready at /play
 
 Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
 attacks one shared Crimson Hunllef. The red arena uses your original logo,
 animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
-bonuses, personal progress, Top 10 raiders, recent hits, and past raid summaries.
+bonuses, personal progress, badges, milestones, Top 10 raiders, recent hits, and
+past raid summaries. Victory includes the full contributor list.
 Instructions are built into the page. There is no signup or separate launch step.
 The homepage Admin footer link is removed; sign in directly at **`/admin`**.
 The admin dashboard also omits the site footer.
@@ -363,7 +461,7 @@ a persistent host. Do not delete it to fix an unrelated deployment problem.
    `${race-db.DATABASE_URL}` binding from the service if you added one, because
    DigitalOcean may try to resolve bindings before starting Python. Do not
    delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.22-boss** and **Local file ready; no
+5. Deploy. Startup should report **2026.09.22-no-regen** and **Local file ready; no
    external database is required**. Open the HTTPS app URL and `/admin`.
 6. Reload your browser with Ctrl+F5. Review the published race dates and provider
    results. Publish the desired schedule if the original seeded race has ended.
@@ -415,7 +513,10 @@ keeps its saved dates.
 1. Sign in as the Superadmin and open **Settings → Private recovery file**.
 2. Choose **Download private recovery file**. The filename is
    `recovery.seed.json`. It contains password hashes and a session signing key;
-   store it privately.
+   store it privately. The dashboard records when the export was generated and
+   reports later hits, damage, and changes. It cannot confirm that you saved the
+   download elsewhere. Expand **Check a recovery file before restoring** to
+   validate its contents and review totals without changing the running site.
 3. For a fresh App Platform deployment, add that file to your private GitHub
    repository as **`private/recovery.seed.json`**, then redeploy.
 4. The app imports it automatically if no saved state exists. Check your login,
@@ -454,19 +555,23 @@ is described at the end of this README.
 ## Race publication and live updates
 
 - Change dates under **Race → Save race settings → Confirm and publish race**.
-  The bottom button submits confirmation. **Published window** shows the saved
-  dates; edited form values remain a draft until confirmed.
+  A side-by-side table lists every changed setting. Review it and use the
+  bottom confirmation button. Changing the form after
+  reviewing requires a new review. **Published window** shows saved dates;
+  edited form values remain a draft until confirmed.
 - Independent Shuffle and Kick jobs start automatically and run every **60
   seconds**. There is no live-mode switch or second worker command. Slow calls
   do not hold up the website or the other provider.
 - Both public/admin pages use the same published snapshot and poll every 60
-  seconds while visible. Returning to a hidden tab checks immediately.
+  seconds while visible. Returning to a hidden tab checks immediately. Public
+  `/public-state` requests use ETags; unchanged data returns a body-free 304 and
+  a fresh server-time header. Admin and personal game responses remain no-store.
 - Manual refreshes queue one follow-up even if a check is already running.
   Repeated clicks coalesce. The admin briefly polls every two seconds after a
   manual request or date publication, then returns to its normal cadence.
-- Every admin tab shows queued, checking, changed, unchanged, empty, and failed
-  results. A queued retry displays its reason and retry time. Request tickets
-  connect the completion message to the requested refresh.
+- Every admin tab has a connection summary and expandable provider results.
+  New failures open the details. A queued retry displays its reason and retry
+  time. Request tickets connect completion to the requested refresh.
 - Successes and failures from old settings cannot publish over a newer race.
   An old ordinary retry delay is cleared when dates change; provider rate limits
   and explicit `Retry-After` instructions are still honored.
@@ -502,7 +607,7 @@ Official reference: [DigitalOcean client IP header](https://docs.digitalocean.co
 ## Dashboard and appearance
 
 **Overview** shows the countdown, prize pool, player count, source freshness,
-and separate provider results. **Race** edits Eastern Time dates, all 15 prizes,
+and shortcuts to race and boss controls. **Race** edits Eastern Time dates, all 15 prizes,
 site text, links, channel, and campaign. DST edge cases receive field errors.
 
 **Players** shows full usernames, weighted/raw totals, filters, exports, and
@@ -524,7 +629,7 @@ and reduced-motion support. No remote fonts or frontend framework are required.
 ## Console output and troubleshooting
 
 ```text
-START RedHunllef 2026.09.22-boss listening on 0.0.0.0:8080; storage=local SQLite.
+START RedHunllef 2026.09.22-no-regen listening on 0.0.0.0:8080; storage=local SQLite.
 STORAGE Local file ready; no external database is required.
 LIVE Automatic Shuffle and Kick checks started; cadence=60s.
 ```
@@ -534,12 +639,12 @@ logs show the requested window, outcome, and duration without API credentials.
 
 | Symptom | Action |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-boss; use `python wager_backend.py`. |
+| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-no-regen; use `python wager_backend.py`. |
 | DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
 | Missing Flask, Waitress, or tzdata | Install `requirements.txt` with the Python used to launch. |
 | Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
 | Dates do not publish | Use the bottom **Confirm and publish race** button and verify **Published window**. |
-| Refresh appears unchanged | Read **Live update progress**. It distinguishes unchanged/empty results from errors or queued retries. |
+| Refresh appears unchanged | Expand **Live connections**. It distinguishes unchanged/empty results from errors or queued retries. |
 | Credentials fail with HTTP 401/403 | Check the provider permissions and selected credential source in diagnostics. |
 | Edits disappeared after a redeploy | A new container started from repository seeds. Restore your saved checkpoint; unsaved-to-checkpoint changes cannot be recovered from the discarded disk. |
 | Local storage cannot be read/written | Check disk space and directory permissions; preserve the existing file. |
@@ -557,7 +662,7 @@ logs show the requested window, outcome, and duration without API credentials.
 
 ## Verification
 
-This release passes **75 Python application/game/calculation tests** and **28 DOM/CSS
+This release passes **86 Python application/game/calculation tests** and **35 DOM/CSS
 checks**. Startup is exercised through an actual Waitress child process using
 `python wager_backend.py`, production mode, and a leftover database placeholder.
 Another check blocks importing psycopg and verifies production login with secure
@@ -615,7 +720,7 @@ shipped. Runtime state and test preview data are excluded from the ZIP.
 ````markdown
 # RedHunllef — start here
 
-Release **2026.09.22-boss**. No PostgreSQL service or DATABASE_URL is needed.
+Release **2026.09.22-no-regen**. No PostgreSQL service or DATABASE_URL is needed.
 Extract the complete folder. Install dependencies once:
 
 ```bash
@@ -660,11 +765,11 @@ there is no account-creation script or separate worker to run.
 The original seed saves August 4–11, 2026, 6 PM Eastern. To publish your desired
 schedule: **Race → Save race settings → Confirm and publish race** in the bottom
 bar. Verify **Published window**. Both providers update automatically every
-60 seconds. Read **Live update progress** for actual provider outcomes.
+60 seconds. Expand **Live connections** for actual provider outcomes.
 
 The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
 and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.22-boss**.
+the release label must show **2026.09.22-no-regen**.
 
 Open **/play** or click **Join the boss fight** on the homepage. In-game
 instructions explain attacks, weaknesses, Crimson burst, and the daily allowance.
@@ -678,6 +783,17 @@ attack receipts, and cooldowns. App Platform can lose changes after the last
 checkpoint if it replaces the container. No extra launch command is required.
 
 The Admin footer link is removed. Bookmark **/admin** for your dashboard.
+
+Boss health never regenerates. Every confirmed hit remains in the saved raid
+across refreshes, daily resets and process restarts with the same data. Only
+starting a new raid creates a fresh boss. The initial percentage now reflects
+saved HP immediately. Save recovery before App Platform redeploys: losing the
+local data file is separate from in-game health regeneration.
+
+This update adds mobile attack controls, cosmetic milestones and badges, the
+full victory contributor list, a live homepage boss invitation, compact admin
+connections, side-by-side change review, and recovery checkpoint tracking.
+See `docs/COMMUNITY_UPDATE.md` for all changes. No new process is needed.
 ````
 
 ## app.yaml
@@ -768,9 +884,29 @@ COOLDOWN = 60
 DAILY_ATTACKS = 40
 DAY = 86400
 WARD_SECONDS = 600
+POLL_SECONDS = 5
+BASE_DAMAGE, WEAK_DAMAGE, BURST_EVERY, BURST_BONUS = 100, 150, 10, 100
+MAX_HIT = WEAK_DAMAGE + BURST_BONUS
 STYLES = {"blade": "Blade", "bow": "Bow", "magic": "Magic"}
 MAX_PLAYERS, MAX_NETWORKS = 2000, 4000
 TOKEN = re.compile(r"[a-f0-9]{64}\Z")
+
+
+def rules():
+    """One contract for server validation, page instructions, and browser labels."""
+    return dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, raid_day=DAY,
+                poll_seconds=POLL_SECONDS, ward_seconds=WARD_SECONDS, default_hp=DEFAULT_HP,
+                damage=BASE_DAMAGE, weak_damage=WEAK_DAMAGE, burst_every=BURST_EVERY,
+                burst_bonus=BURST_BONUS, styles=dict(STYLES))
+
+
+def badges(player):
+    hits, days = player.get("attacks", 0), player.get("active_days", 0)
+    return [dict(id=key, label=label, description=description, earned=earned) for key, label, description, earned in (
+        ("first", "First strike", "Land your first hit.", hits >= 1),
+        ("burst", "Crimson veteran", f"Land {10 * BURST_EVERY} hits for ten Crimson bursts.", hits >= 10 * BURST_EVERY),
+        ("loyal", "Three-day crew", "Land a hit on three different raid days.", days >= 3),
+    )]
 
 
 class BossError(ValueError):
@@ -827,12 +963,14 @@ def validate_boss(value):
     for player in players.values():
         _integer(player.get("attacks"), 1)
         _integer(player.get("damage"), 1, maximum)
+        if "active_days" in player:
+            _integer(player["active_days"], 1, player["attacks"])
         receipt = player.get("last_hit")
         if not isinstance(receipt, dict) or not isinstance(receipt.get("style"), str) or receipt["style"] not in STYLES:
             raise ValueError("The community boss recovery has an invalid attack receipt.")
         if not isinstance(player.get("request_id"), str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", player["request_id"]):
             raise ValueError("The community boss recovery has an invalid request receipt.")
-        _integer(receipt.get("damage"), 1, 250)
+        _integer(receipt.get("damage"), 1, MAX_HIT)
         _integer(receipt.get("at"))
         if type(receipt.get("weakness")) is not bool or type(receipt.get("burst")) is not bool:
             raise ValueError("The community boss recovery has an invalid attack bonus.")
@@ -844,7 +982,7 @@ def validate_boss(value):
     for hit in recent:
         if not isinstance(hit, dict) or not re.fullmatch(r"Raider [A-F0-9]{8}", str(hit.get("name", ""))) or not isinstance(hit.get("style"), str) or hit["style"] not in STYLES:
             raise ValueError("The community boss recovery has an invalid recent hit.")
-        _integer(hit.get("damage"), 1, 250)
+        _integer(hit.get("damage"), 1, MAX_HIT)
         _integer(hit.get("at"))
     for entry in history:
         if not isinstance(entry, dict) or entry.get("outcome") not in {"Victory", "Restarted"}:
@@ -893,7 +1031,24 @@ class CommunityBoss:
             raise ValueError("Community boss state is missing. Restore the private recovery checkpoint.")
         return validate_boss(json.loads(row[0]))
 
-    def _write(self, conn, state):
+    def _write(self, conn, state, *, previous=None, new_raid=False):
+        """Only a deliberate new raid may replenish health.
+
+        Callers already hold the storage transaction. Compare against the row
+        read inside that transaction, never an older viewer/cache snapshot.
+        """
+        previous = self._read(conn, locked=True) if previous is None else previous
+        if state["id"] != previous["id"]:
+            if not new_raid:
+                raise BossError("Starting a new boss requires the host's new-raid action.", "new_raid_required", 409)
+        elif (state["max_hp"] != previous["max_hp"] or state["hp"] > previous["hp"]
+              or state["total_damage"] < previous["total_damage"]
+              or state["total_attacks"] < previous["total_attacks"]
+              or state["version"] < previous["version"]):
+            LOG.error("BOSS Blocked a progress reversal. Saved damage and health were not changed.")
+            raise BossError("Boss progress cannot move backwards. Existing damage was preserved.", "progress_reversal", 409)
+        if state["hp"] != state["max_hp"] - state["total_damage"]:
+            raise BossError("Boss health does not match saved damage. Existing progress was preserved.", "invalid_health", 409)
         self.store.query(conn, "UPDATE rh_boss SET document=? WHERE name=?",
                          (json.dumps(state, separators=(",", ":"), allow_nan=False), self.store.key))
 
@@ -901,7 +1056,7 @@ class CommunityBoss:
         # Most 5-second viewer polls use memory, not another SQLite read. A
         # periodic reload also picks up writes from another process during tests
         # or a short deployment overlap. Local mode still requires one instance.
-        if force or time.monotonic() - self.loaded_at >= 5:
+        if force or time.monotonic() - self.loaded_at >= POLL_SECONDS:
             with self.store.connection() as conn:
                 self.state = self._read(conn)
             self.loaded_at = time.monotonic()
@@ -928,14 +1083,36 @@ class CommunityBoss:
                     finished_at=state["finished_at"], day=day + 1, resets_at=reset,
                     total_damage=state["total_damage"], total_attacks=state["total_attacks"], raiders=len(state["players"]),
                     weakness=weakness, weakness_label=STYLES[weakness], ward_changes_at=(int(now) // WARD_SECONDS + 1) * WARD_SECONDS,
-                    rules=dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, damage=100, weak_damage=150, burst_every=10, burst_bonus=100),
+                    rules=rules(),
+                    milestones=[dict(percent=p, label=label, reached=state["total_damage"] * 100 >= state["max_hp"] * p)
+                                for p, label in ((25, "Armor cracked"), (50, "The crew rallies"), (75, "Final stand"), (100, "Crimson conquered"))],
                     you=dict(name=_name(player_key) if guest else "Spectator", damage=player.get("damage", 0),
                              attacks=player.get("attacks", 0), remaining=remaining, ready_at=ready,
-                             burst_in=10 - player.get("attacks", 0) % 10,
+                             burst_in=BURST_EVERY - player.get("attacks", 0) % BURST_EVERY,
+                             active_days=player.get("active_days", 1 if player else 0), badges=badges(player),
                              last_request=player.get("request_id", ""), last_hit=copy.deepcopy(player.get("last_hit")),
                              can_attack=bool(guest and status in {"waiting", "active"} and remaining and now >= ready)),
                     leaders=[dict(name=_name(key), damage=p["damage"], attacks=p["attacks"], you=key == player_key) for key, p in leaders],
                     recent=copy.deepcopy(state["recent"]), history=copy.deepcopy(state["history"]))
+
+    def summary(self):
+        """Small anonymous homepage projection: no guest, receipt, or network data."""
+        with self.lock:
+            self._load()
+            state = self.state
+            status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
+            return dict(raid_id=state["id"], hp=state["hp"], max_hp=state["max_hp"],
+                        status=status, raiders=len(state["players"]), total_attacks=state["total_attacks"],
+                        total_damage=state["total_damage"], version=state["version"])
+
+    def contributors(self):
+        """Victory recap includes every contributor, using only raid aliases."""
+        with self.lock:
+            self._load()
+            if self.state["hp"]:
+                return []
+            return [dict(name=_name(key), damage=p["damage"], attacks=p["attacks"])
+                    for key, p in sorted(self.state["players"].items(), key=lambda item: (-item[1]["damage"], item[0]))]
 
     def status(self, guest=None, address=None):
         with self.lock:
@@ -968,7 +1145,7 @@ class CommunityBoss:
                     raise BossError("The host paused the raid." if state["paused"] and state["hp"] else "The community has already defeated this boss.", view["status"], 409)
                 if not view["you"]["can_attack"]:
                     retry = max(1, math.ceil(view["you"]["ready_at"] - now))
-                    message = "Your browser or shared connection has used today's 40 attacks. Return next raid day." if not view["you"]["remaining"] else "Your browser or shared connection is cooling down. Wait for the timer."
+                    message = f"Your browser or shared connection has used today's {DAILY_ATTACKS} attacks. Return next raid day." if not view["you"]["remaining"] else "Your browser or shared connection is cooling down. Wait for the timer."
                     raise BossError(message, "daily_limit" if not view["you"]["remaining"] else "cooldown", 429, retry)
                 day = view["day"] - 1
                 state["networks"] = {key: p for key, p in state["networks"].items() if p["day"] >= day - 1}
@@ -976,9 +1153,13 @@ class CommunityBoss:
                     raise BossError("This raid has reached its player capacity. The host can start a new raid.", "capacity", 409)
                 player = state["players"].setdefault(pk, dict(attacks=0, damage=0))
                 network = state["networks"].setdefault(nk, {})
-                burst = (player["attacks"] + 1) % 10 == 0
+                # Older saves cannot reconstruct every past participation day.
+                # Credit one known day, then count future distinct days exactly.
+                active_days = player.get("active_days", 1 if player["attacks"] else 0)
+                player["active_days"] = active_days + int(player.get("day") != day)
+                burst = (player["attacks"] + 1) % BURST_EVERY == 0
                 weak = style == view["weakness"]
-                damage = min(state["hp"], (150 if weak else 100) + (100 if burst else 0))
+                damage = min(state["hp"], (WEAK_DAMAGE if weak else BASE_DAMAGE) + (BURST_BONUS if burst else 0))
                 hit = dict(style=style, damage=damage, weakness=weak, burst=burst, at=int(now))
                 for record in (player, network):
                     record.update(used=(record.get("used", 0) if record.get("day") == day else 0) + 1,
@@ -987,18 +1168,22 @@ class CommunityBoss:
                 # the server-enforced cooldown.
                 player.update(attacks=player["attacks"] + 1, damage=player["damage"] + damage,
                               request_id=request_id, last_hit=hit)
-                state.update(hp=state["hp"] - damage, total_damage=state["total_damage"] + damage,
+                # Cumulative committed damage is never reset by cooldowns,
+                # weakness rotations, midnight, idle time, or source refreshes.
+                total_damage = state["total_damage"] + damage
+                state.update(hp=state["max_hp"] - total_damage, total_damage=total_damage,
                              total_attacks=state["total_attacks"] + 1, version=state["version"] + 1,
                              started_at=state["started_at"] or int(now))
                 state["recent"] = [dict(name=_name(pk), **hit)] + state["recent"][:11]
                 if not state["hp"]:
                     state["finished_at"] = int(now)
-                self._write(conn, state)
+                self._write(conn, state, previous=self.state)
             self.state, self.loaded_at = state, time.monotonic()
             if state["finished_at"]:
                 LOG.info("BOSS Victory; %s attacks from %s raider profiles.", state["total_attacks"], len(state["players"]))
             elif state["total_attacks"] == 1:
-                LOG.info("BOSS Shared raid started; HP=%s, cooldown=60s, daily attacks=40.", state["max_hp"])
+                LOG.info("BOSS Shared raid started; HP=%s, cooldown=%ss, daily attacks=%s; health regeneration=off.",
+                         state["max_hp"], COOLDOWN, DAILY_ATTACKS)
             return dict(ok=True, duplicate=False, hit=hit, state=self._project(state, guest, address, now))
 
     def control(self, action, raid_id, health=DEFAULT_HP):
@@ -1011,6 +1196,7 @@ class CommunityBoss:
                 state = self._read(conn, locked=True)
                 if state["id"] != raid_id:
                     raise BossError("Another raid has started. Reload before changing it.", "new_raid", 409)
+                previous = copy.deepcopy(state)
                 if action == "restart":
                     self.store.backup_in(conn, "before-boss-restart", {"community_boss": state})
                     history = state["history"]
@@ -1021,7 +1207,7 @@ class CommunityBoss:
                     state = fresh_raid(health=health, history=history)
                 else:
                     state["paused"], state["version"] = action == "pause", state["version"] + 1
-                self._write(conn, state)
+                self._write(conn, state, previous=previous, new_raid=action == "restart")
             self.state, self.loaded_at = state, time.monotonic()
         LOG.info("BOSS Host action: %s.", action)
 ```
@@ -1036,7 +1222,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.22-boss"
+RELEASE = "2026.09.22-no-regen"
 INTERVAL = 60
 
 
@@ -1144,6 +1330,21 @@ The original `wager_backend.py` launcher serves the game and existing wager site
   do not secretly change the damage rules or punish players who joined late.
 - Victory remains visible. The host chooses when to start another raid.
 
+The server rejects any attempt to heal the same raid or reverse its committed
+damage. Health is always maximum HP minus saved cumulative damage. Cooldowns,
+weakness changes and daily resets affect attacks only. The browser also rejects
+healing snapshots, and the initial page percentage reflects saved health.
+Process restarts retain progress when the same data file is preserved. Losing
+that file through a container replacement is a separate recovery concern below.
+
+The mobile attack dock offers the same controls and cooldown while you scroll.
+Cosmetic milestones at 25%, 50%, and 75% damage change the arena and celebrate
+progress. Badges recognize your first hit, ten bursts (100 hits), and three
+distinct raid days. They grant no damage advantage. Victory's expandable recap
+lists every contributor by raid alias; the ordinary live board shows the Top 10.
+Use **Copy raid link** to invite the community. Errors remain until dismissed,
+retried, or resolved; a routine poll cannot erase an unsuccessful attack message.
+
 ## Why it should last several days
 
 With matching hits, every full ten-attack sequence deals 1,600 damage.
@@ -1201,6 +1402,11 @@ planned deployment.** It includes the boss ID, HP, players, network hashes,
 receipts, allowances, timestamps, history, and account/session state. The
 ordinary race-only backup does not contain the game.
 
+The recovery panel tracks when an export was generated and the progress since
+then. Generation does not prove you saved the file off-host. Its review form
+checks a recovery JSON file and shows account/race/boss totals without importing
+anything. See `COMMUNITY_UPDATE.md` for the full recovery and storage explanation.
+
 On a fresh App Platform instance, `private/recovery.seed.json` is imported
 before the original seed. Existing local state always wins; a recovery file
 never silently resets a running raid. Corrupt game recovery stops the first
@@ -1252,10 +1458,122 @@ invalid trusted header disables new attacks rather than merging all players
 under an ingress IP. See README.md for full deployment and recovery steps.
 ```
 
+## docs/COMMUNITY_UPDATE.md
+
+```markdown
+# Community update — 2026.09.22-community
+
+Run **`python wager_backend.py`**. The imports, web server, source jobs, and game
+remain in one process. No additional service or production dependency was added.
+Original Shuffle/Kick configuration, Superadmin seed, and logo files are retained
+byte for byte. Existing saved accounts, dates, and raid progress take precedence.
+
+## What changed for visitors
+
+The homepage is shorter and brings the standings into view sooner. Its boss
+invitation shows remaining HP and community participation, with appropriate
+labels for a paused raid or victory. It shares the public page's automatic
+60-second update cycle. The arena still updates every five seconds while visible.
+
+On narrow screens a fixed attack bar exposes style selection, remaining attacks,
+and cooldown. It uses the same action and receipt as the main attack button.
+There are no automatic attacks. Errors survive normal successful polls; players
+can dismiss them, retry, or wait for the server to confirm the pending hit.
+
+Quarter-health milestones change the arena's appearance and show a brief
+celebration when crossed during a visit. Cosmetic badges reward the first hit,
+100 hits (ten Crimson bursts), and participation on three distinct raid days.
+Different visits on the same raid day do not count twice. A legacy profile starts
+with one known participation day because its previous distinct days were not
+recorded. Existing hit totals still qualify for first-hit/ten-burst badges.
+
+Victory thanks everyone, with the complete list of raid aliases available in an
+expandable recap. It is loaded once per completed raid and cannot return a live
+raid's private records. A copy-link button has a selectable-text fallback when
+the browser denies clipboard access. There is no chat, account signup, paid
+reward, extra damage, or new wager requirement.
+
+## What changed for administrators
+
+Connections are summarized in two compact status chips. Expand the connection
+details for timing, last success, retry reasons and individual source refreshes.
+New failures expand the details automatically; repeated identical polls respect
+a manually collapsed panel. Overview offers shortcuts to race and boss controls.
+Draft fields, confirmations, filters, and Code Red expansion survive live updates.
+
+Race publication shows current and proposed values side by side, including all
+changed prizes, links, labels, dates, channel and campaign. A signed confirmation
+is bound to the user, settings revision and full proposed settings. It expires
+after 15 minutes. Editing reviewed values requires another review; another
+administrator's save still triggers the existing revision-conflict protection.
+Race-backup restore also shows changed values and saved-data counts.
+
+The Superadmin recovery panel reports the last export generated and changes
+since then: hits/damage, a new raid, raid controls, settings/accounts and standings.
+Export metadata is separate from the admin record, so a download does not
+invalidate open edit forms. A private recovery file can be uploaded for validation
+and a readable account/race/boss summary. This preview imports nothing. Actual
+fresh-instance recovery continues to use `private/recovery.seed.json`.
+
+**An export-generation timestamp is not proof of an off-host backup.** Save the
+download privately. Provider credentials remain in the supplied configuration
+and are not copied into the recovery export. Malformed optional export metadata
+is ignored during import while valid account/game progress remains recoverable.
+
+## Performance and maintenance
+
+- `boss.py` supplies one rules contract to validation, HTML instructions and JS.
+- `/public-state` contains anonymous published data, excludes the moving clock,
+  and uses a strong ETag. A matching request receives 304 with `X-Server-Time`.
+  The browser reuses its in-memory body and updates its clock. Existing `/data`
+  compatibility is retained. Cached data is always revalidated before reuse.
+- Admin responses, personal cooldowns, CSRF values, recovery files and game
+  actions remain `no-store`. No account or visitor identifiers enter the public
+  conditional snapshot. This cache does not slow provider polling.
+- Game lists retain unchanged DOM nodes instead of rebuilding every five seconds.
+  Hit effects use `Element.animate()` without synchronous layout reads and honor
+  reduced-motion preferences. Semantic controls retain keyboard support.
+- `presentation.py` isolates change-review and recovery view models. JS and CSS
+  are expanded into readable source, with comments around the state, retry,
+  privacy, cache and transaction boundaries. No frontend build step is required.
+
+## Upgrade and storage choice
+
+1. Save a private recovery checkpoint before replacing the installation.
+2. Keep the current `data/`, newer private recovery seed, and custom configuration.
+3. Replace application modules, templates and static assets together. Install
+   requirements and run the same sole launcher. Hard-refresh the browser.
+4. Verify release `2026.09.22-community`, published dates, source results and boss
+   progress. The original historical race is not silently advanced.
+
+Local SQLite remains automatic. Use one process/instance with local storage.
+On DigitalOcean App Platform, filesystem changes can disappear with container
+replacement; this update cannot make that disk durable. The export tracker helps
+identify unprotected progress but does not upload backups automatically.
+
+For automatic durability **without a database service**, run this same package
+on a persistent Linux host, preserve `data/`, and back it up off-host. Run under
+a normal process supervisor with `wager_backend.py` as its command, set
+`TRUST_APP_PLATFORM=0` for direct hosting, and provide HTTPS for production.
+Alternatively, staying on App Platform requires a separately configured durable
+storage or off-host backup destination. None is provisioned by this package;
+downloaded checkpoints protect only the state they contain.
+
+## Verification and references
+
+See [VALIDATION.md](VALIDATION.md) for executed tests and external-service limits.
+The default multi-day balance, existing account import, native admin login,
+date publication and 60-second source cadence are regression-tested.
+
+- [Conditional HTTP requests — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Conditional_requests)
+- [Element.animate — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate)
+- [App Platform storage — DigitalOcean](https://docs.digitalocean.com/products/app-platform/how-to/store-data/)
+```
+
 ## docs/VALIDATION.md
 
 ```markdown
-# Verification record — 2026.09.22-boss
+# Verification record — 2026.09.22-no-regen
 
 Verified in the supplied Linux workspace on 2026-09-22.
 
@@ -1267,9 +1585,17 @@ Verified in the supplied Linux workspace on 2026-09-22.
 | Multi-day balance | 100 simulated raiders using 40 matching hits per day defeat 2,400,000 HP on raid day 4; no real waiting or provider calls. |
 | Game interface | Five-second polling, hidden-tab pause, no automatic attacks, uncertain-click retry, stale-response rejection, safe text rendering, and admin draft retention passed. |
 | Homepage/footer | Join the boss fight button reaches /play. Public Admin footer link and dashboard site footer removed; /admin remains available. |
-| Python tests | 75 passed (including 18 game tests). |
+| Python tests | 86 passed (including 21 core game and 8 community-update tests); 90 discovered. |
 | PostgreSQL integration tests | 4 skipped: no dedicated database supplied. CI provisions one. |
-| DOM and CSS checks | 28 passed with jsdom 26.1.0; no browser build required in production. |
+| DOM and CSS checks | 35 passed with jsdom 26.1.0; no browser build required in production. |
+| No regeneration | Seven idle days, cooldown/weakness changes, daily allowance reset, pause/resume and cold app initialization with the saved SQLite file retain damage. Consistent-looking writes that heal the same raid or implicitly replace it are rejected without changing storage. |
+| Health display | Initial HTML renders the saved percentage; same-raid HP increases are rejected even with a newer clock/version. Victory remains at zero until a different raid starts. |
+| Change review | Prize/link/text changes are listed; a signed confirmation cannot publish modified values. Valid confirmation publishes the exact reviewed values. |
+| Conditional public state | Unchanged snapshot returns 304 with an empty body and fresh clock; a hit changes the ETag. Browser reuses the cached body without trying to parse 304 as JSON. Private routes remain no-store with no ETag. |
+| Feedback and mobile controls | Successful polls preserve attack errors; explicit dismissal works. Unchanged leader nodes retain identity. Mobile style selection sends the same validated attack request as the main button. |
+| Badges and milestones | 100 real validated hits across three raid days earn all badges with unchanged damage. Old records retain their totals and gain participation-day tracking. Quarter-health milestones and a victory recap of 11 contributors pass. |
+| Recovery tracking/review | Export leaves the admin revision unchanged, progress since export updates, and private upload review validates without changing live state or exposing password hashes. Imported export metadata survives; malformed optional metadata is ignored while game progress remains intact. |
+| Share link | Selectable URL fallback works when clipboard access is unavailable. |
 | Date publication | Bottom confirmation button submits confirmation and persists the edited window. |
 | Superseded failure | An old-window HTTP failure cannot mark the new race as failed or impose its ordinary retry delay. Explicit provider rate limits remain honored. |
 | Concurrent refresh | An active provider check retains one follow-up request; repeated clicks coalesce. An in-flight browser read schedules a follow-up instead of dropping the request. |
@@ -1440,6 +1766,89 @@ class Providers:
 
     def last_http_status(self):
         return getattr(self.local, "http_status", None)
+```
+
+## presentation.py
+
+```python
+"""Small view models for change review and private recovery status."""
+import re
+
+from race import token
+from race_support import fmt_et, money
+
+LABELS = {
+    'start_time': 'Starts · Eastern Time', 'end_time': 'Ends · Eastern Time',
+    'site_name': 'Website name', 'race_title': 'Race title',
+    'race_description': 'Description', 'kick_channel_slug': 'Kick channel',
+    'campaign_code_filter': 'Campaign filter', 'stream_url': 'Livestream link',
+    'sponsor_name': 'Sponsor name', 'sponsor_url': 'Sponsor link',
+    'community_name': 'Community label', 'community_url': 'Community link',
+    'responsible_gambling_url': 'Responsible play link',
+}
+
+
+def changes(before, after):
+    result = []
+    for key, label in LABELS.items():
+        old, new = before.get(key), after.get(key)
+        if old != new:
+            display = fmt_et if key.endswith('_time') else lambda v: str(v or 'Not set')
+            result.append(dict(label=label, before=display(old), after=display(new)))
+    for rank in range(1, 16):
+        old, new = before.get('prizes', {}).get(str(rank), '0'), after.get('prizes', {}).get(str(rank), '0')
+        if money(old) != money(new):
+            result.append(dict(label=f'Place {rank} prize', before=money(old), after=money(new)))
+    return result
+
+
+def admin_fingerprint(admin):
+    # Exclude migration fields and background timestamps. Exporting a checkpoint
+    # never increments the settings revision or invalidates an open admin form.
+    return token({key: admin.get(key) for key in (
+        'users', 'secret_key', 'site_settings', 'overrides', 'race_history', 'banned_ips', 'audit_log')})
+
+
+def export_marker(admin, snapshot, boss, generated_at):
+    return dict(generated_at=generated_at, admin_token=admin_fingerprint(admin),
+                standings_token=token(snapshot['last_top15']), raid_id=boss['id'],
+                boss_version=boss['version'], attacks=boss['total_attacks'], damage=boss['total_damage'])
+
+
+def valid_marker(value):
+    """Ignore damaged optional metadata without discarding recovered game data."""
+    if not isinstance(value, dict):
+        return None
+    for key in ('generated_at', 'boss_version', 'attacks', 'damage'):
+        if type(value.get(key)) is not int or not 0 <= value[key] <= 10**12:
+            return None
+    for key, length in (('admin_token', 20), ('standings_token', 20), ('raid_id', 32)):
+        if not isinstance(value.get(key), str) or not re.fullmatch(r'[a-f0-9]{%d}' % length, value[key]):
+            return None
+    return {key: value[key] for key in ('generated_at', 'boss_version', 'attacks', 'damage',
+                                       'admin_token', 'standings_token', 'raid_id')}
+
+
+def checkpoint_status(marker, admin, rows, boss):
+    marker = valid_marker(marker)
+    if not marker:
+        return dict(generated_at=0, label='No recovery export recorded', changes=True,
+                    details='Generate a private recovery file to protect this checkpoint.')
+    new_raid = marker.get('raid_id') != boss['raid_id']
+    attacks = max(0, boss['total_attacks'] - marker.get('attacks', 0)) if not new_raid else boss['total_attacks']
+    damage = max(0, boss['total_damage'] - marker.get('damage', 0)) if not new_raid else boss['total_damage']
+    changed = admin_fingerprint(admin) != marker.get('admin_token')
+    standings = token(rows[:15]) != marker.get('standings_token')
+    raid_changed = new_raid or boss['version'] != marker.get('boss_version')
+    notes = ([f'{attacks:,} new hits · {damage:,} damage'] if attacks else [])
+    if new_raid: notes.append('a different raid is active')
+    elif raid_changed and not attacks: notes.append('raid controls changed')
+    if changed: notes.append('account or race settings changed')
+    if standings: notes.append('standings changed')
+    return dict(generated_at=marker.get('generated_at', 0), changes=changed or standings or raid_changed,
+                label='Changes since last export' if notes else 'Checkpoint matches current progress',
+                details='; '.join(notes) or 'No new saved progress since this export.',
+                attacks=attacks, damage=damage, new_raid=new_raid)
 ```
 
 ## private/admin_store.seed.json
@@ -2514,243 +2923,775 @@ python-3.13.12
 ```javascript
 /* Shared page controller. Native navigation/forms work before this file loads. */
 (() => {
-  'use strict';
-  const id = name => document.getElementById(name);
+  "use strict";
+  const id = (name) => document.getElementById(name);
   const text = (node, value) => {
     // Only leaf labels can be text destinations. Never erase a page or form.
     if (!node) return;
-    if (node.childElementCount || ['BODY','MAIN','FORM','HTML'].includes(node.tagName)) throw new Error('Invalid text destination');
-    if (node.textContent !== String(value ?? '')) node.textContent = String(value ?? '');
+    if (
+      node.childElementCount ||
+      ["BODY", "MAIN", "FORM", "HTML"].includes(node.tagName)
+    )
+      throw new Error("Invalid text destination");
+    if (node.textContent !== String(value ?? ""))
+      node.textContent = String(value ?? "");
   };
-  const notice = (name, value) => { const node=id(name); if(node) {node.hidden=!value; text(node,value);} };
-  const currency = value => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(value)||0);
-  const eastern = new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'});
-  const date = value => value ? eastern.format(new Date(value*1000)) : 'Waiting for first source update';
-  document.documentElement.classList.add('js');
+  const notice = (name, value) => {
+    const node = id(name);
+    if (node) {
+      node.hidden = !value;
+      text(node, value);
+    }
+  };
+  const currency = (value) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(Number(value) || 0);
+  const eastern = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+  const date = (value) =>
+    value
+      ? eastern.format(new Date(value * 1000))
+      : "Waiting for first source update";
+  document.documentElement.classList.add("js");
   let toastTimer;
-  function toast(message) { notice('toast',message); clearTimeout(toastTimer); toastTimer=setTimeout(()=>notice('toast',''),4000); }
-  document.addEventListener('click',async event=>{
-    const button=event.target.closest('[data-copy]');
-    if(!button) return;
-    try { await navigator.clipboard.writeText(button.dataset.copy); toast('Username copied.'); }
-    catch { toast('Select and copy the username manually.'); }
+  function toast(message) {
+    notice("toast", message);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => notice("toast", ""), 4000);
+  }
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-copy]");
+    if (!button) return;
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy);
+      toast("Username copied.");
+    } catch {
+      toast("Select and copy the username manually.");
+    }
   });
-  let dirty=false;
-  document.querySelectorAll('[data-dirty]').forEach(form=>{
-    const initial=new URLSearchParams(new FormData(form)).toString();
-    const update=()=>{dirty=new URLSearchParams(new FormData(form)).toString()!==initial; text(id('saveLabel'),dirty?'Unsaved changes':'All changes saved');};
-    form.addEventListener('input',update);
-    form.addEventListener('change',update);
-    form.addEventListener('reset',()=>setTimeout(update,0));
-    form.addEventListener('submit',()=>{dirty=false;});
+  let dirty = false;
+  document.querySelectorAll("[data-dirty]").forEach((form) => {
+    const initial = new URLSearchParams(new FormData(form)).toString();
+    const update = () => {
+      dirty = new URLSearchParams(new FormData(form)).toString() !== initial;
+      text(id("saveLabel"), dirty ? "Unsaved changes" : "All changes saved");
+    };
+    form.addEventListener("input", update);
+    form.addEventListener("change", update);
+    form.addEventListener("reset", () => setTimeout(update, 0));
+    form.addEventListener("submit", () => {
+      dirty = false;
+    });
   });
-  window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
-  document.querySelectorAll('[data-confirm]').forEach(form=>form.addEventListener('submit',event=>{
-    if(!window.confirm(form.dataset.confirm)) event.preventDefault();
-  }));
-  id('raceForm')?.addEventListener('input',()=>{
-    const sum=[...id('raceForm').querySelectorAll('[name^="prize_"]')].reduce((n,input)=>n+Number(input.value.replace(/[$,\s]/g,'')),0);
-    text(id('prizeTotal'),Number.isFinite(sum)?currency(sum)+' total':'Review prize amounts');
+  window.addEventListener("beforeunload", (event) => {
+    if (dirty) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+  });
+  document.querySelectorAll("[data-confirm]").forEach((form) =>
+    form.addEventListener("submit", (event) => {
+      if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+    }),
+  );
+  id("raceForm")?.addEventListener("input", () => {
+    const sum = [...id("raceForm").querySelectorAll('[name^="prize_"]')].reduce(
+      (n, input) => n + Number(input.value.replace(/[$,\s]/g, "")),
+      0,
+    );
+    text(
+      id("prizeTotal"),
+      Number.isFinite(sum) ? currency(sum) + " total" : "Review prize amounts",
+    );
   });
   // The date picker stores Eastern local wall time. Server validation handles
   // nonexistent/ambiguous DST times; a shortcut never silently publishes a race.
   function easternInput(stamp) {
-    const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(stamp));
-    const v=Object.fromEntries(parts.map(p=>[p.type,p.value])); return `${v.year}-${v.month}-${v.day}T${v.hour}:${v.minute}`;
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(stamp));
+    const v = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+    return `${v.year}-${v.month}-${v.day}T${v.hour}:${v.minute}`;
   }
-  function daysAfter(value,days) { const d=new Date(value+'Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,16); }
-  id('startNow')?.addEventListener('click',()=>{
-    id('f-start_et').value=easternInput(Date.now());id('f-end_et').value=daysAfter(id('f-start_et').value,7);
-    id('f-start_et').dispatchEvent(new Event('input',{bubbles:true}));
+  function daysAfter(value, days) {
+    const d = new Date(value + "Z");
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 16);
+  }
+  id("startNow")?.addEventListener("click", () => {
+    id("f-start_et").value = easternInput(Date.now());
+    id("f-end_et").value = daysAfter(id("f-start_et").value, 7);
+    id("f-start_et").dispatchEvent(new Event("input", { bubbles: true }));
   });
-  id('nextRace')?.addEventListener('click',()=>{
-    const start=id('f-start_et'),end=id('f-end_et');
-    const duration=Math.max(1,Math.round((new Date(end.value+'Z')-new Date(start.value+'Z'))/86400000)||7);
-    start.value=end.value||easternInput(Date.now());end.value=daysAfter(start.value,duration);
-    start.dispatchEvent(new Event('input',{bubbles:true}));toast('Draft prepared. Review the dates before saving.');
+  id("nextRace")?.addEventListener("click", () => {
+    const start = id("f-start_et"),
+      end = id("f-end_et");
+    const duration = Math.max(
+      1,
+      Math.round(
+        (new Date(end.value + "Z") - new Date(start.value + "Z")) / 86400000,
+      ) || 7,
+    );
+    start.value = end.value || easternInput(Date.now());
+    end.value = daysAfter(start.value, duration);
+    start.dispatchEvent(new Event("input", { bubbles: true }));
+    toast("Draft prepared. Review the dates before saving.");
   });
 
-  if(!document.body.dataset.feed) return;
-  const isAdmin=document.body.dataset.page==='admin';
-  let site={}, offset=0, sourceAt=0, jobs={}, busy=false, timer, next=0, urgentUntil=0;
-  let pollAgain=false, lastWork='', receipt=null;
-  let participantVersion='',redVersion='';
-  try {const boot=JSON.parse(document.body.dataset.bootstrap);site=boot.site;offset=boot.server_time*1000-Date.now();} catch {}
+  if (!document.body.dataset.feed) return;
+  const isAdmin = document.body.dataset.page === "admin";
+  let site = {},
+    offset = 0,
+    sourceAt = 0,
+    jobs = {},
+    busy = false,
+    timer,
+    next = 0,
+    urgentUntil = 0;
+  let pollAgain = false,
+    lastWork = "",
+    receipt = null;
+  let publicCache = null,
+    publicETag = "",
+    lastProviderFailure = "";
+  let participantVersion = "",
+    redVersion = "";
+  try {
+    const boot = JSON.parse(document.body.dataset.bootstrap);
+    site = boot.site;
+    offset = boot.server_time * 1000 - Date.now();
+  } catch {}
   function clock() {
-    if(document.hidden) return;
-    const now=(Date.now()+offset)/1000;
-    const state=!site.start_time||site.end_time<=site.start_time?'unconfigured':now<site.start_time?'upcoming':now>=site.end_time?'ended':'active';
-    const badge=id('raceBadge');text(badge,state.charAt(0).toUpperCase()+state.slice(1));
-    if(badge) badge.className='badge state-'+state;
-    const left=Math.max(0,Math.ceil((state==='upcoming'?site.start_time:site.end_time)-now));
-    text(id('countdown'),state==='unconfigured'?'Set the race dates':state==='ended'?'Race complete':`${Math.floor(left/86400)}d ${String(Math.floor(left/3600)%24).padStart(2,'0')}h ${String(Math.floor(left/60)%60).padStart(2,'0')}m ${String(left%60).padStart(2,'0')}s`);
-    text(id('clockLabel'),state==='upcoming'?'STARTS IN':state==='active'?'RACE ENDS IN':'RACE SCHEDULE');
-    text(id('raceWindow'),site.start_time?date(site.start_time)+' → '+date(site.end_time):'Choose the race dates in Race settings.');
-    if(id('endedNotice')) id('endedNotice').hidden=state!=='ended';
-    if(sourceAt) text(id('sourceTime'),'Source checked '+Math.max(0,Math.floor(now-sourceAt))+'s ago');
-    for(const [name,job] of Object.entries(jobs)) {
-      const remaining=Math.max(0,Math.ceil(job.next_check-now));
-      text(id(name+'Timing'),job.state==='checking'?'Checking now…':`${job.duration_ms||0} ms · ${job.next_check?'Next check in '+remaining+'s':'Check queued'} · Last success: ${date(job.last_success)}`);
+    if (document.hidden) return;
+    const now = (Date.now() + offset) / 1000;
+    const state =
+      !site.start_time || site.end_time <= site.start_time
+        ? "unconfigured"
+        : now < site.start_time
+          ? "upcoming"
+          : now >= site.end_time
+            ? "ended"
+            : "active";
+    const badge = id("raceBadge");
+    text(badge, state.charAt(0).toUpperCase() + state.slice(1));
+    if (badge) badge.className = "badge state-" + state;
+    const left = Math.max(
+      0,
+      Math.ceil((state === "upcoming" ? site.start_time : site.end_time) - now),
+    );
+    text(
+      id("countdown"),
+      state === "unconfigured"
+        ? "Set the race dates"
+        : state === "ended"
+          ? "Race complete"
+          : `${Math.floor(left / 86400)}d ${String(Math.floor(left / 3600) % 24).padStart(2, "0")}h ${String(Math.floor(left / 60) % 60).padStart(2, "0")}m ${String(left % 60).padStart(2, "0")}s`,
+    );
+    text(
+      id("clockLabel"),
+      state === "upcoming"
+        ? "STARTS IN"
+        : state === "active"
+          ? "RACE ENDS IN"
+          : "RACE SCHEDULE",
+    );
+    text(
+      id("raceWindow"),
+      site.start_time
+        ? date(site.start_time) + " → " + date(site.end_time)
+        : "Choose the race dates in Race settings.",
+    );
+    if (id("endedNotice")) id("endedNotice").hidden = state !== "ended";
+    if (sourceAt)
+      text(
+        id("sourceTime"),
+        "Source checked " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
+      );
+    for (const [name, job] of Object.entries(jobs)) {
+      const remaining = Math.max(0, Math.ceil(job.next_check - now));
+      text(
+        id(name + "Timing"),
+        job.state === "checking"
+          ? "Checking now…"
+          : `${job.duration_ms || 0} ms · ${job.next_check ? "Next check in " + remaining + "s" : "Check queued"} · Last success: ${date(job.last_success)}`,
+      );
     }
   }
   function filterRed() {
-    const q=(id('redSearch')?.value||'').trim().toLowerCase();
-    id('redBody')?.querySelectorAll('[data-red-name]').forEach(row=>row.hidden=!row.dataset.redName.toLowerCase().includes(q));
+    const q = (id("redSearch")?.value || "").trim().toLowerCase();
+    id("redBody")
+      ?.querySelectorAll("[data-red-name]")
+      .forEach(
+        (row) => (row.hidden = !row.dataset.redName.toLowerCase().includes(q)),
+      );
   }
-  id('redSearch')?.addEventListener('input',filterRed);
+  id("redSearch")?.addEventListener("input", filterRed);
   function checkingSoon(job) {
-    const pending=job.pending||job.requested>job.completed||job.state==='queued';
-    return job.state==='checking'||(pending&&(!job.next_check||job.next_check<=(Date.now()+offset)/1000+3));
+    const pending =
+      job.pending || job.requested > job.completed || job.state === "queued";
+    return (
+      job.state === "checking" ||
+      (pending &&
+        (!job.next_check || job.next_check <= (Date.now() + offset) / 1000 + 3))
+    );
   }
   function progress(value) {
-    for(const name of ['shuffle','kick']) {
-      const job=jobs[name]||{}, pending=job.pending||job.requested>job.completed||job.state==='queued';
-      let message='Automatic check is starting.';
-      if(job.state==='checking') message=job.pending?'Checking now; your follow-up refresh is queued.':'Checking the provider now…';
-      else if(pending) {
-        message=job.next_check>(Date.now()+offset)/1000+3?'Queued. Retry scheduled for '+date(job.next_check)+'.':'Refresh queued; waiting for the worker.';
-        if(job.error) message+=' Last check'+(job.http_status?' (HTTP '+job.http_status+')':'')+': '+job.error;
-      }
-      else if(job.error) message='Check failed'+(job.http_status?' (HTTP '+job.http_status+')':'')+': '+job.error;
-      else if(name==='shuffle'&&['updated','unchanged'].includes(job.result)) message=(job.result==='updated'?'Published ':'Confirmed ')+(value.count||0)+' qualifying players. Last check: '+date(job.completed_at)+'.';
-      else if(name==='shuffle'&&job.result==='empty') message=value.leaderboard_message||'Check completed; no qualifying wagers were returned.';
-      else if(['upcoming','unconfigured'].includes(job.result)) message=value.leaderboard_message||'Waiting for the configured race to start.';
-      else if(job.result==='superseded') message='The old settings were superseded; a check for the current settings is queued.';
-      else if(job.result==='shared') message='Another app instance is checking this provider.';
-      else if(name==='kick'&&['live','offline'].includes(job.result)) message='Confirmed '+job.result+' on Kick. Last check: '+date(job.completed_at)+'.';
-      text(id(name+'Progress'),message);
+    for (const name of ["shuffle", "kick"]) {
+      const job = jobs[name] || {},
+        pending =
+          job.pending ||
+          job.requested > job.completed ||
+          job.state === "queued";
+      let message = "Automatic check is starting.";
+      if (job.state === "checking")
+        message = job.pending
+          ? "Checking now; your follow-up refresh is queued."
+          : "Checking the provider now…";
+      else if (pending) {
+        message =
+          job.next_check > (Date.now() + offset) / 1000 + 3
+            ? "Queued. Retry scheduled for " + date(job.next_check) + "."
+            : "Refresh queued; waiting for the worker.";
+        if (job.error)
+          message +=
+            " Last check" +
+            (job.http_status ? " (HTTP " + job.http_status + ")" : "") +
+            ": " +
+            job.error;
+      } else if (job.error)
+        message =
+          "Check failed" +
+          (job.http_status ? " (HTTP " + job.http_status + ")" : "") +
+          ": " +
+          job.error;
+      else if (
+        name === "shuffle" &&
+        ["updated", "unchanged"].includes(job.result)
+      )
+        message =
+          (job.result === "updated" ? "Published " : "Confirmed ") +
+          (value.count || 0) +
+          " qualifying players. Last check: " +
+          date(job.completed_at) +
+          ".";
+      else if (name === "shuffle" && job.result === "empty")
+        message =
+          value.leaderboard_message ||
+          "Check completed; no qualifying wagers were returned.";
+      else if (["upcoming", "unconfigured"].includes(job.result))
+        message =
+          value.leaderboard_message ||
+          "Waiting for the configured race to start.";
+      else if (job.result === "superseded")
+        message =
+          "The old settings were superseded; a check for the current settings is queued.";
+      else if (job.result === "shared")
+        message = "Another app instance is checking this provider.";
+      else if (name === "kick" && ["live", "offline"].includes(job.result))
+        message =
+          "Confirmed " +
+          job.result +
+          " on Kick. Last check: " +
+          date(job.completed_at) +
+          ".";
+      text(id(name + "Progress"), message);
+      const summary = job.error
+        ? "Needs attention"
+        : job.state === "checking"
+          ? "Checking now"
+          : pending
+            ? "Queued"
+            : name === "kick" && ["live", "offline"].includes(job.result)
+              ? job.result === "live"
+                ? "Live"
+                : "Offline"
+              : job.result === "waiting"
+                ? "Waiting for data"
+                : job.result === "upcoming"
+                  ? "Race upcoming"
+                  : job.result === "unconfigured"
+                    ? "Set race dates"
+                    : "Up to date";
+      text(
+        id(name + "Summary"),
+        `${name === "shuffle" ? "Shuffle" : "Kick"} · ${summary}`,
+      );
+      id(name + "Summary")?.classList.toggle("has-error", Boolean(job.error));
     }
-    text(id('publishedWindow'),'Published window: '+date(site.start_time)+' → '+date(site.end_time));
-    const work=JSON.stringify([value.runtime_id,...Object.values(jobs).map(job=>[job.requested,job.runs,job.state])]);
-    if(work!==lastWork&&Object.values(jobs).some(checkingSoon)) urgentUntil=Date.now()+60000;
-    lastWork=work;
-    if(receipt&&value.runtime_id) {
-      if(receipt.runtime_id!==value.runtime_id) {receipt=null;toast('The backend restarted. Current update progress is shown below.');}
-      else if(Object.entries(receipt.requests).every(([name,target])=>jobs[name]?.completed>=target)) {
-        const failed=Object.keys(receipt.requests).some(name=>jobs[name]?.error);
-        toast(failed?'Refresh finished with a provider error. See update progress below.':'Refresh finished. See the update result below.');
-        receipt=null;
+    const failure = JSON.stringify(
+      Object.entries(jobs)
+        .filter(([, job]) => job.error)
+        .map(([name, job]) => [name, job.error, job.http_status]),
+    );
+    if (
+      failure !== "[]" &&
+      failure !== lastProviderFailure &&
+      id("connectionDetails")
+    )
+      id("connectionDetails").open = true;
+    lastProviderFailure = failure;
+    text(
+      id("publishedWindow"),
+      "Published window: " +
+        date(site.start_time) +
+        " → " +
+        date(site.end_time),
+    );
+    const work = JSON.stringify([
+      value.runtime_id,
+      ...Object.values(jobs).map((job) => [job.requested, job.runs, job.state]),
+    ]);
+    if (work !== lastWork && Object.values(jobs).some(checkingSoon))
+      urgentUntil = Date.now() + 60000;
+    lastWork = work;
+    if (receipt && value.runtime_id) {
+      if (receipt.runtime_id !== value.runtime_id) {
+        receipt = null;
+        toast("The backend restarted. Current update progress is shown below.");
+      } else if (
+        Object.entries(receipt.requests).every(
+          ([name, target]) => jobs[name]?.completed >= target,
+        )
+      ) {
+        const failed = Object.keys(receipt.requests).some(
+          (name) => jobs[name]?.error,
+        );
+        toast(
+          failed
+            ? "Refresh finished with a provider error. See update progress below."
+            : "Refresh finished. See the update result below.",
+        );
+        receipt = null;
       }
     }
   }
-  function cell(value,className='') {const td=document.createElement('td');td.textContent=String(value??'—');td.className=className;return td;}
-  function updateTable(body,rows,red=false) {
-    if(!body) return;
-    const encoded=JSON.stringify(rows);
-    if(encoded===(red?redVersion:participantVersion)) return;
-    if(red) redVersion=encoded; else participantVersion=encoded;
-    const scroll=body.closest('.table-scroll'), top=scroll?.scrollTop,left=scroll?.scrollLeft;
-    const focused=document.activeElement, focusRow=focused?.closest('tr'), focusName=focusRow?.dataset.player||focusRow?.dataset.redName;
-    const focusCopy=focused?.hasAttribute('data-copy');
-    const fragment=document.createDocumentFragment();
-    rows.forEach((r,index)=>{
-      const tr=document.createElement('tr');tr.dataset[red?'redName':'player']=r.username;
-      tr.append(cell(red?index+1:r.rank,'rank'));
-      const name=cell('');const strong=document.createElement('strong');strong.textContent=r.username;name.append(strong);
-      const copy=document.createElement('button');copy.type='button';copy.className='copy-button';copy.dataset.copy=r.username;copy.textContent='⧉';copy.setAttribute('aria-label','Copy '+r.username);name.append(copy);
-      if(!red&&r.source==='override') {const label=document.createElement('span');label.className='tag';label.textContent='Adjusted';name.append(label);}
-      tr.append(name,cell(red?r.weighted:r.wager,'number accent'));
-      if(!red) tr.append(cell(r.original_weighted_str,'number'));
-      tr.append(cell(red?r.raw:r.raw_wager_str,'number'));
-      if(!red) {const action=cell(''),link=document.createElement('a');link.href='/admin?tab=players&edit='+encodeURIComponent(r.username)+'#override';link.className='text-link';link.textContent='Edit';action.append(link);tr.append(action);}
+  function cell(value, className = "") {
+    const td = document.createElement("td");
+    td.textContent = String(value ?? "—");
+    td.className = className;
+    return td;
+  }
+  function updateTable(body, rows, red = false) {
+    if (!body) return;
+    const encoded = JSON.stringify(rows);
+    if (encoded === (red ? redVersion : participantVersion)) return;
+    if (red) redVersion = encoded;
+    else participantVersion = encoded;
+    const scroll = body.closest(".table-scroll"),
+      top = scroll?.scrollTop,
+      left = scroll?.scrollLeft;
+    const focused = document.activeElement,
+      focusRow = focused?.closest("tr"),
+      focusName = focusRow?.dataset.player || focusRow?.dataset.redName;
+    const focusCopy = focused?.hasAttribute("data-copy");
+    const fragment = document.createDocumentFragment();
+    rows.forEach((r, index) => {
+      const tr = document.createElement("tr");
+      tr.dataset[red ? "redName" : "player"] = r.username;
+      tr.append(cell(red ? index + 1 : r.rank, "rank"));
+      const name = cell("");
+      const strong = document.createElement("strong");
+      strong.textContent = r.username;
+      name.append(strong);
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "copy-button";
+      copy.dataset.copy = r.username;
+      copy.textContent = "⧉";
+      copy.setAttribute("aria-label", "Copy " + r.username);
+      name.append(copy);
+      if (!red && r.source === "override") {
+        const label = document.createElement("span");
+        label.className = "tag";
+        label.textContent = "Adjusted";
+        name.append(label);
+      }
+      tr.append(name, cell(red ? r.weighted : r.wager, "number accent"));
+      if (!red) tr.append(cell(r.original_weighted_str, "number"));
+      tr.append(cell(red ? r.raw : r.raw_wager_str, "number"));
+      if (!red) {
+        const action = cell(""),
+          link = document.createElement("a");
+        link.href =
+          "/admin?tab=players&edit=" +
+          encodeURIComponent(r.username) +
+          "#override";
+        link.className = "text-link";
+        link.textContent = "Edit";
+        action.append(link);
+        tr.append(action);
+      }
       fragment.append(tr);
     });
-    if(!rows.length) {const tr=document.createElement('tr'),td=cell(red?'No confirmed Code Red wagerers for this window.':'No matching qualifying wagers.','empty');td.colSpan=red?4:6;tr.append(td);fragment.append(tr);}
+    if (!rows.length) {
+      const tr = document.createElement("tr"),
+        td = cell(
+          red
+            ? "No confirmed Code Red wagerers for this window."
+            : "No matching qualifying wagers.",
+          "empty",
+        );
+      td.colSpan = red ? 4 : 6;
+      tr.append(td);
+      fragment.append(tr);
+    }
     body.replaceChildren(fragment);
-    if(scroll){scroll.scrollTop=top;scroll.scrollLeft=left;}
-    if(focusName) [...body.rows].find(row=>(row.dataset.player||row.dataset.redName)===focusName)?.querySelector(focusCopy?'button':'a')?.focus({preventScroll:true});
-    if(red) filterRed();
+    if (scroll) {
+      scroll.scrollTop = top;
+      scroll.scrollLeft = left;
+    }
+    if (focusName)
+      [...body.rows]
+        .find(
+          (row) => (row.dataset.player || row.dataset.redName) === focusName,
+        )
+        ?.querySelector(focusCopy ? "button" : "a")
+        ?.focus({ preventScroll: true });
+    if (red) filterRed();
   }
-  function apply(value,began) {
-    if(!value.site||!value.freshness||!Number.isFinite(value.server_time)) throw new Error('The update response is incomplete.');
-    site=value.site;offset=value.server_time*1000-(began+Date.now())/2;sourceAt=value.freshness.updated_at;
-    text(id('raceTitle'),site.race_title);text(id('raceDescription'),site.race_description);text(id('sponsorName'),site.sponsor_name);
-    text(id('poolTotal'),site.total_prize);text(id('playerCount'),value.count);
-    text(id('dataState'),value.freshness.label);text(id('sourceTime'),date(sourceAt));
-    notice('leaderboardMessage',value.leaderboard_message||'');
-    notice('sourceWarning',[value.freshness.warning,isAdmin?value.freshness.error:''].filter(Boolean).join(' '));
-    document.querySelectorAll('[data-site-text]').forEach(node=>text(node,site[node.dataset.siteText]));
-    document.querySelectorAll('[data-site-link]').forEach(a=>{const href=site[a.dataset.siteLink];a.hidden=!href;if(href&&/^https?:\/\//.test(href))a.href=href;});
-    if(id('sponsorLink')&&/^https?:\/\//.test(site.sponsor_url)) id('sponsorLink').href=site.sponsor_url;
-    if(isAdmin) {
-      jobs=value.jobs||{};
+  function apply(value, began) {
+    if (!value.site || !value.freshness || !Number.isFinite(value.server_time))
+      throw new Error("The update response is incomplete.");
+    site = value.site;
+    offset = value.server_time * 1000 - (began + Date.now()) / 2;
+    sourceAt = value.freshness.updated_at;
+    text(id("raceTitle"), site.race_title);
+    text(id("raceDescription"), site.race_description);
+    text(id("sponsorName"), site.sponsor_name);
+    text(id("poolTotal"), site.total_prize);
+    text(id("playerCount"), value.count);
+    text(id("dataState"), value.freshness.label);
+    text(id("sourceTime"), date(sourceAt));
+    notice("leaderboardMessage", value.leaderboard_message || "");
+    notice(
+      "sourceWarning",
+      [value.freshness.warning, isAdmin ? value.freshness.error : ""]
+        .filter(Boolean)
+        .join(" "),
+    );
+    document
+      .querySelectorAll("[data-site-text]")
+      .forEach((node) => text(node, site[node.dataset.siteText]));
+    document.querySelectorAll("[data-site-link]").forEach((a) => {
+      const href = site[a.dataset.siteLink];
+      a.hidden = !href;
+      if (href && /^https?:\/\//.test(href)) a.href = href;
+    });
+    if (id("sponsorLink") && /^https?:\/\//.test(site.sponsor_url))
+      id("sponsorLink").href = site.sponsor_url;
+    if (isAdmin) {
+      jobs = value.jobs || {};
+      if (value.checkpoint) {
+        text(id("checkpointLabel"), value.checkpoint.label);
+        text(id("checkpointDetails"), value.checkpoint.details);
+        text(
+          id("checkpointTime"),
+          value.checkpoint.generated_at
+            ? "Last export generated: " + date(value.checkpoint.generated_at)
+            : "No export generated yet.",
+        );
+        id("checkpointLabel")?.classList.toggle(
+          "accent",
+          value.checkpoint.changes,
+        );
+      }
       progress(value);
-      updateTable(id('participantsBody'),value.participants||[]);
-      if(id('codeRed')?.open&&value.red) updateTable(id('redBody'),value.red,true);
-      text(id('redCount'),Math.min(100,value.red_total||0)+' / 100');
-      text(id('redMembership'),(value.diagnostics?.missing_campaign||0)+' source rows have no campaign metadata; membership cannot be verified for those rows.');
-      for(const name of ['shuffle','kick']) text(id(name+'Message'),jobs[name]?.error || (name==='shuffle'?value.freshness.label:value.stream?.available?(value.stream.live?'Live on Kick':'Kick offline'):'Kick status unavailable'));
-      const stream=value.stream||{};
-      text(id('streamDetail'),stream.available&&stream.live?[stream.title,stream.viewers?stream.viewers.toLocaleString()+' watching':'Viewer count unavailable'].filter(Boolean).join(' · '):'');
-      document.querySelectorAll('[data-diagnostic]').forEach(node=>text(node,value.diagnostics?.[node.dataset.diagnostic]));
-      text(id('browserCheck'),'Dashboard checked '+date(value.server_time)+' · next update in 60 seconds');
+      updateTable(id("participantsBody"), value.participants || []);
+      if (id("codeRed")?.open && value.red)
+        updateTable(id("redBody"), value.red, true);
+      text(id("redCount"), Math.min(100, value.red_total || 0) + " / 100");
+      text(
+        id("redMembership"),
+        (value.diagnostics?.missing_campaign || 0) +
+          " source rows have no campaign metadata; membership cannot be verified for those rows.",
+      );
+      for (const name of ["shuffle", "kick"])
+        text(
+          id(name + "Message"),
+          jobs[name]?.error ||
+            (name === "shuffle"
+              ? value.freshness.label
+              : value.stream?.available
+                ? value.stream.live
+                  ? "Live on Kick"
+                  : "Kick offline"
+                : "Kick status unavailable"),
+        );
+      const stream = value.stream || {};
+      text(
+        id("streamDetail"),
+        stream.available && stream.live
+          ? [
+              stream.title,
+              stream.viewers
+                ? stream.viewers.toLocaleString() + " watching"
+                : "Viewer count unavailable",
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : "",
+      );
+      document
+        .querySelectorAll("[data-diagnostic]")
+        .forEach((node) =>
+          text(node, value.diagnostics?.[node.dataset.diagnostic]),
+        );
+      text(
+        id("browserCheck"),
+        "Dashboard checked " +
+          date(value.server_time) +
+          " · next update in 60 seconds",
+      );
     } else {
-      const rows=new Map((value.rows||[]).map(row=>[row.rank,row]));
-      document.querySelectorAll('[data-rank]').forEach(node=>{const n=Number(node.dataset.rank),row=rows.get(n);text(node.querySelector('[data-name]'),row?.username||'Open position');text(node.querySelector('[data-wager]'),row?.wager||'$0.00');text(node.querySelector('[data-prize]'),currency(site.prizes[n]));});
-      text(id('streamStatus'),!value.stream?.available?'Kick status unavailable':value.stream.live?'● Live on Kick':'Kick offline');
+      const rows = new Map((value.rows || []).map((row) => [row.rank, row]));
+      document.querySelectorAll("[data-rank]").forEach((node) => {
+        const n = Number(node.dataset.rank),
+          row = rows.get(n);
+        text(
+          node.querySelector("[data-name]"),
+          row?.username || "Open position",
+        );
+        text(node.querySelector("[data-wager]"), row?.wager || "$0.00");
+        text(node.querySelector("[data-prize]"), currency(site.prizes[n]));
+      });
+      if (value.boss) {
+        const b = value.boss;
+        text(
+          id("inviteTitle"),
+          b.status === "victory"
+            ? "The crew conquered Crimson."
+            : b.status === "paused"
+              ? "The raid is taking a breather."
+              : "Red needs a raid party.",
+        );
+        text(
+          id("inviteProgress"),
+          `${Number(b.hp).toLocaleString()} HP left · ${b.raiders} raiders united`,
+        );
+        text(
+          id("inviteButtonLabel"),
+          b.status === "victory"
+            ? "View the victory"
+            : b.status === "paused"
+              ? "View the raid"
+              : "Join the boss fight",
+        );
+        const bar = id("inviteHealth");
+        if (bar) {
+          bar.max = b.max_hp;
+          bar.value = b.hp;
+        }
+      }
+      text(
+        id("streamStatus"),
+        !value.stream?.available
+          ? "Kick status unavailable"
+          : value.stream.live
+            ? "● Live on Kick"
+            : "Kick offline",
+      );
     }
     clock();
   }
-  async function getJSON(url,options={}) {
-    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);
+  async function getJSON(url, options = {}) {
+    const controller = new AbortController(),
+      timeout = setTimeout(() => controller.abort(), 10000);
     try {
-      const response=await fetch(url,{...options,credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}});
-      if(response.status===401) throw new Error('Your session expired. Sign in again to resume updates.');
-      if(response.redirected&&response.url&&new URL(response.url,location.origin).pathname==='/admin/login') {
-        throw new Error('Your session expired. Sign in again to resume updates.');
+      const conditional =
+        !isAdmin &&
+        !options.method &&
+        new URL(url, location.origin).pathname === "/public-state";
+      const headers = { Accept: "application/json", ...options.headers };
+      if (conditional && publicETag) headers["If-None-Match"] = publicETag;
+      const response = await fetch(url, {
+        ...options,
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller.signal,
+        headers,
+      });
+      const clockHeader = response.headers?.get("X-Server-Time");
+      const currentTime =
+        clockHeader && Number.isFinite(Number(clockHeader))
+          ? Number(clockHeader)
+          : null;
+      if (conditional && response.status === 304) {
+        if (!publicCache)
+          throw new Error("The cached update is unavailable. Reload the page.");
+        return {
+          ...publicCache,
+          server_time: currentTime ?? Date.now() / 1000,
+        };
       }
-      if(!response.headers.get('content-type')?.includes('application/json')) {
-        const hint=response.status===404?'The update endpoint was not found. Reload the page after installing the complete update.':
-          response.status>=500?'Check the backend runtime logs. Previous results are retained.':
-          'Reload the page and sign in again if needed.';
+      if (response.status === 401)
+        throw new Error(
+          "Your session expired. Sign in again to resume updates.",
+        );
+      if (
+        response.redirected &&
+        response.url &&
+        new URL(response.url, location.origin).pathname === "/admin/login"
+      ) {
+        throw new Error(
+          "Your session expired. Sign in again to resume updates.",
+        );
+      }
+      if (!response.headers.get("content-type")?.includes("application/json")) {
+        const hint =
+          response.status === 404
+            ? "The update endpoint was not found. Reload the page after installing the complete update."
+            : response.status >= 500
+              ? "Check the backend runtime logs. Previous results are retained."
+              : "Reload the page and sign in again if needed.";
         // Never render an HTML error/proxy page into the dashboard.
-        throw new Error(`Expected JSON but received a non-JSON response (HTTP ${response.status}). ${hint}`);
+        throw new Error(
+          `Expected JSON but received a non-JSON response (HTTP ${response.status}). ${hint}`,
+        );
       }
       let value;
-      try {value=await response.json();}
-      catch {throw new Error(`The server returned invalid JSON (HTTP ${response.status}). Check the runtime logs.`);}
-      if(!response.ok)throw new Error(`${value?.error||'The server could not complete this request.'} (HTTP ${response.status})`);
+      try {
+        value = await response.json();
+      } catch {
+        throw new Error(
+          `The server returned invalid JSON (HTTP ${response.status}). Check the runtime logs.`,
+        );
+      }
+      if (!response.ok)
+        throw new Error(
+          `${value?.error || "The server could not complete this request."} (HTTP ${response.status})`,
+        );
+      if (conditional) {
+        publicCache = value;
+        publicETag = response.headers.get("ETag") || "";
+        value = {
+          ...value,
+          server_time: currentTime ?? value.server_time ?? Date.now() / 1000,
+        };
+      }
       return value;
-    } finally {clearTimeout(timeout);}
+    } finally {
+      clearTimeout(timeout);
+    }
   }
   async function poll() {
-    if(document.hidden) return;
-    if(busy) {pollAgain=true;return;}
-    busy=true;clearTimeout(timer);
-    const began=Date.now();
+    if (document.hidden) return;
+    if (busy) {
+      pollAgain = true;
+      return;
+    }
+    busy = true;
+    clearTimeout(timer);
+    const began = Date.now();
     try {
-      const url=new URL(document.body.dataset.feed,location.origin);
-      if(isAdmin) {for(const [key,value] of new URLSearchParams(location.search))url.searchParams.set(key,value);if(id('codeRed')?.open)url.searchParams.set('code_red','1');}
-      const result=await getJSON(url);apply(result,began);notice('networkError','');
-      if(result.release&&result.release!=='2026.09.22-boss') notice('networkError','A newer version was deployed. Save your draft, then reload.');
-    } catch(error) {notice('networkError',error.name==='AbortError'?'Dashboard request timed out. Previous results are retained; updates will retry.':error.message);}
-    finally {
-      busy=false;
-      if(!next) next=began+60000;
-      else if(next<=began) next+=60000*(Math.floor((began-next)/60000)+1);
-      if(next<=Date.now())next+=60000*(Math.floor((Date.now()-next)/60000)+1);
-      const urgent=Date.now()<urgentUntil&&Object.values(jobs).some(checkingSoon);
-      const delay=pollAgain?50:urgent?2000:Math.max(250,next-Date.now());
-      pollAgain=false;
-      if(!document.hidden)timer=setTimeout(poll,delay);
+      const url = new URL(document.body.dataset.feed, location.origin);
+      if (isAdmin) {
+        for (const [key, value] of new URLSearchParams(location.search))
+          url.searchParams.set(key, value);
+        if (id("codeRed")?.open) url.searchParams.set("code_red", "1");
+      }
+      const result = await getJSON(url);
+      apply(result, began);
+      notice("networkError", "");
+      if (result.release && result.release !== "2026.09.22-no-regen")
+        notice(
+          "networkError",
+          "A newer version was deployed. Save your draft, then reload.",
+        );
+    } catch (error) {
+      notice(
+        "networkError",
+        error.name === "AbortError"
+          ? "Dashboard request timed out. Previous results are retained; updates will retry."
+          : error.message,
+      );
+    } finally {
+      busy = false;
+      if (!next) next = began + 60000;
+      else if (next <= began)
+        next += 60000 * (Math.floor((began - next) / 60000) + 1);
+      if (next <= Date.now())
+        next += 60000 * (Math.floor((Date.now() - next) / 60000) + 1);
+      const urgent =
+        Date.now() < urgentUntil && Object.values(jobs).some(checkingSoon);
+      const delay = pollAgain
+        ? 50
+        : urgent
+          ? 2000
+          : Math.max(250, next - Date.now());
+      pollAgain = false;
+      if (!document.hidden) timer = setTimeout(poll, delay);
     }
   }
-  document.querySelectorAll('[data-refresh]').forEach(form=>form.addEventListener('submit',async event=>{
-    event.preventDefault();const button=form.querySelector('button');if(button.disabled)return;button.disabled=true;
-    try {
-      // A hidden input named "action" shadows form.action in real browsers.
-      // Read the HTML attribute so every refresh reaches the backend route.
-      const value=await getJSON(form.getAttribute('action'),{method:'POST',body:new FormData(form)});
-      receipt=value.requests?{runtime_id:value.runtime_id,requests:value.requests}:null;
-      jobs=value.jobs||jobs;
-      toast(value.message);urgentUntil=Date.now()+60000;next=0;await poll();
+  document.querySelectorAll("[data-refresh]").forEach((form) =>
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = form.querySelector("button");
+      if (button.disabled) return;
+      button.disabled = true;
+      try {
+        // A hidden input named "action" shadows form.action in real browsers.
+        // Read the HTML attribute so every refresh reaches the backend route.
+        const value = await getJSON(form.getAttribute("action"), {
+          method: "POST",
+          body: new FormData(form),
+        });
+        receipt = value.requests
+          ? { runtime_id: value.runtime_id, requests: value.requests }
+          : null;
+        jobs = value.jobs || jobs;
+        toast(value.message);
+        urgentUntil = Date.now() + 60000;
+        next = 0;
+        await poll();
+      } catch (error) {
+        toast(error.message);
+      } finally {
+        button.disabled = false;
+      }
+    }),
+  );
+  document
+    .querySelectorAll("[data-recovery-download]")
+    .forEach((link) =>
+      link.addEventListener("click", () => setTimeout(() => void poll(), 1000)),
+    );
+  id("codeRed")?.addEventListener("toggle", () => {
+    if (id("codeRed").open) {
+      next = 0;
+      poll();
     }
-    catch(error){toast(error.message);}finally{button.disabled=false;}
-  }));
-  id('codeRed')?.addEventListener('toggle',()=>{if(id('codeRed').open){next=0;poll();}});
-  document.addEventListener('visibilitychange',()=>{clearTimeout(timer);if(!document.hidden){next=0;poll();}});
-  window.addEventListener('pageshow',event=>{if(event.persisted){next=0;poll();}});
-  clock();setInterval(clock,1000);poll();
+  });
+  document.addEventListener("visibilitychange", () => {
+    clearTimeout(timer);
+    if (!document.hidden) {
+      next = 0;
+      poll();
+    }
+  });
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      next = 0;
+      poll();
+    }
+  });
+  clock();
+  setInterval(clock, 1000);
+  poll();
 })();
 ```
 
@@ -2758,11 +3699,971 @@ python-3.13.12
 
 ```css
 /* A small CSS arena using the original logo; no canvas engine or image bundle. */
-.boss-page{padding-top:40px}.boss-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:30px}.boss-heading h1{font-size:clamp(2.3rem,4vw,3.6rem);margin:16px 0}.boss-heading .lead{max-width:520px;margin-bottom:0}.boss-heading>a{white-space:nowrap;margin-bottom:5px}.boss-live{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.72rem;margin-bottom:16px}.boss-live>span:first-child{color:var(--accent)}.raid-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px}.arena{padding:24px 28px;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#671c253d,transparent 65%),#191216}.arena-heading,.boss-name-row,.hp-label,.combo-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.arena-heading .eyebrow{font-size:.6rem}.boss-stage{height:280px;display:grid;place-items:center;position:relative;isolation:isolate}.boss-sprite{object-fit:contain;width:190px;height:190px;image-rendering:pixelated;filter:drop-shadow(0 15px 25px #ff24243d);z-index:1;animation:boss-hover 4s ease-in-out infinite}.rune-ring{position:absolute;border:1px solid #bb35375c;border-radius:50%;width:254px;height:254px;box-shadow:0 0 45px #ff323210,inset 0 0 38px #f33b3810}.rune-ring.inner{width:220px;height:220px;border-style:dashed;opacity:.55;animation:ring-turn 80s linear infinite}.arena-rune{position:absolute;color:#ff666d;font-size:22px;opacity:.65}.rune-one{left:15%;top:30%}.rune-two{right:14%;bottom:23%}.boss-shadow{position:absolute;bottom:20px;background:#0006;width:145px;height:18px;border-radius:50%;filter:blur(6px)}.boss-name-row{margin-top:8px}.boss-name-row h2{font-size:1.6rem}.boss-name-row .eyebrow{font-size:.57rem;margin-bottom:4px}.hp-label{font-size:.77rem;margin:10px 0 8px;font-variant-numeric:tabular-nums}.hp-label>span{color:var(--muted)}.health-bar{appearance:none;-webkit-appearance:none;width:100%;height:12px;border:none;border-radius:8px;background:#382128;overflow:hidden;display:block;accent-color:#ff3a47}.health-bar::-webkit-progress-bar{background:#382128;border-radius:8px}.health-bar::-webkit-progress-value{background:linear-gradient(90deg,#b91732,#ff4a51);border-radius:8px;transition:width .45s}.health-bar::-moz-progress-bar{background:linear-gradient(90deg,#b91732,#ff4a51);border-radius:8px}.boss-story{color:var(--muted);font-size:.75rem;margin:14px 0 20px;min-height:2.8em}.raid-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);padding-top:18px;gap:14px}.raid-stats strong,.personal-stats strong{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums;letter-spacing:-.035em}.raid-stats span,.personal-stats span{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}.attack-panel{padding:26px}.attack-panel>.row{align-items:flex-start}.attack-panel .eyebrow{font-size:.59rem}.attack-panel h2{font-size:1.65rem;margin-top:5px}.weakness-box{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid #73402f;background:linear-gradient(105deg,#40261d,#291c19);border-radius:10px;margin:22px 0 17px}.weakness-symbol{font-size:2.1rem;color:#ffcd86}.weakness-box small,.weakness-box strong,.weakness-box div>span{display:block}.weakness-box small{font-size:.56rem;letter-spacing:.13em;color:#e3b777}.weakness-box strong{font-size:.93rem;color:#ffe5c1;margin:3px 0}.weakness-box div>span{font-size:.65rem;color:#c5ae99}.strike-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.strike-options button{border:1px solid var(--line);border-radius:10px;background:#21161c;color:var(--text);padding:12px 6px;position:relative}.strike-options button[aria-pressed=true]{border-color:var(--accent);background:#481f2b;box-shadow:inset 0 0 0 1px var(--accent)}.strike-options button.is-weak:after{content:'WEAK';position:absolute;right:5px;top:5px;font-size:.42rem;letter-spacing:.05em;color:#ffd397}.strike-options button>span{display:block;font-size:1.65rem;line-height:1.2;margin:4px 0 7px;color:#ffd5d7}.strike-options strong{display:block;font-size:.8rem}.strike-options small{display:block;font-size:.55rem;color:var(--muted);margin-top:4px}.combo-row{font-size:.65rem;margin:20px 0 8px}.combo-row>span{color:var(--muted)}.burst-meter{display:flex;gap:4px}.burst-meter span{height:5px;flex:1;background:#462632;border-radius:2px}.burst-meter span.filled{background:var(--accent);box-shadow:0 0 8px #ff2d2d25}.attack-button{width:100%;min-height:53px;font-size:.98rem;margin-top:22px}.attack-button:disabled{cursor:default;opacity:.6}.attack-hint{text-align:center;color:var(--muted);font-size:.64rem;margin:9px 0 0}.hit-result{min-height:2.8em;font-size:.78rem;text-align:center;color:var(--accent);margin:16px 0}.personal-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);padding-top:14px;gap:15px}.raider-name{color:var(--muted);font-size:.62rem;margin:14px 0 5px}.raider-name strong{color:#eed5dd}.attack-panel>#raidReset{font-size:.6rem;margin-bottom:0}.hit-float{position:absolute;z-index:3;top:30%;left:50%;font-size:2.4rem;font-weight:850;color:#ffe7ae;opacity:0;pointer-events:none;text-shadow:0 3px 12px #270008}.boss-stage.struck .hit-float{animation:damage-pop .8s ease-out}.boss-stage.struck .boss-sprite{animation:boss-hit .45s ease-out}.boss-stage.victory .boss-sprite{filter:grayscale(.8);opacity:.6;animation:none;transform:rotate(-9deg)}.arena:has(.victory){border-color:#a6753e}.instructions{padding:28px;margin-top:24px;scroll-margin-top:95px}.instruction-grid{list-style:none;counter-reset:steps;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:0;margin:24px 0}.instruction-grid li{counter-increment:steps}.instruction-grid li:before{content:'0' counter(steps);display:block;color:var(--accent);font-size:.8rem;font-weight:750;margin-bottom:10px}.instruction-grid strong{font-size:.93rem}.instruction-grid p{color:var(--muted);font-size:.79rem;margin:9px 0 0}.instruction-grid b{color:#f0d9de;font-weight:550}.raid-fineprint{border-top:1px solid var(--line);padding-top:18px;display:grid;gap:10px}.raid-fineprint p{font-size:.71rem;color:var(--muted);margin:0}.raid-fineprint strong{color:#e9cdd4}.raid-bottom{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}.raid-list{padding:25px}.raid-list h2{font-size:1.45rem}.combat-list{list-style:none;padding:0;margin:19px 0}.combat-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #35232b;padding:11px 0;font-size:.76rem}.combat-list li:last-child{border:0}.combat-list strong{font-size:.8rem;font-weight:600}.combat-list small{display:block;color:var(--muted);font-size:.61rem;margin-top:3px}.combat-list .score{color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}.combat-list .self strong{color:#ffb8bf}.raid-history{margin-top:22px;padding:18px 24px;font-size:.82rem}.boss-restart{display:grid;gap:18px;max-width:500px;margin-top:22px}.boss-confirm{display:flex;align-items:flex-start;gap:10px;font-size:.78rem}.boss-confirm input{width:18px;min-height:18px;margin-top:2px;accent-color:var(--action)}
-@keyframes boss-hover{50%{transform:translateY(-8px)}}@keyframes ring-turn{to{transform:rotate(360deg)}}@keyframes boss-hit{25%{transform:translateX(-9px) rotate(-4deg)}60%{transform:translateX(6px) rotate(3deg)}}@keyframes damage-pop{0%{opacity:1;transform:translate(-50%,0) scale(.8)}25%{opacity:1;transform:translate(-50%,-15px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-65px) scale(1)}}
-@media(max-width:850px){.raid-layout{grid-template-columns:1fr 1fr;gap:16px}.arena{padding:21px}.attack-panel{padding:21px}.boss-stage{height:255px}.boss-sprite{width:165px;height:165px}.rune-ring{width:215px;height:215px}.rune-ring.inner{width:185px;height:185px}.boss-name-row{align-items:flex-start;flex-direction:column;gap:0}.arena-heading{flex-wrap:wrap}.arena-heading .badge{font-size:.61rem}.instructions{padding:23px}.instruction-grid{gap:20px}.raid-stats strong{font-size:1.1rem}}
-@media(max-width:650px){.boss-page{padding-top:28px}.boss-heading{display:block;margin-bottom:22px}.boss-heading .lead{font-size:.87rem;margin-bottom:15px}.boss-heading h1{font-size:2.6rem}.boss-live{flex-direction:column;gap:4px;font-size:.66rem}.raid-layout,.raid-bottom{grid-template-columns:1fr}.arena{padding:20px}.boss-stage{height:245px}.boss-name-row{flex-direction:row;align-items:center;gap:10px}.boss-name-row h2{font-size:1.5rem}.arena-heading{flex-wrap:nowrap}.attack-panel{padding:24px}.raid-stats strong{font-size:1.25rem}.instruction-grid{grid-template-columns:1fr;gap:22px}.instructions .section-title{align-items:flex-start;flex-direction:column}.instruction-grid li:before{float:left;margin:0 15px 35px 0}.raid-list{padding:22px}.raid-bottom{gap:16px}.hp-label{font-size:.73rem}.boss-heading .text-link{font-size:.8rem}}
-@media(prefers-reduced-motion:reduce){.boss-sprite,.rune-ring.inner,.boss-stage.struck .hit-float,.boss-stage.struck .boss-sprite{animation:none!important}.health-bar::-webkit-progress-value{transition:none}}
+.boss-page {
+  padding-top: 40px;
+}
+.boss-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+.boss-heading h1 {
+  font-size: clamp(2.3rem, 4vw, 3.6rem);
+  margin: 16px 0;
+}
+.boss-heading .lead {
+  max-width: 520px;
+  margin-bottom: 0;
+}
+.boss-heading > a {
+  white-space: nowrap;
+  margin-bottom: 5px;
+}
+.boss-live {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-bottom: 16px;
+}
+.boss-live > span:first-child {
+  color: var(--accent);
+}
+.raid-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 22px;
+}
+.arena {
+  padding: 24px 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 30%, #671c253d, transparent 65%), #191216;
+}
+.arena-heading,
+.boss-name-row,
+.hp-label,
+.combo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.arena-heading .eyebrow {
+  font-size: 0.6rem;
+}
+.boss-stage {
+  height: 280px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  isolation: isolate;
+}
+.boss-sprite {
+  object-fit: contain;
+  width: 190px;
+  height: 190px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 15px 25px #ff24243d);
+  z-index: 1;
+  animation: boss-hover 4s ease-in-out infinite;
+}
+.rune-ring {
+  position: absolute;
+  border: 1px solid #bb35375c;
+  border-radius: 50%;
+  width: 254px;
+  height: 254px;
+  box-shadow:
+    0 0 45px #ff323210,
+    inset 0 0 38px #f33b3810;
+}
+.rune-ring.inner {
+  width: 220px;
+  height: 220px;
+  border-style: dashed;
+  opacity: 0.55;
+  animation: ring-turn 80s linear infinite;
+}
+.arena-rune {
+  position: absolute;
+  color: #ff666d;
+  font-size: 22px;
+  opacity: 0.65;
+}
+.rune-one {
+  left: 15%;
+  top: 30%;
+}
+.rune-two {
+  right: 14%;
+  bottom: 23%;
+}
+.boss-shadow {
+  position: absolute;
+  bottom: 20px;
+  background: #0006;
+  width: 145px;
+  height: 18px;
+  border-radius: 50%;
+  filter: blur(6px);
+}
+.boss-name-row {
+  margin-top: 8px;
+}
+.boss-name-row h2 {
+  font-size: 1.6rem;
+}
+.boss-name-row .eyebrow {
+  font-size: 0.57rem;
+  margin-bottom: 4px;
+}
+.hp-label {
+  font-size: 0.77rem;
+  margin: 10px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.hp-label > span {
+  color: var(--muted);
+}
+.health-bar {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #382128;
+  overflow: hidden;
+  display: block;
+  accent-color: #ff3a47;
+}
+.health-bar::-webkit-progress-bar {
+  background: #382128;
+  border-radius: 8px;
+}
+.health-bar::-webkit-progress-value {
+  background: linear-gradient(90deg, #b91732, #ff4a51);
+  border-radius: 8px;
+  transition: width 0.45s;
+}
+.health-bar::-moz-progress-bar {
+  background: linear-gradient(90deg, #b91732, #ff4a51);
+  border-radius: 8px;
+}
+.boss-story {
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin: 14px 0 20px;
+  min-height: 2.8em;
+}
+.raid-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  gap: 14px;
+}
+.raid-stats strong,
+.personal-stats strong {
+  display: block;
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+.raid-stats span,
+.personal-stats span {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.attack-panel {
+  padding: 26px;
+}
+.attack-panel > .row {
+  align-items: flex-start;
+}
+.attack-panel .eyebrow {
+  font-size: 0.59rem;
+}
+.attack-panel h2 {
+  font-size: 1.65rem;
+  margin-top: 5px;
+}
+.weakness-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #73402f;
+  background: linear-gradient(105deg, #40261d, #291c19);
+  border-radius: 10px;
+  margin: 22px 0 17px;
+}
+.weakness-symbol {
+  font-size: 2.1rem;
+  color: #ffcd86;
+}
+.weakness-box small,
+.weakness-box strong,
+.weakness-box div > span {
+  display: block;
+}
+.weakness-box small {
+  font-size: 0.56rem;
+  letter-spacing: 0.13em;
+  color: #e3b777;
+}
+.weakness-box strong {
+  font-size: 0.93rem;
+  color: #ffe5c1;
+  margin: 3px 0;
+}
+.weakness-box div > span {
+  font-size: 0.65rem;
+  color: #c5ae99;
+}
+.strike-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.strike-options button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #21161c;
+  color: var(--text);
+  padding: 12px 6px;
+  position: relative;
+}
+.strike-options button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #481f2b;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.strike-options button.is-weak:after {
+  content: "WEAK";
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  font-size: 0.42rem;
+  letter-spacing: 0.05em;
+  color: #ffd397;
+}
+.strike-options button > span {
+  display: block;
+  font-size: 1.65rem;
+  line-height: 1.2;
+  margin: 4px 0 7px;
+  color: #ffd5d7;
+}
+.strike-options strong {
+  display: block;
+  font-size: 0.8rem;
+}
+.strike-options small {
+  display: block;
+  font-size: 0.55rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.combo-row {
+  font-size: 0.65rem;
+  margin: 20px 0 8px;
+}
+.combo-row > span {
+  color: var(--muted);
+}
+.burst-meter {
+  display: flex;
+  gap: 4px;
+}
+.burst-meter span {
+  height: 5px;
+  flex: 1;
+  background: #462632;
+  border-radius: 2px;
+}
+.burst-meter span.filled {
+  background: var(--accent);
+  box-shadow: 0 0 8px #ff2d2d25;
+}
+.attack-button {
+  width: 100%;
+  min-height: 53px;
+  font-size: 0.98rem;
+  margin-top: 22px;
+}
+.attack-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.attack-hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.64rem;
+  margin: 9px 0 0;
+}
+.hit-result {
+  min-height: 2.8em;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--accent);
+  margin: 16px 0;
+}
+.personal-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  gap: 15px;
+}
+.raider-name {
+  color: var(--muted);
+  font-size: 0.62rem;
+  margin: 14px 0 5px;
+}
+.raider-name strong {
+  color: #eed5dd;
+}
+.attack-panel > #raidReset {
+  font-size: 0.6rem;
+  margin-bottom: 0;
+}
+.hit-float {
+  position: absolute;
+  z-index: 3;
+  top: 30%;
+  left: 50%;
+  font-size: 2.4rem;
+  font-weight: 850;
+  color: #ffe7ae;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 3px 12px #270008;
+}
+.boss-stage.struck .hit-float {
+  animation: damage-pop 0.8s ease-out;
+}
+.boss-stage.struck .boss-sprite {
+  animation: boss-hit 0.45s ease-out;
+}
+.boss-stage.victory .boss-sprite {
+  filter: grayscale(0.8);
+  opacity: 0.6;
+  animation: none;
+  transform: rotate(-9deg);
+}
+.arena:has(.victory) {
+  border-color: #a6753e;
+}
+.instructions {
+  padding: 28px;
+  margin-top: 24px;
+  scroll-margin-top: 95px;
+}
+.instruction-grid {
+  list-style: none;
+  counter-reset: steps;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  padding: 0;
+  margin: 24px 0;
+}
+.instruction-grid li {
+  counter-increment: steps;
+}
+.instruction-grid li:before {
+  content: "0" counter(steps);
+  display: block;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 750;
+  margin-bottom: 10px;
+}
+.instruction-grid strong {
+  font-size: 0.93rem;
+}
+.instruction-grid p {
+  color: var(--muted);
+  font-size: 0.79rem;
+  margin: 9px 0 0;
+}
+.instruction-grid b {
+  color: #f0d9de;
+  font-weight: 550;
+}
+.raid-fineprint {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+.raid-fineprint p {
+  font-size: 0.71rem;
+  color: var(--muted);
+  margin: 0;
+}
+.raid-fineprint strong {
+  color: #e9cdd4;
+}
+.raid-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 24px;
+}
+.raid-list {
+  padding: 25px;
+}
+.raid-list h2 {
+  font-size: 1.45rem;
+}
+.combat-list {
+  list-style: none;
+  padding: 0;
+  margin: 19px 0;
+}
+.combat-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #35232b;
+  padding: 11px 0;
+  font-size: 0.76rem;
+}
+.combat-list li:last-child {
+  border: 0;
+}
+.combat-list strong {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.combat-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.61rem;
+  margin-top: 3px;
+}
+.combat-list .score {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.combat-list .self strong {
+  color: #ffb8bf;
+}
+.raid-history {
+  margin-top: 22px;
+  padding: 18px 24px;
+  font-size: 0.82rem;
+}
+.boss-restart {
+  display: grid;
+  gap: 18px;
+  max-width: 500px;
+  margin-top: 22px;
+}
+.boss-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+.boss-confirm input {
+  width: 18px;
+  min-height: 18px;
+  margin-top: 2px;
+  accent-color: var(--action);
+}
+@keyframes boss-hover {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes ring-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes boss-hit {
+  25% {
+    transform: translateX(-9px) rotate(-4deg);
+  }
+  60% {
+    transform: translateX(6px) rotate(3deg);
+  }
+}
+@keyframes damage-pop {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(0.8);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -15px) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -65px) scale(1);
+  }
+}
+@media (max-width: 850px) {
+  .raid-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .arena {
+    padding: 21px;
+  }
+  .attack-panel {
+    padding: 21px;
+  }
+  .boss-stage {
+    height: 255px;
+  }
+  .boss-sprite {
+    width: 165px;
+    height: 165px;
+  }
+  .rune-ring {
+    width: 215px;
+    height: 215px;
+  }
+  .rune-ring.inner {
+    width: 185px;
+    height: 185px;
+  }
+  .boss-name-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+  }
+  .arena-heading {
+    flex-wrap: wrap;
+  }
+  .arena-heading .badge {
+    font-size: 0.61rem;
+  }
+  .instructions {
+    padding: 23px;
+  }
+  .instruction-grid {
+    gap: 20px;
+  }
+  .raid-stats strong {
+    font-size: 1.1rem;
+  }
+}
+@media (max-width: 650px) {
+  .boss-page {
+    padding-top: 28px;
+  }
+  .boss-heading {
+    display: block;
+    margin-bottom: 22px;
+  }
+  .boss-heading .lead {
+    font-size: 0.87rem;
+    margin-bottom: 15px;
+  }
+  .boss-heading h1 {
+    font-size: 2.6rem;
+  }
+  .boss-live {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.66rem;
+  }
+  .raid-layout,
+  .raid-bottom {
+    grid-template-columns: 1fr;
+  }
+  .arena {
+    padding: 20px;
+  }
+  .boss-stage {
+    height: 245px;
+  }
+  .boss-name-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .boss-name-row h2 {
+    font-size: 1.5rem;
+  }
+  .arena-heading {
+    flex-wrap: nowrap;
+  }
+  .attack-panel {
+    padding: 24px;
+  }
+  .raid-stats strong {
+    font-size: 1.25rem;
+  }
+  .instruction-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .instructions .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .instruction-grid li:before {
+    float: left;
+    margin: 0 15px 35px 0;
+  }
+  .raid-list {
+    padding: 22px;
+  }
+  .raid-bottom {
+    gap: 16px;
+  }
+  .hp-label {
+    font-size: 0.73rem;
+  }
+  .boss-heading .text-link {
+    font-size: 0.8rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boss-sprite,
+  .rune-ring.inner,
+  .boss-stage.struck .hit-float,
+  .boss-stage.struck .boss-sprite {
+    animation: none !important;
+  }
+  .health-bar::-webkit-progress-value {
+    transition: none;
+  }
+}
+
+/* Milestones and badges are cosmetic; the server's damage rules stay fixed. */
+.boss-stage[data-milestone="25"] .rune-ring {
+  border-color: #d6485799;
+}
+.boss-stage[data-milestone="50"] .rune-ring {
+  border-color: #ff647599;
+  box-shadow:
+    0 0 55px #ff303033,
+    inset 0 0 45px #ff404026;
+}
+.boss-stage[data-milestone="75"] .rune-ring {
+  border-color: #ffab8aaa;
+  box-shadow:
+    0 0 65px #ff32324d,
+    inset 0 0 45px #f336363d;
+}
+.boss-stage[data-milestone="100"] .rune-ring {
+  border-color: #ffce83aa;
+  box-shadow: 0 0 50px #ffd07a24;
+}
+.milestone-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 15px 0;
+}
+.milestone-rail li {
+  font-size: 0.7rem;
+  color: var(--muted);
+  border-left: 2px solid #653141;
+  padding-left: 8px;
+}
+.milestone-rail li > span {
+  display: block;
+}
+.milestone-rail strong {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+.milestone-rail small {
+  display: block;
+  font-size: 0.66rem;
+  margin: 4px 0;
+  min-height: 2.7em;
+}
+.milestone-rail .score {
+  font-size: 0.64rem;
+}
+.milestone-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: #4b2630;
+  border: 1px solid #ff8b89;
+  border-radius: 12px;
+  padding: 15px 18px;
+  margin-bottom: 18px;
+  font-size: 0.91rem;
+}
+.dismiss-error {
+  display: block;
+  margin: -11px 0 18px;
+  color: var(--accent);
+  padding-left: 0;
+}
+.raid-recognition,
+.victory-recap {
+  padding: 25px;
+  margin-top: 24px;
+}
+.raid-recognition h2,
+.victory-recap h2 {
+  font-size: 1.45rem;
+}
+.share-tools {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 7px;
+}
+.share-tools input {
+  max-width: 330px;
+}
+.share-tools #shareResult {
+  max-width: 300px;
+  text-align: right;
+}
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 14px;
+}
+.badge-grid li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #20171d;
+}
+.badge-grid li.earned {
+  border-color: #ba7154;
+  background: linear-gradient(120deg, #442822, #27191d);
+}
+.badge-grid strong {
+  font-size: 0.82rem;
+  display: block;
+}
+.badge-grid small {
+  display: block;
+  font-size: 0.73rem;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.badge-grid .score {
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+.badge-grid .earned .score {
+  color: #ffd18b;
+}
+.victory-recap {
+  border-color: #b6874d;
+  background: linear-gradient(120deg, #3c291c, #251920);
+}
+.victory-recap > p {
+  color: #e5c5a2;
+}
+.victory-recap details {
+  padding-top: 15px;
+  border-top: 1px solid #7b503f;
+}
+.victory-recap #allContributors {
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 10px;
+}
+.personal-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.personal-stats strong {
+  font-size: 1.2rem;
+}
+.personal-stats span,
+.raid-stats span {
+  font-size: 0.75rem;
+}
+.raider-name {
+  font-size: 0.75rem;
+}
+.attack-panel > #raidReset {
+  font-size: 0.72rem;
+}
+.attack-hint {
+  font-size: 0.75rem;
+}
+.attack-panel .eyebrow,
+.arena-heading .eyebrow {
+  font-size: 0.66rem;
+}
+.strike-options small {
+  font-size: 0.65rem;
+}
+.strike-options strong {
+  font-size: 0.87rem;
+}
+.weakness-box small {
+  font-size: 0.65rem;
+}
+.weakness-box div > span,
+.combo-row {
+  font-size: 0.75rem;
+}
+.raid-fineprint p,
+.combat-list small {
+  font-size: 0.78rem;
+}
+.combat-list li {
+  font-size: 0.85rem;
+}
+.combat-list strong {
+  font-size: 0.88rem;
+}
+.boss-story {
+  font-size: 0.84rem;
+}
+.instruction-grid p {
+  font-size: 0.9rem;
+}
+.boss-live {
+  font-size: 0.78rem;
+}
+.raid-list .eyebrow {
+  font-size: 0.7rem;
+}
+.mobile-attack-dock {
+  display: none;
+}
+.strike-options .ui-icon {
+  display: block;
+  margin: 0 auto;
+}
+.boss-page .footer {
+  padding-bottom: 30px;
+}
+@media (max-width: 800px) {
+  .badge-grid {
+    grid-template-columns: 1fr;
+  }
+  .badge-grid small {
+    margin-top: 4px;
+  }
+  .raid-recognition .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .share-tools {
+    align-items: flex-start;
+  }
+  .share-tools #shareResult {
+    text-align: left;
+  }
+}
+@media (max-width: 650px) {
+  body[data-page="boss"] {
+    padding-bottom: 116px;
+  }
+  .mobile-attack-dock {
+    display: flex;
+    position: fixed;
+    z-index: 6;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 13px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: #22141cf5;
+    border-top: 1px solid #a95361;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 -8px 25px #0005;
+  }
+  .mobile-attack-dock > div {
+    width: 125px;
+    flex-shrink: 0;
+  }
+  .mobile-attack-dock label {
+    font-size: 0.66rem;
+    display: block;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .mobile-attack-dock select {
+    padding: 6px 9px;
+    min-height: 34px;
+    font-size: 0.8rem;
+  }
+  .mobile-attack-dock small {
+    font-size: 0.64rem;
+    color: var(--muted);
+    display: block;
+    margin-top: 4px;
+  }
+  .mobile-attack-dock .button {
+    flex: 1;
+    white-space: normal;
+    min-height: 49px;
+    padding: 10px 8px;
+    font-size: 0.78rem;
+  }
+  .milestone-rail {
+    gap: 5px;
+  }
+  .milestone-rail small {
+    font-size: 0.65rem;
+  }
+  .milestone-rail li {
+    padding-left: 5px;
+  }
+  .personal-stats strong {
+    font-size: 1.15rem;
+  }
+  .raid-recognition,
+  .victory-recap {
+    padding: 22px;
+  }
+  .badge-grid strong {
+    font-size: 0.87rem;
+  }
+  .badge-grid small {
+    font-size: 0.8rem;
+  }
+  .attack-panel .eyebrow {
+    font-size: 0.62rem;
+  }
+  .attack-panel {
+    padding: 22px;
+  }
+  .raid-fineprint p {
+    font-size: 0.8rem;
+  }
+  .combat-list small {
+    font-size: 0.72rem;
+  }
+  .boss-heading .lead {
+    font-size: 0.94rem;
+  }
+}
 ```
 
 ## static/boss.js
@@ -2771,145 +4672,622 @@ python-3.13.12
 /* Shared raid UI. The server owns damage, identity, cooldowns and daily limits.
    Polling never attacks. A failed POST keeps its receipt ID for a safe retry. */
 (() => {
-  'use strict';
-  const root = document.querySelector('[data-boss-root]');
+  "use strict";
+  const root = document.querySelector("[data-boss-root]");
   if (!root) return;
-  const admin = root.dataset.mode === 'admin';
-  const $ = id => root.querySelector('#' + id);
-  const text = (id, value) => { const el=$(id); if(el) el.textContent=String(value); };
-  const number = value => Number(value).toLocaleString('en-US');
-  const labels = {blade:'Blade',bow:'Bow',magic:'Magic'};
-  const button=$('attackButton'), stage=$('bossStage');
-  let state, csrf='', selected='blade', busy=false, timer, polling=false;
-  let receivedAt=performance.now(), lastGood=-Infinity, pending=null, lastAnimated='';
-  const pendingKey='rh.boss.pending';
+  const admin = root.dataset.mode === "admin";
+  const $ = (id) => root.querySelector("#" + id);
+  const text = (id, value) => {
+    const el = $(id);
+    if (el) el.textContent = String(value);
+  };
+  const number = (value) => Number(value).toLocaleString("en-US");
+  let labels = {};
+  const listCache = new Map();
+  const effects = new Map();
+  const button = $("attackButton"),
+    dockButton = $("dockAttack"),
+    stage = $("bossStage");
+  let state,
+    csrf = "",
+    selected = "blade",
+    busy = false,
+    timer,
+    polling = false;
+  let receivedAt = performance.now(),
+    lastGood = -Infinity,
+    pending = null,
+    lastAnimated = "";
+  let milestoneTimer,
+    recapRaid = "",
+    recapPending = false;
+  const pendingKey = "rh.boss.pending";
   // Session storage remembers a click if the connection drops or the tab reloads.
   // Gameplay still works in browsers that disable storage; cookies are required.
-  try { pending=JSON.parse(sessionStorage.getItem(pendingKey)); } catch (_) { /* optional */ }
-  function remember(value) {
-    pending=value;
-    try { value ? sessionStorage.setItem(pendingKey,JSON.stringify(value)) : sessionStorage.removeItem(pendingKey); } catch (_) { /* optional */ }
+  try {
+    pending = JSON.parse(sessionStorage.getItem(pendingKey));
+  } catch (_) {
+    /* optional */
   }
-  function error(message='') { const el=$('bossError'); if(el){el.hidden=!message;el.textContent=message;} }
-  const now = () => state ? state.server_time+(performance.now()-receivedAt)/1000 : 0;
+  function remember(value) {
+    pending = value;
+    try {
+      value
+        ? sessionStorage.setItem(pendingKey, JSON.stringify(value))
+        : sessionStorage.removeItem(pendingKey);
+    } catch (_) {
+      /* optional */
+    }
+  }
+  function error(message = "") {
+    const el = $("bossError");
+    if (el) {
+      el.hidden = !message;
+      el.textContent = message;
+    }
+    if ($("dismissBossError")) $("dismissBossError").hidden = !message;
+  }
+  const now = () =>
+    state ? state.server_time + (performance.now() - receivedAt) / 1000 : 0;
   function duration(seconds) {
-    const s=Math.max(0,Math.ceil(seconds));
-    return s>=3600 ? `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m` : `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    const s = Math.max(0, Math.ceil(seconds));
+    return s >= 3600
+      ? `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`
+      : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   }
   function strikeFeedback(hit, receipt) {
-    if (!hit || receipt===lastAnimated) return;
-    lastAnimated=receipt;
-    text('hitResult',`${hit.burst?'CRIMSON BURST! ':''}${labels[hit.style]} hit for ${number(hit.damage)}${hit.weakness?' · Weakness matched!':' · Nice hit.'}`);
-    text('hitFloat','−'+number(hit.damage));
-    if(stage){stage.classList.remove('struck'); void stage.offsetWidth; stage.classList.add('struck');}
+    if (!hit || receipt === lastAnimated) return;
+    lastAnimated = receipt;
+    text(
+      "hitResult",
+      `${hit.burst ? "CRIMSON BURST! " : ""}${labels[hit.style]} hit for ${number(hit.damage)}${hit.weakness ? " · Weakness matched!" : " · Nice hit."}`,
+    );
+    text("hitFloat", "−" + number(hit.damage));
+    if (
+      stage &&
+      !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      const sprite = stage.querySelector(".boss-sprite"),
+        float = $("hitFloat");
+      for (const [element, frames, duration] of [
+        [
+          sprite,
+          [
+            { transform: "translateX(0)" },
+            { transform: "translateX(-8px) rotate(-3deg)" },
+            { transform: "translateX(6px)" },
+            { transform: "translateX(0)" },
+          ],
+          400,
+        ],
+        [
+          float,
+          [
+            { opacity: 1, transform: "translate(-50%,0) scale(.8)" },
+            {
+              opacity: 1,
+              transform: "translate(-50%,-15px) scale(1.1)",
+              offset: 0.25,
+            },
+            { opacity: 0, transform: "translate(-50%,-65px)" },
+          ],
+          800,
+        ],
+      ]) {
+        if (element?.animate) {
+          effects.get(element)?.cancel();
+          effects.set(
+            element,
+            element.animate(frames, { duration, easing: "ease-out" }),
+          );
+        }
+      }
+    }
   }
   function rows(id, values, empty, mapper) {
-    const list=$(id); if(!list) return;
-    const nodes=values.map(mapper);
-    if(!nodes.length){const li=document.createElement('li');li.className='muted';li.textContent=empty;nodes.push(li);}
-    list.replaceChildren(...nodes);
+    const list = $(id);
+    if (!list) return;
+    const signature = JSON.stringify(values),
+      previous = listCache.get(id);
+    if (previous?.signature === signature) return;
+    const records = new Map();
+    const nodes = values.map((value, index) => {
+      const key = String(
+        value.id || (value.name ? value.name + ":" + (value.at || "") : index),
+      );
+      const rowSignature = JSON.stringify([value, index]);
+      const old = previous?.records.get(key);
+      const node =
+        old?.signature === rowSignature ? old.node : mapper(value, index);
+      records.set(key, { signature: rowSignature, node });
+      return node;
+    });
+    if (!nodes.length) {
+      const li = document.createElement("li");
+      li.className = "muted";
+      li.textContent = empty;
+      nodes.push(li);
+    }
+    // Retain untouched nodes, keyboard focus and scroll position between polls.
+    nodes.forEach((node, index) => {
+      if (list.children[index] !== node)
+        list.insertBefore(node, list.children[index] || null);
+    });
+    while (list.children.length > nodes.length) list.lastElementChild.remove();
+    listCache.set(id, { signature, records });
   }
-  function item(title, detail, score, self=false) {
-    const li=document.createElement('li'), left=document.createElement('span'), strong=document.createElement('strong'), small=document.createElement('small'), right=document.createElement('span');
-    strong.textContent=title;small.textContent=detail;right.textContent=score;right.className='score';
-    left.append(strong,small);li.append(left,right);if(self)li.className='self';return li;
+  function item(title, detail, score, self = false) {
+    const li = document.createElement("li"),
+      left = document.createElement("span"),
+      strong = document.createElement("strong"),
+      small = document.createElement("small"),
+      right = document.createElement("span");
+    strong.textContent = title;
+    small.textContent = detail;
+    right.textContent = score;
+    right.className = "score";
+    left.append(strong, small);
+    li.append(left, right);
+    if (self) li.className = "self";
+    return li;
   }
   function apply(value) {
-    const next=value.state;
-    if(!next || typeof next.raid_id!=='string' || !Number.isFinite(next.server_time) || !next.you) throw new Error('The game returned an incomplete update. Reload in a moment.');
+    const next = value.state;
+    if (
+      !next ||
+      typeof next.raid_id !== "string" ||
+      !Number.isFinite(next.server_time) ||
+      !next.you
+    )
+      throw new Error(
+        "The game returned an incomplete update. Reload in a moment.",
+      );
     // A slow poll must not undo an attack or bring back a replaced raid.
-    if(state && (next.server_time<state.server_time || (next.raid_id===state.raid_id && next.version<state.version))) return;
-    if(value.csrf)csrf=value.csrf;
-    state=next;receivedAt=performance.now();lastGood=receivedAt;
-    if(pending && (pending.raid_id!==state.raid_id || pending.name!==state.you.name)) remember(null);
-    if(pending && state.you.last_request===pending.request_id){strikeFeedback(state.you.last_hit,pending.request_id);remember(null);}
-    text('bossConnection','Live · Shared raid connected');
-    text('bossHealth',`${number(state.hp)} / ${number(state.max_hp)} HP`);
-    text('bossPercent',(state.hp/state.max_hp*100).toFixed(2)+'%');
-    const bar=$('bossHealthBar');if(bar){bar.max=state.max_hp;bar.value=state.hp;}
-    text('bossPhase',state.status==='victory'?'DEFEATED':state.status==='paused'?'PAUSED':state.phase);
-    text('bossDay','Raid day '+state.day);text('bossRaiders',number(state.raiders));
-    text('bossAttacks',number(state.total_attacks));text('bossDamage',number(state.total_damage));
-    const story=state.status==='victory'?'VICTORY. The Red crew brought the beast down. Every hit made this happen.':state.status==='paused'?'The host has paused attacks. Your progress is safe; the raid-day clock keeps running.':state.status==='waiting'?'The first strike starts the raid. Let’s wake the beast.':state.phase==='Last stand'?'Last stand. The beast is cornered. Rally the crew and finish what you started.':state.phase==='Enraged'?'Enraged. The arena is heating up. Watch the weakness and keep the pressure on.':'Awakening. The beast stirs. Small hits become a massive takedown.';
-    text('bossStory',story);if(stage)stage.classList.toggle('victory',state.status==='victory');
-    text('bossWeakness',`${state.weakness_label} · 150 damage`);
-    root.querySelectorAll('[data-style]').forEach(el=>el.classList.toggle('is-weak',el.dataset.style===state.weakness));
-    text('yourName',state.you.name);text('yourDamage',number(state.you.damage));
-    text('yourRemaining',`${state.you.remaining} / ${state.rules.daily_attacks}`);
-    text('burstLabel',state.you.burst_in===1?'NEXT HIT: +100 damage':`${state.you.burst_in} hits to +100 damage`);
-    root.querySelectorAll('#burstMeter span').forEach((el,i)=>el.classList.toggle('filled',i<10-state.you.burst_in));
-    rows('bossLeaders',state.leaders,'Land the first hit to lead the charge.',(r,i)=>item(`${String(i+1).padStart(2,'0')}  ${r.name}${r.you?' · You':''}`,`${number(r.attacks)} hits`,number(r.damage),r.you));
-    rows('bossRecent',state.recent,'The arena is waiting for your community.',r=>item(r.name,`${labels[r.style]}${r.burst?' · Burst':''}${r.weakness?' · Weakness':''} · ${new Date(r.at*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`,'−'+number(r.damage)));
-    rows('bossHistory',state.history.slice().reverse(),'The first chapter is yours to write.',r=>item(r.outcome,`${number(r.raiders)} raiders · ${number(r.attacks)} hits · ${new Date(r.ended_at*1000).toLocaleDateString()}`,number(r.damage)+' damage'));
+    if (
+      state &&
+      (next.server_time < state.server_time ||
+        (next.raid_id === state.raid_id && next.version < state.version))
+    )
+      return;
+    // Even a mis-versioned response cannot heal the same boss on screen.
+    // Keep the last confirmed state and let stale-state handling disable hits;
+    // never fabricate a lower HP value while accepting inconsistent counters.
+    if (
+      state &&
+      next.raid_id === state.raid_id &&
+      (next.hp > state.hp ||
+        next.max_hp !== state.max_hp ||
+        next.total_damage < state.total_damage ||
+        next.total_attacks < state.total_attacks)
+    )
+      throw new Error(
+        "Boss progress moved backwards; retaining the last confirmed state.",
+      );
+    if (value.csrf) csrf = value.csrf;
+    state = next;
+    labels = state.rules.styles;
+    receivedAt = performance.now();
+    lastGood = receivedAt;
+    if (
+      pending &&
+      (pending.raid_id !== state.raid_id || pending.name !== state.you.name)
+    )
+      remember(null);
+    if (pending && state.you.last_request === pending.request_id) {
+      strikeFeedback(state.you.last_hit, pending.request_id);
+      remember(null);
+      error();
+    }
+    text("bossConnection", "Live · Shared raid connected");
+    text("bossHealth", `${number(state.hp)} / ${number(state.max_hp)} HP`);
+    text("bossPercent", ((state.hp / state.max_hp) * 100).toFixed(2) + "%");
+    const bar = $("bossHealthBar");
+    if (bar) {
+      bar.max = state.max_hp;
+      bar.value = state.hp;
+    }
+    text(
+      "bossPhase",
+      state.status === "victory"
+        ? "DEFEATED"
+        : state.status === "paused"
+          ? "PAUSED"
+          : state.phase,
+    );
+    text("bossDay", "Raid day " + state.day);
+    text("bossRaiders", number(state.raiders));
+    text("bossAttacks", number(state.total_attacks));
+    text("bossDamage", number(state.total_damage));
+    const story =
+      state.status === "victory"
+        ? "VICTORY. The Red crew brought the beast down. Every hit made this happen."
+        : state.status === "paused"
+          ? "The host has paused attacks. Your progress is safe; the raid-day clock keeps running."
+          : state.status === "waiting"
+            ? "The first strike starts the raid. Let’s wake the beast."
+            : state.phase === "Last stand"
+              ? "Last stand. The beast is cornered. Rally the crew and finish what you started."
+              : state.phase === "Enraged"
+                ? "Enraged. The arena is heating up. Watch the weakness and keep the pressure on."
+                : "Awakening. The beast stirs. Small hits become a massive takedown.";
+    text("bossStory", story);
+    if (stage) stage.classList.toggle("victory", state.status === "victory");
+    text(
+      "bossWeakness",
+      `${state.weakness_label} · ${number(state.rules.weak_damage)} damage`,
+    );
+    root
+      .querySelectorAll("[data-style]")
+      .forEach((el) =>
+        el.classList.toggle("is-weak", el.dataset.style === state.weakness),
+      );
+    text("yourName", state.you.name);
+    text("yourDamage", number(state.you.damage));
+    text(
+      "yourRemaining",
+      `${state.you.remaining} / ${state.rules.daily_attacks}`,
+    );
+    text(
+      "burstLabel",
+      state.you.burst_in === 1
+        ? `NEXT HIT: +${state.rules.burst_bonus} damage`
+        : `${state.you.burst_in} hits to +${state.rules.burst_bonus} damage`,
+    );
+    root
+      .querySelectorAll("#burstMeter span")
+      .forEach((el, i) =>
+        el.classList.toggle(
+          "filled",
+          i < state.rules.burst_every - state.you.burst_in,
+        ),
+      );
+    rows(
+      "bossLeaders",
+      state.leaders,
+      "Land the first hit to lead the charge.",
+      (r, i) =>
+        item(
+          `${String(i + 1).padStart(2, "0")}  ${r.name}${r.you ? " · You" : ""}`,
+          `${number(r.attacks)} hits`,
+          number(r.damage),
+          r.you,
+        ),
+    );
+    rows(
+      "bossRecent",
+      state.recent,
+      "The arena is waiting for your community.",
+      (r) =>
+        item(
+          r.name,
+          `${labels[r.style]}${r.burst ? " · Burst" : ""}${r.weakness ? " · Weakness" : ""} · ${new Date(r.at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+          "−" + number(r.damage),
+        ),
+    );
+    rows(
+      "bossHistory",
+      state.history.slice().reverse(),
+      "The first chapter is yours to write.",
+      (r) =>
+        item(
+          r.outcome,
+          `${number(r.raiders)} raiders · ${number(r.attacks)} hits · ${new Date(r.ended_at * 1000).toLocaleDateString()}`,
+          number(r.damage) + " damage",
+        ),
+    );
+    achievements();
+    if (!admin && state.status === "victory") void recap();
     tick();
   }
+  function achievements() {
+    const milestones = state.milestones || [],
+      achieved = milestones.filter((m) => m.reached);
+    const level = achieved.at(-1)?.percent || 0;
+    if (stage) stage.dataset.milestone = String(level);
+    rows("bossMilestones", milestones, "", (m) =>
+      item(
+        `${m.reached ? "✓" : "◇"} ${m.percent}%`,
+        m.label,
+        m.reached ? "Reached" : "Next",
+      ),
+    );
+    rows(
+      "yourBadges",
+      state.you.badges || [],
+      "Land a hit to earn your first badge.",
+      (b) => {
+        const li = item(b.label, b.description, b.earned ? "Earned" : "Locked");
+        li.classList.toggle("earned", b.earned);
+        return li;
+      },
+    );
+    text("yourActiveDays", state.you.active_days || 0);
+    if (admin) return;
+    const key = "rh.boss.achievements";
+    try {
+      const old = JSON.parse(sessionStorage.getItem(key) || "null");
+      const earned = (state.you.badges || [])
+        .filter((b) => b.earned)
+        .map((b) => b.id);
+      const same = old?.raid === state.raid_id && old?.name === state.you.name;
+      const unlocked = same
+        ? (state.you.badges || []).filter(
+            (b) => b.earned && !old.badges.includes(b.id),
+          )
+        : [];
+      if (same && (level > old.level || unlocked.length)) {
+        const message =
+          level > old.level
+            ? `Community milestone: ${achieved.at(-1).label}! ${level}% conquered together.`
+            : `Badge earned: ${unlocked.map((b) => b.label).join(", ")}!`;
+        text("milestoneMessage", message);
+        const banner = $("milestoneBanner");
+        if (banner) banner.hidden = false;
+        clearTimeout(milestoneTimer);
+        milestoneTimer = setTimeout(() => {
+          if (banner) banner.hidden = true;
+        }, 8000);
+      }
+      sessionStorage.setItem(
+        key,
+        JSON.stringify({
+          raid: state.raid_id,
+          name: state.you.name,
+          level,
+          badges: earned,
+        }),
+      );
+    } catch (_) {
+      /* Badges still render when browser storage is unavailable. */
+    }
+    const victory = $("victoryRecap");
+    if (victory) victory.hidden = state.status !== "victory";
+    if (state.status === "victory")
+      text(
+        "victorySummary",
+        `${number(state.raiders)} raiders · ${number(state.total_attacks)} hits · ${number(state.total_damage)} damage. You contributed ${number(state.you.damage)} damage. Every hit helped.`,
+      );
+  }
+  async function recap() {
+    if (recapRaid === state.raid_id || recapPending) return;
+    recapPending = true;
+    const raid = state.raid_id;
+    try {
+      const { response, value } = await request(
+        "/play/api/contributors?raid_id=" + encodeURIComponent(raid),
+      );
+      if (!response.ok || value.raid_id !== state.raid_id) return;
+      rows(
+        "allContributors",
+        value.contributors,
+        "Everyone who landed a hit helped win.",
+        (r, i) =>
+          item(
+            `${i + 1}. ${r.name}`,
+            `${number(r.attacks)} hits`,
+            number(r.damage),
+          ),
+      );
+      text(
+        "recapNote",
+        "Every contributor is included, using their raid alias.",
+      );
+      recapRaid = raid;
+    } catch (_) {
+      text(
+        "recapNote",
+        "Contributor list is reconnecting. It will retry automatically.",
+      );
+    } finally {
+      recapPending = false;
+    }
+  }
   function tick() {
-    if(!state)return;
-    const seconds=now(), stale=performance.now()-lastGood>15000;
-    text('wardTimer',seconds>=state.ward_changes_at?'Weakness changing…':`Changes in ${duration(state.ward_changes_at-seconds)}`);
-    text('raidReset',state.resets_at?`Next raid day in ${duration(state.resets_at-seconds)}. Allowance refreshes then.`:'The first community hit starts the 24-hour raid-day schedule.');
-    if(!button)return;
-    const active=['waiting','active'].includes(state.status);
+    if (!state) return;
+    const seconds = now(),
+      stale = performance.now() - lastGood > 15000;
+    text(
+      "wardTimer",
+      seconds >= state.ward_changes_at
+        ? "Weakness changing…"
+        : `Changes in ${duration(state.ward_changes_at - seconds)}`,
+    );
+    text(
+      "raidReset",
+      state.resets_at
+        ? `Next raid day in ${duration(state.resets_at - seconds)}. Allowance refreshes then.`
+        : "The first community hit starts the 24-hour raid-day schedule.",
+    );
+    if (!button) return;
+    const active = ["waiting", "active"].includes(state.status);
     // An unacknowledged click can be retried even if its first delivery caused
     // a cooldown or victory. The backend returns the original receipt.
-    const retry=Boolean(pending && !busy && !stale);
-    const ready=active && state.connection_ready && state.you.remaining>0 && seconds>=state.you.ready_at && !stale && !busy;
-    button.disabled=!(retry || ready);
-    button.textContent=busy?'Landing your hit…':stale?'Reconnecting…':pending?'Retry last strike':state.status==='victory'?'Victory · We did it!':state.status==='paused'?'Raid paused':!state.connection_ready?'Connection setup needed':!state.you.remaining?'Rest up · Return next raid day':seconds<state.you.ready_at?`Next strike in ${duration(state.you.ready_at-seconds)}`:`Attack with ${labels[selected]} →`;
-    text('attackHint',pending?'Last strike unconfirmed. Retry safely; it won’t count twice.':state.status==='victory'?'You helped write this chapter. The host can open the next raid.':!state.you.remaining?'Daily allowance used by this browser or shared connection.':`One strike per minute · ${selected===state.weakness?'150':'100'} damage${state.you.burst_in===1?' + 100 burst':''}`);
-    if(stale)text('bossConnection','Reconnecting · Showing the last confirmed state');
+    const retry = Boolean(pending && !busy && !stale);
+    const ready =
+      active &&
+      state.connection_ready &&
+      state.you.remaining > 0 &&
+      seconds >= state.you.ready_at &&
+      !stale &&
+      !busy;
+    button.disabled = !(retry || ready);
+    button.textContent = busy
+      ? "Landing your hit…"
+      : stale
+        ? "Reconnecting…"
+        : pending
+          ? "Retry last strike"
+          : state.status === "victory"
+            ? "Victory · We did it!"
+            : state.status === "paused"
+              ? "Raid paused"
+              : !state.connection_ready
+                ? "Connection setup needed"
+                : !state.you.remaining
+                  ? "Rest up · Return next raid day"
+                  : seconds < state.you.ready_at
+                    ? `Next strike in ${duration(state.you.ready_at - seconds)}`
+                    : `Attack with ${labels[selected]} →`;
+    text(
+      "attackHint",
+      pending
+        ? "Last strike unconfirmed. Retry safely; it won’t count twice."
+        : state.status === "victory"
+          ? "You helped write this chapter. The host can open the next raid."
+          : !state.you.remaining
+            ? "Daily allowance used by this browser or shared connection."
+            : `One strike every ${state.rules.cooldown}s · ${selected === state.weakness ? state.rules.weak_damage : state.rules.damage} damage${state.you.burst_in === 1 ? " + " + state.rules.burst_bonus + " burst" : ""}`,
+    );
+    if (dockButton) {
+      dockButton.disabled = button.disabled;
+      dockButton.textContent = button.textContent;
+    }
+    text(
+      "dockRemaining",
+      `${state.you.remaining} / ${state.rules.daily_attacks} attacks left`,
+    );
+    if (stale)
+      text("bossConnection", "Reconnecting · Showing the last confirmed state");
   }
-  async function request(url, options={}) {
-    const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),10000);
+  async function request(url, options = {}) {
+    const controller = new AbortController(),
+      timeout = setTimeout(() => controller.abort(), 10000);
     try {
-      const response=await fetch(url,{...options,credentials:'same-origin',cache:'no-store',signal:controller.signal,
-        headers:{Accept:'application/json',...options.headers}});
-      if(!response.headers.get('content-type')?.includes('application/json'))throw new Error('The game server returned an unexpected response. Try again in a moment.');
-      return {response,value:await response.json()};
-    } finally {clearTimeout(timeout);}
+      const response = await fetch(url, {
+        ...options,
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: { Accept: "application/json", ...options.headers },
+      });
+      if (!response.headers.get("content-type")?.includes("application/json"))
+        throw new Error(
+          "The game server returned an unexpected response. Try again in a moment.",
+        );
+      return { response, value: await response.json() };
+    } finally {
+      clearTimeout(timeout);
+    }
   }
   async function poll() {
     clearTimeout(timer);
-    if(document.hidden || polling)return;
-    polling=true;
+    if (document.hidden || polling) return;
+    polling = true;
     try {
-      const {response,value}=await request('/play/api/state');
-      if(!response.ok)throw new Error(value.error || 'The raid is temporarily unavailable.');
-      apply(value);error();
-    } catch (_) {text('bossConnection','Reconnecting · Your saved damage is safe');tick();}
-    finally {polling=false;if(!document.hidden)timer=setTimeout(poll,5000);}
-  }
-  root.querySelectorAll('[data-style]').forEach(el=>el.addEventListener('click',()=>{
-    selected=el.dataset.style;
-    root.querySelectorAll('[data-style]').forEach(b=>b.setAttribute('aria-pressed',String(b===el)));
-    tick();
-  }));
-  if(button)button.addEventListener('click',async()=>{
-    if(busy || button.disabled)return;
-    if(!pending){
-      const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);
-      remember({request_id:Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''),raid_id:state.raid_id,style:selected,name:state.you.name});
+      const { response, value } = await request("/play/api/state");
+      if (!response.ok)
+        throw new Error(value.error || "The raid is temporarily unavailable.");
+      apply(value);
+    } catch (_) {
+      text("bossConnection", "Reconnecting · Your saved damage is safe");
+      tick();
+    } finally {
+      polling = false;
+      if (!document.hidden)
+        timer = setTimeout(poll, (state?.rules.poll_seconds || 5) * 1000);
     }
-    const receipt=pending.request_id;
-    busy=true;error();tick();
-    try {
-      const {response,value}=await request('/play/api/attack',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},
-        body:JSON.stringify({request_id:pending.request_id,raid_id:pending.raid_id,style:pending.style})});
-      if(value.state)apply(value);
-      if(!response.ok){
-        // A definitive rejection did not land. A 5xx may have happened after
-        // commit, so retain its receipt until a state check resolves it.
-        if(response.status<500)remember(null);
-        throw new Error(value.error || 'The strike could not be confirmed.');
-      }
-      strikeFeedback(value.hit,receipt);remember(null);
-    } catch(e) {error(e.name==='AbortError'?'The connection timed out. Your hit may have landed. Retry the same strike safely.':e.message);}
-    finally {busy=false;tick();void poll();}
+  }
+  function choose(style) {
+    if (!labels[style]) return;
+    selected = style;
+    root
+      .querySelectorAll("[data-style]")
+      .forEach((b) =>
+        b.setAttribute("aria-pressed", String(b.dataset.style === style)),
+      );
+    if ($("dockStyle")) $("dockStyle").value = style;
+    tick();
+  }
+  root
+    .querySelectorAll("[data-style]")
+    .forEach((el) =>
+      el.addEventListener("click", () => choose(el.dataset.style)),
+    );
+  $("dockStyle")?.addEventListener("change", (event) =>
+    choose(event.target.value),
+  );
+  dockButton?.addEventListener("click", () => button?.click());
+  $("dismissBossError")?.addEventListener("click", () => error());
+  $("dismissMilestone")?.addEventListener("click", () => {
+    $("milestoneBanner").hidden = true;
   });
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(timer);else void poll();});
-  window.addEventListener('online',()=>void poll());
-  try {apply(JSON.parse(root.dataset.bossBootstrap));} catch (_) {error('Reload to reconnect to the raid.');}
-  if(!admin)setInterval(tick,1000);
+  $("copyRaidLink")?.addEventListener("click", async () => {
+    const url = new URL("/play", location.origin).href;
+    try {
+      await navigator.clipboard.writeText(url);
+      text("shareResult", "Raid link copied. Rally the crew!");
+    } catch {
+      const fallback = $("shareUrl");
+      if (fallback) {
+        fallback.hidden = false;
+        fallback.value = url;
+        fallback.focus();
+        fallback.select();
+      }
+      text("shareResult", "Select and copy your raid link.");
+    }
+  });
+  if (button)
+    button.addEventListener("click", async () => {
+      if (busy || button.disabled) return;
+      if (!pending) {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        remember({
+          request_id: Array.from(bytes, (b) =>
+            b.toString(16).padStart(2, "0"),
+          ).join(""),
+          raid_id: state.raid_id,
+          style: selected,
+          name: state.you.name,
+        });
+      }
+      const receipt = pending.request_id;
+      busy = true;
+      error();
+      tick();
+      try {
+        const { response, value } = await request("/play/api/attack", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+          body: JSON.stringify({
+            request_id: pending.request_id,
+            raid_id: pending.raid_id,
+            style: pending.style,
+          }),
+        });
+        if (value.state) apply(value);
+        if (!response.ok) {
+          // A definitive rejection did not land. A 5xx may have happened after
+          // commit, so retain its receipt until a state check resolves it.
+          if (response.status < 500) remember(null);
+          throw new Error(value.error || "The strike could not be confirmed.");
+        }
+        strikeFeedback(value.hit, receipt);
+        remember(null);
+      } catch (e) {
+        error(
+          e.name === "AbortError"
+            ? "The connection timed out. Your hit may have landed. Retry the same strike safely."
+            : e.message,
+        );
+      } finally {
+        busy = false;
+        tick();
+        void poll();
+      }
+    });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) clearTimeout(timer);
+    else void poll();
+  });
+  window.addEventListener("online", () => void poll());
+  try {
+    apply(JSON.parse(root.dataset.bossBootstrap));
+  } catch (_) {
+    error("Reload to reconnect to the raid.");
+  }
+  if (!admin) setInterval(tick, 1000);
   void poll();
 })();
 ```
@@ -2935,27 +5313,1770 @@ iVBORw0KGgoAAAANSUhEUgAAAvgAAALuCAYAAADbrWJlAAARinpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4
 ```css
 /* Logo red (#ff2d2d), warm charcoal panels, and lighter red for readable text.
    Filled action buttons use a deeper red so their white labels stay readable. */
-:root{color-scheme:dark;--bg:#110e11;--panel:#1a1418;--panel-high:#231a20;--line:#39282f;--text:#faf1f3;--muted:#b8a8ae;--accent:#ff737b;--brand:#ff2d2d;--action:#d92236;--warning:#f3c77a;--radius:16px;--shadow:0 12px 40px #0002;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
-*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:95px}body{margin:0;background:var(--bg);color:var(--text)}body:before{content:"";position:absolute;z-index:-1;inset:0 0 auto;height:500px;background:radial-gradient(ellipse at 90% -15%,#ff2d2d24,transparent 65%);pointer-events:none}a{color:inherit;text-decoration:none}a:hover{color:var(--accent)}button,input,textarea,select{font:inherit}button,a,input,textarea,select{touch-action:manipulation}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}[hidden]{display:none!important}.js-only{display:none}.js .js-only{display:inline-flex}:focus-visible{outline:3px solid var(--accent);outline-offset:4px}.shell{max-width:1200px;margin:auto;padding:0 32px}.accent,.text-link{color:var(--accent)}.muted{color:var(--muted)}.small{font-size:.82rem}.eyebrow{font-size:.67rem;font-weight:700;letter-spacing:.16em;color:var(--muted);display:flex;gap:9px;align-items:center}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2.1rem,4vw,3.65rem);letter-spacing:-.055em;line-height:1.08;font-weight:650;margin-bottom:20px}h2{font-size:1.65rem;line-height:1.2;letter-spacing:-.035em;margin-bottom:12px}h3{font-size:1.05rem;letter-spacing:-.015em;margin-bottom:9px}p{margin-bottom:16px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px #ff2d2d50}.panel{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}.row,.section-title,.button-row{display:flex;align-items:center;justify-content:space-between;gap:16px}.button-row{justify-content:flex-start;flex-wrap:wrap}.section-title{margin-bottom:22px}.section-title h2{margin-bottom:0}.section-title .eyebrow{margin-bottom:7px}.button{display:inline-flex;align-items:center;justify-content:center;gap:13px;min-height:42px;padding:10px 17px;border:1px solid #59313c;border-radius:9px;background:#351e27;color:var(--text);font-weight:600;font-size:.84rem;white-space:nowrap;transition:background .16s,transform .16s}.button:hover{background:#48232f;color:#fff}.button.primary{background:var(--action);color:#fff;border-color:var(--action)}.button.primary:hover{background:#b8182b;border-color:#b8182b}.button.small{min-height:36px;padding:7px 13px;font-size:.76rem}.button.danger{border-color:#745047;background:#382521;color:#ffb6a3}.text-button,.copy-button{border:0;background:transparent;color:var(--muted);padding:7px}.copy-button{font-size:1rem;min-width:34px;min-height:34px}.text-button:hover,.copy-button:hover{color:var(--accent)}.text-link{font-size:.82rem;font-weight:600}.badge,.tag{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid #57333e;border-radius:7px;font-size:.71rem;color:#edc1ca;background:#331e27;white-space:nowrap}.tag{font-size:.64rem;padding:3px 8px;margin-left:6px}.state-active{color:var(--accent);border-color:#89434f;background:#411d28}.state-ended{color:var(--warning);background:#312a1f;border-color:#665330}.state-upcoming{color:#b6c9fb;background:#222b40;border-color:#404e73}.skip-link{position:fixed;z-index:20;top:-80px;left:16px;padding:12px;background:var(--accent);color:#111}.skip-link:focus{top:12px}
-.site-header{border-bottom:1px solid #40252f;background:#160e14ed;position:sticky;top:0;z-index:5;backdrop-filter:blur(10px)}.header-inner{min-height:78px;display:flex;justify-content:space-between;align-items:center;gap:24px}.brand{display:flex;gap:12px;align-items:center;font-size:.92rem;font-weight:800;letter-spacing:.07em}.brand img{border-radius:8px;object-fit:contain;background:#11080c}.brand-sub{display:block;color:var(--muted);font-size:.48rem;font-weight:600;letter-spacing:.2em;margin-top:3px}.site-header nav{display:flex;align-items:center;gap:26px;font-size:.8rem;color:#ead7dc}.site-header form{margin:0}.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:52px;padding:52px 0 45px;align-items:center}.hero h1{max-width:580px;margin-top:14px}.lead{color:var(--muted);font-size:1rem;max-width:440px}.hero-links{display:flex;align-items:center;gap:24px;margin-top:26px;flex-wrap:wrap}.sponsor{display:flex;align-items:center;gap:13px}.sponsor small{display:block;font-size:.54rem;letter-spacing:.13em;color:var(--muted)}.sponsor strong{font-size:.9rem}.sponsor-symbol{display:grid;place-items:center;background:#29213d;color:#d1baff;font-size:1.2rem;font-weight:900;width:39px;height:39px;border-radius:11px}.race-clock{padding:27px 28px;background:linear-gradient(125deg,#311b25,#1a1418)}.clock{font-size:clamp(1.3rem,2.4vw,2.2rem);letter-spacing:-.045em;font-weight:600;font-variant-numeric:tabular-nums;margin:28px 0 16px;white-space:nowrap}.race-clock p{font-size:.72rem}.clock-footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;padding-top:15px;gap:14px;font-size:.71rem;color:var(--muted)}.clock-footer strong{font-size:1rem;display:inline-block;margin-left:7px}.source-status{text-align:right;font-size:.74rem;display:flex;flex-direction:column;gap:4px}.source-status small{color:var(--muted);font-size:.66rem}.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:16px;margin:35px 0 22px}.podium-card{padding:21px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(160deg,#291b22,#1a1418);min-width:0}.podium-card.place-1{background:linear-gradient(135deg,#461d2b,#211319);border-color:#a34755;padding-top:28px;box-shadow:0 6px 35px #ff2d2d14}.podium-top{display:flex;align-items:center;gap:12px}.placement{font-size:1.05rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}.podium-top .eyebrow{font-size:.56rem;letter-spacing:.13em;flex:1}.podium-symbol{color:var(--accent);font-size:1.3rem}.podium-name{display:block;font-size:1.4rem;font-weight:600;letter-spacing:-.03em;margin:24px 0 27px;overflow-wrap:anywhere}.place-1 .podium-name{font-size:1.7rem;margin-bottom:30px}.podium-values{display:grid;grid-template-columns:1.5fr 1fr;gap:10px}.podium-values small{display:block;font-size:.51rem;letter-spacing:.12em;color:var(--muted);margin-bottom:7px}.podium-values strong{font-size:1rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.podium-values>div:last-child{text-align:right}.public-table{padding:0 20px}table{border-collapse:collapse;width:100%;font-size:.81rem}th{text-align:left;font-size:.64rem;letter-spacing:.055em;text-transform:uppercase;font-weight:600;color:var(--muted);padding:16px 14px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:13px 14px;border-bottom:1px solid #36242c}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#ffffff03}.number{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.rank{color:var(--muted);font-variant-numeric:tabular-nums;width:65px}.table-scroll{overflow:auto;max-width:100%;scrollbar-color:#8c4a5b transparent}.leaderboard-foot{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.67rem;margin:15px 0 26px}.explanation{padding:0 22px;margin-top:24px}.explanation summary{padding:18px 0;font-size:.82rem}.weighting-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;border-top:1px solid var(--line);padding-top:20px}.weighting-grid strong{font-size:.9rem}.weighting-grid p{color:var(--muted);font-size:.79rem;margin:5px 0 22px}.footer{display:flex;justify-content:space-between;gap:20px;padding-top:36px;padding-bottom:28px;font-size:.69rem;color:#cfb7c0}.footer span:last-child{display:flex;gap:22px}
-.admin-main{padding-top:35px}.admin-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:25px}.admin-heading h1{font-size:2.05rem;margin:9px 0 13px}.admin-heading p{font-size:.8rem;margin:0}.tabs{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-bottom:15px;margin-bottom:26px}.tabs a{color:var(--muted);padding:9px 17px;font-size:.83rem;border-radius:8px}.tabs a[aria-current]{background:#3c1d29;color:var(--accent)}.tabs a:hover{background:#2c1923}.auto-label{margin-left:auto;font-size:.67rem;color:var(--muted);display:flex;gap:8px;align-items:center}.stat-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:18px;margin-bottom:32px}.stat{padding:24px;min-width:0}.stat-value{display:block;font-size:2rem;line-height:1.2;letter-spacing:-.035em;margin:24px 0 12px;font-variant-numeric:tabular-nums}.stat #countdown{font-size:1.4rem;white-space:nowrap}.stat p{font-size:.77rem;margin-bottom:12px}.stat small{font-size:.7rem}.connection-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.connection{display:flex;align-items:flex-start;gap:16px;padding:23px}.connection>div:nth-child(2){flex:1;min-width:0}.connection h3{font-size:.93rem}.connection p{font-size:.8rem;margin-bottom:8px;overflow-wrap:anywhere}.connection small{font-size:.64rem}.connection-icon{flex-shrink:0;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:#441f2d;color:var(--accent);font-size:1.2rem;font-weight:800}.quick-guide{display:flex;align-items:center;justify-content:space-between;gap:25px;padding:25px;margin-top:24px;background:linear-gradient(120deg,#311a25,#1a1418)}.quick-guide p{font-size:.81rem;margin:0}.notice{padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:#281b23;font-size:.83rem;margin:0 0 20px;overflow-wrap:anywhere}.notice.warning{color:#f4d6a8;background:#2a241a;border-color:#655237}.notice.success{color:#d0efae;background:#23301d;border-color:#4c683b}.notice p:last-child{margin-bottom:0}.notice strong{display:block;margin-bottom:6px}.notice ul{padding-left:20px;margin:6px 0}.ended-notice{display:flex;justify-content:space-between;align-items:center;gap:20px}.ended-notice span{color:var(--muted);font-size:.78rem}.stack{display:flex;flex-direction:column;gap:20px}.form-panel{padding:25px;margin-bottom:20px}.stack .form-panel{margin-bottom:0}.form-panel h2{font-size:1.4rem}.form-panel h3{margin-top:24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 22px;margin-top:20px}.field{display:flex;flex-direction:column;gap:7px;min-width:0}.field label{font-size:.77rem;font-weight:600}.field small{font-size:.69rem;min-height:1em}.field-error{color:#ffbd9f}input,textarea,select{width:100%;min-height:42px;background:#160f15;color:var(--text);border:1px solid #573240;border-radius:8px;padding:10px 12px;font-size:.83rem}input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:1px solid var(--accent)}input[type=file]{padding:7px}input::placeholder{color:#ab909c}textarea{resize:vertical}input[aria-invalid]{border-color:var(--warning)}.form-panel>.field{margin-top:20px}.prize-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.prize-grid input{font-variant-numeric:tabular-nums}.prize-grid .field small:empty{display:none}.save-bar{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:17px 20px;background:#301923ef;border:1px solid #89505f;border-radius:12px;position:sticky;bottom:15px;z-index:4;backdrop-filter:blur(10px)}.save-bar strong,.save-bar span{display:block}.save-bar strong{font-size:.86rem;margin-bottom:3px}.filter-bar{display:flex;align-items:flex-start;gap:14px;margin:22px 0 14px;flex-wrap:wrap}.filter-bar .field{flex:1;min-width:150px}.filter-bar .grow{flex:2}.filter-bar>.button{margin-top:26px}.name-cell{display:flex;align-items:center;gap:6px;overflow-wrap:anywhere}.empty{text-align:center;padding:35px;color:var(--muted)}details summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:18px;font-weight:600}details summary::-webkit-details-marker{display:none}summary h2{margin:0}summary .eyebrow{display:block;margin-bottom:7px}details[open]>summary{margin-bottom:18px}.explanation[open]>summary{margin-bottom:0}.expand-icon{font-size:1.4rem;color:var(--accent)}details[open]>summary .expand-icon{transform:rotate(45deg)}.details-content>.field{margin:22px 0}.nested{border-top:1px solid var(--line);margin-top:22px;padding-top:18px}.nested summary{font-size:.83rem;color:#dac2cc}.account-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.account-row strong{font-size:.85rem}.diagnostic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:22px 0}.diagnostic-grid strong,.diagnostic-grid small{display:block;overflow-wrap:anywhere}.diagnostic-grid strong{font-size:.82rem;margin-top:5px}.diagnostic-grid small{font-size:.68rem}.admin-foot{display:flex;justify-content:space-between;gap:20px;font-size:.65rem;color:#b396a4;margin:30px 0}.login-wrap{min-height:70vh;display:grid;place-items:center;padding-top:45px;padding-bottom:45px}.login-panel{width:100%;max-width:450px;padding:38px}.login-panel h1{font-size:2.35rem;margin:22px 0 14px}.login-panel>.muted{font-size:.82rem}.login-panel .stack{margin:27px 0}.release{font-size:.64rem;color:#b39aa5}.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:20;padding:14px 22px;border:1px solid #8a455c;border-radius:10px;background:#3b1c2a;box-shadow:var(--shadow);max-width:calc(100vw - 30px);font-size:.83rem}
-@media(min-width:1600px){.shell{max-width:1330px}.hero{padding-top:64px}}
-@media(max-width:1000px){.shell{padding-left:24px;padding-right:24px}.hero{gap:24px;grid-template-columns:1fr 1fr}.race-clock{padding:22px}.stat-grid{grid-template-columns:1fr 1fr}.stat:first-child{grid-column:1/-1}.stat:first-child .stat-value{font-size:2rem}.connection-grid{grid-template-columns:1fr}.podium{gap:12px}.podium-card{padding:16px}.podium-values strong{font-size:.83rem}.podium-top .eyebrow{font-size:.5rem}.prize-grid{grid-template-columns:repeat(3,1fr)}.stat #countdown{font-size:1.8rem}}
-@media(max-width:700px){html{scroll-padding-top:80px}.shell{padding-left:18px;padding-right:18px}.header-inner{min-height:68px}.brand{font-size:.75rem;gap:8px}.brand img{width:30px;height:30px}.brand-sub{font-size:.4rem}.site-header nav{gap:12px;font-size:.72rem}.site-header nav>a:first-child{display:none}.site-header .button{padding:8px 11px}.hero{grid-template-columns:1fr;gap:27px;padding:34px 0}.hero h1{font-size:2.7rem;max-width:480px;margin-top:15px}.hero-links{margin-top:20px}.race-clock{padding:22px}.clock{font-size:1.9rem;margin:23px 0 14px}.clock-footer strong{font-size:1rem}.section-title h2{font-size:1.5rem}.section-title{align-items:flex-start;gap:12px}.source-status{font-size:.66rem;max-width:155px}.source-status small{font-size:.59rem}.podium{grid-template-columns:1fr 1fr;margin-top:24px;gap:12px}.podium .place-1{grid-column:1/-1;grid-row:1;padding:22px}.podium .place-1 .podium-name{margin:14px 0 20px;font-size:1.65rem}.place-1 .podium-values strong{font-size:1.3rem}.podium .place-2,.podium .place-3{padding:16px}.podium-top .eyebrow{font-size:.49rem}.podium-name{font-size:1.1rem;margin:17px 0 20px}.podium-values{grid-template-columns:1fr;gap:15px}.podium-values>div:last-child{text-align:left}.place-1 .podium-values{grid-template-columns:1fr 1fr}.place-1 .podium-values>div:last-child{text-align:right}.podium-values strong{font-size:1rem}.podium-top{gap:8px}.podium-symbol{font-size:1rem}.public-table{padding:0 5px}th{font-size:.58rem;padding:14px 9px}td{font-size:.74rem;padding:12px 9px}.public-table table{min-width:355px}.rank{width:45px}.leaderboard-foot{flex-direction:column;gap:5px;font-size:.63rem}.weighting-grid{grid-template-columns:1fr;gap:0}.weighting-grid p{margin-bottom:16px}.footer{flex-direction:column;gap:12px;padding-top:26px}.footer span:last-child{gap:18px}.admin-heading{align-items:flex-start;gap:12px}.admin-heading h1{font-size:1.75rem}.admin-heading>.button,.admin-heading form .button{font-size:.69rem;padding:9px}.admin-heading p{font-size:.72rem}.tabs{gap:2px;flex-wrap:wrap}.tabs a{padding:9px 13px;font-size:.76rem}.auto-label{width:100%;margin:10px 0 0 13px;font-size:.65rem}.stat-grid{gap:12px}.stat{padding:18px}.stat-value{font-size:1.7rem}.stat:first-child .stat-value{font-size:1.65rem}.stat .eyebrow{font-size:.6rem}.stat p{font-size:.7rem}.connection{padding:18px;gap:12px}.connection-icon{width:32px;height:32px}.quick-guide{align-items:flex-start;flex-direction:column;padding:20px}.form-panel{padding:18px}.form-panel .section-title{flex-direction:column}.form-grid{grid-template-columns:1fr;gap:15px}.prize-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.prize-grid input{padding:9px;font-size:.78rem}.prize-grid label{font-size:.7rem}.save-bar{bottom:8px;padding:14px;gap:12px;flex-wrap:wrap}.save-bar .button{min-height:40px}.save-bar .button-row{margin-left:auto;gap:8px}.filter-bar .field{min-width:130px}.ended-notice{align-items:flex-start;flex-direction:column}.diagnostic-grid{grid-template-columns:1fr 1fr;gap:17px}.admin-foot{flex-direction:column;gap:5px}.login-panel{padding:28px 24px}.login-panel h1{font-size:2.1rem}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+:root {
+  color-scheme: dark;
+  --bg: #110e11;
+  --panel: #1a1418;
+  --panel-high: #231a20;
+  --line: #39282f;
+  --text: #faf1f3;
+  --muted: #b8a8ae;
+  --accent: #ff737b;
+  --brand: #ff2d2d;
+  --action: #d92236;
+  --warning: #f3c77a;
+  --radius: 16px;
+  --shadow: 0 12px 40px #0002;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 95px;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+body:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 500px;
+  background: radial-gradient(ellipse at 90% -15%, #ff2d2d24, transparent 65%);
+  pointer-events: none;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent);
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button,
+a,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+[hidden] {
+  display: none !important;
+}
+.js-only {
+  display: none;
+}
+.js .js-only {
+  display: inline-flex;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.shell {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 32px;
+}
+.accent,
+.text-link {
+  color: var(--accent);
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 0.82rem;
+}
+.eyebrow {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1 {
+  font-size: clamp(2.1rem, 4vw, 3.65rem);
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  font-weight: 650;
+  margin-bottom: 20px;
+}
+h2 {
+  font-size: 1.65rem;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  margin-bottom: 12px;
+}
+h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
+  margin-bottom: 9px;
+}
+p {
+  margin-bottom: 16px;
+}
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px #ff2d2d50;
+}
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.row,
+.section-title,
+.button-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.button-row {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.section-title {
+  margin-bottom: 22px;
+}
+.section-title h2 {
+  margin-bottom: 0;
+}
+.section-title .eyebrow {
+  margin-bottom: 7px;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  min-height: 42px;
+  padding: 10px 17px;
+  border: 1px solid #59313c;
+  border-radius: 9px;
+  background: #351e27;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.84rem;
+  white-space: nowrap;
+  transition:
+    background 0.16s,
+    transform 0.16s;
+}
+.button:hover {
+  background: #48232f;
+  color: #fff;
+}
+.button.primary {
+  background: var(--action);
+  color: #fff;
+  border-color: var(--action);
+}
+.button.primary:hover {
+  background: #b8182b;
+  border-color: #b8182b;
+}
+.button.small {
+  min-height: 36px;
+  padding: 7px 13px;
+  font-size: 0.76rem;
+}
+.button.danger {
+  border-color: #745047;
+  background: #382521;
+  color: #ffb6a3;
+}
+.text-button,
+.copy-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px;
+}
+.copy-button {
+  font-size: 1rem;
+  min-width: 34px;
+  min-height: 34px;
+}
+.text-button:hover,
+.copy-button:hover {
+  color: var(--accent);
+}
+.text-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.badge,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid #57333e;
+  border-radius: 7px;
+  font-size: 0.71rem;
+  color: #edc1ca;
+  background: #331e27;
+  white-space: nowrap;
+}
+.tag {
+  font-size: 0.64rem;
+  padding: 3px 8px;
+  margin-left: 6px;
+}
+.state-active {
+  color: var(--accent);
+  border-color: #89434f;
+  background: #411d28;
+}
+.state-ended {
+  color: var(--warning);
+  background: #312a1f;
+  border-color: #665330;
+}
+.state-upcoming {
+  color: #b6c9fb;
+  background: #222b40;
+  border-color: #404e73;
+}
+.skip-link {
+  position: fixed;
+  z-index: 20;
+  top: -80px;
+  left: 16px;
+  padding: 12px;
+  background: var(--accent);
+  color: #111;
+}
+.skip-link:focus {
+  top: 12px;
+}
+.site-header {
+  border-bottom: 1px solid #40252f;
+  background: #160e14ed;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(10px);
+}
+.header-inner {
+  min-height: 78px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+.brand img {
+  border-radius: 8px;
+  object-fit: contain;
+  background: #11080c;
+}
+.brand-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 0.48rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  margin-top: 3px;
+}
+.site-header nav {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  font-size: 0.8rem;
+  color: #ead7dc;
+}
+.site-header form {
+  margin: 0;
+}
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 52px;
+  padding: 52px 0 45px;
+  align-items: center;
+}
+.hero h1 {
+  max-width: 580px;
+  margin-top: 14px;
+}
+.lead {
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 440px;
+}
+.hero-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+.sponsor {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.sponsor small {
+  display: block;
+  font-size: 0.54rem;
+  letter-spacing: 0.13em;
+  color: var(--muted);
+}
+.sponsor strong {
+  font-size: 0.9rem;
+}
+.sponsor-symbol {
+  display: grid;
+  place-items: center;
+  background: #29213d;
+  color: #d1baff;
+  font-size: 1.2rem;
+  font-weight: 900;
+  width: 39px;
+  height: 39px;
+  border-radius: 11px;
+}
+.race-clock {
+  padding: 27px 28px;
+  background: linear-gradient(125deg, #311b25, #1a1418);
+}
+.clock {
+  font-size: clamp(1.3rem, 2.4vw, 2.2rem);
+  letter-spacing: -0.045em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin: 28px 0 16px;
+  white-space: nowrap;
+}
+.race-clock p {
+  font-size: 0.72rem;
+}
+.clock-footer {
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding-top: 15px;
+  gap: 14px;
+  font-size: 0.71rem;
+  color: var(--muted);
+}
+.clock-footer strong {
+  font-size: 1rem;
+  display: inline-block;
+  margin-left: 7px;
+}
+.source-status {
+  text-align: right;
+  font-size: 0.74rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.source-status small {
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+.podium {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  align-items: end;
+  gap: 16px;
+  margin: 35px 0 22px;
+}
+.podium-card {
+  padding: 21px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, #291b22, #1a1418);
+  min-width: 0;
+}
+.podium-card.place-1 {
+  background: linear-gradient(135deg, #461d2b, #211319);
+  border-color: #a34755;
+  padding-top: 28px;
+  box-shadow: 0 6px 35px #ff2d2d14;
+}
+.podium-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.placement {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.podium-top .eyebrow {
+  font-size: 0.56rem;
+  letter-spacing: 0.13em;
+  flex: 1;
+}
+.podium-symbol {
+  color: var(--accent);
+  font-size: 1.3rem;
+}
+.podium-name {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin: 24px 0 27px;
+  overflow-wrap: anywhere;
+}
+.place-1 .podium-name {
+  font-size: 1.7rem;
+  margin-bottom: 30px;
+}
+.podium-values {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 10px;
+}
+.podium-values small {
+  display: block;
+  font-size: 0.51rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.podium-values strong {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.podium-values > div:last-child {
+  text-align: right;
+}
+.public-table {
+  padding: 0 20px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.81rem;
+}
+th {
+  text-align: left;
+  font-size: 0.64rem;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #36242c;
+}
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+tbody tr:hover {
+  background: #ffffff03;
+}
+.number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rank {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  width: 65px;
+}
+.table-scroll {
+  overflow: auto;
+  max-width: 100%;
+  scrollbar-color: #8c4a5b transparent;
+}
+.leaderboard-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.67rem;
+  margin: 15px 0 26px;
+}
+.explanation {
+  padding: 0 22px;
+  margin-top: 24px;
+}
+.explanation summary {
+  padding: 18px 0;
+  font-size: 0.82rem;
+}
+.weighting-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.weighting-grid strong {
+  font-size: 0.9rem;
+}
+.weighting-grid p {
+  color: var(--muted);
+  font-size: 0.79rem;
+  margin: 5px 0 22px;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 36px;
+  padding-bottom: 28px;
+  font-size: 0.69rem;
+  color: #cfb7c0;
+}
+.footer span:last-child {
+  display: flex;
+  gap: 22px;
+}
+.admin-main {
+  padding-top: 35px;
+}
+.admin-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 25px;
+}
+.admin-heading h1 {
+  font-size: 2.05rem;
+  margin: 9px 0 13px;
+}
+.admin-heading p {
+  font-size: 0.8rem;
+  margin: 0;
+}
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 15px;
+  margin-bottom: 26px;
+}
+.tabs a {
+  color: var(--muted);
+  padding: 9px 17px;
+  font-size: 0.83rem;
+  border-radius: 8px;
+}
+.tabs a[aria-current] {
+  background: #3c1d29;
+  color: var(--accent);
+}
+.tabs a:hover {
+  background: #2c1923;
+}
+.auto-label {
+  margin-left: auto;
+  font-size: 0.67rem;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+.stat {
+  padding: 24px;
+  min-width: 0;
+}
+.stat-value {
+  display: block;
+  font-size: 2rem;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  margin: 24px 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+.stat #countdown {
+  font-size: 1.4rem;
+  white-space: nowrap;
+}
+.stat p {
+  font-size: 0.77rem;
+  margin-bottom: 12px;
+}
+.stat small {
+  font-size: 0.7rem;
+}
+.connection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.connection {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 23px;
+}
+.connection > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.connection h3 {
+  font-size: 0.93rem;
+}
+.connection p {
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.connection small {
+  font-size: 0.64rem;
+}
+.connection-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #441f2d;
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+.quick-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  padding: 25px;
+  margin-top: 24px;
+  background: linear-gradient(120deg, #311a25, #1a1418);
+}
+.quick-guide p {
+  font-size: 0.81rem;
+  margin: 0;
+}
+.notice {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #281b23;
+  font-size: 0.83rem;
+  margin: 0 0 20px;
+  overflow-wrap: anywhere;
+}
+.notice.warning {
+  color: #f4d6a8;
+  background: #2a241a;
+  border-color: #655237;
+}
+.notice.success {
+  color: #d0efae;
+  background: #23301d;
+  border-color: #4c683b;
+}
+.notice p:last-child {
+  margin-bottom: 0;
+}
+.notice strong {
+  display: block;
+  margin-bottom: 6px;
+}
+.notice ul {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+.ended-notice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.ended-notice span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.form-panel {
+  padding: 25px;
+  margin-bottom: 20px;
+}
+.stack .form-panel {
+  margin-bottom: 0;
+}
+.form-panel h2 {
+  font-size: 1.4rem;
+}
+.form-panel h3 {
+  margin-top: 24px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 22px;
+  margin-top: 20px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.field label {
+  font-size: 0.77rem;
+  font-weight: 600;
+}
+.field small {
+  font-size: 0.69rem;
+  min-height: 1em;
+}
+.field-error {
+  color: #ffbd9f;
+}
+input,
+textarea,
+select {
+  width: 100%;
+  min-height: 42px;
+  background: #160f15;
+  color: var(--text);
+  border: 1px solid #573240;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.83rem;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+}
+input[type="file"] {
+  padding: 7px;
+}
+input::placeholder {
+  color: #ab909c;
+}
+textarea {
+  resize: vertical;
+}
+input[aria-invalid] {
+  border-color: var(--warning);
+}
+.form-panel > .field {
+  margin-top: 20px;
+}
+.prize-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+.prize-grid input {
+  font-variant-numeric: tabular-nums;
+}
+.prize-grid .field small:empty {
+  display: none;
+}
+.save-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 17px 20px;
+  background: #301923ef;
+  border: 1px solid #89505f;
+  border-radius: 12px;
+  position: sticky;
+  bottom: 15px;
+  z-index: 4;
+  backdrop-filter: blur(10px);
+}
+.save-bar strong,
+.save-bar span {
+  display: block;
+}
+.save-bar strong {
+  font-size: 0.86rem;
+  margin-bottom: 3px;
+}
+.filter-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 22px 0 14px;
+  flex-wrap: wrap;
+}
+.filter-bar .field {
+  flex: 1;
+  min-width: 150px;
+}
+.filter-bar .grow {
+  flex: 2;
+}
+.filter-bar > .button {
+  margin-top: 26px;
+}
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.empty {
+  text-align: center;
+  padding: 35px;
+  color: var(--muted);
+}
+details summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  font-weight: 600;
+}
+details summary::-webkit-details-marker {
+  display: none;
+}
+summary h2 {
+  margin: 0;
+}
+summary .eyebrow {
+  display: block;
+  margin-bottom: 7px;
+}
+details[open] > summary {
+  margin-bottom: 18px;
+}
+.explanation[open] > summary {
+  margin-bottom: 0;
+}
+.expand-icon {
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+details[open] > summary .expand-icon {
+  transform: rotate(45deg);
+}
+.details-content > .field {
+  margin: 22px 0;
+}
+.nested {
+  border-top: 1px solid var(--line);
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.nested summary {
+  font-size: 0.83rem;
+  color: #dac2cc;
+}
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.account-row strong {
+  font-size: 0.85rem;
+}
+.diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 22px 0;
+}
+.diagnostic-grid strong,
+.diagnostic-grid small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.diagnostic-grid strong {
+  font-size: 0.82rem;
+  margin-top: 5px;
+}
+.diagnostic-grid small {
+  font-size: 0.68rem;
+}
+.admin-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 0.65rem;
+  color: #b396a4;
+  margin: 30px 0;
+}
+.login-wrap {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  padding-top: 45px;
+  padding-bottom: 45px;
+}
+.login-panel {
+  width: 100%;
+  max-width: 450px;
+  padding: 38px;
+}
+.login-panel h1 {
+  font-size: 2.35rem;
+  margin: 22px 0 14px;
+}
+.login-panel > .muted {
+  font-size: 0.82rem;
+}
+.login-panel .stack {
+  margin: 27px 0;
+}
+.release {
+  font-size: 0.64rem;
+  color: #b39aa5;
+}
+.toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 14px 22px;
+  border: 1px solid #8a455c;
+  border-radius: 10px;
+  background: #3b1c2a;
+  box-shadow: var(--shadow);
+  max-width: calc(100vw - 30px);
+  font-size: 0.83rem;
+}
+@media (min-width: 1600px) {
+  .shell {
+    max-width: 1330px;
+  }
+  .hero {
+    padding-top: 64px;
+  }
+}
+@media (max-width: 1000px) {
+  .shell {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .hero {
+    gap: 24px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .race-clock {
+    padding: 22px;
+  }
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat:first-child {
+    grid-column: 1/-1;
+  }
+  .stat:first-child .stat-value {
+    font-size: 2rem;
+  }
+  .connection-grid {
+    grid-template-columns: 1fr;
+  }
+  .podium {
+    gap: 12px;
+  }
+  .podium-card {
+    padding: 16px;
+  }
+  .podium-values strong {
+    font-size: 0.83rem;
+  }
+  .podium-top .eyebrow {
+    font-size: 0.5rem;
+  }
+  .prize-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .stat #countdown {
+    font-size: 1.8rem;
+  }
+}
+@media (max-width: 700px) {
+  html {
+    scroll-padding-top: 80px;
+  }
+  .shell {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .header-inner {
+    min-height: 68px;
+  }
+  .brand {
+    font-size: 0.75rem;
+    gap: 8px;
+  }
+  .brand img {
+    width: 30px;
+    height: 30px;
+  }
+  .brand-sub {
+    font-size: 0.4rem;
+  }
+  .site-header nav {
+    gap: 12px;
+    font-size: 0.72rem;
+  }
+  .site-header nav > a:first-child {
+    display: none;
+  }
+  .site-header .button {
+    padding: 8px 11px;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 27px;
+    padding: 34px 0;
+  }
+  .hero h1 {
+    font-size: 2.7rem;
+    max-width: 480px;
+    margin-top: 15px;
+  }
+  .hero-links {
+    margin-top: 20px;
+  }
+  .race-clock {
+    padding: 22px;
+  }
+  .clock {
+    font-size: 1.9rem;
+    margin: 23px 0 14px;
+  }
+  .clock-footer strong {
+    font-size: 1rem;
+  }
+  .section-title h2 {
+    font-size: 1.5rem;
+  }
+  .section-title {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .source-status {
+    font-size: 0.66rem;
+    max-width: 155px;
+  }
+  .source-status small {
+    font-size: 0.59rem;
+  }
+  .podium {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 24px;
+    gap: 12px;
+  }
+  .podium .place-1 {
+    grid-column: 1/-1;
+    grid-row: 1;
+    padding: 22px;
+  }
+  .podium .place-1 .podium-name {
+    margin: 14px 0 20px;
+    font-size: 1.65rem;
+  }
+  .place-1 .podium-values strong {
+    font-size: 1.3rem;
+  }
+  .podium .place-2,
+  .podium .place-3 {
+    padding: 16px;
+  }
+  .podium-top .eyebrow {
+    font-size: 0.49rem;
+  }
+  .podium-name {
+    font-size: 1.1rem;
+    margin: 17px 0 20px;
+  }
+  .podium-values {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .podium-values > div:last-child {
+    text-align: left;
+  }
+  .place-1 .podium-values {
+    grid-template-columns: 1fr 1fr;
+  }
+  .place-1 .podium-values > div:last-child {
+    text-align: right;
+  }
+  .podium-values strong {
+    font-size: 1rem;
+  }
+  .podium-top {
+    gap: 8px;
+  }
+  .podium-symbol {
+    font-size: 1rem;
+  }
+  .public-table {
+    padding: 0 5px;
+  }
+  th {
+    font-size: 0.58rem;
+    padding: 14px 9px;
+  }
+  td {
+    font-size: 0.74rem;
+    padding: 12px 9px;
+  }
+  .public-table table {
+    min-width: 355px;
+  }
+  .rank {
+    width: 45px;
+  }
+  .leaderboard-foot {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.63rem;
+  }
+  .weighting-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .weighting-grid p {
+    margin-bottom: 16px;
+  }
+  .footer {
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 26px;
+  }
+  .footer span:last-child {
+    gap: 18px;
+  }
+  .admin-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .admin-heading h1 {
+    font-size: 1.75rem;
+  }
+  .admin-heading > .button,
+  .admin-heading form .button {
+    font-size: 0.69rem;
+    padding: 9px;
+  }
+  .admin-heading p {
+    font-size: 0.72rem;
+  }
+  .tabs {
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  .tabs a {
+    padding: 9px 13px;
+    font-size: 0.76rem;
+  }
+  .auto-label {
+    width: 100%;
+    margin: 10px 0 0 13px;
+    font-size: 0.65rem;
+  }
+  .stat-grid {
+    gap: 12px;
+  }
+  .stat {
+    padding: 18px;
+  }
+  .stat-value {
+    font-size: 1.7rem;
+  }
+  .stat:first-child .stat-value {
+    font-size: 1.65rem;
+  }
+  .stat .eyebrow {
+    font-size: 0.6rem;
+  }
+  .stat p {
+    font-size: 0.7rem;
+  }
+  .connection {
+    padding: 18px;
+    gap: 12px;
+  }
+  .connection-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .quick-guide {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .form-panel {
+    padding: 18px;
+  }
+  .form-panel .section-title {
+    flex-direction: column;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .prize-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .prize-grid input {
+    padding: 9px;
+    font-size: 0.78rem;
+  }
+  .prize-grid label {
+    font-size: 0.7rem;
+  }
+  .save-bar {
+    bottom: 8px;
+    padding: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .save-bar .button {
+    min-height: 40px;
+  }
+  .save-bar .button-row {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .filter-bar .field {
+    min-width: 130px;
+  }
+  .ended-notice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .diagnostic-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 17px;
+  }
+  .admin-foot {
+    flex-direction: column;
+    gap: 5px;
+  }
+  .login-panel {
+    padding: 28px 24px;
+  }
+  .login-panel h1 {
+    font-size: 2.1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 
 /* Provider progress stays visible on every admin tab. */
-.refresh-progress{padding:21px 24px;margin-bottom:24px;border-top:2px solid var(--brand);background:linear-gradient(120deg,#321821,#1a1418)}
-.progress-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:15px}
-.progress-heading p{margin-bottom:5px}.progress-heading .text-link{white-space:nowrap}
-.progress-services{display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--line);padding-top:15px}
-.progress-services strong{font-size:.8rem;color:var(--accent)}.progress-services p{margin:7px 0 0;font-size:.78rem;overflow-wrap:anywhere;color:var(--text)}
-@media(max-width:700px){.refresh-progress{padding:18px}.progress-heading{flex-direction:column;gap:10px}.progress-services{grid-template-columns:1fr;gap:17px}}
+.refresh-progress {
+  padding: 21px 24px;
+  margin-bottom: 24px;
+  border-top: 2px solid var(--brand);
+  background: linear-gradient(120deg, #321821, #1a1418);
+}
+.progress-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 15px;
+}
+.progress-heading p {
+  margin-bottom: 5px;
+}
+.progress-heading .text-link {
+  white-space: nowrap;
+}
+.progress-services {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+}
+.progress-services strong {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+.progress-services p {
+  margin: 7px 0 0;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+@media (max-width: 700px) {
+  .refresh-progress {
+    padding: 18px;
+  }
+  .progress-heading {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .progress-services {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+}
 
 /* The homepage invitation is visible on mobile as well as desktop. */
-.play-invite{display:flex;align-items:center;gap:22px;padding:23px 25px;margin:0 0 36px;background:linear-gradient(105deg,#431b25,#22141c);border-color:#853344}.play-invite img{image-rendering:pixelated;object-fit:contain;border-radius:10px}.play-invite>div{flex:1}.play-invite h2{font-size:1.3rem;margin-bottom:6px}.play-invite .eyebrow{font-size:.57rem;margin-bottom:6px}.play-invite p:last-child{font-size:.78rem;color:var(--muted);margin:0}.site-header .play-nav{color:var(--accent);font-weight:650}
-@media(max-width:900px){.site-header .community-nav{display:none}}
-@media(max-width:700px){.play-invite{flex-wrap:wrap;padding:20px;gap:16px}.play-invite img{width:45px;height:45px}.play-invite .button{width:100%}.play-invite h2{font-size:1.17rem}.play-invite>div{min-width:180px}.site-header nav{gap:10px}.site-header .button{font-size:.64rem}.site-header .play-nav{font-size:.69rem}}
+.play-invite {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 23px 25px;
+  margin: 0 0 36px;
+  background: linear-gradient(105deg, #431b25, #22141c);
+  border-color: #853344;
+}
+.play-invite img {
+  image-rendering: pixelated;
+  object-fit: contain;
+  border-radius: 10px;
+}
+.play-invite > div {
+  flex: 1;
+}
+.play-invite h2 {
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+.play-invite .eyebrow {
+  font-size: 0.57rem;
+  margin-bottom: 6px;
+}
+.play-invite p:last-child {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0;
+}
+.site-header .play-nav {
+  color: var(--accent);
+  font-weight: 650;
+}
+@media (max-width: 900px) {
+  .site-header .community-nav {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .play-invite {
+    flex-wrap: wrap;
+    padding: 20px;
+    gap: 16px;
+  }
+  .play-invite img {
+    width: 45px;
+    height: 45px;
+  }
+  .play-invite .button {
+    width: 100%;
+  }
+  .play-invite h2 {
+    font-size: 1.17rem;
+  }
+  .play-invite > div {
+    min-width: 180px;
+  }
+  .site-header nav {
+    gap: 10px;
+  }
+  .site-header .button {
+    font-size: 0.64rem;
+  }
+  .site-header .play-nav {
+    font-size: 0.69rem;
+  }
+}
+
+/* Community release: tighter hierarchy and readable, consistent controls. */
+:root {
+  --muted: #c8b8be;
+  font-size: 16px;
+  --radius: 14px;
+}
+.hero {
+  padding: 32px 0 27px;
+  gap: 30px;
+}
+.hero h1 {
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  margin-bottom: 13px;
+}
+.hero-links {
+  margin-top: 17px;
+  gap: 20px;
+}
+.hero .lead {
+  font-size: 0.92rem;
+  margin-bottom: 10px;
+}
+.race-clock {
+  padding: 23px;
+}
+.clock {
+  margin: 18px 0 12px;
+}
+.play-invite {
+  padding: 16px 20px;
+  gap: 17px;
+  margin-bottom: 28px;
+}
+.play-invite h2 {
+  font-size: 1.13rem;
+}
+.play-invite p:last-of-type {
+  font-size: 0.79rem;
+}
+.play-invite .eyebrow {
+  font-size: 0.63rem;
+}
+.invite-copy {
+  min-width: 0;
+}
+#inviteHealth {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 5px;
+  display: block;
+  width: min(100%, 390px);
+  border: 0;
+  background: #4b2934;
+  border-radius: 6px;
+  margin-top: 9px;
+  accent-color: var(--brand);
+}
+#inviteHealth::-webkit-progress-bar {
+  background: #4b2934;
+  border-radius: 6px;
+}
+#inviteHealth::-webkit-progress-value {
+  background: var(--brand);
+  border-radius: 6px;
+}
+#inviteHealth::-moz-progress-bar {
+  background: var(--brand);
+}
+.source-status small,
+.leaderboard-foot,
+.podium-values small,
+.clock-footer,
+.race-clock p {
+  font-size: 0.74rem;
+}
+.podium-top .eyebrow {
+  font-size: 0.62rem;
+}
+.field label {
+  font-size: 0.85rem;
+}
+.field small,
+.small {
+  font-size: 0.8rem;
+}
+.button {
+  min-height: 44px;
+}
+.button.small {
+  min-height: 40px;
+}
+.ui-icon {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.connection-summary > span:first-child {
+  display: grid;
+  gap: 8px;
+}
+.connection-summary strong {
+  font-size: 0.94rem;
+}
+.connection-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 20px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 450;
+}
+.connection-chips .has-error {
+  color: var(--warning);
+}
+.refresh-progress {
+  padding: 18px 22px;
+  margin-bottom: 23px;
+}
+.refresh-progress > summary {
+  font-size: 0.82rem;
+}
+.connection-details {
+  padding-top: 19px;
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+}
+.connection-details .progress-services {
+  border: 0;
+  padding-top: 4px;
+}
+.progress-services form {
+  margin: 7px 0 0;
+}
+.progress-services .text-button {
+  padding-left: 0;
+  color: var(--accent);
+}
+.admin-shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.admin-shortcuts > a {
+  padding: 24px;
+  background: linear-gradient(120deg, #291821, var(--panel));
+}
+.admin-shortcuts h2 {
+  font-size: 1.25rem;
+  margin: 16px 0 10px;
+}
+.admin-shortcuts p {
+  color: var(--muted);
+  font-size: 0.83rem;
+  margin: 0;
+}
+.change-review {
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.change-review h2 {
+  font-size: 1.35rem;
+}
+.change-review table {
+  table-layout: fixed;
+  min-width: 480px;
+}
+.change-review th,
+.change-review td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+.change-review th:first-child {
+  width: 26%;
+}
+.change-review > p:last-child {
+  margin: 14px 0 0;
+}
+.checkpoint-status {
+  padding: 16px 18px;
+  border: 1px solid #77414c;
+  border-radius: 10px;
+  background: #341d27;
+  margin: 18px 0;
+}
+.checkpoint-status p {
+  margin: 6px 0;
+  font-size: 0.85rem;
+}
+.checkpoint-status small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.recovery-review {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.recovery-review dl {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 0.85rem;
+}
+.recovery-review dt {
+  color: var(--muted);
+}
+.recovery-review dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.admin-foot {
+  font-size: 0.74rem;
+}
+.site-header nav {
+  font-size: 0.83rem;
+}
+@media (max-width: 700px) {
+  .hero {
+    padding: 26px 0 22px;
+    gap: 20px;
+  }
+  .hero h1 {
+    font-size: 2.2rem;
+    margin-top: 10px;
+  }
+  .hero .lead {
+    font-size: 0.91rem;
+  }
+  .race-clock {
+    padding: 20px;
+  }
+  .clock {
+    font-size: 1.65rem;
+    margin: 14px 0 10px;
+  }
+  .clock-footer {
+    font-size: 0.73rem;
+  }
+  .play-invite {
+    padding: 17px;
+    gap: 12px;
+  }
+  .play-invite .button {
+    width: 100%;
+  }
+  .play-invite > div {
+    min-width: 190px;
+  }
+  .play-invite img {
+    width: 42px;
+    height: 42px;
+  }
+  .podium-values small {
+    font-size: 0.67rem;
+  }
+  .podium-top .eyebrow {
+    font-size: 0.59rem;
+  }
+  .public-table th {
+    font-size: 0.68rem;
+  }
+  .public-table td {
+    font-size: 0.83rem;
+  }
+  .source-status small {
+    font-size: 0.72rem;
+  }
+  .site-header nav {
+    gap: 9px;
+  }
+  .site-header .button {
+    font-size: 0.69rem;
+  }
+  .site-header .play-nav {
+    font-size: 0.74rem;
+  }
+  .brand {
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+  }
+  .brand-sub {
+    font-size: 0.43rem;
+  }
+  .admin-shortcuts {
+    grid-template-columns: 1fr;
+  }
+  .refresh-progress {
+    padding: 17px;
+  }
+  .connection-chips {
+    gap: 7px 14px;
+    font-size: 0.73rem;
+  }
+  .connection-summary {
+    align-items: flex-start;
+  }
+  .connection-summary > span:last-child {
+    font-size: 0.69rem;
+  }
+  .recovery-review dl {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  .recovery-review dd {
+    margin-bottom: 10px;
+  }
+  .change-review {
+    padding: 18px;
+  }
+  .tabs a {
+    font-size: 0.78rem;
+  }
+  .tabs {
+    gap: 4px;
+  }
+}
 ```
 
 ## storage.py
@@ -2982,6 +7103,7 @@ from race_support import read_json, clean_snapshots, race_key, empty_snapshots
 from store_schema import upgrade_store
 from race import empty
 from boss import validate_boss
+from presentation import valid_marker
 
 LOG = logging.getLogger("redhunllef")
 
@@ -3061,6 +7183,7 @@ class Store:
             conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
+            conn.execute("CREATE TABLE IF NOT EXISTS rh_checkpoint (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
             existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
             if existing:
@@ -3085,6 +7208,7 @@ class Store:
                     secret_key=secrets.token_hex(32), site_settings=self.config.site)
             value, _ = upgrade_store(legacy, self.config.site, {})
             community_boss = value.pop("community_boss", None)
+            marker = valid_marker(value.pop("recovery_export", None))
             if community_boss is not None:
                 community_boss = validate_boss(community_boss)
             if not value["users"]:
@@ -3096,6 +7220,8 @@ class Store:
             self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
             if community_boss is not None:
                 self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
+            if marker is not None:
+                self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?)", (self.key, encode(marker)))
             saved = empty(value["site_settings"])
             saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
                          updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),
@@ -3113,6 +7239,18 @@ class Store:
         if not row:
             raise StoreError("Saved admin state is missing. Restore a verified database backup.")
         return row[0], json.loads(row[1])
+
+    def checkpoint(self, marker=None):
+        if marker is not None:
+            marker = valid_marker(marker)
+            if marker is None:
+                raise ValueError("Invalid recovery export metadata.")
+        with self.connection(transaction=marker is not None) as conn:
+            if marker is not None:
+                self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
+                           (self.key, encode(marker)))
+            row = self.query(conn, "SELECT document FROM rh_checkpoint WHERE name=?", (self.key,)).fetchone()
+        return valid_marker(json.loads(row[0])) if row else None
 
     def live(self, service):
         with self.connection() as conn:
@@ -3283,17 +7421,18 @@ def upgrade_store(value, defaults, health_defaults):
 {% block scripts %}{% if tab=='boss' %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script>{% endif %}{% endblock %}
 {% block navigation %}<a href="/" target="_blank" rel="noopener">View website ↗</a><form method="post" action="/admin/logout"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="text-button" type="submit">Sign out</button></form>{% endblock %}
 {% block content %}<main id="main" class="shell admin-main"><div class="admin-heading"><div><p class="eyebrow">CONTROL CENTER</p><h1>Your race, at a glance<span class="accent">.</span></h1><p class="muted">Welcome, {{ user }} <span class="tag">{{ 'Superadmin' if superadmin else 'Admin' }}</span></p></div><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<button type="submit" class="button primary">↻ Refresh data</button></form></div>
-<nav class="tabs" aria-label="Administration">{% for key,label in tabs.items() %}<a href="{{ url_for('login',tab=key) }}" {% if tab==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}<span class="auto-label"><span class="dot"></span> Automatic · 60 sec</span></nav>
+<nav class="tabs" aria-label="Administration">{% for key,label in tabs.items() %}<a href="{{ url_for('login',tab=key) }}" {% if tab==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}<span class="auto-label"><span class="dot"></span> {{ 'Boss · 5 sec / Sources · 60 sec' if tab=='boss' else 'Automatic · 60 sec' }}</span></nav>
 {% if hosted_local %}<p class="notice warning">Local storage is active. On App Platform, saved changes can be lost when the app is redeployed or replaced. {% if superadmin %}<a class="text-link" href="/admin?tab=settings#recovery">Save a private recovery file →</a>{% else %}Ask the Superadmin to save a private recovery file after important changes.{% endif %}</p>{% endif %}
 {% with messages=get_flashed_messages() %}{% for message in messages %}<p class="notice success" role="status">{{ message }}</p>{% endfor %}{% endwith %}
 {% if errors %}<div class="notice warning" role="alert"><strong>Review before saving.</strong><ul>{% for key,message in errors.items() %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
-<p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
+{% if tab in ['overview','race','players'] %}<p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>{% endif %}
 <p id="networkError" class="notice warning" role="status" hidden></p><p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
-<div id="endedNotice" class="notice ended-notice" {% if data.site.race_state!='ended' %}hidden{% endif %}><div><strong>This saved race has ended.</strong><span>New wagers outside its dates do not count toward these results.</span></div><a class="button small" href="{{ url_for('login',tab='race') }}">Prepare next race →</a></div>
-<section class="panel refresh-progress" aria-label="Live update progress">
-<div class="progress-heading"><div><p class="eyebrow">LIVE UPDATE PROGRESS</p><p id="publishedWindow" class="muted small">Published window: {{ data.site.start_et }} → {{ data.site.end_et }}</p></div><a class="text-link" href="/admin/diagnostics">Download diagnostics</a></div>
-<div class="progress-services"><div><strong>Shuffle · Leaderboard</strong><p id="shuffleProgress" role="status">{{ data.jobs.shuffle.error or ('Check in progress.' if data.jobs.shuffle.state=='checking' else 'Automatic check queued.') }}</p></div><div><strong>Kick · Stream status</strong><p id="kickProgress" role="status">{{ data.jobs.kick.error or ('Check in progress.' if data.jobs.kick.state=='checking' else 'Automatic check queued.') }}</p></div></div>
-</section>
+{% if tab in ['overview','race','players'] %}<div id="endedNotice" class="notice ended-notice" {% if data.site.race_state!='ended' %}hidden{% endif %}><div><strong>This saved race has ended.</strong><span>New wagers outside its dates do not count toward these results.</span></div><a class="button small" href="{{ url_for('login',tab='race') }}">Prepare next race →</a></div>{% endif %}
+<details class="panel refresh-progress" id="connectionDetails" {% if data.jobs.shuffle.error or data.jobs.kick.error %}open{% endif %}>
+<summary class="connection-summary"><span><strong>Live connections</strong><span class="connection-chips"><span id="shuffleSummary">Shuffle · {{ 'Needs attention' if data.jobs.shuffle.error else 'Checking automatically' }}</span><span id="kickSummary">Kick · {{ 'Needs attention' if data.jobs.kick.error else 'Checking automatically' }}</span></span></span><span class="small muted">Details <span aria-hidden="true">⌄</span></span></summary>
+<div class="connection-details"><div class="progress-heading"><p id="publishedWindow" class="muted small">Published window: {{ data.site.start_et }} → {{ data.site.end_et }}</p><a class="text-link" href="/admin/diagnostics">Download diagnostics</a></div>
+<div class="progress-services">{% for name,label in [('shuffle','Shuffle · Leaderboard'),('kick','Kick · Stream status')] %}<div><strong>{{ label }}</strong><p id="{{ name }}Progress" role="status">{{ data.jobs[name].error or 'Automatic check queued.' }}</p><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<input type="hidden" name="service" value="{{ name }}"><button class="text-button small" type="submit">Check {{ name|capitalize }} now</button></form></div>{% endfor %}</div></div>
+</details>
 {% include 'admin_' ~ tab ~ '.html' %}
 <div class="admin-foot"><span id="browserCheck">Connecting to automatic updates…</span><span>Release {{ release }}</span></div>
 <noscript><p class="notice">Forms and navigation work without JavaScript. Reload for current statistics.</p></noscript></main>{% endblock %}
@@ -3310,8 +7449,10 @@ def upgrade_store(value, defaults, health_defaults):
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
 <p class="muted small">This panel updates every 5 seconds. Race and provider checks still run every 60 seconds. Boss hits do not change the wager leaderboard.</p>
 {% if superadmin %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form><a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a></div>
-<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives the current result and resets health, personal totals, and allowances. Victory stays visible until you choose this. Save a checkpoint before replacing an unfinished raid.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="100000" max="100000000" step="1" value="2400000" required><small class="muted">2,400,000 targets roughly 4–8 days with 100 people making 20–40 matching attacks daily.</small></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> I want to end this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% else %}<p class="muted">Ask the Superadmin to pause, resume, or start another raid.</p>{% endif %}
+<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives the current result and resets health, personal totals, and allowances. Victory stays visible until you choose this. Save a checkpoint before replacing an unfinished raid.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="100000" max="100000000" step="1" value="{{ boss_rules.default_hp }}" required><small class="muted">{{ '{:,}'.format(boss_rules.default_hp) }} targets roughly 4–8 days with 100 people making 20–40 matching attacks daily.</small></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> I want to end this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% else %}<p class="muted">Ask the Superadmin to pause, resume, or start another raid.</p>{% endif %}
 </section>
+
+{% if superadmin %}{% include "recovery_panel.html" %}{% endif %}
 ```
 
 ## templates/admin_overview.html
@@ -3320,8 +7461,7 @@ def upgrade_store(value, defaults, health_defaults):
 <section class="stat-grid"><article class="panel stat"><div class="row"><span class="eyebrow">RACE STATUS</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><strong id="countdown" class="stat-value">{{ data.site.race_state|capitalize }}</strong><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><a class="text-link" href="{{ url_for('login',tab='race') }}">Review schedule →</a></article>
 <article class="panel stat"><span class="eyebrow">TOTAL PRIZE POOL</span><strong class="stat-value accent" id="poolTotal">{{ data.site.total_prize }}</strong><p class="muted">Across 15 paid places</p><a class="text-link" href="{{ url_for('login',tab='race') }}#prizes">Manage prizes →</a></article>
 <article class="panel stat"><span class="eyebrow">QUALIFYING PLAYERS</span><strong class="stat-value" id="playerCount">{{ data.count }}</strong><p id="dataState">{{ data.freshness.label }}</p><small id="sourceTime" class="muted">{{ fmt_et(data.freshness.updated_at) }}</small></article></section>
-<div class="section-title"><div><p class="eyebrow">CONNECTED TO YOUR COMMUNITY</p><h2>Live connections</h2></div><a class="text-link" href="{{ url_for('login',tab='settings') }}#diagnostics">View diagnostics →</a></div>
-<section class="connection-grid">{% for name,label in [('shuffle','Shuffle wager data'),('kick','Kick livestream')] %}<article class="panel connection"><div class="connection-icon">{{ 'S' if name=='shuffle' else 'K' }}</div><div><h3>{{ label }}</h3><p id="{{ name }}Message">{{ data.jobs[name].error or 'Checking automatically' }}</p><small id="{{ name }}Timing" class="muted">Every 60 seconds</small>{% if name=='kick' %}<p id="streamDetail" class="muted small"></p>{% endif %}</div><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh','overview',revision) }}<input type="hidden" name="service" value="{{ name }}"><button class="button small" type="submit">Check</button></form></article>{% endfor %}</section>
+<section class="admin-shortcuts"><a class="panel" href="/admin?tab=race"><span class="eyebrow">SCHEDULE & PRIZES</span><h2>Prepare your next race →</h2><p>Review exactly what changes before publishing.</p></a><a class="panel" href="/admin?tab=boss"><span class="eyebrow">YOUR COMMUNITY</span><h2>Manage the boss fight →</h2><p>See shared progress, pause attacks, or open a new raid.</p></a></section>
 <section class="panel quick-guide"><div><h3>Keep the race moving.</h3><p class="muted">Set the Eastern Time schedule, review participants, and let automatic updates do the rest.</p></div><a class="button" href="{{ url_for('login',tab='players') }}">View players →</a></section>
 ```
 
@@ -3339,7 +7479,8 @@ def upgrade_store(value, defaults, health_defaults):
 
 ```html
 <form id="raceForm" method="post" action="/admin/action" class="stack" data-dirty>{{ form_fields('save_race','race',revision) }}
-{% if confirm_race %}<div class="notice warning"><strong>These dates are a draft. Confirm below to publish them.</strong><p>The current race will be archived, including its results and overrides. The new race starts with its own participants. Review the dates below.</p><p>The saved race stays active until you choose <strong>Confirm and publish race</strong> in the bottom save bar.</p></div>{% endif %}
+{% if confirm_race %}<input type="hidden" name="review_token" value="{{ review_token }}"><div class="notice warning"><strong>These changes are a draft. Confirm below to publish them.</strong><p>Changing the race window archives its results and resets its overrides. Changes to prizes or text keep the current race participants. Review the changes below.</p><p>The saved race stays active until you choose <strong>Confirm and publish race</strong> in the bottom save bar.</p></div>{% endif %}
+{% if change_review %}{% include "change_review.html" %}{% endif %}
 <section class="panel form-panel"><div class="section-title"><div><p class="eyebrow">THE NEXT CHAPTER</p><h2>Schedule &amp; details</h2></div><div class="button-row js-only"><button class="button small" type="button" id="startNow">Start now</button><button class="button small" type="button" id="nextRace">Prepare next race</button></div></div>
 <div class="form-grid">{{ field('start_et','Starts · Eastern Time',form.start_et,'datetime-local',error=errors.get('start_et','')) }}{{ field('end_et','Ends · Eastern Time',form.end_et,'datetime-local',error=errors.get('end_et','')) }}</div><p class="muted small">Eastern Time includes daylight saving. Preparing a schedule creates a draft; saving a new window requires confirmation.</p>
 <div class="form-grid">{{ field('site_name','Website name',form.site_name) }}{{ field('race_title','Race title',form.race_title) }}</div>{{ field('race_description','Short description',form.race_description,'textarea',required=false) }}</section>
@@ -3355,9 +7496,9 @@ def upgrade_store(value, defaults, health_defaults):
 {% if superadmin %}<details class="panel form-panel" open><summary><h2>Administrator accounts</h2><span aria-hidden="true">+</span></summary><div class="details-content"><p class="muted">{{ admin.superadmin }} is the protected Superadmin. Existing accounts are retained while their saved storage is available. Use the private recovery file below before redeploying with local storage.</p><div class="account-list">{% for name,record in admin.users.items() %}<div class="account-row"><div><strong>{{ name }}</strong><span class="tag">{{ 'Superadmin' if name|lower==admin.superadmin|lower else 'Admin' }}</span></div>{% if name|lower!=admin.superadmin|lower %}<form action="/admin/action" method="post" data-confirm="Remove this account and revoke its sessions?">{{ form_fields('remove_account','settings',revision) }}<input type="hidden" name="username" value="{{ name }}"><button class="button small danger" type="submit">Remove</button></form>{% endif %}</div>{% endfor %}</div><h3>Add an administrator</h3><form action="/admin/action" method="post" class="form-grid">{{ form_fields('add_account','settings',revision) }}{{ field('username','New username',prefix='add-') }}{{ field('new_password','Initial password',type='password',help='At least 12 characters.',prefix='add-') }}{{ field('confirm_password','Confirm password',type='password',prefix='add-') }}<div class="field"><span>&nbsp;</span><button class="button" type="submit">Add administrator</button></div></form>
 <details class="nested"><summary>Reset an administrator password</summary><form action="/admin/action" method="post" class="form-grid" data-confirm="Reset this password and revoke previous sessions?">{{ form_fields('reset_password','settings',revision) }}<div class="field"><label for="resetUser">Account</label><select name="username" id="resetUser">{% for name in admin.users %}<option>{{ name }}</option>{% endfor %}</select></div>{{ field('new_password','Replacement password',type='password',prefix='reset-') }}{{ field('confirm_password','Confirm replacement',type='password',prefix='reset-') }}<div class="field"><span>&nbsp;</span><button class="button" type="submit">Reset password</button></div></form></details></div></details>{% endif %}
 <details class="panel form-panel" {% if restore %}open{% endif %}><summary><h2>Backups &amp; race history</h2><span aria-hidden="true">+</span></summary><div class="details-content"><p class="muted">Race backups include settings, results, overrides, and history. Passwords and integration credentials are excluded.</p><a class="button" href="/admin/backup">↓ Download race backup</a><form class="filter-bar" method="post" action="/admin/action" enctype="multipart/form-data">{{ form_fields('preview_restore','settings',revision) }}<div class="field grow"><label for="backupFile">Restore a race backup</label><input id="backupFile" name="backup" type="file" accept=".json,application/json" required></div><button class="button" type="submit">Review backup</button></form>
-{% if restore %}<div class="notice warning"><strong>Review this restore</strong><p>{{ restore.start }} → {{ restore.end }} · {{ restore.rows }} saved participants</p><p>Current race data will be replaced. Accounts remain intact, and a private recovery copy is created first.</p><form method="post" action="/admin/action">{{ form_fields('restore','settings',revision) }}<input type="hidden" name="restore_token" value="{{ restore.token }}"><button class="button danger" type="submit">Confirm restore</button></form></div>{% endif %}
+{% if restore %}<div class="notice warning"><strong>Review this restore</strong><p>{{ restore.start }} → {{ restore.end }} · {{ restore.rows }} saved participants</p><p>{{ restore.overrides }} overrides · {{ restore.history }} archived races. Boss progress and accounts stay intact.</p>{% if restore.changes %}{% with change_review=restore.changes %}{% include "change_review.html" %}{% endwith %}{% endif %}<p>Current race data will be replaced. Accounts remain intact, and a private recovery copy is created first.</p><form method="post" action="/admin/action">{{ form_fields('restore','settings',revision) }}<input type="hidden" name="restore_token" value="{{ restore.token }}"><button class="button danger" type="submit">Confirm restore</button></form></div>{% endif %}
 {% for race in admin.race_history|reverse %}<details class="nested"><summary>{{ fmt_et(race.site_settings.start_time) }} → {{ fmt_et(race.site_settings.end_time) }}</summary><div class="table-scroll"><table><thead><tr><th>Rank</th><th>Username</th><th class="number">Weighted wager</th></tr></thead><tbody>{% for row in race.leaderboard_snapshots.last_top15 %}<tr><td>{{ row.rank }}</td><td>{{ row.username }}</td><td class="number">{{ row.wager }}</td></tr>{% else %}<tr><td colspan="3">No saved participants.</td></tr>{% endfor %}</tbody></table></div></details>{% else %}<p class="muted small">Completed races appear here after you save a new window.</p>{% endfor %}</div></details>
-{% if superadmin %}<section class="panel form-panel" id="recovery"><p class="eyebrow">KEEP YOUR CHANGES</p><h2>Private recovery file</h2><p class="muted">Save your administrator accounts, password hashes, race dates, overrides, history, last Top 15, and the community boss (health, raiders, and cooldowns). This file contains sensitive account data; keep it private.</p><a class="button primary" href="/admin/recovery-backup">↓ Download private recovery file</a><p class="small muted">To carry these changes into a fresh deployment, add the downloaded <code>recovery.seed.json</code> to the <code>private/</code> folder in your private source repository before deploying. It imports automatically only when no saved local state exists. Download a new copy after important changes. Shuffle and Kick credentials stay in your existing configuration.</p><p class="small muted">On App Platform, local files can disappear during redeploys or container replacements. This download is a manual recovery copy, not automatic remote storage.</p></section>{% endif %}
+{% if superadmin %}{% include 'recovery_panel.html' %}{% endif %}
 <details class="panel form-panel" id="diagnostics" open><summary><h2>Connections &amp; diagnostics</h2><span aria-hidden="true">+</span></summary><div class="details-content"><div class="diagnostic-grid">{% for key,label in [('storage','Storage'),('start_et','Race starts'),('end_et','Race ends'),('received','Source records received'),('accepted','Valid race records'),('missing_campaign','Records without campaign')] %}<div><span class="muted small">{{ label }}</span><strong data-diagnostic="{{ key }}">{{ data.diagnostics[key] }}</strong></div>{% endfor %}{% for key,value in data.diagnostics.credentials.items() %}<div><span class="muted small">{{ key|replace('_',' ')|title }}</span><strong>{{ 'Configured' if value.configured else 'Missing' }}</strong><small class="muted">{{ value.source }}</small></div>{% endfor %}</div>
 {% for name in ['shuffle','kick'] %}<div class="notice"><strong>{{ name|capitalize }}</strong><p id="{{ name }}Message">{{ data.jobs[name].error or 'Waiting for first update' }}</p><small id="{{ name }}Timing" class="muted">Automatic updates every 60 seconds</small></div>{% endfor %}<a class="button" href="/admin/diagnostics">↓ Download redacted diagnostics</a><p class="muted small">The report excludes keys, password hashes, provider response bodies, and participant usernames.</p></div></details>
 <details class="panel form-panel"><summary><h2>Access controls &amp; logs</h2><span aria-hidden="true">+</span></summary><div class="details-content"><form method="post" action="/admin/action" class="filter-bar" data-confirm="Block requests from this IP address?">{{ form_fields('ban_ip','settings',revision) }}{{ field('ip','Block an IPv4 or IPv6 address') }}<button class="button danger" type="submit">Block address</button></form><div class="button-row">{% for ip in admin.banned_ips %}<form action="/admin/action" method="post">{{ form_fields('unban_ip','settings',revision) }}<input type="hidden" name="ip" value="{{ ip }}"><button class="button small" type="submit">Unblock {{ ip }}</button></form>{% endfor %}</div><h3>Recent access</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Address</th><th>Path</th><th>Status</th></tr></thead><tbody>{% for row in access_log %}<tr><td>{{ fmt_et(row.time) }}</td><td>{{ row.ip }}</td><td>{{ row.method }} {{ row.path }}</td><td>{{ row.status }}</td></tr>{% endfor %}</tbody></table></div><form method="post" action="/admin/action" data-confirm="Clear recent access entries?">{{ form_fields('clear_access','settings',revision) }}<button class="button small" type="submit">Clear access log</button></form><h3>Administrator activity</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Administrator</th><th>Action</th></tr></thead><tbody>{% for row in admin.audit_log|reverse %}<tr><td>{{ row.ts_et }}</td><td>{{ row.admin_user }}</td><td>{{ row.action }}</td></tr>{% endfor %}</tbody></table></div>{% if superadmin %}<form action="/admin/action" method="post" data-confirm="Clear the audit log after saving a private recovery copy?">{{ form_fields('clear_audit','settings',revision) }}<button class="button small" type="submit">Clear audit log</button></form>{% endif %}</div></details>
@@ -3386,7 +7527,7 @@ def upgrade_store(value, defaults, health_defaults):
 ## templates/boss.html
 
 ```html
-{% extends 'base.html' %}
+{% extends 'base.html' %}{% from 'icons.html' import icon %}
 {% block title %}Community boss fight · RedHunllef{% endblock %}
 {% block attributes %}data-page="boss"{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='boss.css',v=asset_version) }}">{% endblock %}
@@ -3394,32 +7535,48 @@ def upgrade_store(value, defaults, health_defaults):
 {% block content %}
 <main id="main" class="shell boss-page" data-boss-root data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
 <section class="boss-heading"><div><p class="eyebrow"><span class="dot"></span> COMMUNITY RAID · FREE TO PLAY</p><h1>Small hits.<br><span class="accent">One massive takedown.</span></h1><p class="lead">The Crimson Hunllef has awakened. Bring the whole community. Every hit stays. Every raider counts.</p></div><a class="text-link" href="#howToPlay">New here? How to play ↓</a></section>
-<div class="boss-live"><span id="bossConnection" role="status">Connecting to the shared raid…</span><span>Everyone fights the same boss · Updates every 5 seconds</span></div>
-<p id="bossError" class="notice warning" role="alert" hidden></p>
+<div class="boss-live"><span id="bossConnection" role="status">Connecting to the shared raid…</span><span>Everyone fights the same boss · Updates every {{ boss_rules.poll_seconds }} seconds</span></div>
+<p id="bossError" class="notice warning" role="alert" hidden></p><button type="button" id="dismissBossError" class="text-button dismiss-error" hidden>Dismiss message</button>
+<div id="milestoneBanner" class="milestone-banner" role="status" hidden><strong id="milestoneMessage"></strong><button id="dismissMilestone" class="text-button" type="button" aria-label="Dismiss milestone">{{ icon('close') }}</button></div>
 <div class="raid-layout">
 <section class="arena panel" aria-labelledby="bossName">
 <div class="arena-heading"><span class="eyebrow">WORLD BOSS / CRIMSON 001</span><span class="badge" id="bossPhase">{{ boss_data.phase }}</span></div>
 <div class="boss-stage" id="bossStage"><div class="rune-ring" aria-hidden="true"></div><div class="rune-ring inner" aria-hidden="true"></div><span class="arena-rune rune-one" aria-hidden="true">✦</span><span class="arena-rune rune-two" aria-hidden="true">✧</span><img class="boss-sprite" src="{{ url_for('static',filename='redlogo.png') }}" alt="The red pixel-art Crimson Hunllef" width="220" height="220"><span id="hitFloat" class="hit-float" aria-hidden="true"></span><span class="boss-shadow" aria-hidden="true"></span></div>
 <div class="boss-name-row"><div><p class="eyebrow">THE COMMUNITY'S NEMESIS</p><h2 id="bossName">Crimson Hunllef</h2></div><span id="bossDay" class="tag">Raid day {{ boss_data.day }}</span></div>
-<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent">100%</span></div>
+<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent">{{ '%.2f'|format(boss_data.hp / boss_data.max_hp * 100) }}%</span></div>
 <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}" value="{{ boss_data.hp }}" aria-label="Boss health"></progress>
+<p class="muted small">No health regeneration. Every confirmed hit stays for this raid.</p>
+<ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
 <p id="bossStory" class="boss-story">The first strike starts the raid. Let's wake the beast.</p>
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders united</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>hits landed</span></div><div><strong id="bossDamage">{{ '{:,}'.format(boss_data.total_damage) }}</strong><span>damage together</span></div></div>
 </section>
 <section class="attack-panel panel" aria-labelledby="yourTurn"><div class="row"><p class="eyebrow">YOUR TURN TO HIT BACK</p><span class="tag">NO SIGN-UP</span></div><h2 id="yourTurn">Choose your strike.</h2><p class="muted small">Read the weakness. Pick your style. Make it count.</p>
-<div class="weakness-box"><span class="weakness-symbol" aria-hidden="true">✦</span><div><small>CURRENT WEAKNESS</small><strong id="bossWeakness">{{ boss_data.weakness_label }} · 150 damage</strong><span id="wardTimer">Changes in —</span></div></div>
-<div class="strike-options" role="group" aria-label="Attack style"><button type="button" data-style="blade" aria-pressed="true"><span aria-hidden="true">⚔</span><strong>Blade</strong><small>Close &amp; personal</small></button><button type="button" data-style="bow" aria-pressed="false"><span aria-hidden="true">➶</span><strong>Bow</strong><small>Right on target</small></button><button type="button" data-style="magic" aria-pressed="false"><span aria-hidden="true">✧</span><strong>Magic</strong><small>A little chaos</small></button></div>
-<div class="combo-row"><strong>Crimson burst</strong><span id="burstLabel">10 hits to +100 damage</span></div><div class="burst-meter" id="burstMeter" aria-hidden="true">{% for n in range(10) %}<span></span>{% endfor %}</div>
-<button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button><p id="attackHint" class="attack-hint">One manual attack every 60 seconds. No wager required.</p>
+<div class="weakness-box"><span class="weakness-symbol" aria-hidden="true">✦</span><div><small>CURRENT WEAKNESS</small><strong id="bossWeakness">{{ boss_data.weakness_label }} · {{ boss_rules.weak_damage }} damage</strong><span id="wardTimer">Changes in —</span></div></div>
+<div class="strike-options" role="group" aria-label="Attack style">{% for key,label in boss_rules.styles.items() %}<button type="button" data-style="{{ key }}" aria-pressed="{{ 'true' if loop.first else 'false' }}"><span aria-hidden="true">{{ icon(key,26) }}</span><strong>{{ label }}</strong><small>{{ 'Close & personal' if key=='blade' else 'Right on target' if key=='bow' else 'A little chaos' }}</small></button>{% endfor %}</div>
+<div class="combo-row"><strong>Crimson burst</strong><span id="burstLabel">{{ boss_rules.burst_every }} hits to +{{ boss_rules.burst_bonus }} damage</span></div><div class="burst-meter" id="burstMeter" aria-hidden="true">{% for n in range(boss_rules.burst_every) %}<span></span>{% endfor %}</div>
+<button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button><p id="attackHint" class="attack-hint">One manual attack every {{ boss_rules.cooldown }} seconds. No wager required.</p>
 <p id="hitResult" class="hit-result" role="status">Your first hit is waiting.</p>
-<div class="personal-stats"><div><strong id="yourDamage">0</strong><span>your damage</span></div><div><strong id="yourRemaining">40 / 40</strong><span>attacks left today</span></div></div><p class="raider-name">Playing as <strong id="yourName">{{ boss_data.you.name }}</strong></p><p class="muted small" id="raidReset">Raid days start with the first community hit.</p>
+<div class="personal-stats"><div><strong id="yourDamage">0</strong><span>your damage</span></div><div><strong id="yourRemaining">{{ boss_rules.daily_attacks }} / {{ boss_rules.daily_attacks }}</strong><span>attacks left today</span></div><div><strong id="yourActiveDays">0</strong><span>raid days played</span></div></div><p class="raider-name">Playing as <strong id="yourName">{{ boss_data.you.name }}</strong></p><p class="muted small" id="raidReset">Raid days start with the first community hit.</p>
 </section></div>
-<section class="instructions panel" id="howToPlay" aria-labelledby="instructionsTitle"><div class="section-title"><div><p class="eyebrow">60 SECONDS TO LEARN. DAYS TO CONQUER.</p><h2 id="instructionsTitle">How to play together</h2></div><span class="tag">TEAMWORK WINS</span></div><ol class="instruction-grid"><li><strong>Read the weakness</strong><p>Pick Blade, Bow, or Magic. A matching strike deals <b>150 damage</b>; other styles deal <b>100</b>. The weakness shifts every 10 minutes.</p></li><li><strong>Land your hit</strong><p>Press Attack, then wait <b>60 seconds</b>. Your tenth personal hit earns a <b>+100 Crimson burst</b>. It stacks with the weakness bonus.</p></li><li><strong>Rally, then return</strong><p>Use up to <b>40 attacks per raid day</b>. Invite the crew back tomorrow. Damage never heals and a missed day never erases your progress.</p></li></ol><div class="raid-fineprint"><p><strong>The goal:</strong> defeat the shared boss. Starting difficulty is 2.4 million HP. Around 100 active people making 20–40 attacks daily should take roughly 4–8 raid days at the starting difficulty. Less participation takes longer. A host can choose a different difficulty for the next raid.</p><p><strong>Fair play:</strong> your browser and internet connection share the limits. People on the same Wi-Fi share one allowance; IPv6 addresses in the same /64 also share it. Keep cookies enabled and use the same browser to keep your raider profile. The first successful community hit starts the 24-hour raid-day schedule. Pausing does not stop that schedule.</p><p><strong>Free, cooperative fun:</strong> no purchases, wagers, cash prizes, or automatic attacks. Everyone who lands a hit helps win. The host saves recovery checkpoints and starts the next raid after victory.</p></div></section>
+<section class="panel raid-recognition"><div class="section-title"><div><p class="eyebrow">YOUR PART IN THE STORY</p><h2>Your raid badges</h2></div><div class="share-tools"><button class="button small" id="copyRaidLink" type="button">{{ icon('link',18) }} Copy raid link</button><span id="shareResult" class="small muted" role="status"></span><input id="shareUrl" type="text" readonly aria-label="Raid link to copy" hidden></div></div><ul id="yourBadges" class="badge-grid"></ul><p class="muted small">Cosmetic achievements for this raid. Your browser keeps your profile; badges do not change damage.</p></section>
+<section id="victoryRecap" class="panel victory-recap" hidden><p class="eyebrow">CRIMSON CONQUERED</p><h2>One community. One incredible takedown.</h2><p id="victorySummary"></p><details><summary>Every raider who made it happen <span aria-hidden="true">+</span></summary><p id="recapNote" class="muted small">All contributors are listed by their raid aliases.</p><ol id="allContributors" class="combat-list"></ol></details></section>
+<section class="instructions panel" id="howToPlay" aria-labelledby="instructionsTitle"><div class="section-title"><div><p class="eyebrow">{{ boss_rules.cooldown }} SECONDS TO LEARN. DAYS TO CONQUER.</p><h2 id="instructionsTitle">How to play together</h2></div><span class="tag">TEAMWORK WINS</span></div><ol class="instruction-grid"><li><strong>Read the weakness</strong><p>Pick Blade, Bow, or Magic. A matching strike deals <b>{{ boss_rules.weak_damage }} damage</b>; other styles deal <b>{{ boss_rules.damage }}</b>. The weakness shifts every {{ boss_rules.ward_seconds // 60 }} minutes.</p></li><li><strong>Land your hit</strong><p>Press Attack, then wait <b>{{ boss_rules.cooldown }} seconds</b>. Every {{ boss_rules.burst_every }} personal hits earns a <b>+{{ boss_rules.burst_bonus }} Crimson burst</b>. It stacks with the weakness bonus.</p></li><li><strong>Rally, then return</strong><p>Use up to <b>{{ boss_rules.daily_attacks }} attacks per raid day</b>. Invite the crew back tomorrow. Damage never heals and a missed day never erases your progress.</p></li></ol><div class="raid-fineprint"><p><strong>The goal:</strong> defeat the shared boss. Starting difficulty is {{ '{:,}'.format(boss_rules.default_hp) }} HP. Around 100 active people making 20–40 attacks daily should take roughly 4–8 raid days at the starting difficulty. Less participation takes longer. A host can choose a different difficulty for the next raid.</p><p><strong>Fair play:</strong> your browser and internet connection share the limits. People on the same Wi-Fi share one allowance; IPv6 addresses in the same /64 also share it. Keep cookies enabled and use the same browser to keep your raider profile. The first successful community hit starts the 24-hour raid-day schedule. Pausing does not stop that schedule.</p><p><strong>Free, cooperative fun:</strong> no purchases, wagers, cash prizes, or automatic attacks. Everyone who lands a hit helps win. The host saves recovery checkpoints and starts the next raid after victory.</p></div></section>
 <div class="raid-bottom"><section class="panel raid-list"><p class="eyebrow">THE DAMAGE CREW</p><h2>Top raiders</h2><ol id="bossLeaders" class="combat-list"><li class="muted">Land the first hit to lead the charge.</li></ol><p class="muted small">Anonymous names belong to this raid. Every contribution counts.</p></section><section class="panel raid-list"><p class="eyebrow">HAPPENING TOGETHER</p><h2>Recent strikes</h2><ol id="bossRecent" class="combat-list"><li class="muted">The arena is waiting for your community.</li></ol></section></div>
 <details class="panel raid-history"><summary>Past raids <span aria-hidden="true">+</span></summary><ul class="combat-list" id="bossHistory"><li class="muted">The first chapter is yours to write.</li></ul></details>
+<section class="mobile-attack-dock" aria-label="Quick attack controls"><div><label for="dockStyle">Your strike</label><select id="dockStyle">{% for key,label in boss_rules.styles.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select><small id="dockRemaining">{{ boss_rules.daily_attacks }} attacks left</small></div><button type="button" class="button primary" id="dockAttack" disabled>Connecting…</button></section>
 <noscript><p class="notice warning">Enable JavaScript and cookies to attack and see other players' live progress.</p></noscript>
 </main>{% endblock %}
 {% block footer %}A free community raid. Built for the Red crew.{% endblock %}
+```
+
+## templates/change_review.html
+
+```html
+<section class="panel change-review" aria-labelledby="changeReviewTitle">
+<p class="eyebrow">REVIEW BEFORE PUBLISHING</p><h2 id="changeReviewTitle">Here is exactly what changes.</h2>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Current and proposed values"><table><thead><tr><th>Setting</th><th>Current</th><th>Proposed</th></tr></thead><tbody>{% for change in change_review %}<tr><th scope="row">{{ change.label }}</th><td>{{ change.before }}</td><td class="accent">{{ change.after }}</td></tr>{% endfor %}</tbody></table></div>
+<p class="small muted">Review expires after 15 minutes. Editing a reviewed value requires a fresh preview before publishing.</p>
+</section>
 ```
 
 ## templates/error.html
@@ -3431,16 +7588,36 @@ def upgrade_store(value, defaults, health_defaults):
 {% block footer %}RedHunllef Wager Race{% endblock %}
 ```
 
+## templates/icons.html
+
+```html
+{% macro icon(name, size=20) -%}
+<svg class="ui-icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{% if name=='blade' %}<path d="m4 3 7 3 10 15-7-3L4 3ZM3 16l5 5m-4 0 4-5"/>
+{% elif name=='bow' %}<path d="M5 3c18 0 18 18 0 18V3Zm0 0 12 9-12 9M2 12h20m-4-4 4 4-4 4"/>
+{% elif name=='magic' %}<path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z"/>
+{% elif name=='close' %}<path d="m6 6 12 12M18 6 6 18"/>
+{% elif name=='link' %}<path d="m9 15 6-6m-5-3 2-2a5 5 0 0 1 7 7l-2 2M7 11l-2 2a5 5 0 0 0 7 7l2-2"/>
+{% endif %}</svg>
+{%- endmacro %}
+```
+
 ## templates/index.html
 
 ```html
 {% extends 'base.html' %}
-{% block attributes %}data-page="public" data-feed="/data" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
+{% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
 <main id="main" class="shell">
 <section class="hero"><div><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
 <aside class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside></section>
-<section class="play-invite panel" aria-labelledby="inviteTitle"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="60" height="60"><div><p class="eyebrow">ONE BOSS. THE WHOLE COMMUNITY.</p><h2 id="inviteTitle">Red needs a raid party.</h2><p>Pick a weapon. Land a hit. Help bring down the Crimson Hunllef together.</p></div><a class="button primary" href="/play">Join the boss fight <span aria-hidden="true">→</span></a></section>
+<section class="play-invite panel" aria-labelledby="inviteTitle">
+<img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="52" height="52">
+<div class="invite-copy"><p class="eyebrow">ONE BOSS. THE WHOLE COMMUNITY.</p><h2 id="inviteTitle">{{ 'The crew conquered Crimson.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
+<p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p>
+<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Community boss health"></progress></div>
+<a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Join the boss fight' }}</span> <span aria-hidden="true">→</span></a>
+</section>
 <section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
 <p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
@@ -3477,6 +7654,20 @@ def upgrade_store(value, defaults, health_defaults):
 {% macro player_rows(rows, tab='players') -%}
 {% for row in rows %}<tr data-player="{{ row.username }}"><td class="rank">{{ '%02d'|format(row.rank) if row.rank else '—' }}</td><td><div class="name-cell"><strong>{{ row.username }}</strong><button type="button" class="copy-button js-only" data-copy="{{ row.username }}" aria-label="Copy {{ row.username }}">⧉</button></div>{% if row.source == 'override' %}<span class="tag">Adjusted</span>{% endif %}</td><td class="number accent">{{ row.wager }}</td><td class="number">{{ row.original_weighted_str }}</td><td class="number">{{ row.raw_wager_str }}</td><td><a class="text-link" href="{{ url_for('login',tab='players',edit=row.username) }}#override">Edit</a></td></tr>{% else %}<tr><td colspan="6" class="empty">No matching qualifying wagers. Check the race dates and connection status.</td></tr>{% endfor %}
 {%- endmacro %}
+```
+
+## templates/recovery_panel.html
+
+```html
+<section class="panel form-panel" id="recovery"><p class="eyebrow">KEEP YOUR COMMUNITY'S PROGRESS</p><h2>Private recovery checkpoint</h2>
+<div class="checkpoint-status"><strong id="checkpointLabel">{{ data.checkpoint.label }}</strong><p id="checkpointDetails">{{ data.checkpoint.details }}</p><small id="checkpointTime">{{ 'Last export generated: ' ~ fmt_et(data.checkpoint.generated_at) if data.checkpoint.generated_at else 'No export generated yet.' }}</small></div>
+<p class="muted">Includes administrator accounts, password hashes, the signing key, race settings, saved standings, and boss progress. Keep this file private.</p>
+<a class="button primary" href="/admin/recovery-backup" data-recovery-download>↓ Download private recovery file</a>
+<p class="small muted">“Generated” means the server prepared a download. It does not confirm that you saved it elsewhere. On App Platform, add the latest file as <code>private/recovery.seed.json</code> to your private repository before redeploying. A new instance imports it automatically; existing saved state always wins. Local copies alone do not survive a container replacement.</p>
+<details class="nested" {% if recovery_review %}open{% endif %}><summary>Check a recovery file before restoring <span aria-hidden="true">+</span></summary>
+<form method="post" action="/admin/recovery-preview" enctype="multipart/form-data" class="filter-bar"><input type="hidden" name="csrf" value="{{ csrf() }}"><div class="field grow"><label for="recoveryFile">Private recovery JSON</label><input id="recoveryFile" name="recovery" type="file" accept=".json,application/json" required></div><button type="submit" class="button">Review recovery file</button></form>
+{% if recovery_review %}<div class="recovery-review"><h3>Validated recovery file</h3><dl><dt>Race dates</dt><dd>{{ recovery_review.start }} → {{ recovery_review.end }}</dd><dt>Accounts</dt><dd>{{ recovery_review.accounts }} administrators</dd><dt>Race data</dt><dd>{{ recovery_review.rows }} saved places · {{ recovery_review.overrides }} overrides · {{ recovery_review.history }} archived races</dd><dt>Community boss</dt><dd>{% if recovery_review.game %}{{ '{:,}'.format(recovery_review.game.hp) }} / {{ '{:,}'.format(recovery_review.game.max_hp) }} HP · {{ recovery_review.game.raiders }} raiders · {{ recovery_review.game.attacks }} hits{% else %}No boss record; a fresh raid will be created on a new instance.{% endif %}</dd></dl><p class="small muted">This review changes nothing. To restore on a fresh deployment, place this file in <code>private/recovery.seed.json</code>. Use the separate race-backup restore form for replacing only a live race.</p></div>{% endif %}
+</details></section>
 ```
 
 ## tests/package.json
@@ -3536,7 +7727,8 @@ def render(destination):
             for tab in ("overview", "race", "players", "boss", "settings"):
                 (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
             (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
-            (destination/"public.json").write_text(json.dumps(client.get("/data").json), encoding="utf-8")
+            public = client.get("/public-state")
+            (destination/"public.json").write_text(json.dumps({**public.json, "server_time":float(public.headers["X-Server-Time"])}), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
         finally:
             runtime.store.close()
@@ -3611,6 +7803,11 @@ class AppTests(unittest.TestCase):
             self.r.check("shuffle")
 
     def action(self, name, **values):
+        if name == 'save_race' and values.get('confirm_race') == 'yes' and 'review_token' not in values:
+            preview = self.action(name, **{k:v for k,v in values.items() if k != 'confirm_race'})
+            match = re.search('name="review_token" value="([^"]+)"', preview.text)
+            if match:
+                values['review_token'] = match.group(1)
         return self.client.post("/admin/action", data={"csrf":"test-token", "action":name, "tab":"settings",
                                                        "revision":self.r.revision, **values})
 
@@ -4381,7 +8578,7 @@ class BossTests(unittest.TestCase):
         self.assertEqual(self.b.export()['total_attacks'],1)
         # A tiny isolated raid verifies final damage clamping and victory receipts.
         value=fresh_raid(health=50)
-        with self.r.store.connection(transaction=True) as conn:self.b._write(conn,value)
+        with self.r.store.connection(transaction=True) as conn:self.b._write(conn,value,new_raid=True)
         self.b.loaded_at=0
         final=self.hit(request_id='victory-receipt')
         self.assertEqual(final['hit']['damage'],50)
@@ -4395,6 +8592,57 @@ class BossTests(unittest.TestCase):
         self.hit(); self.b.control('pause',self.b.status()['raid_id'])
         self.assertEqual(self.r.store.admin(),before)
         self.assertEqual(self.r.store.live('shuffle'),snapshot)
+
+    def test_health_never_regenerates_during_idle_time_daily_reset_or_pause(self):
+        hit = self.hit()
+        saved = self.b.export()
+        for elapsed in (60, 601, DAY + 1, 7 * DAY):
+            self.time.return_value = self.start + elapsed
+            self.b.loaded_at = 0
+            view = self.b.status('a', '192.0.2.1')
+            self.assertEqual(view['hp'], hit['state']['hp'])
+            self.assertEqual(view['total_damage'], 150)
+            self.assertEqual(self.b.export(), saved)
+        self.assertEqual(view['you']['remaining'], 40)
+        self.b.control('pause', saved['id'])
+        self.time.return_value += DAY
+        self.b.control('resume', saved['id'])
+        self.assertEqual(self.b.status()['hp'], saved['hp'])
+        # Reloaded HTML must not briefly label a damaged boss as 100% health.
+        page = self.app.test_client().get('/play')
+        self.assertIn(f'id="bossPercent">{saved["hp"] / saved["max_hp"] * 100:.2f}%</span>', page.text)
+
+    def test_cold_app_restart_retains_all_committed_damage(self):
+        self.hit()
+        self.time.return_value += 60
+        self.hit()
+        saved = self.b.export()
+        self.r.store.close()
+        restarted = create_app(self.root, testing=True)
+        self.addCleanup(restarted.extensions['runtime'].store.close)
+        restored = restarted.extensions['boss']
+        self.assertEqual(restored.export(), saved)
+        self.assertEqual(restored.status()['hp'], DEFAULT_HP - 300)
+
+    def test_storage_refuses_health_increases_and_implicit_new_raids(self):
+        self.hit()
+        saved = self.b.export()
+        healed = copy.deepcopy(saved)
+        healed['hp'] += 1
+        healed['total_damage'] -= 1
+        healed['version'] += 1
+        next(iter(healed['players'].values()))['damage'] -= 1
+        validate_boss(healed)  # Structurally valid, but it reverses committed damage.
+        with self.assertRaises(BossError) as rejected:
+            with self.r.store.connection(transaction=True) as conn:
+                self.b._write(conn, healed)
+        self.assertEqual(rejected.exception.code, 'progress_reversal')
+        self.assertEqual(self.b.export(), saved)
+        with self.assertRaises(BossError) as rejected:
+            with self.r.store.connection(transaction=True) as conn:
+                self.b._write(conn, fresh_raid())
+        self.assertEqual(rejected.exception.code, 'new_raid_required')
+        self.assertEqual(self.b.export(), saved)
 
     def test_pause_resume_restart_and_stale_raid(self):
         first=self.hit(); raid=first['state']['raid_id']
@@ -4600,6 +8848,231 @@ test('admin boss updates preserve difficulty draft and restart confirmation',asy
  await p.advance(5000);assert.equal(input.value,'5000000');assert.equal(confirm.checked,true);
  assert.equal(p.w.document.querySelector('footer'),null);p.close();
 });
+
+test('a successful background poll cannot erase an attack error',async()=>{
+ const p=page();await flush();
+ p.respond(async(url,options)=>options.method==='POST'?response({error:'Your shared connection is cooling down.'},429):response(p.value));
+ p.w.document.querySelector('#attackButton').click();await flush();
+ await p.advance(5000);await p.advance(5000);
+ const error=p.w.document.querySelector('#bossError');
+ assert.equal(error.hidden,false);assert.match(error.textContent,/shared connection/);
+ p.w.document.querySelector('#dismissBossError').click();assert.equal(error.hidden,true);p.close();
+});
+
+test('unchanged contributor rows survive polls and mobile styles share attack controls',async()=>{
+ const p=page();await flush();
+ p.value.state.leaders=[{name:'Raider ABCDEF12',damage:150,attacks:1,you:false}];await p.advance(5000);
+ const row=p.w.document.querySelector('#bossLeaders li');await p.advance(5000);
+ assert.strictEqual(p.w.document.querySelector('#bossLeaders li'),row);
+ const style=p.w.document.querySelector('#dockStyle');style.value='magic';style.dispatchEvent(new p.w.Event('change'));
+ assert.equal(p.w.document.querySelector('[data-style="magic"]').getAttribute('aria-pressed'),'true');
+ let sent;p.respond(async(url,options)=>{if(options.method==='POST'){sent=JSON.parse(options.body);return response({error:'Fixture rejection'},400);}return response(p.value);});
+ p.w.document.querySelector('#dockAttack').click();await flush();assert.equal(sent.style,'magic');p.close();
+});
+
+test('copy link supplies selectable text if clipboard access is unavailable',async()=>{
+ const p=page();await flush();p.w.document.querySelector('#copyRaidLink').click();await flush();
+ const field=p.w.document.querySelector('#shareUrl');assert.equal(field.hidden,false);
+ assert.equal(field.value,'https://example.test/play');assert.equal(field.selectionEnd,field.value.length);p.close();
+});
+
+test('same-raid updates cannot refill health even with a newer version or clock',async()=>{
+ const p=page();await flush();
+ p.value.state.hp-=150;p.value.state.total_damage=150;p.value.state.total_attacks=1;p.value.state.version++;
+ await p.advance(5000);const hp=p.value.state.hp;
+ p.value.state.hp+=150;p.value.state.total_damage=0;p.value.state.total_attacks=0;
+ for(const versionBump of [0,10]){
+  p.value.state.version+=versionBump;p.value.state.server_time+=5;
+  await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,hp);
+  assert.equal(p.w.document.querySelector('#bossDamage').textContent,'150');
+ }
+ p.close();
+});
+
+test('victory stays at zero until a different raid starts',async()=>{
+ const p=page();await flush();
+ p.value.state.hp=0;p.value.state.total_damage=p.value.state.max_hp;p.value.state.status='victory';p.value.state.version++;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,0);
+ p.value.state.hp=p.value.state.max_hp;p.value.state.total_damage=0;p.value.state.status='waiting';p.value.state.version++;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,0);
+ p.value.state.raid_id='new-host-started-raid';p.value.state.server_time+=10;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.max_hp);
+ p.close();
+});
+```
+
+## tests/test_community.py
+
+```python
+"""Regressions for community polish, reviewed publication and recovery metadata."""
+import copy
+import io
+import json
+from pathlib import Path
+import re
+import secrets
+import tempfile
+import unittest
+from unittest.mock import patch
+
+import test_app as support
+from boss import CommunityBoss, DAY, fresh_raid, validate_boss
+from wager_backend import create_app
+
+
+class CommunityTests(unittest.TestCase):
+    setUp = support.AppTests.setUp
+    form = support.AppTests.form
+    schedule = support.AppTests.schedule
+
+    def hit(self, guest='community-test', ip='192.0.2.9'):
+        boss = self.app.extensions['boss']
+        state = boss.status(guest, ip)
+        return boss.attack(guest, ip, state['weakness'], state['raid_id'], secrets.token_hex(16))
+
+    def test_conditional_public_snapshot_and_private_cache_boundaries(self):
+        first = self.client.get('/public-state')
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first.headers['Cache-Control'], 'public, no-cache')
+        self.assertNotIn('server_time', first.json)
+        self.assertNotIn('you', first.json['boss'])
+        self.assertNotIn('csrf', first.json)
+        with patch('runtime.time.time', return_value=float(first.headers['X-Server-Time']) + 1):
+            unchanged = self.client.get('/public-state', headers={'If-None-Match': first.headers['ETag']})
+        self.assertEqual(unchanged.status_code, 304)
+        self.assertEqual(unchanged.data, b'')
+        self.assertGreater(float(unchanged.headers['X-Server-Time']), float(first.headers['X-Server-Time']))
+        self.hit()
+        changed = self.client.get('/public-state', headers={'If-None-Match': first.headers['ETag']})
+        self.assertEqual(changed.status_code, 200)
+        self.assertNotEqual(first.headers['ETag'], changed.headers['ETag'])
+        for url in ('/play/api/state', '/admin/status', '/admin/recovery-backup'):
+            response = self.client.get(url)
+            self.assertEqual(response.headers['Cache-Control'], 'no-store')
+            self.assertNotIn('ETag', response.headers)
+
+    def test_review_signature_requires_the_exact_reviewed_changes(self):
+        self.schedule()
+        original = copy.deepcopy(self.r.admin)
+        revision = self.r.revision
+        form = dict(self.form(), csrf='test-token', action='save_race', revision=revision,
+                    race_title='The new community race', prize_1='1801', sponsor_url='https://example.test/sponsor')
+        preview = self.client.post('/admin/action', data=form)
+        self.assertEqual(preview.status_code, 200)
+        for label in ('Race title', 'Place 1 prize', 'Sponsor link'):
+            self.assertIn(label, preview.text)
+        review = re.search('name="review_token" value="([^"]+)"', preview.text).group(1)
+        tampered = self.client.post('/admin/action', data={**form, 'confirm_race':'yes', 'review_token':review, 'prize_1':'1901'})
+        self.assertEqual(tampered.status_code, 200)
+        self.assertEqual(self.r.revision, revision)
+        self.assertEqual(self.r.admin, original)
+        confirmed = self.client.post('/admin/action', data={**form, 'confirm_race':'yes', 'review_token':review})
+        self.assertEqual(confirmed.status_code, 303)
+        self.assertEqual(self.r.revision, revision + 1)
+        self.assertEqual(self.r.admin['site_settings']['prizes']['1'], '1801')
+
+    def test_badges_reward_real_hits_and_distinct_raid_days(self):
+        boss = self.app.extensions['boss']
+        with patch('boss.time.time', return_value=1_800_000_000) as clock:
+            for hit in range(100):
+                clock.return_value = 1_800_000_000 + (hit // 40) * DAY + (hit % 40) * 60
+                result = self.hit()
+            state = result['state']
+            self.assertEqual(state['you']['active_days'], 3)
+            self.assertEqual(state['you']['attacks'], 100)
+            self.assertTrue(all(badge['earned'] for badge in state['you']['badges']))
+            self.assertEqual(state['total_damage'], 16_000)
+            self.assertEqual(state['rules']['daily_attacks'], 40)
+        validate_boss(boss.export())
+
+    def test_legacy_raid_migration_keeps_progress_and_counts_only_known_days(self):
+        boss = self.app.extensions['boss']
+        with patch('boss.time.time', return_value=1_800_000_000) as clock:
+            self.hit()
+            old = boss.export()
+            for player in old['players'].values():
+                player.pop('active_days')
+            with self.r.store.connection(transaction=True) as conn:
+                boss._write(conn, old)
+            restored = CommunityBoss(self.r.store)
+            self.assertEqual(restored.export(), old)
+            self.app.extensions['boss'] = restored
+            clock.return_value += DAY
+            state = self.hit()['state']
+            self.assertEqual(state['you']['active_days'], 2)
+            self.assertEqual(state['you']['damage'], 300)
+            self.assertFalse(next(b for b in state['you']['badges'] if b['id'] == 'loyal')['earned'])
+
+    def test_milestones_and_victory_recap_include_every_contributor(self):
+        boss = self.app.extensions['boss']
+        raid = fresh_raid(health=1650)
+        with self.r.store.connection(transaction=True) as conn:
+            boss._write(conn, raid, new_raid=True)
+        boss.loaded_at = 0
+        url = '/play/api/contributors?raid_id=' + raid['id']
+        self.assertEqual(self.client.get(url).status_code, 409)
+        for index in range(11):
+            state = self.hit(str(index), f'192.0.2.{index + 1}')['state']
+            if index == 2:
+                self.assertEqual([m['percent'] for m in state['milestones'] if m['reached']], [25])
+        self.assertTrue(all(m['reached'] for m in state['milestones']))
+        result = self.client.get(url)
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(len(result.json['contributors']), 11)
+        self.assertTrue(all(set(row) == {'name', 'damage', 'attacks'} for row in result.json['contributors']))
+        self.assertEqual(self.client.get('/play/api/contributors?raid_id=old-raid').status_code, 409)
+
+    def test_recovery_export_tracks_changes_without_invalidating_admin_forms(self):
+        before = self.r.store.admin()
+        recovery = self.client.get('/admin/recovery-backup').json
+        self.assertEqual(self.r.store.admin(), before)
+        self.assertEqual(self.r.store.checkpoint(), recovery['recovery_export'])
+        self.assertFalse(self.client.get('/admin/status').json['checkpoint']['changes'])
+        self.hit()
+        status = self.client.get('/admin/status').json['checkpoint']
+        self.assertEqual(status['attacks'], 1)
+        self.assertEqual(status['damage'], 150)
+        self.assertTrue(status['changes'])
+
+    def test_private_recovery_review_validates_without_changing_live_state(self):
+        self.hit()
+        recovery = self.client.get('/admin/recovery-backup').json
+        before = self.r.store.admin(), self.app.extensions['boss'].export()
+        response = self.client.post('/admin/recovery-preview', data={
+            'csrf':'test-token', 'recovery':(io.BytesIO(json.dumps(recovery).encode()), 'recovery.json')})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Validated recovery file', response.text)
+        self.assertIn('1 raiders', response.text)
+        self.assertNotIn(recovery['users']['gingrsnaps']['pw_hash'], response.text)
+        self.assertEqual((self.r.store.admin(), self.app.extensions['boss'].export()), before)
+        invalid = self.client.post('/admin/recovery-preview', data={
+            'csrf':'test-token', 'recovery':(io.BytesIO(b'{bad json'), 'bad.json')})
+        self.assertEqual(invalid.status_code, 422)
+        self.assertEqual(self.client.post('/admin/recovery-preview').status_code, 400)
+        self.assertEqual(self.app.test_client().post('/admin/recovery-preview').status_code, 302)
+
+    def test_recovered_metadata_survives_import_and_malformed_metadata_is_ignored(self):
+        self.hit()
+        recovery = self.client.get('/admin/recovery-backup').json
+        for malformed in (False, True):
+            with self.subTest(malformed=malformed), tempfile.TemporaryDirectory() as directory:
+                value = copy.deepcopy(recovery)
+                if malformed:
+                    value['recovery_export']['attacks'] = 'untrusted number'
+                root = Path(directory)
+                (root / 'private').mkdir()
+                (root / 'private/recovery.seed.json').write_text(json.dumps(value), encoding='utf-8')
+                restored = create_app(root, testing=True)
+                try:
+                    store = restored.extensions['runtime'].store
+                    self.assertEqual(restored.extensions['boss'].export(), recovery['community_boss'])
+                    self.assertEqual(store.checkpoint(), None if malformed else recovery['recovery_export'])
+                finally:
+                    restored.extensions['runtime'].store.close()
+
+
+if __name__ == '__main__':
+    unittest.main()
 ```
 
 ## tests/test_frontend.cjs
@@ -4832,6 +9305,31 @@ test('a manual refresh during an in-flight status read schedules an immediate fo
     assert.match(p.window.document.getElementById('toast').textContent,/Refresh finished\. See the update result/);
   } finally {p.close();}
 });
+
+test('conditional public updates reuse the cached body and take a fresh server clock',async()=>{
+  const p=page('public');await flush();let reads=0;
+  const payload=structuredClone(p.feed);delete payload.server_time;
+  p.respond(async()=>{
+    reads++;
+    return reads===1?{status:200,ok:true,headers:new Map([['content-type','application/json'],['ETag','"same-public-state"'],['X-Server-Time',String(p.feed.server_time+60)]]),json:async()=>payload}:
+      {status:304,ok:false,headers:new Map([['ETag','"same-public-state"'],['X-Server-Time',String(p.feed.server_time+120)]]),json:async()=>{throw Error('304 has no JSON body');}};
+  });
+  await p.advance(60000);const before=p.window.document.querySelector('#countdown').textContent;
+  await p.advance(60000);await p.tick();
+  assert.equal(p.calls.at(-1).options.headers['If-None-Match'],'"same-public-state"');
+  assert.equal(p.window.document.querySelector('#networkError').hidden,true);
+  assert.notEqual(p.window.document.querySelector('#countdown').textContent,before);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('homepage invitation follows boss health and paused or completed status',async()=>{
+  const p=page('public');await flush();p.feed.boss.hp=1200000;p.feed.boss.status='paused';p.feed.boss.raiders=37;
+  await p.advance(60000);
+  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/pause|View/i);
+  assert.match(p.window.document.querySelector('#inviteProgress').textContent,/37/);
+  p.feed.boss.hp=0;p.feed.boss.status='victory';await p.advance(60000);
+  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);p.close();
+});
 ```
 
 ## tests/test_postgres.py
@@ -4879,7 +9377,7 @@ class PostgreSQLTests(unittest.TestCase):
     def cleanup_database(self):
         self.store.close_job()
         with self.store.connection(transaction=True) as conn:
-            for table in ("rh_live", "rh_boss", "rh_recovery", "rh_admin"):
+            for table in ("rh_live", "rh_boss", "rh_checkpoint", "rh_recovery", "rh_admin"):
                 conn.execute("DELETE FROM " + table + " WHERE name=%s", (self.key,))
             if conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
                 conn.execute("DELETE FROM wager_state WHERE name=%s", (self.key,))
@@ -4979,7 +9477,9 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
-from boss import BossError, CommunityBoss, DEFAULT_HP
+from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
+from presentation import changes, checkpoint_status, export_marker
+from store_schema import upgrade_store
 from race import calculate, empty, phase, token
 from race_support import (DEFAULT_PRIZES, WEIGHTING_RULES, TEXT_LIMITS, URL_FIELDS,
                           canonical_site, clean_overrides, clean_snapshots, csv_text,
@@ -5018,6 +9518,7 @@ def create_app(root=None, testing=False):
     app.extensions["settings"] = config
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
+    review_signer = URLSafeTimedSerializer(app.secret_key, salt="race-review-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
     dummy_hash = generate_password_hash(secrets.token_hex(16))
@@ -5044,7 +9545,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status):
@@ -5091,12 +9592,14 @@ def create_app(root=None, testing=False):
             "Cache-Control":"public, max-age=31536000, immutable" if request.path.startswith("/static/") and request.args.get("v") == assets else "no-store"})
         if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
+        if request.path == "/public-state" and response.status_code in {200, 304}:
+            response.headers["Cache-Control"] = "public, no-cache"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -5106,7 +9609,8 @@ def create_app(root=None, testing=False):
     def context():
         return dict(release=RELEASE, asset_version=assets, csrf=csrf, money=money, fmt_et=fmt_et,
                     local_input=local_input, tabs=TABS, weighting=WEIGHTING_RULES,
-                    local_storage=not runtime.store.pg, hosted_local=config.production and not runtime.store.pg)
+                    local_storage=not runtime.store.pg, hosted_local=config.production and not runtime.store.pg,
+                    boss_rules=boss_rules())
 
     @app.errorhandler(StoreError)
     def storage_error(error):
@@ -5131,7 +9635,23 @@ def create_app(root=None, testing=False):
 
     @app.get("/")
     def index():
-        return render_template("index.html", data=runtime.public())
+        return render_template("index.html", data=public_snapshot())
+
+    def public_snapshot():
+        value = runtime.public()
+        value["boss"] = boss.summary()
+        return value
+
+    @app.get("/public-state")
+    def public_state():
+        # The representation excludes the moving clock, so its strong ETag
+        # really describes identical bytes. Both 200 and 304 carry fresh time.
+        value = public_snapshot()
+        server_time = value.pop("server_time")
+        response = jsonify(value)
+        response.set_etag(token(value))
+        response.headers["X-Server-Time"] = str(server_time)
+        return response.make_conditional(request)
 
     def guest():
         if not hasattr(g, "guest"):
@@ -5151,6 +9671,15 @@ def create_app(root=None, testing=False):
     @app.get("/play/api/state")
     def boss_state():
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
+
+    @app.get("/play/api/contributors")
+    def boss_contributors():
+        # Keep a host restart from mixing one raid's ID with another's recap.
+        with boss.lock:
+            current = boss.summary()
+            if request.args.get("raid_id") != current["raid_id"] or current["status"] != "victory":
+                return json_error("The victory recap belongs to a completed raid. Refresh to see the current raid.", 409)
+            return jsonify(ok=True, raid_id=current["raid_id"], contributors=boss.contributors())
 
     @app.post("/play/api/attack")
     def boss_attack():
@@ -5194,11 +9723,17 @@ def create_app(root=None, testing=False):
         ok = value["freshness"]["state"] in {"current", "partial"} or value["site"]["race_state"] == "upcoming"
         return jsonify(ok=ok, data_state=value["freshness"]["state"]), 200 if ok else 503
 
-    def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200):
+    def recovery_status():
+        with runtime.lock:
+            return checkpoint_status(runtime.store.checkpoint(), runtime.admin, runtime.shuffle["rows"], boss.summary())
+
+    def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200,
+                     change_review=None, review_token=None, recovery_review=None):
         tab = tab or request.args.get("tab", "overview")
         if tab not in TABS:
             tab = "overview"
         values = runtime.status()
+        values["checkpoint"] = recovery_status() if g.superadmin else None
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
         form.update(start_et=local_input(form["start_time"]), end_et=local_input(form["end_time"]))
@@ -5209,7 +9744,9 @@ def create_app(root=None, testing=False):
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
-                               boss_data=boss.status() if tab == "boss" else None), status
+                               boss_data=boss.status() if tab == "boss" else None,
+                               change_review=change_review, review_token=review_token,
+                               recovery_review=recovery_review), status
 
     @app.post("/admin/boss/action")
     @protected
@@ -5268,6 +9805,7 @@ def create_app(root=None, testing=False):
     @protected
     def status():
         value = runtime.status()
+        value["checkpoint"] = recovery_status() if g.superadmin else None
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
         if request.args.get("tab", "players") == "players":
@@ -5309,8 +9847,33 @@ def create_app(root=None, testing=False):
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
             value["community_boss"] = boss.export()
+            marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
+            value["recovery_export"] = marker
+            runtime.store.checkpoint(marker)
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=recovery.seed.json"})
+
+    @app.post("/admin/recovery-preview")
+    @protected
+    def recovery_preview():
+        require_csrf()
+        if not g.superadmin:
+            abort(403)
+        try:
+            upload = request.files.get("recovery")
+            if not upload:
+                raise ValueError("Choose a private recovery JSON file.")
+            value, _ = upgrade_store(json.load(upload), config.site, {})
+            if not value["users"]:
+                raise ValueError("The recovery file contains no administrator accounts.")
+            game = validate_boss(value["community_boss"]) if value.get("community_boss") is not None else None
+            review = dict(accounts=len(value["users"]), overrides=len(value["overrides"]),
+                          history=len(value["race_history"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
+                          start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
+                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]))
+            return render_admin("settings", recovery_review=review)
+        except (ValueError, RuntimeError, UnicodeDecodeError) as exc:
+            return render_admin("settings", errors={"recovery":str(exc)}, status=422)
 
     @app.get("/admin/export.csv")
     @protected
@@ -5390,8 +9953,15 @@ def create_app(root=None, testing=False):
                     return render_admin("race", dict(request.form), errors, status=422)
                 site["prizes"] = {k: str(money_input(v)) for k, v in site["prizes"].items()}
                 changed_race = race_key(site) != race_key(candidate["site_settings"])
-                if changed_race and request.form.get("confirm_race") != "yes":
-                    return render_admin("race", dict(request.form), confirm_race=True)
+                review = changes(candidate["site_settings"], site)
+                expected_review = dict(user=g.user, revision=expected, site=site)
+                try:
+                    confirmed = request.form.get("confirm_race") == "yes" and review_signer.loads(request.form.get("review_token", ""), max_age=900) == expected_review
+                except BadSignature:
+                    confirmed = False
+                if review and not confirmed:
+                    return render_admin("race", dict(request.form), confirm_race=True, change_review=review,
+                                        review_token=review_signer.dumps(expected_review))
                 if changed_race:
                     old = safe_backup()
                     if candidate["site_settings"]["start_time"]:
@@ -5450,7 +10020,9 @@ def create_app(root=None, testing=False):
                         raise ValueError("Too many pending restores. Wait ten minutes and try again.")
                     previews[identifier] = dict(value=value, user=g.user, expires=time.time()+600, revision=expected)
                 return render_admin("settings", restore=dict(token=identifier, start=fmt_et(value["site_settings"]["start_time"]),
-                                    end=fmt_et(value["site_settings"]["end_time"]), rows=len(value["leaderboard_snapshots"]["last_top15"])))
+                                    end=fmt_et(value["site_settings"]["end_time"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
+                                    overrides=len(value["overrides"]), history=len(value["race_history"]),
+                                    changes=changes(g.admin["site_settings"], value["site_settings"])))
             elif action_name == "restore":
                 with auth_lock:
                     preview = previews.get(request.form.get("restore_token"))
@@ -5549,7 +10121,7 @@ if __name__ == "__main__":
 
 ```json
 {
-  "release": "2026.09.22-boss",
+  "release": "2026.09.22-no-regen",
   "entry_point": "python wager_backend.py",
   "source_files": {
     ".env.example": {
@@ -5565,48 +10137,56 @@ if __name__ == "__main__":
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 5783,
-      "sha256": "5187ad688283f7db26c06748e167fc1fc4204c263208a9b826bb33f20df500bb"
+      "bytes": 8538,
+      "sha256": "3523711f4cb57e31cfa70a2391c4c8fef2b181c8aec5e0ec0bb4ee3c6d186ab7"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 4990,
-      "sha256": "21dbb328d7f2212cff9aa7b8bcd4e8551917c0fef8c5921f5f4845961bf1d125"
+      "bytes": 5545,
+      "sha256": "7d27005c4de332e0a4b2c9199c5f54ebee61f7223a4b9534f18f267996ae0a1e"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 21564,
-      "sha256": "cbec8ec3c0f6066da13cb6c868ee48f29b6a1a5802ce1453f6063a4a56d38784"
+      "bytes": 24893,
+      "sha256": "9e5cbf928c9d4aeaf6fe6a4cb85917e4b801ba36d84f2edd0504db2e101a6552"
     },
     "START_HERE.md": {
-      "bytes": 2950,
-      "sha256": "829d98efe64d3d82a8a7f1929be87225f3ff9ec8a5f16f8f2262bd82cecec7c1"
+      "bytes": 3634,
+      "sha256": "bcf539c26846746d9a28a0ee3c55a05806e36b6ccbe89ecc5fed172e2982bcd3"
     },
     "app.yaml": {
       "bytes": 1440,
       "sha256": "8593c6d4ed1906bbcd675257f2e71af0e5fda94451704ef7a3d4d7e169bd231e"
     },
     "boss.py": {
-      "bytes": 17035,
-      "sha256": "1c38f9ab69a066b482debcdc9a2e2f1fee95ccda4c42eba3ccba17297b78dff4"
+      "bytes": 21533,
+      "sha256": "bbdce5bbe49068ce912ef52acae075c29ce3c72eb8856850532d34ac4528f04b"
     },
     "config.py": {
-      "bytes": 6072,
-      "sha256": "f95a79d5a686d82911a90de6b0b374c73da0df216f06c9d1cff71599088f984a"
+      "bytes": 6076,
+      "sha256": "03fee73392c638f8141bc16afae97f1ec964f9c8a0a66033699e161b3a41e6c8"
     },
     "docs/COMMUNITY_BOSS.md": {
-      "bytes": 7282,
-      "sha256": "c215ea951f2e56bb47e0396bdb3990d55be59b9f84fe0ff6414e41ea629af15d"
+      "bytes": 8627,
+      "sha256": "4eb2d99fb0bffcd07f18c24904bbde49b900b8a1138833ef801237367cf00320"
+    },
+    "docs/COMMUNITY_UPDATE.md": {
+      "bytes": 6592,
+      "sha256": "e41bd37fb9de4b9cd218d2a47fc8fdae65131d6dfa5610112be3c84e60e00546"
     },
     "docs/VALIDATION.md": {
-      "bytes": 6509,
-      "sha256": "0e230afbbd9abfcf976115fc023c1a7829bf72a0e35e577b4d31aa660ce5ccd3"
+      "bytes": 8304,
+      "sha256": "3f0fcebab1d5208f19c19daceaa95ccc7b79476922689a0db6e1fee97b7f8f8a"
     },
     "integrations.py": {
       "bytes": 7041,
       "sha256": "1468838afdf081e4ce09e3598f6b5861c2feca090ef6f5ae4d3f24db94e214ea"
+    },
+    "presentation.py": {
+      "bytes": 4164,
+      "sha256": "d63720e8fad70aa8a1a0a833f4a48ab322f66b06f89410f1ba0bd6e6b8fad0d4"
     },
     "private/admin_store.seed.json": {
       "bytes": 6514,
@@ -5641,16 +10221,16 @@ if __name__ == "__main__":
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 18060,
-      "sha256": "d340e54bade4fdb3a88c03980500e1bd01e15e8d11a67b03a5c5aaf7575d1655"
+      "bytes": 26302,
+      "sha256": "aef66fd070cf9097cc7891b444f55b691c80e0ef846a131303f8145c5f5c1e62"
     },
     "static/boss.css": {
-      "bytes": 9188,
-      "sha256": "9fe896a62436cf4d014614fa33d563bbcb96c03d1fd136de540a848b80fd978a"
+      "bytes": 17522,
+      "sha256": "60462a65fb07ed1b250785bae279b8d8b915b43ebb8ee99069cf3e7713be0357"
     },
     "static/boss.js": {
-      "bytes": 10912,
-      "sha256": "6e2dfe14f092dac488ba72d76722c85dce2338be12722983c72778f934527535"
+      "bytes": 21115,
+      "sha256": "8993d004c796d869b1398994cbcd0799deea3b7c49aca7ddec133acc3f5f4a49"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -5661,56 +10241,64 @@ if __name__ == "__main__":
       "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
     },
     "static/style.css": {
-      "bytes": 19314,
-      "sha256": "55b00828a24d71476acd5a8584b988d209cad03d0460098870f3a369fe0feb8e"
+      "bytes": 29950,
+      "sha256": "b9e7475adfab9c94c1227e89f4f04c78ca2092e47ffcf3d11d62b37534eeef2f"
     },
     "storage.py": {
-      "bytes": 11458,
-      "sha256": "3464404fdc2639bc2875a31642077fb140179d724f4365bb42919ba5e9bb2308"
+      "bytes": 12506,
+      "sha256": "3ca15a54aa6c05e89b39a48ffe37dd633e892510f42bd839334bfe7845ab796a"
     },
     "store_schema.py": {
       "bytes": 4551,
       "sha256": "b178eaa121bdf4dca84fc1daf5845bebaa04049c9e4302653f577bbb7a4bea98"
     },
     "templates/admin.html": {
-      "bytes": 4272,
-      "sha256": "71dd587fb2d53c47dacda3261222010fa47207ae5072838d2cb73eadc7b4e8fe"
+      "bytes": 5009,
+      "sha256": "e6b28d2823e3ff5adf0d29da480113294fd377b5a8b81a761e79596c99a8ebd9"
     },
     "templates/admin_boss.html": {
-      "bytes": 3298,
-      "sha256": "e58c141302484d80f67b0032f729ee38b9d6f08543e13b76907ee5fae9064df0"
+      "bytes": 3418,
+      "sha256": "8d9cc42104cc350983566189a84232cf3dea0792ad1d22d95589b56eb995df45"
     },
     "templates/admin_overview.html": {
-      "bytes": 2342,
-      "sha256": "243bed71ed611c88606577258ee4e674457e8c9eda4151114446a41ac086206b"
+      "bytes": 1785,
+      "sha256": "9c10664afcf466c04b562c538bf7eabd77be070b7c73fb9b9b0b5304feed4f9d"
     },
     "templates/admin_players.html": {
       "bytes": 4156,
       "sha256": "40eb1fa32633f4a0f9ce11a04f98bd8d99677227e443fee5c15bb48e671db859"
     },
     "templates/admin_race.html": {
-      "bytes": 3121,
-      "sha256": "12dafba7c83f846c25103f05af6ac266c84db667a2aaa08e4df45e3176e288a5"
+      "bytes": 3276,
+      "sha256": "98569a72716c515043386b72ddf4ba5579fc5e171ab34b81bdf7b11b2140f1a6"
     },
     "templates/admin_settings.html": {
-      "bytes": 9046,
-      "sha256": "78f93c3bdcd85560cceaf57deb6f8756fddbf9d373c1ed953623b79066be1d95"
+      "bytes": 8297,
+      "sha256": "eac3e3a11afe3a41e8f25c6b138a9f33ace38e782759407a90ca5ce493ae0aa0"
     },
     "templates/base.html": {
       "bytes": 2129,
       "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
     },
     "templates/boss.html": {
-      "bytes": 7683,
-      "sha256": "8214ebeadfd938928909713edb79c35e628007fe2e95cfba9746bf5553839254"
+      "bytes": 10194,
+      "sha256": "eff0e63fabd0e928afa6f7fc32efed711a4194fafbfddd2210e8108d3721b897"
+    },
+    "templates/change_review.html": {
+      "bytes": 690,
+      "sha256": "c5469e3b96c979eaf815c6599180de30ef81c83112d786e468ccbb056cc17450"
     },
     "templates/error.html": {
       "bytes": 515,
       "sha256": "8c02ec7296f011932263817c387f5126d62238d1d7714bd57d64cb51917474be"
     },
+    "templates/icons.html": {
+      "bytes": 687,
+      "sha256": "7d99dc9ee58e6f0827b2a3583cb028477ae304b078f3b1311e766594f189ce3c"
+    },
     "templates/index.html": {
-      "bytes": 4700,
-      "sha256": "07e59aec708d27bbd8e4eddc83c1ac9852c9779582536a186b864af8fa0072e8"
+      "bytes": 5205,
+      "sha256": "f9b3aa126e783a265bf563e328b5c56d1292fd5fcac0e94067aa174acbb7241b"
     },
     "templates/login.html": {
       "bytes": 1292,
@@ -5720,37 +10308,45 @@ if __name__ == "__main__":
       "bytes": 2037,
       "sha256": "c221df4a851759c64be861363d83161223a367db24dde7f022c8b39e05a65324"
     },
+    "templates/recovery_panel.html": {
+      "bytes": 2709,
+      "sha256": "e87b62a59d25f64ad491420a719d5a93bee5b3ca3cbe23a04daf97e48119316a"
+    },
     "tests/package.json": {
       "bytes": 153,
       "sha256": "c18c562cf375863cdc2b73e7221e18cdf6c3afd432783690389efc1d0bf4b9cd"
     },
     "tests/render_fixtures.py": {
-      "bytes": 2828,
-      "sha256": "57428b0809e63a480a4ff6b9def2acf9249a92af992b0e2a24d4c7cac538767b"
+      "bytes": 2922,
+      "sha256": "bfdbdc677723aac6903c5743ceb6f4dad68f63690f1a939f5356726a6c3b0988"
     },
     "tests/test_app.py": {
-      "bytes": 40670,
-      "sha256": "04d0c5621a3260f46b6cb4c13b9e059d4c40aae749700487c9faf8037db82eef"
+      "bytes": 41034,
+      "sha256": "f348e4f060a45c441a41522cbdcb83b984e575d3a864ef778c7d9be38beb4e22"
     },
     "tests/test_boss.py": {
-      "bytes": 13370,
-      "sha256": "c0e84ba40b7d2f10e3257afcc3c4216b73088ee75d7681269bb5af63c9985f2f"
+      "bytes": 15850,
+      "sha256": "b835f5c16bcd9f7b3b047417427abd6cc349c4fe46d8c6fe726011c8aafc29d1"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 6142,
-      "sha256": "1d4b4d8e4f86a3c1f0244a78be2c64ede97b9f9bfa9bd6fe6194cab68a2875db"
+      "bytes": 9438,
+      "sha256": "077321bfefedf85540e30cc95f653684a55bba453738507940a000b5ccf375ea"
+    },
+    "tests/test_community.py": {
+      "bytes": 9063,
+      "sha256": "b87d3ee1c29c80cffa3e773bca2e06e01bb53cb524fdba3a7c6561f1d7ccede0"
     },
     "tests/test_frontend.cjs": {
-      "bytes": 14290,
-      "sha256": "96fcd4297dbca0466d0ffefac0d0e1404281fffc7f95e9ad824cd813f809e582"
+      "bytes": 15957,
+      "sha256": "fdb795df14a376ca6dd4cad95c970dae7e2dd1f2c329b0f3009c259d42626295"
     },
     "tests/test_postgres.py": {
-      "bytes": 5371,
-      "sha256": "2a7e5df4bf11122dac324c7ab68c22b39863f4d649fbbc8408bf0dfd57d29961"
+      "bytes": 5388,
+      "sha256": "0adf58c3fe35941c08a0bc407d834fa533a05b268e26e046ef87abac59c20ead"
     },
     "wager_backend.py": {
-      "bytes": 33362,
-      "sha256": "319cef286a9d60abf2c0476ab4c906f01b4cb199014461d40824e8d0e6d5d79c"
+      "bytes": 37753,
+      "sha256": "614641ff663728d54bba52335fb59f75de0daaafdcad4a1c4b39c1a50d6add11"
     }
   }
 }

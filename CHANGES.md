@@ -1,4 +1,51 @@
-# Changes — 2026.09.22-boss
+# Changes — 2026.09.22-no-regen
+
+No-regeneration guard: the server rejects same-raid writes that increase HP,
+change maximum HP, reverse damage/attack totals, or roll back the version. A
+different boss requires the explicit new-raid control. Attack health is derived
+from cumulative committed damage, with no timed or daily regeneration.
+
+Health display: render the correct initial percentage instead of a temporary
+100% label. Ignore inconsistent healing snapshots even when their version/clock
+is newer. Cooldowns and daily allowances still reset normally; boss HP does not.
+
+Regression checks cover a week of inactivity, daily reset, pause/resume, a cold
+app restart retaining its saved file, rejected healing writes, and zero HP after
+victory. All 86 Python and 35 DOM/CSS checks pass; four optional PostgreSQL tests
+skip. Prior features, credentials and sole launcher are retained. Disk loss on
+App Platform still requires a recovery checkpoint or durable hosting.
+
+## Previous community update — 2026.09.22-community
+
+Community polish: add a live homepage boss invitation, mobile attack dock,
+quarter-health milestones, arena transitions, first-hit/ten-burst/three-day
+badges, copy-link fallback, and a victory recap including every contributor.
+All rewards are cosmetic; the multi-day damage rules are unchanged.
+
+Reliability: successful polls no longer erase attack errors. Main and mobile
+controls share receipts, cooldowns and retries. Lists preserve unchanged nodes;
+animation uses the browser animation API without forced layout reads. Public
+snapshots use conditional ETags and a fresh server-time header; private feeds
+remain no-store. Game rules are centralized and JS/CSS are readable source.
+
+Administration: compact expandable connection status, overview shortcuts,
+side-by-side signed change review, and readable recovery-file validation.
+Track generated exports and progress since export without changing the admin
+revision. Recovery metadata is validated separately from accounts/game state.
+Existing local progress and original credentials are preserved.
+
+Verification: 83 Python tests and 33 DOM/CSS checks pass; 4 optional PostgreSQL
+tests skip. Chromium verifies native login, source refresh, reviewed race
+publication, the 100-user Code Red list, recovery downloads/review, and shared
+boss damage across desktop/mobile players. Live external provider connectivity
+and a deployed DigitalOcean instance remain unverified.
+
+The sole launcher is still `python wager_backend.py`. There is no new production
+dependency or required remote database. Recovery exports remain manual; their
+generation does not confirm off-host storage. Full details are in
+`docs/COMMUNITY_UPDATE.md` and `docs/VALIDATION.md`.
+
+## Previous community boss release — 2026.09.22-boss
 
 Community game: add `/play` with a shared boss, signed guest profiles, atomic
 attacks, one-minute cooldowns, 40-hit raid-day allowances, rotating weaknesses,

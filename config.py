@@ -5,7 +5,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.22-boss"
+RELEASE = "2026.09.22-no-regen"
 INTERVAL = 60
 
 

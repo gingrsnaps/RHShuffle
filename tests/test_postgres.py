@@ -40,7 +40,7 @@ class PostgreSQLTests(unittest.TestCase):
     def cleanup_database(self):
         self.store.close_job()
         with self.store.connection(transaction=True) as conn:
-            for table in ("rh_live", "rh_boss", "rh_recovery", "rh_admin"):
+            for table in ("rh_live", "rh_boss", "rh_checkpoint", "rh_recovery", "rh_admin"):
                 conn.execute("DELETE FROM " + table + " WHERE name=%s", (self.key,))
             if conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
                 conn.execute("DELETE FROM wager_state WHERE name=%s", (self.key,))

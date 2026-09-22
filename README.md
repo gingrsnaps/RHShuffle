@@ -1,17 +1,62 @@
 # RedHunllef Wager Race + Community Boss
 
-Release **2026.09.22-boss**. Run the complete app with **`python wager_backend.py`**.
+Release **2026.09.22-no-regen**. Run the complete app with **`python wager_backend.py`**.
 No PostgreSQL service, database connection string, account-creation script, or
 separate update worker is required. Python's built-in SQLite creates a local
 file automatically. The red theme, original credentials, original Superadmin,
 public Top 15, private Code Red list, and automatic 60-second updates remain.
+
+## Boss health never regenerates
+
+Every confirmed hit reduces the current raid's saved health. Cooldowns, weakness
+rotations, daily allowance resets, inactivity, page refreshes and process restarts
+with the same saved data do not restore HP. The server now explicitly rejects
+same-raid writes that increase health or reverse damage. Remaining health is
+calculated from maximum health minus cumulative committed damage.
+
+The browser rejects same-raid updates that increase HP even if they carry a
+newer timestamp/version. It retains the last confirmed state and disables fresh
+attacks if valid updates stop arriving. Initial HTML renders the actual health
+percentage, removing the previous brief “100%” label during page loading.
+The host's confirmed **Start a new raid** action creates a different boss.
+
+A loss of local files on App Platform is a storage reset, not regeneration.
+This patch cannot recover damage absent from both the saved file and your latest
+recovery checkpoint. Keep one instance, preserve `data/` on persistent hosts,
+and save a private recovery checkpoint before redeploying. Existing configuration
+and game state are not reset by installing these application files.
+
+## Included community improvements
+
+- A shorter homepage with live boss health, raider count, and a play button that
+  reflects an active, paused, or completed raid.
+- Fixed mobile attack controls: choose a style, see your remaining allowance,
+  and attack without scrolling back up. They share the main button's cooldown
+  and safe retry receipt.
+- Cosmetic 25%, 50%, and 75% milestones, arena changes, a victory recap with
+  every contributor, first-hit/ten-burst/three-day badges, and a copy-link button.
+- Attack errors stay visible until dismissed, retried, or resolved by a
+  confirmed receipt. Ordinary successful polls cannot erase them.
+- Compact connection summaries in the dashboard. Expand **Live connections**
+  to see timings and provider controls; new failures open the details automatically.
+- Side-by-side review before publishing changed dates, prizes, text, links,
+  channel, or campaign. Confirmation is signed, expires after 15 minutes, and
+  applies only to the exact changes reviewed.
+- Private recovery export tracking, progress since the last export, and a
+  read-only recovery-file review with account/race/game totals.
+- Conditional public updates, retained unchanged game rows, animation without
+  forced layout reads, shared game-rule constants, and readable JS/CSS source.
+
+See [docs/COMMUNITY_UPDATE.md](docs/COMMUNITY_UPDATE.md) for implementation and
+upgrade details. Cosmetic rewards do not increase damage or shorten the raid.
 
 ## Community boss: ready at /play
 
 Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
 attacks one shared Crimson Hunllef. The red arena uses your original logo,
 animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
-bonuses, personal progress, Top 10 raiders, recent hits, and past raid summaries.
+bonuses, personal progress, badges, milestones, Top 10 raiders, recent hits, and
+past raid summaries. Victory includes the full contributor list.
 Instructions are built into the page. There is no signup or separate launch step.
 The homepage Admin footer link is removed; sign in directly at **`/admin`**.
 The admin dashboard also omits the site footer.
@@ -130,7 +175,7 @@ a persistent host. Do not delete it to fix an unrelated deployment problem.
    `${race-db.DATABASE_URL}` binding from the service if you added one, because
    DigitalOcean may try to resolve bindings before starting Python. Do not
    delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.22-boss** and **Local file ready; no
+5. Deploy. Startup should report **2026.09.22-no-regen** and **Local file ready; no
    external database is required**. Open the HTTPS app URL and `/admin`.
 6. Reload your browser with Ctrl+F5. Review the published race dates and provider
    results. Publish the desired schedule if the original seeded race has ended.
@@ -182,7 +227,10 @@ keeps its saved dates.
 1. Sign in as the Superadmin and open **Settings → Private recovery file**.
 2. Choose **Download private recovery file**. The filename is
    `recovery.seed.json`. It contains password hashes and a session signing key;
-   store it privately.
+   store it privately. The dashboard records when the export was generated and
+   reports later hits, damage, and changes. It cannot confirm that you saved the
+   download elsewhere. Expand **Check a recovery file before restoring** to
+   validate its contents and review totals without changing the running site.
 3. For a fresh App Platform deployment, add that file to your private GitHub
    repository as **`private/recovery.seed.json`**, then redeploy.
 4. The app imports it automatically if no saved state exists. Check your login,
@@ -221,19 +269,23 @@ is described at the end of this README.
 ## Race publication and live updates
 
 - Change dates under **Race → Save race settings → Confirm and publish race**.
-  The bottom button submits confirmation. **Published window** shows the saved
-  dates; edited form values remain a draft until confirmed.
+  A side-by-side table lists every changed setting. Review it and use the
+  bottom confirmation button. Changing the form after
+  reviewing requires a new review. **Published window** shows saved dates;
+  edited form values remain a draft until confirmed.
 - Independent Shuffle and Kick jobs start automatically and run every **60
   seconds**. There is no live-mode switch or second worker command. Slow calls
   do not hold up the website or the other provider.
 - Both public/admin pages use the same published snapshot and poll every 60
-  seconds while visible. Returning to a hidden tab checks immediately.
+  seconds while visible. Returning to a hidden tab checks immediately. Public
+  `/public-state` requests use ETags; unchanged data returns a body-free 304 and
+  a fresh server-time header. Admin and personal game responses remain no-store.
 - Manual refreshes queue one follow-up even if a check is already running.
   Repeated clicks coalesce. The admin briefly polls every two seconds after a
   manual request or date publication, then returns to its normal cadence.
-- Every admin tab shows queued, checking, changed, unchanged, empty, and failed
-  results. A queued retry displays its reason and retry time. Request tickets
-  connect the completion message to the requested refresh.
+- Every admin tab has a connection summary and expandable provider results.
+  New failures open the details. A queued retry displays its reason and retry
+  time. Request tickets connect completion to the requested refresh.
 - Successes and failures from old settings cannot publish over a newer race.
   An old ordinary retry delay is cleared when dates change; provider rate limits
   and explicit `Retry-After` instructions are still honored.
@@ -269,7 +321,7 @@ Official reference: [DigitalOcean client IP header](https://docs.digitalocean.co
 ## Dashboard and appearance
 
 **Overview** shows the countdown, prize pool, player count, source freshness,
-and separate provider results. **Race** edits Eastern Time dates, all 15 prizes,
+and shortcuts to race and boss controls. **Race** edits Eastern Time dates, all 15 prizes,
 site text, links, channel, and campaign. DST edge cases receive field errors.
 
 **Players** shows full usernames, weighted/raw totals, filters, exports, and
@@ -291,7 +343,7 @@ and reduced-motion support. No remote fonts or frontend framework are required.
 ## Console output and troubleshooting
 
 ```text
-START RedHunllef 2026.09.22-boss listening on 0.0.0.0:8080; storage=local SQLite.
+START RedHunllef 2026.09.22-no-regen listening on 0.0.0.0:8080; storage=local SQLite.
 STORAGE Local file ready; no external database is required.
 LIVE Automatic Shuffle and Kick checks started; cadence=60s.
 ```
@@ -301,12 +353,12 @@ logs show the requested window, outcome, and duration without API credentials.
 
 | Symptom | Action |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-boss; use `python wager_backend.py`. |
+| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-no-regen; use `python wager_backend.py`. |
 | DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
 | Missing Flask, Waitress, or tzdata | Install `requirements.txt` with the Python used to launch. |
 | Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
 | Dates do not publish | Use the bottom **Confirm and publish race** button and verify **Published window**. |
-| Refresh appears unchanged | Read **Live update progress**. It distinguishes unchanged/empty results from errors or queued retries. |
+| Refresh appears unchanged | Expand **Live connections**. It distinguishes unchanged/empty results from errors or queued retries. |
 | Credentials fail with HTTP 401/403 | Check the provider permissions and selected credential source in diagnostics. |
 | Edits disappeared after a redeploy | A new container started from repository seeds. Restore your saved checkpoint; unsaved-to-checkpoint changes cannot be recovered from the discarded disk. |
 | Local storage cannot be read/written | Check disk space and directory permissions; preserve the existing file. |
@@ -324,7 +376,7 @@ logs show the requested window, outcome, and duration without API credentials.
 
 ## Verification
 
-This release passes **75 Python application/game/calculation tests** and **28 DOM/CSS
+This release passes **86 Python application/game/calculation tests** and **35 DOM/CSS
 checks**. Startup is exercised through an actual Waitress child process using
 `python wager_backend.py`, production mode, and a leftover database placeholder.
 Another check blocks importing psycopg and verifies production login with secure

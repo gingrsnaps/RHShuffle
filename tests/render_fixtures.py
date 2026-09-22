@@ -41,7 +41,8 @@ def render(destination):
             for tab in ("overview", "race", "players", "boss", "settings"):
                 (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
             (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
-            (destination/"public.json").write_text(json.dumps(client.get("/data").json), encoding="utf-8")
+            public = client.get("/public-state")
+            (destination/"public.json").write_text(json.dumps({**public.json, "server_time":float(public.headers["X-Server-Time"])}), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
         finally:
             runtime.store.close()

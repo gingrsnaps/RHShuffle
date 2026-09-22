@@ -1,4 +1,4 @@
-# Verification record — 2026.09.22-boss
+# Verification record — 2026.09.22-no-regen
 
 Verified in the supplied Linux workspace on 2026-09-22.
 
@@ -10,9 +10,17 @@ Verified in the supplied Linux workspace on 2026-09-22.
 | Multi-day balance | 100 simulated raiders using 40 matching hits per day defeat 2,400,000 HP on raid day 4; no real waiting or provider calls. |
 | Game interface | Five-second polling, hidden-tab pause, no automatic attacks, uncertain-click retry, stale-response rejection, safe text rendering, and admin draft retention passed. |
 | Homepage/footer | Join the boss fight button reaches /play. Public Admin footer link and dashboard site footer removed; /admin remains available. |
-| Python tests | 75 passed (including 18 game tests). |
+| Python tests | 86 passed (including 21 core game and 8 community-update tests); 90 discovered. |
 | PostgreSQL integration tests | 4 skipped: no dedicated database supplied. CI provisions one. |
-| DOM and CSS checks | 28 passed with jsdom 26.1.0; no browser build required in production. |
+| DOM and CSS checks | 35 passed with jsdom 26.1.0; no browser build required in production. |
+| No regeneration | Seven idle days, cooldown/weakness changes, daily allowance reset, pause/resume and cold app initialization with the saved SQLite file retain damage. Consistent-looking writes that heal the same raid or implicitly replace it are rejected without changing storage. |
+| Health display | Initial HTML renders the saved percentage; same-raid HP increases are rejected even with a newer clock/version. Victory remains at zero until a different raid starts. |
+| Change review | Prize/link/text changes are listed; a signed confirmation cannot publish modified values. Valid confirmation publishes the exact reviewed values. |
+| Conditional public state | Unchanged snapshot returns 304 with an empty body and fresh clock; a hit changes the ETag. Browser reuses the cached body without trying to parse 304 as JSON. Private routes remain no-store with no ETag. |
+| Feedback and mobile controls | Successful polls preserve attack errors; explicit dismissal works. Unchanged leader nodes retain identity. Mobile style selection sends the same validated attack request as the main button. |
+| Badges and milestones | 100 real validated hits across three raid days earn all badges with unchanged damage. Old records retain their totals and gain participation-day tracking. Quarter-health milestones and a victory recap of 11 contributors pass. |
+| Recovery tracking/review | Export leaves the admin revision unchanged, progress since export updates, and private upload review validates without changing live state or exposing password hashes. Imported export metadata survives; malformed optional metadata is ignored while game progress remains intact. |
+| Share link | Selectable URL fallback works when clipboard access is unavailable. |
 | Date publication | Bottom confirmation button submits confirmation and persists the edited window. |
 | Superseded failure | An old-window HTTP failure cannot mark the new race as failed or impose its ordinary retry delay. Explicit provider rate limits remain honored. |
 | Concurrent refresh | An active provider check retains one follow-up request; repeated clicks coalesce. An in-flight browser read schedules a follow-up instead of dropping the request. |
