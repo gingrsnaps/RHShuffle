@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block title %}{{ title }} · RedHunllef{% endblock %}
+{% block navigation %}<a href="/">View race ↗</a>{% endblock %}
+{% block content %}<main class="shell login-wrap" id="main"><section class="panel login-panel"><p class="eyebrow">REDHUNLLEF</p><h1>{{ title }}</h1><p class="muted">{{ message }}</p><a class="button primary" href="/admin">Return to admin →</a><p class="release">{{ release }}</p></section></main>{% endblock %}
+{% block footer %}RedHunllef Wager Race{% endblock %}

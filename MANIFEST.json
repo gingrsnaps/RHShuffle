@@ -1,0 +1,174 @@
+{
+  "release": "2026.09.22-local",
+  "entry_point": "python wager_backend.py",
+  "source_files": {
+    ".env.example": {
+      "bytes": 673,
+      "sha256": "36aa17cd82b15d44227ad341800246aaca78a207033ce8f6fd5f7f8c92b879c7"
+    },
+    ".github/workflows/test.yml": {
+      "bytes": 1135,
+      "sha256": "2a680f8f042171b63c2c7c73cebe0e087be46137f2004d1d15ebb3031787e48f"
+    },
+    ".gitignore": {
+      "bytes": 126,
+      "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
+    },
+    "CHANGES.md": {
+      "bytes": 4263,
+      "sha256": "44fc40835d61051bdbe83f2ff69d2eb88927e5e55f37a09c1e7a2a1ccfe37deb"
+    },
+    "FILE_STRUCTURE.md": {
+      "bytes": 4172,
+      "sha256": "58ad55b97c35f9f25011b10df7fbe3ce97452649a27a962923800b305a9de151"
+    },
+    "Procfile": {
+      "bytes": 29,
+      "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
+    },
+    "README.md": {
+      "bytes": 17323,
+      "sha256": "b85e81ee4637b3b0da4b6f3d0b0a2a89985bdbdafd6f9d6739d267394426df3e"
+    },
+    "START_HERE.md": {
+      "bytes": 2175,
+      "sha256": "6cd58070da069bc46aa0cc07b26b8b4be1c3201e424b7810693f2299a4788252"
+    },
+    "app.yaml": {
+      "bytes": 1440,
+      "sha256": "8593c6d4ed1906bbcd675257f2e71af0e5fda94451704ef7a3d4d7e169bd231e"
+    },
+    "config.py": {
+      "bytes": 6073,
+      "sha256": "6e1060ebd963fe9e5a43850e3a6c27968495ca7565ba3e2c6d9da444f6af560c"
+    },
+    "docs/VALIDATION.md": {
+      "bytes": 5296,
+      "sha256": "1ab0814402250540784d15952dc6bb4adca499bfada404227821eeace572d739"
+    },
+    "integrations.py": {
+      "bytes": 7041,
+      "sha256": "1468838afdf081e4ce09e3598f6b5861c2feca090ef6f5ae4d3f24db94e214ea"
+    },
+    "private/admin_store.seed.json": {
+      "bytes": 6514,
+      "sha256": "b02e8a52d277f1d5dc7a710a97c368b3b1549e9aa3aa7c8d73c5d6abda10f303"
+    },
+    "private/settings.json": {
+      "bytes": 1758,
+      "sha256": "eb8cb8ead9104da92840274f335e0bc7549ca315ca0883308aec329816530321"
+    },
+    "race.py": {
+      "bytes": 7590,
+      "sha256": "d342af11d32d65157c87f96b0cdf942be89446d9657f615f2157887d4cfab7ad"
+    },
+    "race_support.py": {
+      "bytes": 12150,
+      "sha256": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96"
+    },
+    "requirements-postgres.txt": {
+      "bytes": 197,
+      "sha256": "c77064a44093905f671aec742f1e9638eec34b1f295e89420053f17d3a7245a4"
+    },
+    "requirements.txt": {
+      "bytes": 61,
+      "sha256": "40f8bcf597ac5177f2f022e3ae5f787addb8e211c35f5d3505b7d778f4d0092d"
+    },
+    "runtime.py": {
+      "bytes": 17577,
+      "sha256": "426fcd9ec4ff3724e8be18208e7471f863379981f504b84466de62c95548d949"
+    },
+    "runtime.txt": {
+      "bytes": 15,
+      "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
+    },
+    "static/app.js": {
+      "bytes": 18061,
+      "sha256": "11adefead1598e50d8a10d8e74b514071bf9db993033dbaaefce86da3069ec4c"
+    },
+    "static/redlogo.ico": {
+      "bytes": 4286,
+      "sha256": "6a2c518c570d0f0357e39f7a8791daa4de681434ca51b2fa17381fd2d6cac63e"
+    },
+    "static/redlogo.png": {
+      "bytes": 12003,
+      "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
+    },
+    "static/style.css": {
+      "bytes": 18352,
+      "sha256": "fdccc104cb1f98987934725419519d6ba065c525b08151167c3e0ed010d65cb1"
+    },
+    "storage.py": {
+      "bytes": 10998,
+      "sha256": "f5c45adecbd2100b7b0bcde96e3a07ea3145072a5ef2a506a478ac6621150496"
+    },
+    "store_schema.py": {
+      "bytes": 4551,
+      "sha256": "b178eaa121bdf4dca84fc1daf5845bebaa04049c9e4302653f577bbb7a4bea98"
+    },
+    "templates/admin.html": {
+      "bytes": 3982,
+      "sha256": "f0ee24a6b915553881233e1f4f3e70cec6fdf0f3685d61fe77c43008dc6a29ef"
+    },
+    "templates/admin_overview.html": {
+      "bytes": 2342,
+      "sha256": "243bed71ed611c88606577258ee4e674457e8c9eda4151114446a41ac086206b"
+    },
+    "templates/admin_players.html": {
+      "bytes": 4156,
+      "sha256": "40eb1fa32633f4a0f9ce11a04f98bd8d99677227e443fee5c15bb48e671db859"
+    },
+    "templates/admin_race.html": {
+      "bytes": 3121,
+      "sha256": "12dafba7c83f846c25103f05af6ac266c84db667a2aaa08e4df45e3176e288a5"
+    },
+    "templates/admin_settings.html": {
+      "bytes": 8993,
+      "sha256": "d29d074e0139edd9f430b95415c6df3b3a8833ab38bccb682b3c5d69b26c260e"
+    },
+    "templates/base.html": {
+      "bytes": 1983,
+      "sha256": "cf741f66417d343e617b310f0e35dc2261a7aec3f3d277b8327849bde6ec8162"
+    },
+    "templates/error.html": {
+      "bytes": 515,
+      "sha256": "8c02ec7296f011932263817c387f5126d62238d1d7714bd57d64cb51917474be"
+    },
+    "templates/index.html": {
+      "bytes": 4246,
+      "sha256": "81af0536c04733b84a37c02e4d2685032f28ab03d842b9ccded523a112f2632d"
+    },
+    "templates/login.html": {
+      "bytes": 1292,
+      "sha256": "569a7023dbcb632ac9dd356660b23ea8e08b7d946b3905122c063cdb09b01a25"
+    },
+    "templates/macros.html": {
+      "bytes": 2037,
+      "sha256": "c221df4a851759c64be861363d83161223a367db24dde7f022c8b39e05a65324"
+    },
+    "tests/package.json": {
+      "bytes": 160,
+      "sha256": "6b16256bcf607689434a29ef7b06ead1bfea82387fa877c9f41f726395e12557"
+    },
+    "tests/render_fixtures.py": {
+      "bytes": 2688,
+      "sha256": "0efc4e2e8ccb6cc26ec3a1c1c2cf2466060381a0f50be677c1d68d819e3e12f1"
+    },
+    "tests/test_app.py": {
+      "bytes": 40670,
+      "sha256": "04d0c5621a3260f46b6cb4c13b9e059d4c40aae749700487c9faf8037db82eef"
+    },
+    "tests/test_frontend.cjs": {
+      "bytes": 14283,
+      "sha256": "9d6006ea5f499c0d56ad758c97859e0db24b49cdac043728f1e40ca1281e99f3"
+    },
+    "tests/test_postgres.py": {
+      "bytes": 5360,
+      "sha256": "88b177212c262aa3e289d155b8d41c5922a9afcf9ba88bb53d9e78e6357dbc89"
+    },
+    "wager_backend.py": {
+      "bytes": 29370,
+      "sha256": "dce9c159d449732ce3d1df4b3a5e53f7516aa9798dd6f74874f1eba266f89251"
+    }
+  }
+}

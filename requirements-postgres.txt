@@ -1,0 +1,4 @@
+# Optional compatibility for an existing PostgreSQL deployment; not needed by
+# the default local-storage build. Select STORAGE_MODE=postgres explicitly.
+-r requirements.txt
+psycopg[binary]==3.3.5
