@@ -1,12 +1,47 @@
-# RedHunllef Wager Race
+# RedHunllef Wager Race + Community Boss
 
-Release **2026.09.22-local**. Run the complete app with **`python wager_backend.py`**.
+Release **2026.09.22-boss**. Run the complete app with **`python wager_backend.py`**.
 No PostgreSQL service, database connection string, account-creation script, or
 separate update worker is required. Python's built-in SQLite creates a local
 file automatically. The red theme, original credentials, original Superadmin,
 public Top 15, private Code Red list, and automatic 60-second updates remain.
 
-## What this release fixes
+## Community boss: ready at /play
+
+Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
+attacks one shared Crimson Hunllef. The red arena uses your original logo,
+animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
+bonuses, personal progress, Top 10 raiders, recent hits, and past raid summaries.
+Instructions are built into the page. There is no signup or separate launch step.
+The homepage Admin footer link is removed; sign in directly at **`/admin`**.
+The admin dashboard also omits the site footer.
+
+Default balance: **2,400,000 HP**, **one manual attack every 60 seconds**, and
+**40 attacks per raid day** per browser and shared network. Matching the current
+weakness deals 150 damage instead of 100; every tenth personal hit adds 100.
+A 100-person community making 20–40 mostly matching attacks daily should take
+roughly **4–8 raid days**. This assumes active daily participation, not merely
+100 community members. The fastest tested 100-person scenario finishes on day
+four. Raid days are 24-hour periods from the first successful community hit.
+No damage regenerates. Victory remains until the host opens a new raid.
+
+The game refreshes every **5 seconds** while visible, with a local countdown
+between updates. Shuffle and Kick continue their original **60-second** checks.
+All attacks and limits are enforced by the server in an atomic transaction.
+A lost-response retry uses the same receipt so that click cannot land twice.
+No WebSocket server, Redis, Node runtime, new dependency, or remote database is
+needed. Keep **one instance** in local mode.
+
+**Admin → Community boss** provides pause, resume, new-raid difficulty, and a
+private recovery download. Only the Superadmin may change a raid. Starting a
+new raid requires confirmation and archives a summary; changing the HP there
+applies only to the new raid. Game writes do not change race settings or wagers.
+
+Read [docs/COMMUNITY_BOSS.md](docs/COMMUNITY_BOSS.md) for the rules, balancing,
+privacy limits, and recovery process. Multi-day game progress is part of the
+private recovery checkpoint; save it regularly and before redeploying.
+
+## Storage and existing functionality
 
 The previous release refused to start in production without PostgreSQL. That
 requirement is removed. Storage now defaults to `STORAGE_MODE=local`, including
@@ -20,7 +55,7 @@ compatibility for existing PostgreSQL installations remains separate.
 
 A new **Private recovery file** download in Settings lets the Superadmin save
 accounts, password hashes, the session signing key, race settings, overrides,
-history, audit entries, bans, and the last Top 15. A fresh instance imports it
+history, audit entries, bans, the last Top 15, and the complete community boss state. A fresh instance imports it
 automatically from `private/recovery.seed.json`. Existing saved local state
 always wins over seed files. Original provider credentials stay in the existing
 configuration; the recovery download does not export the provider configuration.
@@ -29,7 +64,7 @@ configuration; the recovery download does not export the provider configuration.
 
 **App Platform local files are temporary.** Redeploying, replacing, or scaling
 an instance can discard changes made inside it. This includes edited race
-dates, passwords, new accounts, overrides, and history. A replacement starts
+dates, passwords, new accounts, overrides, history, and all community boss progress. A replacement starts
 from the files committed to your repository, including your latest recovery
 seed if you supplied one. Live standings and Kick status are fetched again.
 
@@ -95,7 +130,7 @@ a persistent host. Do not delete it to fix an unrelated deployment problem.
    `${race-db.DATABASE_URL}` binding from the service if you added one, because
    DigitalOcean may try to resolve bindings before starting Python. Do not
    delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.22-local** and **Local file ready; no
+5. Deploy. Startup should report **2026.09.22-boss** and **Local file ready; no
    external database is required**. Open the HTTPS app URL and `/admin`.
 6. Reload your browser with Ctrl+F5. Review the published race dates and provider
    results. Publish the desired schedule if the original seeded race has ended.
@@ -151,7 +186,7 @@ keeps its saved dates.
 3. For a fresh App Platform deployment, add that file to your private GitHub
    repository as **`private/recovery.seed.json`**, then redeploy.
 4. The app imports it automatically if no saved state exists. Check your login,
-   dates, overrides, and history. The saved Top 15 appears until a live check
+   dates, overrides, history, boss health, and personal raid progress. The saved Top 15 appears until a live check
    loads the complete current standings. The uncensored Code Red list and Kick
    status are fetched again.
 
@@ -161,7 +196,7 @@ A corrupt recovery file stops import with an error rather than resetting your
 accounts to the original defaults.
 
 The ordinary **Download race backup** remains available to administrators and
-excludes passwords/account records. Its restore form previews the saved race
+excludes passwords/account records and the community boss. Its restore form previews the saved race
 before replacing the current race; current accounts stay intact. Use the private
 recovery download when account recovery is needed. Internal rollback checkpoints
 remain local and do not protect against App Platform discarding the container.
@@ -218,6 +253,19 @@ fix, stopped-worker recovery, and draft preservation remain included. Provider
 latency and browser scheduling can delay delivery; a 60-second interval does
 not mean the external provider necessarily publishes new results every minute.
 
+## Visitor IP addresses on DigitalOcean
+
+`TRUST_APP_PLATFORM=1` tells the app to use the validated **DO-Connecting-IP**
+header for visitor identity. DigitalOcean documents that header; do not use
+`X-Forwarded-For` as a substitute for per-player cooldowns. Without the expected
+header, game attacks are unavailable with a clear setup response instead of
+silently sharing an ingress address across all players.
+
+Set `TRUST_APP_PLATFORM=0` on a local/direct Python host. Forwarded headers are
+then ignored. Enable the App Platform setting only behind its trusted ingress;
+placing a directly accessible server behind an untrusted header permits spoofing.
+Official reference: [DigitalOcean client IP header](https://docs.digitalocean.com/support/where-can-i-find-the-client-ip-address-of-a-request-connecting-to-my-app/).
+
 ## Dashboard and appearance
 
 **Overview** shows the countdown, prize pool, player count, source freshness,
@@ -243,7 +291,7 @@ and reduced-motion support. No remote fonts or frontend framework are required.
 ## Console output and troubleshooting
 
 ```text
-START RedHunllef 2026.09.22-local listening on 0.0.0.0:8080; storage=local SQLite.
+START RedHunllef 2026.09.22-boss listening on 0.0.0.0:8080; storage=local SQLite.
 STORAGE Local file ready; no external database is required.
 LIVE Automatic Shuffle and Kick checks started; cadence=60s.
 ```
@@ -253,7 +301,7 @@ logs show the requested window, outcome, and duration without API credentials.
 
 | Symptom | Action |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-local; use `python wager_backend.py`. |
+| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-boss; use `python wager_backend.py`. |
 | DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
 | Missing Flask, Waitress, or tzdata | Install `requirements.txt` with the Python used to launch. |
 | Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
@@ -263,9 +311,20 @@ logs show the requested window, outcome, and duration without API credentials.
 | Edits disappeared after a redeploy | A new container started from repository seeds. Restore your saved checkpoint; unsaved-to-checkpoint changes cannot be recovered from the discarded disk. |
 | Local storage cannot be read/written | Check disk space and directory permissions; preserve the existing file. |
 
+## Game troubleshooting
+
+| Symptom | Action |
+| --- | --- |
+| “Connection setup needed” | On App Platform set `TRUST_APP_PLATFORM=1` and check that ingress supplies `DO-Connecting-IP`. For direct/local hosting use `0`. Do not run a directly exposed server with proxy trust enabled. |
+| Shared cooldown on Wi-Fi | Intended: one network shares the 60-second cooldown and 40-hit allowance. A separate signed browser identity also keeps its own allowance when its network changes. |
+| “Retry last strike” | The response was lost. Click it to resend the same receipt safely. A state update may confirm the hit first. It never auto-attacks. |
+| Progress changed after deploy | Local container state was replaced. A new instance starts from your last committed `private/recovery.seed.json`, or a fresh boss if it has none. |
+| Raider name changed | Cookies were cleared/expired, a different browser is in use, or the host started a new raid. No account sign-in is needed. |
+| Old raid form rejected | Another raid started after you opened the tab. Reload to review it before submitting controls again. |
+
 ## Verification
 
-This release passes **57 Python application/calculation tests** and **20 DOM/CSS
+This release passes **75 Python application/game/calculation tests** and **28 DOM/CSS
 checks**. Startup is exercised through an actual Waitress child process using
 `python wager_backend.py`, production mode, and a leftover database placeholder.
 Another check blocks importing psycopg and verifies production login with secure

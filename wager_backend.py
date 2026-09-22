@@ -21,10 +21,12 @@ import time
 
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
+from boss import BossError, CommunityBoss, DEFAULT_HP
 from race import calculate, empty, phase, token
 from race_support import (DEFAULT_PRIZES, WEIGHTING_RULES, TEXT_LIMITS, URL_FIELDS,
                           canonical_site, clean_overrides, clean_snapshots, csv_text,
@@ -34,7 +36,7 @@ from runtime import Runtime
 from storage import Conflict, StoreError
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "race":"Race", "players":"Players", "settings":"Settings"}
+TABS = {"overview":"Overview", "race":"Race", "players":"Players", "boss":"Community boss", "settings":"Settings"}
 
 
 def account(users, name):
@@ -61,6 +63,8 @@ def create_app(root=None, testing=False):
                       SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=timedelta(hours=12))
     app.extensions["runtime"] = runtime
     app.extensions["settings"] = config
+    boss = app.extensions["boss"] = CommunityBoss(runtime.store)
+    guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
     dummy_hash = generate_password_hash(secrets.token_hex(16))
@@ -86,7 +90,7 @@ def create_app(root=None, testing=False):
 
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
-        return request.accept_mimetypes.best == "application/json" or request.path in {
+        return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
             "/data", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
@@ -94,7 +98,7 @@ def create_app(root=None, testing=False):
         return jsonify(ok=False, error=message, status=status, release=RELEASE), status
 
     def require_csrf():
-        if not secrets.compare_digest(str(request.form.get("csrf", "")), str(session.get("csrf", "!"))):
+        if not secrets.compare_digest(str(request.headers.get("X-CSRF-Token") or request.form.get("csrf", "")), str(session.get("csrf", "!"))):
             abort(400, description="This form expired. Reload the page and try again.")
 
     def protected(fn):
@@ -110,13 +114,20 @@ def create_app(root=None, testing=False):
     @app.before_request
     def before():
         g.began, g.user, g.superadmin = time.perf_counter(), None, False
+        # App Platform supplies the visitor address in DO-Connecting-IP. Never
+        # trust this header on a directly exposed/local server.
+        address = request.headers.get("DO-Connecting-IP") if config.proxy else request.remote_addr
+        try:
+            g.client_ip = str(ipaddress.ip_address(address))
+        except (ValueError, TypeError):
+            g.client_ip = None
         if request.path.startswith("/admin"):
             g.revision, g.admin = runtime.sync()
             name, record = account(g.admin["users"], session.get("user"))
             if name and record.get("auth_version", 1) == session.get("auth_version"):
                 g.user = name
                 g.superadmin = name.casefold() == g.admin.get("superadmin", config.superadmin).casefold()
-        if request.path not in {"/healthz", "/readyz"} and request.remote_addr in runtime.admin.get("banned_ips", []):
+        if request.path not in {"/healthz", "/readyz"} and g.client_ip in runtime.admin.get("banned_ips", []):
             abort(403, description="Access from this address has been disabled.")
 
     @app.after_request
@@ -129,10 +140,13 @@ def create_app(root=None, testing=False):
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
-        if request.path not in {"/data", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith("/static/"):
+        if getattr(g, "new_guest", None):
+            response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
+                                secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
+        if request.path not in {"/data", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
-                                           ip=request.remote_addr, ms=round((time.perf_counter()-g.began)*1000)))
+                                           ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
         return response
 
     @app.context_processor
@@ -165,6 +179,44 @@ def create_app(root=None, testing=False):
     @app.get("/")
     def index():
         return render_template("index.html", data=runtime.public())
+
+    def guest():
+        if not hasattr(g, "guest"):
+            try:
+                value = guest_signer.loads(request.cookies.get("rh_raider", ""), max_age=365*86400)
+                if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{32}", value):
+                    raise BadSignature("Invalid raider identifier")
+                g.guest = value
+            except BadSignature:
+                g.guest = g.new_guest = secrets.token_hex(16)
+        return g.guest
+
+    @app.get("/play")
+    def play():
+        return render_template("boss.html", data=runtime.public(), boss_data=boss.status(guest(), g.client_ip))
+
+    @app.get("/play/api/state")
+    def boss_state():
+        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
+
+    @app.post("/play/api/attack")
+    def boss_attack():
+        require_csrf()
+        identity = guest()
+        if getattr(g, "new_guest", None):
+            return json_error("Enable cookies and reload the game before attacking.", 400)
+        if not g.client_ip:
+            return json_error("The server could not identify your connection. The host should check TRUST_APP_PLATFORM and the DO-Connecting-IP header.", 503)
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return json_error("Send a valid attack request.", 400)
+        try:
+            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id")))
+        except BossError as exc:
+            response = jsonify(ok=False, error=str(exc), code=exc.code, state=boss.status(identity, g.client_ip))
+            if exc.retry_after:
+                response.headers["Retry-After"] = str(exc.retry_after)
+            return response, exc.status
 
     @app.get("/data")
     def data():
@@ -203,7 +255,24 @@ def create_app(root=None, testing=False):
         return render_template("admin.html", data=values, tab=tab, form=form, errors=errors or {},
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
-                               access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit), status
+                               access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
+                               boss_data=boss.status() if tab == "boss" else None), status
+
+    @app.post("/admin/boss/action")
+    @protected
+    def boss_control():
+        require_csrf()
+        if not g.superadmin:
+            abort(403, description="Only the Superadmin can change the community raid.")
+        try:
+            action = request.form.get("action", "")
+            if action == "restart" and request.form.get("confirm_restart") != "yes":
+                raise ValueError("Confirm that you want to archive the current raid and start a new one.")
+            boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)))
+            flash("New community raid is ready." if action == "restart" else "Community raid " + ("paused." if action == "pause" else "resumed."))
+            return redirect(url_for("login", tab="boss"), 303)
+        except ValueError as exc:
+            return render_admin("boss", errors={"boss":str(exc)}, status=422)
 
     @app.route("/admin", methods=["GET", "POST"])
     @app.route("/admin/login", methods=["GET", "POST"])
@@ -212,7 +281,7 @@ def create_app(root=None, testing=False):
             return render_admin() if g.user else render_template("login.html", error="")
         require_csrf()
         name, password = request.form.get("username", "").strip()[:64], request.form.get("password", "")
-        key = request.remote_addr or "unknown"
+        key = g.client_ip or request.remote_addr or "unknown"
         with auth_lock:
             cutoff = time.monotonic() - 600
             for ip in list(failures):
@@ -286,6 +355,7 @@ def create_app(root=None, testing=False):
         with runtime.lock:
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
+            value["community_boss"] = boss.export()
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=recovery.seed.json"})
 
@@ -491,6 +561,7 @@ def main():
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
         LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "PostgreSQL" if runtime.store.pg else "local SQLite")
+        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 60s, 40 per raid day. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
             if config.production:

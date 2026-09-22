@@ -1,4 +1,4 @@
-# File structure — 2026.09.22-local
+# File structure — 2026.09.22-boss
 
 Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
 
@@ -15,7 +15,9 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `README.md` | Setup, deployment, migration, operation, troubleshooting, verification limits. |
 | `START_HERE.md` | Quick launch instructions and original account information. |
 | `app.yaml` | One Python web service, no database component; edit the repository name. |
+| `boss.py` | Server-authoritative shared raid, atomic attacks, guest/network limits, recovery validation. |
 | `config.py` | Credential precedence, deployment configuration, fixed update interval. |
+| `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
 | `docs/VALIDATION.md` | Test record and explicit verification limits. |
 | `integrations.py` | Bounded provider requests, response validation, Kick token renewal. |
 | `private/admin_store.seed.json` | Original account/password hash and saved state, unchanged. |
@@ -27,17 +29,21 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `runtime.py` | Shared cached state and independent Shuffle/Kick background jobs. |
 | `runtime.txt` | App Platform Python 3.13.12 pin. |
 | `static/app.js` | Native browser controller, automatic polling, countdown, scoped DOM updates. |
+| `static/boss.css` | Responsive red arena, weakness cards, burst meter, damage animation, reduced-motion support. |
+| `static/boss.js` | Automatic five-second game updates, manual attacks, safe receipts, countdown and hit feedback. |
 | `static/redlogo.ico` | Original favicon. |
 | `static/redlogo.png` | Original PNG brand asset. |
 | `static/style.css` | Responsive public/admin styling, focus states, reduced-motion support. |
 | `storage.py` | SQLite/PostgreSQL transactions, migrations, account state, recovery checkpoints. |
 | `store_schema.py` | Additive validation of original accounts and saved race state. |
 | `templates/admin.html` | Rendered admin template. |
+| `templates/admin_boss.html` | Rendered admin boss template. |
 | `templates/admin_overview.html` | Rendered admin overview template. |
 | `templates/admin_players.html` | Rendered admin players template. |
 | `templates/admin_race.html` | Rendered admin race template. |
 | `templates/admin_settings.html` | Rendered admin settings template. |
 | `templates/base.html` | Rendered base template. |
+| `templates/boss.html` | Rendered boss template. |
 | `templates/error.html` | Rendered error template. |
 | `templates/index.html` | Rendered index template. |
 | `templates/login.html` | Rendered login template. |
@@ -45,6 +51,8 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `tests/package.json` | Optional development test dependency; no Node runtime needed by the site. |
 | `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
 | `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
+| `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
+| `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
 | `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
 | `tests/test_postgres.py` | Integration tests for a dedicated disposable PostgreSQL database. |
 | `wager_backend.py` | Only launch script; Waitress, routes, native login, admin actions, session protection. |

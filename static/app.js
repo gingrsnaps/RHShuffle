@@ -208,7 +208,7 @@
       const url=new URL(document.body.dataset.feed,location.origin);
       if(isAdmin) {for(const [key,value] of new URLSearchParams(location.search))url.searchParams.set(key,value);if(id('codeRed')?.open)url.searchParams.set('code_red','1');}
       const result=await getJSON(url);apply(result,began);notice('networkError','');
-      if(result.release&&result.release!=='2026.09.22-local') notice('networkError','A newer version was deployed. Save your draft, then reload.');
+      if(result.release&&result.release!=='2026.09.22-boss') notice('networkError','A newer version was deployed. Save your draft, then reload.');
     } catch(error) {notice('networkError',error.name==='AbortError'?'Dashboard request timed out. Previous results are retained; updates will retry.':error.message);}
     finally {
       busy=false;

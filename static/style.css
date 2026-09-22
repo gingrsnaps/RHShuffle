@@ -16,3 +16,8 @@
 .progress-services{display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--line);padding-top:15px}
 .progress-services strong{font-size:.8rem;color:var(--accent)}.progress-services p{margin:7px 0 0;font-size:.78rem;overflow-wrap:anywhere;color:var(--text)}
 @media(max-width:700px){.refresh-progress{padding:18px}.progress-heading{flex-direction:column;gap:10px}.progress-services{grid-template-columns:1fr;gap:17px}}
+
+/* The homepage invitation is visible on mobile as well as desktop. */
+.play-invite{display:flex;align-items:center;gap:22px;padding:23px 25px;margin:0 0 36px;background:linear-gradient(105deg,#431b25,#22141c);border-color:#853344}.play-invite img{image-rendering:pixelated;object-fit:contain;border-radius:10px}.play-invite>div{flex:1}.play-invite h2{font-size:1.3rem;margin-bottom:6px}.play-invite .eyebrow{font-size:.57rem;margin-bottom:6px}.play-invite p:last-child{font-size:.78rem;color:var(--muted);margin:0}.site-header .play-nav{color:var(--accent);font-weight:650}
+@media(max-width:900px){.site-header .community-nav{display:none}}
+@media(max-width:700px){.play-invite{flex-wrap:wrap;padding:20px;gap:16px}.play-invite img{width:45px;height:45px}.play-invite .button{width:100%}.play-invite h2{font-size:1.17rem}.play-invite>div{min-width:180px}.site-header nav{gap:10px}.site-header .button{font-size:.64rem}.site-header .play-nav{font-size:.69rem}}

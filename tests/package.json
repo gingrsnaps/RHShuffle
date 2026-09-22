@@ -1,6 +1,6 @@
 {
   "name": "redhunllef-interface-tests",
   "private": true,
-  "scripts": {"test": "node --test test_frontend.cjs"},
+  "scripts": {"test": "node --test test_*.cjs"},
   "devDependencies": {"jsdom": "26.1.0"}
 }

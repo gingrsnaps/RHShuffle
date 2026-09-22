@@ -34,12 +34,13 @@ def render(destination):
                                   "updated_at": now, "ok": True}, admin, runtime.config)
             runtime.commit(admin, runtime.revision, snapshot=snapshot)
             client = app.test_client()
-            for name, url in {"public": "/", "login": "/admin", "error": "/missing"}.items():
+            for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play"}.items():
                 (destination/(name+".html")).write_text(client.get(url).text, encoding="utf-8")
             with client.session_transaction() as session:
                 session.update(user="gingrsnaps", auth_version=1, csrf="fixture-csrf")
-            for tab in ("overview", "race", "players", "settings"):
+            for tab in ("overview", "race", "players", "boss", "settings"):
                 (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
+            (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
             (destination/"public.json").write_text(json.dumps(client.get("/data").json), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
         finally:

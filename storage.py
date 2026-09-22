@@ -18,6 +18,7 @@ from werkzeug.security import generate_password_hash
 from race_support import read_json, clean_snapshots, race_key, empty_snapshots
 from store_schema import upgrade_store
 from race import empty
+from boss import validate_boss
 
 LOG = logging.getLogger("redhunllef")
 
@@ -96,6 +97,7 @@ class Store:
                 conn.execute("SELECT pg_advisory_xact_lock(728364092)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
+            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
             existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
             if existing:
@@ -119,6 +121,9 @@ class Store:
                     pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
                     secret_key=secrets.token_hex(32), site_settings=self.config.site)
             value, _ = upgrade_store(legacy, self.config.site, {})
+            community_boss = value.pop("community_boss", None)
+            if community_boss is not None:
+                community_boss = validate_boss(community_boss)
             if not value["users"]:
                 raise StoreError("Saved account store contains no accounts. The original was not replaced.")
             self.backup_in(conn, "before-rebuild-import", {"admin": legacy, "source": source})
@@ -126,6 +131,8 @@ class Store:
             value.pop("health", None)
             value["superadmin"] = self.config.superadmin
             self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
+            if community_boss is not None:
+                self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
             saved = empty(value["site_settings"])
             saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
                          updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),

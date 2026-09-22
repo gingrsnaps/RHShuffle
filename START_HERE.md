@@ -1,6 +1,6 @@
 # RedHunllef — start here
 
-Release **2026.09.22-local**. No PostgreSQL service or DATABASE_URL is needed.
+Release **2026.09.22-boss**. No PostgreSQL service or DATABASE_URL is needed.
 Extract the complete folder. Install dependencies once:
 
 ```bash
@@ -49,4 +49,17 @@ bar. Verify **Published window**. Both providers update automatically every
 
 The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
 and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.22-local**.
+the release label must show **2026.09.22-boss**.
+
+Open **/play** or click **Join the boss fight** on the homepage. In-game
+instructions explain attacks, weaknesses, Crimson burst, and the daily allowance.
+The shared boss starts at 2,400,000 HP. One attack per minute, 40 per raid day,
+with a target of roughly 4–8 days for 100 active participants. Game views update
+every 5 seconds. Wager/Kick views still update every 60 seconds.
+
+Host controls live at **/admin?tab=boss**. Save a **private recovery checkpoint**
+regularly during the raid and before redeploying. It includes health, profiles,
+attack receipts, and cooldowns. App Platform can lose changes after the last
+checkpoint if it replaces the container. No extra launch command is required.
+
+The Admin footer link is removed. Bookmark **/admin** for your dashboard.

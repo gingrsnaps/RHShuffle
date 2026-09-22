@@ -1,6 +1,6 @@
 # RedHunllef — complete configured source
 
-Release **2026.09.22-local**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
+Release **2026.09.22-boss**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
 
 Start with README.md and FILE_STRUCTURE.md. The only launch command is `python wager_backend.py`. FULL_CODE_BLOCKS.md is this generated document and is not recursively repeated inside itself.
 
@@ -85,9 +85,33 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
-# Changes — 2026.09.22-local
+# Changes — 2026.09.22-boss
 
-Local-storage release: remove the production PostgreSQL startup requirement. Default to built-in SQLite, ignore stale DATABASE_URL values in local mode, and remove the PostgreSQL driver from normal requirements. App Platform configuration contains only the Python web service. Production cookies and proxy handling remain independent of storage.
+Community game: add `/play` with a shared boss, signed guest profiles, atomic
+attacks, one-minute cooldowns, 40-hit raid-day allowances, rotating weaknesses,
+and every-tenth-hit Crimson burst. The default 2.4-million-HP encounter targets
+4–8 days for 100 active raiders. Victory is retained until a host starts again.
+
+Game presentation: animated red arena with the original logo, readable health,
+weapon buttons, personal burst meter, Top 10 contributors, recent attacks,
+past raids, and visible instructions. Add the homepage Join the boss fight CTA
+and header link. Remove the public Admin footer link and dashboard site footer.
+
+Host tools: a Community boss tab updates every five seconds and preserves input
+drafts. Superadmin pause/resume/restart actions use CSRF and a current-raid guard.
+Private recovery export/import now includes boss progress and hashed cooldown
+records. Race-only backups remain separate. No extra production dependency.
+
+DigitalOcean: use the documented DO-Connecting-IP visitor header when trusted
+App Platform ingress is enabled; ignore it on direct hosts. This also improves
+existing login rate limiting and IP access controls behind that ingress.
+
+Verification: 75 Python tests pass; 4 optional PostgreSQL tests skip. All 28
+DOM/CSS checks pass. Two real browser contexts see shared damage and host pause
+changes. A 100-player simulation finishes on raid day four at maximum matching
+attacks. Existing race publication, refresh, recovery, and Code Red checks pass.
+
+Previous local-storage release: remove the production PostgreSQL startup requirement. Default to built-in SQLite, ignore stale DATABASE_URL values in local mode, and remove the PostgreSQL driver from normal requirements. App Platform configuration contains only the Python web service. Production cookies and proxy handling remain independent of storage.
 
 Recovery: add a Superadmin-only private account/race export and automatic import from private/recovery.seed.json on a fresh instance. Existing saved state takes priority. The dashboard, logs, and README explicitly explain that App Platform local files do not persist through redeploys or container replacements; checkpoints are manual.
 
@@ -100,7 +124,7 @@ Progress: every admin tab shows published dates and separate provider outcomes. 
 
 Visuals: logo-red branding, burgundy surfaces, red buttons and active tabs, and readable progress panels. Original logo files are unchanged. No production dependency was added.
 
-Verification: 57 Python tests and 20 DOM/CSS checks pass. A local HTTP fixture exercises date changes during a failed request and subsequent automatic publication; external Shuffle/Kick connectivity remains unverified here.
+Earlier verification: 57 Python tests and 20 DOM/CSS checks passed. A local HTTP fixture exercises date changes during a failed request and subsequent automatic publication; external Shuffle/Kick connectivity remains unverified here.
 
 Refresh patch: read the real form action attribute to avoid the hidden action input overriding the request URL. Fetch errors retain JSON and HTTP status; empty leaderboards explain waiting, source failure, and nonqualifying results. Regression tests cover the URL collision and manual-refresh publication to both boards. Accounts, credentials, and saved dates are retained.
 
@@ -136,7 +160,7 @@ is always live, with stale-cache preservation only during provider failures.
 ## FILE_STRUCTURE.md
 
 ```markdown
-# File structure — 2026.09.22-local
+# File structure — 2026.09.22-boss
 
 Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
 
@@ -153,7 +177,9 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `README.md` | Setup, deployment, migration, operation, troubleshooting, verification limits. |
 | `START_HERE.md` | Quick launch instructions and original account information. |
 | `app.yaml` | One Python web service, no database component; edit the repository name. |
+| `boss.py` | Server-authoritative shared raid, atomic attacks, guest/network limits, recovery validation. |
 | `config.py` | Credential precedence, deployment configuration, fixed update interval. |
+| `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
 | `docs/VALIDATION.md` | Test record and explicit verification limits. |
 | `integrations.py` | Bounded provider requests, response validation, Kick token renewal. |
 | `private/admin_store.seed.json` | Original account/password hash and saved state, unchanged. |
@@ -165,17 +191,21 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `runtime.py` | Shared cached state and independent Shuffle/Kick background jobs. |
 | `runtime.txt` | App Platform Python 3.13.12 pin. |
 | `static/app.js` | Native browser controller, automatic polling, countdown, scoped DOM updates. |
+| `static/boss.css` | Responsive red arena, weakness cards, burst meter, damage animation, reduced-motion support. |
+| `static/boss.js` | Automatic five-second game updates, manual attacks, safe receipts, countdown and hit feedback. |
 | `static/redlogo.ico` | Original favicon. |
 | `static/redlogo.png` | Original PNG brand asset. |
 | `static/style.css` | Responsive public/admin styling, focus states, reduced-motion support. |
 | `storage.py` | SQLite/PostgreSQL transactions, migrations, account state, recovery checkpoints. |
 | `store_schema.py` | Additive validation of original accounts and saved race state. |
 | `templates/admin.html` | Rendered admin template. |
+| `templates/admin_boss.html` | Rendered admin boss template. |
 | `templates/admin_overview.html` | Rendered admin overview template. |
 | `templates/admin_players.html` | Rendered admin players template. |
 | `templates/admin_race.html` | Rendered admin race template. |
 | `templates/admin_settings.html` | Rendered admin settings template. |
 | `templates/base.html` | Rendered base template. |
+| `templates/boss.html` | Rendered boss template. |
 | `templates/error.html` | Rendered error template. |
 | `templates/index.html` | Rendered index template. |
 | `templates/login.html` | Rendered login template. |
@@ -183,6 +213,8 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `tests/package.json` | Optional development test dependency; no Node runtime needed by the site. |
 | `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
 | `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
+| `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
+| `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
 | `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
 | `tests/test_postgres.py` | Integration tests for a dedicated disposable PostgreSQL database. |
 | `wager_backend.py` | Only launch script; Waitress, routes, native login, admin actions, session protection. |
@@ -199,15 +231,50 @@ web: python wager_backend.py
 ## README.md
 
 ````markdown
-# RedHunllef Wager Race
+# RedHunllef Wager Race + Community Boss
 
-Release **2026.09.22-local**. Run the complete app with **`python wager_backend.py`**.
+Release **2026.09.22-boss**. Run the complete app with **`python wager_backend.py`**.
 No PostgreSQL service, database connection string, account-creation script, or
 separate update worker is required. Python's built-in SQLite creates a local
 file automatically. The red theme, original credentials, original Superadmin,
 public Top 15, private Code Red list, and automatic 60-second updates remain.
 
-## What this release fixes
+## Community boss: ready at /play
+
+Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
+attacks one shared Crimson Hunllef. The red arena uses your original logo,
+animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
+bonuses, personal progress, Top 10 raiders, recent hits, and past raid summaries.
+Instructions are built into the page. There is no signup or separate launch step.
+The homepage Admin footer link is removed; sign in directly at **`/admin`**.
+The admin dashboard also omits the site footer.
+
+Default balance: **2,400,000 HP**, **one manual attack every 60 seconds**, and
+**40 attacks per raid day** per browser and shared network. Matching the current
+weakness deals 150 damage instead of 100; every tenth personal hit adds 100.
+A 100-person community making 20–40 mostly matching attacks daily should take
+roughly **4–8 raid days**. This assumes active daily participation, not merely
+100 community members. The fastest tested 100-person scenario finishes on day
+four. Raid days are 24-hour periods from the first successful community hit.
+No damage regenerates. Victory remains until the host opens a new raid.
+
+The game refreshes every **5 seconds** while visible, with a local countdown
+between updates. Shuffle and Kick continue their original **60-second** checks.
+All attacks and limits are enforced by the server in an atomic transaction.
+A lost-response retry uses the same receipt so that click cannot land twice.
+No WebSocket server, Redis, Node runtime, new dependency, or remote database is
+needed. Keep **one instance** in local mode.
+
+**Admin → Community boss** provides pause, resume, new-raid difficulty, and a
+private recovery download. Only the Superadmin may change a raid. Starting a
+new raid requires confirmation and archives a summary; changing the HP there
+applies only to the new raid. Game writes do not change race settings or wagers.
+
+Read [docs/COMMUNITY_BOSS.md](docs/COMMUNITY_BOSS.md) for the rules, balancing,
+privacy limits, and recovery process. Multi-day game progress is part of the
+private recovery checkpoint; save it regularly and before redeploying.
+
+## Storage and existing functionality
 
 The previous release refused to start in production without PostgreSQL. That
 requirement is removed. Storage now defaults to `STORAGE_MODE=local`, including
@@ -221,7 +288,7 @@ compatibility for existing PostgreSQL installations remains separate.
 
 A new **Private recovery file** download in Settings lets the Superadmin save
 accounts, password hashes, the session signing key, race settings, overrides,
-history, audit entries, bans, and the last Top 15. A fresh instance imports it
+history, audit entries, bans, the last Top 15, and the complete community boss state. A fresh instance imports it
 automatically from `private/recovery.seed.json`. Existing saved local state
 always wins over seed files. Original provider credentials stay in the existing
 configuration; the recovery download does not export the provider configuration.
@@ -230,7 +297,7 @@ configuration; the recovery download does not export the provider configuration.
 
 **App Platform local files are temporary.** Redeploying, replacing, or scaling
 an instance can discard changes made inside it. This includes edited race
-dates, passwords, new accounts, overrides, and history. A replacement starts
+dates, passwords, new accounts, overrides, history, and all community boss progress. A replacement starts
 from the files committed to your repository, including your latest recovery
 seed if you supplied one. Live standings and Kick status are fetched again.
 
@@ -296,7 +363,7 @@ a persistent host. Do not delete it to fix an unrelated deployment problem.
    `${race-db.DATABASE_URL}` binding from the service if you added one, because
    DigitalOcean may try to resolve bindings before starting Python. Do not
    delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.22-local** and **Local file ready; no
+5. Deploy. Startup should report **2026.09.22-boss** and **Local file ready; no
    external database is required**. Open the HTTPS app URL and `/admin`.
 6. Reload your browser with Ctrl+F5. Review the published race dates and provider
    results. Publish the desired schedule if the original seeded race has ended.
@@ -352,7 +419,7 @@ keeps its saved dates.
 3. For a fresh App Platform deployment, add that file to your private GitHub
    repository as **`private/recovery.seed.json`**, then redeploy.
 4. The app imports it automatically if no saved state exists. Check your login,
-   dates, overrides, and history. The saved Top 15 appears until a live check
+   dates, overrides, history, boss health, and personal raid progress. The saved Top 15 appears until a live check
    loads the complete current standings. The uncensored Code Red list and Kick
    status are fetched again.
 
@@ -362,7 +429,7 @@ A corrupt recovery file stops import with an error rather than resetting your
 accounts to the original defaults.
 
 The ordinary **Download race backup** remains available to administrators and
-excludes passwords/account records. Its restore form previews the saved race
+excludes passwords/account records and the community boss. Its restore form previews the saved race
 before replacing the current race; current accounts stay intact. Use the private
 recovery download when account recovery is needed. Internal rollback checkpoints
 remain local and do not protect against App Platform discarding the container.
@@ -419,6 +486,19 @@ fix, stopped-worker recovery, and draft preservation remain included. Provider
 latency and browser scheduling can delay delivery; a 60-second interval does
 not mean the external provider necessarily publishes new results every minute.
 
+## Visitor IP addresses on DigitalOcean
+
+`TRUST_APP_PLATFORM=1` tells the app to use the validated **DO-Connecting-IP**
+header for visitor identity. DigitalOcean documents that header; do not use
+`X-Forwarded-For` as a substitute for per-player cooldowns. Without the expected
+header, game attacks are unavailable with a clear setup response instead of
+silently sharing an ingress address across all players.
+
+Set `TRUST_APP_PLATFORM=0` on a local/direct Python host. Forwarded headers are
+then ignored. Enable the App Platform setting only behind its trusted ingress;
+placing a directly accessible server behind an untrusted header permits spoofing.
+Official reference: [DigitalOcean client IP header](https://docs.digitalocean.com/support/where-can-i-find-the-client-ip-address-of-a-request-connecting-to-my-app/).
+
 ## Dashboard and appearance
 
 **Overview** shows the countdown, prize pool, player count, source freshness,
@@ -444,7 +524,7 @@ and reduced-motion support. No remote fonts or frontend framework are required.
 ## Console output and troubleshooting
 
 ```text
-START RedHunllef 2026.09.22-local listening on 0.0.0.0:8080; storage=local SQLite.
+START RedHunllef 2026.09.22-boss listening on 0.0.0.0:8080; storage=local SQLite.
 STORAGE Local file ready; no external database is required.
 LIVE Automatic Shuffle and Kick checks started; cadence=60s.
 ```
@@ -454,7 +534,7 @@ logs show the requested window, outcome, and duration without API credentials.
 
 | Symptom | Action |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-local; use `python wager_backend.py`. |
+| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-boss; use `python wager_backend.py`. |
 | DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
 | Missing Flask, Waitress, or tzdata | Install `requirements.txt` with the Python used to launch. |
 | Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
@@ -464,9 +544,20 @@ logs show the requested window, outcome, and duration without API credentials.
 | Edits disappeared after a redeploy | A new container started from repository seeds. Restore your saved checkpoint; unsaved-to-checkpoint changes cannot be recovered from the discarded disk. |
 | Local storage cannot be read/written | Check disk space and directory permissions; preserve the existing file. |
 
+## Game troubleshooting
+
+| Symptom | Action |
+| --- | --- |
+| “Connection setup needed” | On App Platform set `TRUST_APP_PLATFORM=1` and check that ingress supplies `DO-Connecting-IP`. For direct/local hosting use `0`. Do not run a directly exposed server with proxy trust enabled. |
+| Shared cooldown on Wi-Fi | Intended: one network shares the 60-second cooldown and 40-hit allowance. A separate signed browser identity also keeps its own allowance when its network changes. |
+| “Retry last strike” | The response was lost. Click it to resend the same receipt safely. A state update may confirm the hit first. It never auto-attacks. |
+| Progress changed after deploy | Local container state was replaced. A new instance starts from your last committed `private/recovery.seed.json`, or a fresh boss if it has none. |
+| Raider name changed | Cookies were cleared/expired, a different browser is in use, or the host started a new raid. No account sign-in is needed. |
+| Old raid form rejected | Another raid started after you opened the tab. Reload to review it before submitting controls again. |
+
 ## Verification
 
-This release passes **57 Python application/calculation tests** and **20 DOM/CSS
+This release passes **75 Python application/game/calculation tests** and **28 DOM/CSS
 checks**. Startup is exercised through an actual Waitress child process using
 `python wager_backend.py`, production mode, and a leftover database placeholder.
 Another check blocks importing psycopg and verifies production login with secure
@@ -524,7 +615,7 @@ shipped. Runtime state and test preview data are excluded from the ZIP.
 ````markdown
 # RedHunllef — start here
 
-Release **2026.09.22-local**. No PostgreSQL service or DATABASE_URL is needed.
+Release **2026.09.22-boss**. No PostgreSQL service or DATABASE_URL is needed.
 Extract the complete folder. Install dependencies once:
 
 ```bash
@@ -573,7 +664,20 @@ bar. Verify **Published window**. Both providers update automatically every
 
 The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
 and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.22-local**.
+the release label must show **2026.09.22-boss**.
+
+Open **/play** or click **Join the boss fight** on the homepage. In-game
+instructions explain attacks, weaknesses, Crimson burst, and the daily allowance.
+The shared boss starts at 2,400,000 HP. One attack per minute, 40 per raid day,
+with a target of roughly 4–8 days for 100 active participants. Game views update
+every 5 seconds. Wager/Kick views still update every 60 seconds.
+
+Host controls live at **/admin?tab=boss**. Save a **private recovery checkpoint**
+regularly during the raid and before redeploying. It includes health, profiles,
+attack receipts, and cooldowns. App Platform can lose changes after the last
+checkpoint if it replaces the container. No extra launch command is required.
+
+The Admin footer link is removed. Bookmark **/admin** for your dashboard.
 ````
 
 ## app.yaml
@@ -638,6 +742,290 @@ alerts:
   - rule: DOMAIN_FAILED
 ```
 
+## boss.py
+
+```python
+"""Shared community raid rules. Every hit is validated and committed server-side.
+
+The boss lives in a separate record, so attacks cannot change race settings or
+invalidate administrator forms. One web instance serves the whole community.
+"""
+import copy
+import hashlib
+import hmac
+import ipaddress
+import json
+import logging
+import math
+import re
+import secrets
+import threading
+import time
+
+LOG = logging.getLogger("redhunllef")
+DEFAULT_HP = 2_400_000
+COOLDOWN = 60
+DAILY_ATTACKS = 40
+DAY = 86400
+WARD_SECONDS = 600
+STYLES = {"blade": "Blade", "bow": "Bow", "magic": "Magic"}
+MAX_PLAYERS, MAX_NETWORKS = 2000, 4000
+TOKEN = re.compile(r"[a-f0-9]{64}\Z")
+
+
+class BossError(ValueError):
+    def __init__(self, message, code="invalid", status=400, retry_after=0):
+        super().__init__(message)
+        self.code, self.status, self.retry_after = code, status, retry_after
+
+
+def fresh_raid(now=None, health=DEFAULT_HP, history=None):
+    now = int(time.time() if now is None else now)
+    return dict(schema=1, id=secrets.token_hex(16), salt=secrets.token_hex(32),
+                version=1, max_hp=health, hp=health, created_at=now, started_at=0,
+                finished_at=0, paused=False, total_attacks=0, total_damage=0,
+                players={}, networks={}, recent=[], history=list(history or [])[-10:])
+
+
+def _integer(value, minimum=0, maximum=10**12):
+    if type(value) is not int or not minimum <= value <= maximum:
+        raise ValueError("The community boss recovery has an invalid number.")
+    return value
+
+
+def _timestamp(value):
+    if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 10**12:
+        raise ValueError("The community boss recovery has an invalid timestamp.")
+
+
+def validate_boss(value):
+    """Validate recovery before a transaction imports any account or game data."""
+    if not isinstance(value, dict) or value.get("schema") != 1:
+        raise ValueError("Unsupported community boss recovery. Existing data was not replaced.")
+    for field, pattern in (("id", r"[a-f0-9]{32}"), ("salt", r"[a-f0-9]{64}")):
+        if not isinstance(value.get(field), str) or not re.fullmatch(pattern, value[field]):
+            raise ValueError("The community boss recovery has an invalid identifier.")
+    _integer(value.get("version"), 1)
+    maximum = _integer(value.get("max_hp"), 1, 100_000_000)
+    hp = _integer(value.get("hp"), 0, maximum)
+    for field in ("created_at", "started_at", "finished_at", "total_attacks", "total_damage"):
+        _integer(value.get(field))
+    if type(value.get("paused")) is not bool or value["total_damage"] != maximum - hp:
+        raise ValueError("The community boss recovery has inconsistent health.")
+    if bool(value["finished_at"]) != (hp == 0) or (value["total_attacks"] and not value["started_at"]):
+        raise ValueError("The community boss recovery has inconsistent progress.")
+    players, networks = value.get("players"), value.get("networks")
+    if not isinstance(players, dict) or len(players) > MAX_PLAYERS or not isinstance(networks, dict) or len(networks) > MAX_NETWORKS:
+        raise ValueError("The community boss recovery has invalid player records.")
+    for records in (players, networks):
+        for key, record in records.items():
+            if not isinstance(key, str) or not TOKEN.fullmatch(key) or not isinstance(record, dict):
+                raise ValueError("The community boss recovery has an invalid player identifier.")
+            _timestamp(record.get("last_attack"))
+            _integer(record.get("day"))
+            _integer(record.get("used"), 0, DAILY_ATTACKS)
+    for player in players.values():
+        _integer(player.get("attacks"), 1)
+        _integer(player.get("damage"), 1, maximum)
+        receipt = player.get("last_hit")
+        if not isinstance(receipt, dict) or not isinstance(receipt.get("style"), str) or receipt["style"] not in STYLES:
+            raise ValueError("The community boss recovery has an invalid attack receipt.")
+        if not isinstance(player.get("request_id"), str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", player["request_id"]):
+            raise ValueError("The community boss recovery has an invalid request receipt.")
+        _integer(receipt.get("damage"), 1, 250)
+        _integer(receipt.get("at"))
+        if type(receipt.get("weakness")) is not bool or type(receipt.get("burst")) is not bool:
+            raise ValueError("The community boss recovery has an invalid attack bonus.")
+    if sum(p["damage"] for p in players.values()) != value["total_damage"] or sum(p["attacks"] for p in players.values()) != value["total_attacks"]:
+        raise ValueError("The community boss recovery totals do not match its players.")
+    recent, history = value.get("recent"), value.get("history")
+    if not isinstance(recent, list) or len(recent) > 12 or not isinstance(history, list) or len(history) > 10:
+        raise ValueError("The community boss recovery has an invalid history.")
+    for hit in recent:
+        if not isinstance(hit, dict) or not re.fullmatch(r"Raider [A-F0-9]{8}", str(hit.get("name", ""))) or not isinstance(hit.get("style"), str) or hit["style"] not in STYLES:
+            raise ValueError("The community boss recovery has an invalid recent hit.")
+        _integer(hit.get("damage"), 1, 250)
+        _integer(hit.get("at"))
+    for entry in history:
+        if not isinstance(entry, dict) or entry.get("outcome") not in {"Victory", "Restarted"}:
+            raise ValueError("The community boss recovery has an invalid raid history.")
+        for field in ("started_at", "ended_at", "max_hp", "damage", "attacks", "raiders"):
+            _integer(entry.get(field))
+    return copy.deepcopy(value)
+
+
+def network_identity(address):
+    """Normalize IPv4; group IPv6 /64 privacy addresses to limit easy rotation."""
+    try:
+        ip = ipaddress.ip_address(address)
+    except ValueError:
+        raise BossError("Your connection could not be identified. Reload and try again.") from None
+    if getattr(ip, "ipv4_mapped", None):
+        ip = ip.ipv4_mapped
+    return str(ipaddress.ip_network((ip, 64), strict=False)) if ip.version == 6 else str(ip)
+
+
+def _key(raid, kind, value):
+    # Raw IP addresses and browser identifiers never enter game records/feeds.
+    return hmac.new(bytes.fromhex(raid["salt"]), (kind + ":" + value).encode(), hashlib.sha256).hexdigest()
+
+
+def _name(key):
+    return "Raider " + key[:8].upper()
+
+
+class CommunityBoss:
+    def __init__(self, store):
+        self.store, self.lock = store, threading.RLock()
+        with self.store.connection(transaction=True) as conn:
+            row = self.store.query(conn, "SELECT document FROM rh_boss WHERE name=?", (store.key,)).fetchone()
+            if not row:
+                value = fresh_raid()
+                self.store.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (store.key, json.dumps(value)))
+            else:
+                value = validate_boss(json.loads(row[0]))
+        self.state, self.loaded_at = value, time.monotonic()
+
+    def _read(self, conn, locked=False):
+        suffix = " FOR UPDATE" if locked and self.store.pg else ""
+        row = self.store.query(conn, "SELECT document FROM rh_boss WHERE name=?" + suffix, (self.store.key,)).fetchone()
+        if not row:
+            raise ValueError("Community boss state is missing. Restore the private recovery checkpoint.")
+        return validate_boss(json.loads(row[0]))
+
+    def _write(self, conn, state):
+        self.store.query(conn, "UPDATE rh_boss SET document=? WHERE name=?",
+                         (json.dumps(state, separators=(",", ":"), allow_nan=False), self.store.key))
+
+    def _load(self, force=False):
+        # Most 5-second viewer polls use memory, not another SQLite read. A
+        # periodic reload also picks up writes from another process during tests
+        # or a short deployment overlap. Local mode still requires one instance.
+        if force or time.monotonic() - self.loaded_at >= 5:
+            with self.store.connection() as conn:
+                self.state = self._read(conn)
+            self.loaded_at = time.monotonic()
+
+    @staticmethod
+    def _project(state, guest, address, now):
+        keys = list(STYLES)
+        weakness = keys[(int(now) // WARD_SECONDS + int(state["id"][:8], 16)) % 3]
+        day = max(0, int((now - state["started_at"]) // DAY)) if state["started_at"] else 0
+        reset = state["started_at"] + (day + 1) * DAY if state["started_at"] else 0
+        player_key = _key(state, "player", guest) if guest else ""
+        network_key = _key(state, "network", network_identity(address)) if address else ""
+        player, network = state["players"].get(player_key, {}), state["networks"].get(network_key, {})
+        used = lambda record: record.get("used", 0) if record.get("day") == day else 0
+        remaining = max(0, DAILY_ATTACKS - max(used(player), used(network)))
+        ready = max(player.get("last_attack", 0), network.get("last_attack", 0)) + COOLDOWN
+        if remaining == 0:
+            ready = max(ready, reset)
+        phase = "Awakening" if state["hp"] > state["max_hp"] * .75 else "Enraged" if state["hp"] > state["max_hp"] * .25 else "Last stand"
+        status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
+        leaders = sorted(state["players"].items(), key=lambda item: (-item[1]["damage"], item[0]))[:10]
+        return dict(server_time=now, raid_id=state["id"], version=state["version"], status=status, connection_ready=bool(address),
+                    hp=state["hp"], max_hp=state["max_hp"], phase=phase, started_at=state["started_at"],
+                    finished_at=state["finished_at"], day=day + 1, resets_at=reset,
+                    total_damage=state["total_damage"], total_attacks=state["total_attacks"], raiders=len(state["players"]),
+                    weakness=weakness, weakness_label=STYLES[weakness], ward_changes_at=(int(now) // WARD_SECONDS + 1) * WARD_SECONDS,
+                    rules=dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, damage=100, weak_damage=150, burst_every=10, burst_bonus=100),
+                    you=dict(name=_name(player_key) if guest else "Spectator", damage=player.get("damage", 0),
+                             attacks=player.get("attacks", 0), remaining=remaining, ready_at=ready,
+                             burst_in=10 - player.get("attacks", 0) % 10,
+                             last_request=player.get("request_id", ""), last_hit=copy.deepcopy(player.get("last_hit")),
+                             can_attack=bool(guest and status in {"waiting", "active"} and remaining and now >= ready)),
+                    leaders=[dict(name=_name(key), damage=p["damage"], attacks=p["attacks"], you=key == player_key) for key, p in leaders],
+                    recent=copy.deepcopy(state["recent"]), history=copy.deepcopy(state["history"]))
+
+    def status(self, guest=None, address=None):
+        with self.lock:
+            self._load()
+            return self._project(self.state, guest, address, time.time())
+
+    def export(self):
+        with self.lock:
+            self._load(force=True)
+            return copy.deepcopy(self.state)
+
+    def attack(self, guest, address, style, raid_id, request_id):
+        if not isinstance(style, str) or style not in STYLES or not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", request_id):
+            raise BossError("Choose Blade, Bow, or Magic, then try again.")
+        with self.lock:
+            now = time.time()
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                self.state = copy.deepcopy(state)
+                if raid_id != state["id"]:
+                    raise BossError("A new raid has started. Review the new boss before attacking.", "new_raid", 409)
+                view = self._project(state, guest, address, now)
+                pk, nk = _key(state, "player", guest), _key(state, "network", network_identity(address))
+                existing = state["players"].get(pk, {})
+                # A retry of an acknowledged click never lands a second hit,
+                # including retries after victory or after the cooldown ends.
+                if existing.get("request_id") == request_id:
+                    return dict(ok=True, duplicate=True, hit=copy.deepcopy(existing["last_hit"]), state=view)
+                if view["status"] in {"paused", "victory"}:
+                    raise BossError("The host paused the raid." if state["paused"] and state["hp"] else "The community has already defeated this boss.", view["status"], 409)
+                if not view["you"]["can_attack"]:
+                    retry = max(1, math.ceil(view["you"]["ready_at"] - now))
+                    message = "Your browser or shared connection has used today's 40 attacks. Return next raid day." if not view["you"]["remaining"] else "Your browser or shared connection is cooling down. Wait for the timer."
+                    raise BossError(message, "daily_limit" if not view["you"]["remaining"] else "cooldown", 429, retry)
+                day = view["day"] - 1
+                state["networks"] = {key: p for key, p in state["networks"].items() if p["day"] >= day - 1}
+                if (pk not in state["players"] and len(state["players"]) >= MAX_PLAYERS) or (nk not in state["networks"] and len(state["networks"]) >= MAX_NETWORKS):
+                    raise BossError("This raid has reached its player capacity. The host can start a new raid.", "capacity", 409)
+                player = state["players"].setdefault(pk, dict(attacks=0, damage=0))
+                network = state["networks"].setdefault(nk, {})
+                burst = (player["attacks"] + 1) % 10 == 0
+                weak = style == view["weakness"]
+                damage = min(state["hp"], (150 if weak else 100) + (100 if burst else 0))
+                hit = dict(style=style, damage=damage, weakness=weak, burst=burst, at=int(now))
+                for record in (player, network):
+                    record.update(used=(record.get("used", 0) if record.get("day") == day else 0) + 1,
+                                  day=day, last_attack=now)
+                # Preserve fractional seconds so early clicks never shorten
+                # the server-enforced cooldown.
+                player.update(attacks=player["attacks"] + 1, damage=player["damage"] + damage,
+                              request_id=request_id, last_hit=hit)
+                state.update(hp=state["hp"] - damage, total_damage=state["total_damage"] + damage,
+                             total_attacks=state["total_attacks"] + 1, version=state["version"] + 1,
+                             started_at=state["started_at"] or int(now))
+                state["recent"] = [dict(name=_name(pk), **hit)] + state["recent"][:11]
+                if not state["hp"]:
+                    state["finished_at"] = int(now)
+                self._write(conn, state)
+            self.state, self.loaded_at = state, time.monotonic()
+            if state["finished_at"]:
+                LOG.info("BOSS Victory; %s attacks from %s raider profiles.", state["total_attacks"], len(state["players"]))
+            elif state["total_attacks"] == 1:
+                LOG.info("BOSS Shared raid started; HP=%s, cooldown=60s, daily attacks=40.", state["max_hp"])
+            return dict(ok=True, duplicate=False, hit=hit, state=self._project(state, guest, address, now))
+
+    def control(self, action, raid_id, health=DEFAULT_HP):
+        if action not in {"pause", "resume", "restart"}:
+            raise BossError("Choose a valid boss action.")
+        if action == "restart":
+            _integer(health, 100_000, 100_000_000)
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if state["id"] != raid_id:
+                    raise BossError("Another raid has started. Reload before changing it.", "new_raid", 409)
+                if action == "restart":
+                    self.store.backup_in(conn, "before-boss-restart", {"community_boss": state})
+                    history = state["history"]
+                    if state["total_attacks"]:
+                        history.append(dict(outcome="Victory" if not state["hp"] else "Restarted", started_at=state["started_at"],
+                                            ended_at=state["finished_at"] or int(time.time()), max_hp=state["max_hp"],
+                                            damage=state["total_damage"], attacks=state["total_attacks"], raiders=len(state["players"])))
+                    state = fresh_raid(health=health, history=history)
+                else:
+                    state["paused"], state["version"] = action == "pause", state["version"] + 1
+                self._write(conn, state)
+            self.state, self.loaded_at = state, time.monotonic()
+        LOG.info("BOSS Host action: %s.", action)
+```
+
 ## config.py
 
 ```python
@@ -648,7 +1036,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.22-local"
+RELEASE = "2026.09.22-boss"
 INTERVAL = 60
 
 
@@ -731,18 +1119,157 @@ class Config:
         return {key: {"configured": bool(value), "source": self.sources[key]} for key, value in self.credentials.items()}
 ```
 
+## docs/COMMUNITY_BOSS.md
+
+```markdown
+# Community boss — play and host guide
+
+One page, one boss, one community. Open `/play`, choose a style, and press Attack.
+No account, wager, purchase, separate process, or additional dependency is needed.
+The original `wager_backend.py` launcher serves the game and existing wager site.
+
+## Rules players see in the game
+
+- **2,400,000 health** by default. Everyone chips away at the same pool.
+- **One manual attack per 60 seconds**, with up to **40 attacks per raid day**.
+- **Blade, Bow, or Magic** deal 100 damage. Matching the current weakness deals
+  150. The weakness changes every 10 minutes according to the server clock.
+- Every **tenth personal hit adds 100 damage** as a Crimson burst. A matching
+  burst normally deals 250. The final hit is capped at the remaining HP.
+- The first successful community attack starts the raid-day clock. Allowances
+  renew every 24 hours from that point, not at each player's local midnight.
+- The game never regenerates health or spends unused attacks. A missed day
+  does not subtract your contribution. Pausing blocks hits but not the calendar.
+- Awakening, Enraged (75%), and Last stand (25%) are visual/story phases. They
+  do not secretly change the damage rules or punish players who joined late.
+- Victory remains visible. The host chooses when to start another raid.
+
+## Why it should last several days
+
+With matching hits, every full ten-attack sequence deals 1,600 damage.
+The following estimates assume 100 distinct, active players/networks making
+that many attacks **each day**, all matching the current weakness:
+
+| Daily attacks per person | Community damage per day | Allowance-days required |
+| --- | ---: | ---: |
+| 20 | 320,000 | 7.5 — victory during raid day 8 |
+| 30 | 480,000 | 5 — victory during raid day 5 |
+| 40 | 640,000 | 3.75 — victory during raid day 4 |
+
+Only the first strike starts the schedule. A full 40-hit session needs at least
+39 minutes because hits are manual and one minute apart. Smaller participation,
+missed weaknesses, and shared connections extend the encounter. Community size
+alone does not guarantee a finish date. A 100-player maximum-activity simulation
+is part of the test suite; the default boss survives the first three allowances.
+
+For later raids, the Superadmin can set **100,000–100,000,000 HP** in the new-raid
+form. The current boss HP cannot be edited accidentally during play. Try the
+default first and adjust the next encounter based on actual participation.
+
+## Together, without accounts
+
+Each browser gets an HttpOnly, signed guest cookie, separate from admin login.
+Its anonymous `Raider XXXXXXXX` name lasts for the raid. The public top ten and
+recent twelve hits use these aliases. They are cosmetic guest profiles, not
+verified individual identities. Clearing cookies, changing browser, or starting
+a new raid can change the name.
+
+The server checks both the browser allowance and the connection allowance.
+Changing cookies does not reset a network's limit; moving the same browser to
+another network does not reset its personal limit. IPv4-mapped IPv6 normalizes
+to IPv4, and IPv6 addresses in the same /64 share a connection allowance.
+Shared Wi-Fi/NAT users therefore share an allowance. VPNs plus new browser
+profiles can evade these lightweight limits; this is not cheat-proof identity.
+
+Game records store salted HMAC keys rather than raw IPs or browser tokens.
+Public game APIs omit the salt and those keys. The existing private web-access
+log can still contain visitor IPs for page visits; game polling/attacks do not
+flood that log. Browser cookies expire after one year; privacy tools may clear
+them sooner. No user-generated chat or custom names need moderation.
+
+## Host controls and recovery
+
+Sign in at `/admin` and choose **Community boss**. Admins can view the shared
+stats; only the Superadmin can pause, resume, export private recovery, or start
+a new raid. A restart requires a checked confirmation and guards against an
+outdated raid ID. It archives the previous result and resets players/allowances.
+The latest ten summaries remain. A complete pre-restart checkpoint is also
+recorded locally; it is not a remote backup.
+
+**Save a private recovery file regularly during a multi-day raid and before a
+planned deployment.** It includes the boss ID, HP, players, network hashes,
+receipts, allowances, timestamps, history, and account/session state. The
+ordinary race-only backup does not contain the game.
+
+On a fresh App Platform instance, `private/recovery.seed.json` is imported
+before the original seed. Existing local state always wins; a recovery file
+never silently resets a running raid. Corrupt game recovery stops the first
+import transaction rather than partially replacing accounts. Keep the current
+`data/` folder when upgrading on a persistent host.
+
+App Platform local disk is ephemeral. An unexpected replacement may lose
+progress since the last downloaded-and-committed checkpoint. In-app hits are
+saved immediately to the local SQLite file, but that does not make the disk
+persistent. A no-remote-storage deployment cannot promise lossless multi-day
+progress on an ephemeral host. Keep one instance; do not scale local storage
+across independent containers. If that limitation becomes unacceptable, use
+a host with a persistent disk or deliberately opt into the existing remote
+storage compatibility; neither is required for this package to launch.
+
+## How updates stay lightweight
+
+The server does no provider requests while handling a game click. A transaction
+locks the boss record, reads current state, validates the hit and receipts, and
+commits its damage. Race settings and provider snapshots are separate records.
+Most viewer requests use a small in-memory snapshot; it reloads at most every
+five seconds per process and immediately reflects local writes. A separate
+GET returns only public summaries plus the requesting player's limits.
+
+The page polls every five seconds while visible and immediately on return or
+network recovery. Countdown animation uses server time plus a monotonic browser
+clock. Old responses cannot undo newer damage. If the response to a click is
+lost, the browser keeps that request ID and can retry it; the server returns
+its saved receipt. There are no automatic attacks. Snapshot responses use
+no-store and same-origin cookies/CSRF. Stale connections disable fresh attacks
+until a successful update arrives.
+
+Game data is bounded to 2,000 browser profiles per raid, 4,000 retained network
+records, 12 recent hits, 10 leaders, and 10 past raid summaries. Old network
+records are pruned as raid days advance. This is intended for the approximately
+100-person community, not a public internet-scale MMO.
+
+## DigitalOcean setup
+
+Build: `python -m pip install -r requirements.txt`
+
+Run: `python wager_backend.py`
+
+Keep port `8080`, health check `/healthz`, and one web instance. No game worker
+or new component is needed. Set `TRUST_APP_PLATFORM=1` only behind App Platform;
+the game uses its documented `DO-Connecting-IP` header. For local/direct hosting,
+use `TRUST_APP_PLATFORM=0` so arbitrary proxy headers are ignored. A missing or
+invalid trusted header disables new attacks rather than merging all players
+under an ingress IP. See README.md for full deployment and recovery steps.
+```
+
 ## docs/VALIDATION.md
 
 ```markdown
-# Verification record — 2026.09.22-local
+# Verification record — 2026.09.22-boss
 
 Verified in the supplied Linux workspace on 2026-09-22.
 
 | Check | Result |
 | --- | --- |
-| Python tests | 57 passed. |
+| Multiplayer | Two separate Chromium browser contexts, distinct visitor IPs, shared HP, automatic 5-second visibility, pause/resume, and personal totals passed. |
+| Atomic hits and fairness | Concurrent distinct players retain all damage; simultaneous requests on one network allow one hit. Fractional cooldowns, daily/browser/network caps, IPv6 /64, and trusted DO headers passed. |
+| Boss receipts and victory | Lost-response retry, final-hit clamping, no extra damage after victory, stale raid rejection, protected host controls, and recovery passed. |
+| Multi-day balance | 100 simulated raiders using 40 matching hits per day defeat 2,400,000 HP on raid day 4; no real waiting or provider calls. |
+| Game interface | Five-second polling, hidden-tab pause, no automatic attacks, uncertain-click retry, stale-response rejection, safe text rendering, and admin draft retention passed. |
+| Homepage/footer | Join the boss fight button reaches /play. Public Admin footer link and dashboard site footer removed; /admin remains available. |
+| Python tests | 75 passed (including 18 game tests). |
 | PostgreSQL integration tests | 4 skipped: no dedicated database supplied. CI provisions one. |
-| DOM and CSS checks | 20 passed with jsdom 26.1.0; no browser build required in production. |
+| DOM and CSS checks | 28 passed with jsdom 26.1.0; no browser build required in production. |
 | Date publication | Bottom confirmation button submits confirmation and persists the edited window. |
 | Superseded failure | An old-window HTTP failure cannot mark the new race as failed or impose its ordinary retry delay. Explicit provider rate limits remain honored. |
 | Concurrent refresh | An active provider check retains one follow-up request; repeated clicks coalesce. An in-flight browser read schedules a follow-up instead of dropping the request. |
@@ -755,14 +1282,14 @@ Verified in the supplied Linux workspace on 2026-09-22.
 | Empty board | Waiting, empty source, campaign filter, zero weighted qualification, and failure/recovery checked. |
 | Actual HTTP startup | Passed: child process launched with `python wager_backend.py` in production/local mode with a stale database binding, served `/healthz` and `/admin`, started both automatic jobs, and shut down. |
 | Production without PostgreSQL | Passed with no usable DATABASE_URL and psycopg imports blocked; original accounts and secure HTTPS login remain functional. |
-| Private recovery | Passed: only Superadmin can download; fresh-instance import preserves password changes, accounts, dates, overrides, history, signing key, and saved Top 15. A newer local store wins over seeds; corrupt recovery files stop import without resetting accounts. |
+| Private recovery | Passed: only Superadmin can download; fresh-instance import preserves password changes, accounts, dates, overrides, history, signing key, and saved Top 15, plus boss HP, guest identity, personal contributions, cooldowns, and network allowances. A newer local store wins over seeds; corrupt recovery files stop import without resetting accounts. |
 | Supplied credential files | Match original uploaded bytes. |
-| Original Superadmin | Original password/hash verified; native login and all four dashboard tabs return successfully. |
+| Original Superadmin | Original password/hash verified; native login and all five dashboard tabs return successfully. |
 | Account migration | Preserves every original account field; adds auth_version for session revocation. |
 | Real Shuffle request | Timeout; successful provider connectivity not verified. |
 | Real Kick authorization | Timeout; successful provider connectivity not verified. |
-| Native browser checks | Passed in Chromium 153.0.8010.0 against Waitress with isolated accounts and synthetic providers: login, actual refresh POST/202, bottom-button date confirmation, published rows, expanded 100-user Code Red list, and the private recovery download. Production local-storage mode is used with a cookie override only for the HTTP test fixture; secure production cookies are separately checked over simulated HTTPS. No JavaScript errors; no horizontal overflow at 390 px. |
-| Browser screenshot review | Public page/admin red theme retained; the new private recovery section was reviewed at mobile width. Test previews contain synthetic wagers and stream status. |
+| Native browser checks | Passed in Chromium 153.0.8010.0 against Waitress with isolated accounts and synthetic providers: login, actual refresh POST/202, bottom-button date confirmation, published rows, expanded 100-user Code Red list, the private recovery download, and the community boss controls. Production local-storage mode is used with a cookie override only for the HTTP test fixture; secure production cookies are separately checked over simulated HTTPS. No JavaScript errors; no horizontal overflow at 390 px. |
+| Browser screenshot review | Public page/admin red theme retained; the game and homepage were reviewed on desktop, and the game/recovery views at mobile width. Test previews contain synthetic wagers and stream status. |
 | DigitalOcean deployment | Not performed; no deployed site was provided for validation. |
 
 The Python tests cover valid/invalid/mixed source responses, stale-cache
@@ -2195,7 +2722,7 @@ python-3.13.12
       const url=new URL(document.body.dataset.feed,location.origin);
       if(isAdmin) {for(const [key,value] of new URLSearchParams(location.search))url.searchParams.set(key,value);if(id('codeRed')?.open)url.searchParams.set('code_red','1');}
       const result=await getJSON(url);apply(result,began);notice('networkError','');
-      if(result.release&&result.release!=='2026.09.22-local') notice('networkError','A newer version was deployed. Save your draft, then reload.');
+      if(result.release&&result.release!=='2026.09.22-boss') notice('networkError','A newer version was deployed. Save your draft, then reload.');
     } catch(error) {notice('networkError',error.name==='AbortError'?'Dashboard request timed out. Previous results are retained; updates will retry.':error.message);}
     finally {
       busy=false;
@@ -2224,6 +2751,166 @@ python-3.13.12
   document.addEventListener('visibilitychange',()=>{clearTimeout(timer);if(!document.hidden){next=0;poll();}});
   window.addEventListener('pageshow',event=>{if(event.persisted){next=0;poll();}});
   clock();setInterval(clock,1000);poll();
+})();
+```
+
+## static/boss.css
+
+```css
+/* A small CSS arena using the original logo; no canvas engine or image bundle. */
+.boss-page{padding-top:40px}.boss-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:30px}.boss-heading h1{font-size:clamp(2.3rem,4vw,3.6rem);margin:16px 0}.boss-heading .lead{max-width:520px;margin-bottom:0}.boss-heading>a{white-space:nowrap;margin-bottom:5px}.boss-live{display:flex;justify-content:space-between;gap:16px;color:var(--muted);font-size:.72rem;margin-bottom:16px}.boss-live>span:first-child{color:var(--accent)}.raid-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px}.arena{padding:24px 28px;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#671c253d,transparent 65%),#191216}.arena-heading,.boss-name-row,.hp-label,.combo-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.arena-heading .eyebrow{font-size:.6rem}.boss-stage{height:280px;display:grid;place-items:center;position:relative;isolation:isolate}.boss-sprite{object-fit:contain;width:190px;height:190px;image-rendering:pixelated;filter:drop-shadow(0 15px 25px #ff24243d);z-index:1;animation:boss-hover 4s ease-in-out infinite}.rune-ring{position:absolute;border:1px solid #bb35375c;border-radius:50%;width:254px;height:254px;box-shadow:0 0 45px #ff323210,inset 0 0 38px #f33b3810}.rune-ring.inner{width:220px;height:220px;border-style:dashed;opacity:.55;animation:ring-turn 80s linear infinite}.arena-rune{position:absolute;color:#ff666d;font-size:22px;opacity:.65}.rune-one{left:15%;top:30%}.rune-two{right:14%;bottom:23%}.boss-shadow{position:absolute;bottom:20px;background:#0006;width:145px;height:18px;border-radius:50%;filter:blur(6px)}.boss-name-row{margin-top:8px}.boss-name-row h2{font-size:1.6rem}.boss-name-row .eyebrow{font-size:.57rem;margin-bottom:4px}.hp-label{font-size:.77rem;margin:10px 0 8px;font-variant-numeric:tabular-nums}.hp-label>span{color:var(--muted)}.health-bar{appearance:none;-webkit-appearance:none;width:100%;height:12px;border:none;border-radius:8px;background:#382128;overflow:hidden;display:block;accent-color:#ff3a47}.health-bar::-webkit-progress-bar{background:#382128;border-radius:8px}.health-bar::-webkit-progress-value{background:linear-gradient(90deg,#b91732,#ff4a51);border-radius:8px;transition:width .45s}.health-bar::-moz-progress-bar{background:linear-gradient(90deg,#b91732,#ff4a51);border-radius:8px}.boss-story{color:var(--muted);font-size:.75rem;margin:14px 0 20px;min-height:2.8em}.raid-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);padding-top:18px;gap:14px}.raid-stats strong,.personal-stats strong{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums;letter-spacing:-.035em}.raid-stats span,.personal-stats span{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}.attack-panel{padding:26px}.attack-panel>.row{align-items:flex-start}.attack-panel .eyebrow{font-size:.59rem}.attack-panel h2{font-size:1.65rem;margin-top:5px}.weakness-box{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid #73402f;background:linear-gradient(105deg,#40261d,#291c19);border-radius:10px;margin:22px 0 17px}.weakness-symbol{font-size:2.1rem;color:#ffcd86}.weakness-box small,.weakness-box strong,.weakness-box div>span{display:block}.weakness-box small{font-size:.56rem;letter-spacing:.13em;color:#e3b777}.weakness-box strong{font-size:.93rem;color:#ffe5c1;margin:3px 0}.weakness-box div>span{font-size:.65rem;color:#c5ae99}.strike-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.strike-options button{border:1px solid var(--line);border-radius:10px;background:#21161c;color:var(--text);padding:12px 6px;position:relative}.strike-options button[aria-pressed=true]{border-color:var(--accent);background:#481f2b;box-shadow:inset 0 0 0 1px var(--accent)}.strike-options button.is-weak:after{content:'WEAK';position:absolute;right:5px;top:5px;font-size:.42rem;letter-spacing:.05em;color:#ffd397}.strike-options button>span{display:block;font-size:1.65rem;line-height:1.2;margin:4px 0 7px;color:#ffd5d7}.strike-options strong{display:block;font-size:.8rem}.strike-options small{display:block;font-size:.55rem;color:var(--muted);margin-top:4px}.combo-row{font-size:.65rem;margin:20px 0 8px}.combo-row>span{color:var(--muted)}.burst-meter{display:flex;gap:4px}.burst-meter span{height:5px;flex:1;background:#462632;border-radius:2px}.burst-meter span.filled{background:var(--accent);box-shadow:0 0 8px #ff2d2d25}.attack-button{width:100%;min-height:53px;font-size:.98rem;margin-top:22px}.attack-button:disabled{cursor:default;opacity:.6}.attack-hint{text-align:center;color:var(--muted);font-size:.64rem;margin:9px 0 0}.hit-result{min-height:2.8em;font-size:.78rem;text-align:center;color:var(--accent);margin:16px 0}.personal-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);padding-top:14px;gap:15px}.raider-name{color:var(--muted);font-size:.62rem;margin:14px 0 5px}.raider-name strong{color:#eed5dd}.attack-panel>#raidReset{font-size:.6rem;margin-bottom:0}.hit-float{position:absolute;z-index:3;top:30%;left:50%;font-size:2.4rem;font-weight:850;color:#ffe7ae;opacity:0;pointer-events:none;text-shadow:0 3px 12px #270008}.boss-stage.struck .hit-float{animation:damage-pop .8s ease-out}.boss-stage.struck .boss-sprite{animation:boss-hit .45s ease-out}.boss-stage.victory .boss-sprite{filter:grayscale(.8);opacity:.6;animation:none;transform:rotate(-9deg)}.arena:has(.victory){border-color:#a6753e}.instructions{padding:28px;margin-top:24px;scroll-margin-top:95px}.instruction-grid{list-style:none;counter-reset:steps;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:0;margin:24px 0}.instruction-grid li{counter-increment:steps}.instruction-grid li:before{content:'0' counter(steps);display:block;color:var(--accent);font-size:.8rem;font-weight:750;margin-bottom:10px}.instruction-grid strong{font-size:.93rem}.instruction-grid p{color:var(--muted);font-size:.79rem;margin:9px 0 0}.instruction-grid b{color:#f0d9de;font-weight:550}.raid-fineprint{border-top:1px solid var(--line);padding-top:18px;display:grid;gap:10px}.raid-fineprint p{font-size:.71rem;color:var(--muted);margin:0}.raid-fineprint strong{color:#e9cdd4}.raid-bottom{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}.raid-list{padding:25px}.raid-list h2{font-size:1.45rem}.combat-list{list-style:none;padding:0;margin:19px 0}.combat-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #35232b;padding:11px 0;font-size:.76rem}.combat-list li:last-child{border:0}.combat-list strong{font-size:.8rem;font-weight:600}.combat-list small{display:block;color:var(--muted);font-size:.61rem;margin-top:3px}.combat-list .score{color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}.combat-list .self strong{color:#ffb8bf}.raid-history{margin-top:22px;padding:18px 24px;font-size:.82rem}.boss-restart{display:grid;gap:18px;max-width:500px;margin-top:22px}.boss-confirm{display:flex;align-items:flex-start;gap:10px;font-size:.78rem}.boss-confirm input{width:18px;min-height:18px;margin-top:2px;accent-color:var(--action)}
+@keyframes boss-hover{50%{transform:translateY(-8px)}}@keyframes ring-turn{to{transform:rotate(360deg)}}@keyframes boss-hit{25%{transform:translateX(-9px) rotate(-4deg)}60%{transform:translateX(6px) rotate(3deg)}}@keyframes damage-pop{0%{opacity:1;transform:translate(-50%,0) scale(.8)}25%{opacity:1;transform:translate(-50%,-15px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-65px) scale(1)}}
+@media(max-width:850px){.raid-layout{grid-template-columns:1fr 1fr;gap:16px}.arena{padding:21px}.attack-panel{padding:21px}.boss-stage{height:255px}.boss-sprite{width:165px;height:165px}.rune-ring{width:215px;height:215px}.rune-ring.inner{width:185px;height:185px}.boss-name-row{align-items:flex-start;flex-direction:column;gap:0}.arena-heading{flex-wrap:wrap}.arena-heading .badge{font-size:.61rem}.instructions{padding:23px}.instruction-grid{gap:20px}.raid-stats strong{font-size:1.1rem}}
+@media(max-width:650px){.boss-page{padding-top:28px}.boss-heading{display:block;margin-bottom:22px}.boss-heading .lead{font-size:.87rem;margin-bottom:15px}.boss-heading h1{font-size:2.6rem}.boss-live{flex-direction:column;gap:4px;font-size:.66rem}.raid-layout,.raid-bottom{grid-template-columns:1fr}.arena{padding:20px}.boss-stage{height:245px}.boss-name-row{flex-direction:row;align-items:center;gap:10px}.boss-name-row h2{font-size:1.5rem}.arena-heading{flex-wrap:nowrap}.attack-panel{padding:24px}.raid-stats strong{font-size:1.25rem}.instruction-grid{grid-template-columns:1fr;gap:22px}.instructions .section-title{align-items:flex-start;flex-direction:column}.instruction-grid li:before{float:left;margin:0 15px 35px 0}.raid-list{padding:22px}.raid-bottom{gap:16px}.hp-label{font-size:.73rem}.boss-heading .text-link{font-size:.8rem}}
+@media(prefers-reduced-motion:reduce){.boss-sprite,.rune-ring.inner,.boss-stage.struck .hit-float,.boss-stage.struck .boss-sprite{animation:none!important}.health-bar::-webkit-progress-value{transition:none}}
+```
+
+## static/boss.js
+
+```javascript
+/* Shared raid UI. The server owns damage, identity, cooldowns and daily limits.
+   Polling never attacks. A failed POST keeps its receipt ID for a safe retry. */
+(() => {
+  'use strict';
+  const root = document.querySelector('[data-boss-root]');
+  if (!root) return;
+  const admin = root.dataset.mode === 'admin';
+  const $ = id => root.querySelector('#' + id);
+  const text = (id, value) => { const el=$(id); if(el) el.textContent=String(value); };
+  const number = value => Number(value).toLocaleString('en-US');
+  const labels = {blade:'Blade',bow:'Bow',magic:'Magic'};
+  const button=$('attackButton'), stage=$('bossStage');
+  let state, csrf='', selected='blade', busy=false, timer, polling=false;
+  let receivedAt=performance.now(), lastGood=-Infinity, pending=null, lastAnimated='';
+  const pendingKey='rh.boss.pending';
+  // Session storage remembers a click if the connection drops or the tab reloads.
+  // Gameplay still works in browsers that disable storage; cookies are required.
+  try { pending=JSON.parse(sessionStorage.getItem(pendingKey)); } catch (_) { /* optional */ }
+  function remember(value) {
+    pending=value;
+    try { value ? sessionStorage.setItem(pendingKey,JSON.stringify(value)) : sessionStorage.removeItem(pendingKey); } catch (_) { /* optional */ }
+  }
+  function error(message='') { const el=$('bossError'); if(el){el.hidden=!message;el.textContent=message;} }
+  const now = () => state ? state.server_time+(performance.now()-receivedAt)/1000 : 0;
+  function duration(seconds) {
+    const s=Math.max(0,Math.ceil(seconds));
+    return s>=3600 ? `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m` : `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  }
+  function strikeFeedback(hit, receipt) {
+    if (!hit || receipt===lastAnimated) return;
+    lastAnimated=receipt;
+    text('hitResult',`${hit.burst?'CRIMSON BURST! ':''}${labels[hit.style]} hit for ${number(hit.damage)}${hit.weakness?' · Weakness matched!':' · Nice hit.'}`);
+    text('hitFloat','−'+number(hit.damage));
+    if(stage){stage.classList.remove('struck'); void stage.offsetWidth; stage.classList.add('struck');}
+  }
+  function rows(id, values, empty, mapper) {
+    const list=$(id); if(!list) return;
+    const nodes=values.map(mapper);
+    if(!nodes.length){const li=document.createElement('li');li.className='muted';li.textContent=empty;nodes.push(li);}
+    list.replaceChildren(...nodes);
+  }
+  function item(title, detail, score, self=false) {
+    const li=document.createElement('li'), left=document.createElement('span'), strong=document.createElement('strong'), small=document.createElement('small'), right=document.createElement('span');
+    strong.textContent=title;small.textContent=detail;right.textContent=score;right.className='score';
+    left.append(strong,small);li.append(left,right);if(self)li.className='self';return li;
+  }
+  function apply(value) {
+    const next=value.state;
+    if(!next || typeof next.raid_id!=='string' || !Number.isFinite(next.server_time) || !next.you) throw new Error('The game returned an incomplete update. Reload in a moment.');
+    // A slow poll must not undo an attack or bring back a replaced raid.
+    if(state && (next.server_time<state.server_time || (next.raid_id===state.raid_id && next.version<state.version))) return;
+    if(value.csrf)csrf=value.csrf;
+    state=next;receivedAt=performance.now();lastGood=receivedAt;
+    if(pending && (pending.raid_id!==state.raid_id || pending.name!==state.you.name)) remember(null);
+    if(pending && state.you.last_request===pending.request_id){strikeFeedback(state.you.last_hit,pending.request_id);remember(null);}
+    text('bossConnection','Live · Shared raid connected');
+    text('bossHealth',`${number(state.hp)} / ${number(state.max_hp)} HP`);
+    text('bossPercent',(state.hp/state.max_hp*100).toFixed(2)+'%');
+    const bar=$('bossHealthBar');if(bar){bar.max=state.max_hp;bar.value=state.hp;}
+    text('bossPhase',state.status==='victory'?'DEFEATED':state.status==='paused'?'PAUSED':state.phase);
+    text('bossDay','Raid day '+state.day);text('bossRaiders',number(state.raiders));
+    text('bossAttacks',number(state.total_attacks));text('bossDamage',number(state.total_damage));
+    const story=state.status==='victory'?'VICTORY. The Red crew brought the beast down. Every hit made this happen.':state.status==='paused'?'The host has paused attacks. Your progress is safe; the raid-day clock keeps running.':state.status==='waiting'?'The first strike starts the raid. Let’s wake the beast.':state.phase==='Last stand'?'Last stand. The beast is cornered. Rally the crew and finish what you started.':state.phase==='Enraged'?'Enraged. The arena is heating up. Watch the weakness and keep the pressure on.':'Awakening. The beast stirs. Small hits become a massive takedown.';
+    text('bossStory',story);if(stage)stage.classList.toggle('victory',state.status==='victory');
+    text('bossWeakness',`${state.weakness_label} · 150 damage`);
+    root.querySelectorAll('[data-style]').forEach(el=>el.classList.toggle('is-weak',el.dataset.style===state.weakness));
+    text('yourName',state.you.name);text('yourDamage',number(state.you.damage));
+    text('yourRemaining',`${state.you.remaining} / ${state.rules.daily_attacks}`);
+    text('burstLabel',state.you.burst_in===1?'NEXT HIT: +100 damage':`${state.you.burst_in} hits to +100 damage`);
+    root.querySelectorAll('#burstMeter span').forEach((el,i)=>el.classList.toggle('filled',i<10-state.you.burst_in));
+    rows('bossLeaders',state.leaders,'Land the first hit to lead the charge.',(r,i)=>item(`${String(i+1).padStart(2,'0')}  ${r.name}${r.you?' · You':''}`,`${number(r.attacks)} hits`,number(r.damage),r.you));
+    rows('bossRecent',state.recent,'The arena is waiting for your community.',r=>item(r.name,`${labels[r.style]}${r.burst?' · Burst':''}${r.weakness?' · Weakness':''} · ${new Date(r.at*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`,'−'+number(r.damage)));
+    rows('bossHistory',state.history.slice().reverse(),'The first chapter is yours to write.',r=>item(r.outcome,`${number(r.raiders)} raiders · ${number(r.attacks)} hits · ${new Date(r.ended_at*1000).toLocaleDateString()}`,number(r.damage)+' damage'));
+    tick();
+  }
+  function tick() {
+    if(!state)return;
+    const seconds=now(), stale=performance.now()-lastGood>15000;
+    text('wardTimer',seconds>=state.ward_changes_at?'Weakness changing…':`Changes in ${duration(state.ward_changes_at-seconds)}`);
+    text('raidReset',state.resets_at?`Next raid day in ${duration(state.resets_at-seconds)}. Allowance refreshes then.`:'The first community hit starts the 24-hour raid-day schedule.');
+    if(!button)return;
+    const active=['waiting','active'].includes(state.status);
+    // An unacknowledged click can be retried even if its first delivery caused
+    // a cooldown or victory. The backend returns the original receipt.
+    const retry=Boolean(pending && !busy && !stale);
+    const ready=active && state.connection_ready && state.you.remaining>0 && seconds>=state.you.ready_at && !stale && !busy;
+    button.disabled=!(retry || ready);
+    button.textContent=busy?'Landing your hit…':stale?'Reconnecting…':pending?'Retry last strike':state.status==='victory'?'Victory · We did it!':state.status==='paused'?'Raid paused':!state.connection_ready?'Connection setup needed':!state.you.remaining?'Rest up · Return next raid day':seconds<state.you.ready_at?`Next strike in ${duration(state.you.ready_at-seconds)}`:`Attack with ${labels[selected]} →`;
+    text('attackHint',pending?'Last strike unconfirmed. Retry safely; it won’t count twice.':state.status==='victory'?'You helped write this chapter. The host can open the next raid.':!state.you.remaining?'Daily allowance used by this browser or shared connection.':`One strike per minute · ${selected===state.weakness?'150':'100'} damage${state.you.burst_in===1?' + 100 burst':''}`);
+    if(stale)text('bossConnection','Reconnecting · Showing the last confirmed state');
+  }
+  async function request(url, options={}) {
+    const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),10000);
+    try {
+      const response=await fetch(url,{...options,credentials:'same-origin',cache:'no-store',signal:controller.signal,
+        headers:{Accept:'application/json',...options.headers}});
+      if(!response.headers.get('content-type')?.includes('application/json'))throw new Error('The game server returned an unexpected response. Try again in a moment.');
+      return {response,value:await response.json()};
+    } finally {clearTimeout(timeout);}
+  }
+  async function poll() {
+    clearTimeout(timer);
+    if(document.hidden || polling)return;
+    polling=true;
+    try {
+      const {response,value}=await request('/play/api/state');
+      if(!response.ok)throw new Error(value.error || 'The raid is temporarily unavailable.');
+      apply(value);error();
+    } catch (_) {text('bossConnection','Reconnecting · Your saved damage is safe');tick();}
+    finally {polling=false;if(!document.hidden)timer=setTimeout(poll,5000);}
+  }
+  root.querySelectorAll('[data-style]').forEach(el=>el.addEventListener('click',()=>{
+    selected=el.dataset.style;
+    root.querySelectorAll('[data-style]').forEach(b=>b.setAttribute('aria-pressed',String(b===el)));
+    tick();
+  }));
+  if(button)button.addEventListener('click',async()=>{
+    if(busy || button.disabled)return;
+    if(!pending){
+      const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);
+      remember({request_id:Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''),raid_id:state.raid_id,style:selected,name:state.you.name});
+    }
+    const receipt=pending.request_id;
+    busy=true;error();tick();
+    try {
+      const {response,value}=await request('/play/api/attack',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},
+        body:JSON.stringify({request_id:pending.request_id,raid_id:pending.raid_id,style:pending.style})});
+      if(value.state)apply(value);
+      if(!response.ok){
+        // A definitive rejection did not land. A 5xx may have happened after
+        // commit, so retain its receipt until a state check resolves it.
+        if(response.status<500)remember(null);
+        throw new Error(value.error || 'The strike could not be confirmed.');
+      }
+      strikeFeedback(value.hit,receipt);remember(null);
+    } catch(e) {error(e.name==='AbortError'?'The connection timed out. Your hit may have landed. Retry the same strike safely.':e.message);}
+    finally {busy=false;tick();void poll();}
+  });
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(timer);else void poll();});
+  window.addEventListener('online',()=>void poll());
+  try {apply(JSON.parse(root.dataset.bossBootstrap));} catch (_) {error('Reload to reconnect to the raid.');}
+  if(!admin)setInterval(tick,1000);
+  void poll();
 })();
 ```
 
@@ -2264,6 +2951,11 @@ iVBORw0KGgoAAAANSUhEUgAAAvgAAALuCAYAAADbrWJlAAARinpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4
 .progress-services{display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--line);padding-top:15px}
 .progress-services strong{font-size:.8rem;color:var(--accent)}.progress-services p{margin:7px 0 0;font-size:.78rem;overflow-wrap:anywhere;color:var(--text)}
 @media(max-width:700px){.refresh-progress{padding:18px}.progress-heading{flex-direction:column;gap:10px}.progress-services{grid-template-columns:1fr;gap:17px}}
+
+/* The homepage invitation is visible on mobile as well as desktop. */
+.play-invite{display:flex;align-items:center;gap:22px;padding:23px 25px;margin:0 0 36px;background:linear-gradient(105deg,#431b25,#22141c);border-color:#853344}.play-invite img{image-rendering:pixelated;object-fit:contain;border-radius:10px}.play-invite>div{flex:1}.play-invite h2{font-size:1.3rem;margin-bottom:6px}.play-invite .eyebrow{font-size:.57rem;margin-bottom:6px}.play-invite p:last-child{font-size:.78rem;color:var(--muted);margin:0}.site-header .play-nav{color:var(--accent);font-weight:650}
+@media(max-width:900px){.site-header .community-nav{display:none}}
+@media(max-width:700px){.play-invite{flex-wrap:wrap;padding:20px;gap:16px}.play-invite img{width:45px;height:45px}.play-invite .button{width:100%}.play-invite h2{font-size:1.17rem}.play-invite>div{min-width:180px}.site-header nav{gap:10px}.site-header .button{font-size:.64rem}.site-header .play-nav{font-size:.69rem}}
 ```
 
 ## storage.py
@@ -2289,6 +2981,7 @@ from werkzeug.security import generate_password_hash
 from race_support import read_json, clean_snapshots, race_key, empty_snapshots
 from store_schema import upgrade_store
 from race import empty
+from boss import validate_boss
 
 LOG = logging.getLogger("redhunllef")
 
@@ -2367,6 +3060,7 @@ class Store:
                 conn.execute("SELECT pg_advisory_xact_lock(728364092)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
+            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
             existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
             if existing:
@@ -2390,6 +3084,9 @@ class Store:
                     pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
                     secret_key=secrets.token_hex(32), site_settings=self.config.site)
             value, _ = upgrade_store(legacy, self.config.site, {})
+            community_boss = value.pop("community_boss", None)
+            if community_boss is not None:
+                community_boss = validate_boss(community_boss)
             if not value["users"]:
                 raise StoreError("Saved account store contains no accounts. The original was not replaced.")
             self.backup_in(conn, "before-rebuild-import", {"admin": legacy, "source": source})
@@ -2397,6 +3094,8 @@ class Store:
             value.pop("health", None)
             value["superadmin"] = self.config.superadmin
             self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
+            if community_boss is not None:
+                self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
             saved = empty(value["site_settings"])
             saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
                          updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),
@@ -2580,6 +3279,8 @@ def upgrade_store(value, defaults, health_defaults):
 {% extends 'base.html' %}{% from 'macros.html' import form_fields,field,player_rows with context %}
 {% block title %}{{ tabs[tab] }} · RedHunllef Admin{% endblock %}
 {% block attributes %}data-page="admin" data-feed="/admin/status" data-bootstrap="{{ {'server_time':data.server_time,'site':data.site}|tojson|forceescape }}"{% endblock %}
+{% block styles %}{% if tab=='boss' %}<link rel="stylesheet" href="{{ url_for('static',filename='boss.css',v=asset_version) }}">{% endif %}{% endblock %}
+{% block scripts %}{% if tab=='boss' %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script>{% endif %}{% endblock %}
 {% block navigation %}<a href="/" target="_blank" rel="noopener">View website ↗</a><form method="post" action="/admin/logout"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="text-button" type="submit">Sign out</button></form>{% endblock %}
 {% block content %}<main id="main" class="shell admin-main"><div class="admin-heading"><div><p class="eyebrow">CONTROL CENTER</p><h1>Your race, at a glance<span class="accent">.</span></h1><p class="muted">Welcome, {{ user }} <span class="tag">{{ 'Superadmin' if superadmin else 'Admin' }}</span></p></div><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<button type="submit" class="button primary">↻ Refresh data</button></form></div>
 <nav class="tabs" aria-label="Administration">{% for key,label in tabs.items() %}<a href="{{ url_for('login',tab=key) }}" {% if tab==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}<span class="auto-label"><span class="dot"></span> Automatic · 60 sec</span></nav>
@@ -2596,7 +3297,21 @@ def upgrade_store(value, defaults, health_defaults):
 {% include 'admin_' ~ tab ~ '.html' %}
 <div class="admin-foot"><span id="browserCheck">Connecting to automatic updates…</span><span>Release {{ release }}</span></div>
 <noscript><p class="notice">Forms and navigation work without JavaScript. Reload for current statistics.</p></noscript></main>{% endblock %}
-{% block footer %}Private administration{% endblock %}
+{% block site_footer %}{% endblock %}
+```
+
+## templates/admin_boss.html
+
+```html
+<section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
+<div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2>Crimson Hunllef</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
+<p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
+<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss health"></progress><p id="bossStory" class="muted"></p>
+<div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
+<p class="muted small">This panel updates every 5 seconds. Race and provider checks still run every 60 seconds. Boss hits do not change the wager leaderboard.</p>
+{% if superadmin %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form><a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a></div>
+<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives the current result and resets health, personal totals, and allowances. Victory stays visible until you choose this. Save a checkpoint before replacing an unfinished raid.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="100000" max="100000000" step="1" value="2400000" required><small class="muted">2,400,000 targets roughly 4–8 days with 100 people making 20–40 matching attacks daily.</small></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> I want to end this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% else %}<p class="muted">Ask the Superadmin to pause, resume, or start another raid.</p>{% endif %}
+</section>
 ```
 
 ## templates/admin_overview.html
@@ -2642,7 +3357,7 @@ def upgrade_store(value, defaults, health_defaults):
 <details class="panel form-panel" {% if restore %}open{% endif %}><summary><h2>Backups &amp; race history</h2><span aria-hidden="true">+</span></summary><div class="details-content"><p class="muted">Race backups include settings, results, overrides, and history. Passwords and integration credentials are excluded.</p><a class="button" href="/admin/backup">↓ Download race backup</a><form class="filter-bar" method="post" action="/admin/action" enctype="multipart/form-data">{{ form_fields('preview_restore','settings',revision) }}<div class="field grow"><label for="backupFile">Restore a race backup</label><input id="backupFile" name="backup" type="file" accept=".json,application/json" required></div><button class="button" type="submit">Review backup</button></form>
 {% if restore %}<div class="notice warning"><strong>Review this restore</strong><p>{{ restore.start }} → {{ restore.end }} · {{ restore.rows }} saved participants</p><p>Current race data will be replaced. Accounts remain intact, and a private recovery copy is created first.</p><form method="post" action="/admin/action">{{ form_fields('restore','settings',revision) }}<input type="hidden" name="restore_token" value="{{ restore.token }}"><button class="button danger" type="submit">Confirm restore</button></form></div>{% endif %}
 {% for race in admin.race_history|reverse %}<details class="nested"><summary>{{ fmt_et(race.site_settings.start_time) }} → {{ fmt_et(race.site_settings.end_time) }}</summary><div class="table-scroll"><table><thead><tr><th>Rank</th><th>Username</th><th class="number">Weighted wager</th></tr></thead><tbody>{% for row in race.leaderboard_snapshots.last_top15 %}<tr><td>{{ row.rank }}</td><td>{{ row.username }}</td><td class="number">{{ row.wager }}</td></tr>{% else %}<tr><td colspan="3">No saved participants.</td></tr>{% endfor %}</tbody></table></div></details>{% else %}<p class="muted small">Completed races appear here after you save a new window.</p>{% endfor %}</div></details>
-{% if superadmin %}<section class="panel form-panel" id="recovery"><p class="eyebrow">KEEP YOUR CHANGES</p><h2>Private recovery file</h2><p class="muted">Save your administrator accounts, password hashes, race dates, overrides, history, and last Top 15. This file contains sensitive account data; keep it private.</p><a class="button primary" href="/admin/recovery-backup">↓ Download private recovery file</a><p class="small muted">To carry these changes into a fresh deployment, add the downloaded <code>recovery.seed.json</code> to the <code>private/</code> folder in your private source repository before deploying. It imports automatically only when no saved local state exists. Download a new copy after important changes. Shuffle and Kick credentials stay in your existing configuration.</p><p class="small muted">On App Platform, local files can disappear during redeploys or container replacements. This download is a manual recovery copy, not automatic remote storage.</p></section>{% endif %}
+{% if superadmin %}<section class="panel form-panel" id="recovery"><p class="eyebrow">KEEP YOUR CHANGES</p><h2>Private recovery file</h2><p class="muted">Save your administrator accounts, password hashes, race dates, overrides, history, last Top 15, and the community boss (health, raiders, and cooldowns). This file contains sensitive account data; keep it private.</p><a class="button primary" href="/admin/recovery-backup">↓ Download private recovery file</a><p class="small muted">To carry these changes into a fresh deployment, add the downloaded <code>recovery.seed.json</code> to the <code>private/</code> folder in your private source repository before deploying. It imports automatically only when no saved local state exists. Download a new copy after important changes. Shuffle and Kick credentials stay in your existing configuration.</p><p class="small muted">On App Platform, local files can disappear during redeploys or container replacements. This download is a manual recovery copy, not automatic remote storage.</p></section>{% endif %}
 <details class="panel form-panel" id="diagnostics" open><summary><h2>Connections &amp; diagnostics</h2><span aria-hidden="true">+</span></summary><div class="details-content"><div class="diagnostic-grid">{% for key,label in [('storage','Storage'),('start_et','Race starts'),('end_et','Race ends'),('received','Source records received'),('accepted','Valid race records'),('missing_campaign','Records without campaign')] %}<div><span class="muted small">{{ label }}</span><strong data-diagnostic="{{ key }}">{{ data.diagnostics[key] }}</strong></div>{% endfor %}{% for key,value in data.diagnostics.credentials.items() %}<div><span class="muted small">{{ key|replace('_',' ')|title }}</span><strong>{{ 'Configured' if value.configured else 'Missing' }}</strong><small class="muted">{{ value.source }}</small></div>{% endfor %}</div>
 {% for name in ['shuffle','kick'] %}<div class="notice"><strong>{{ name|capitalize }}</strong><p id="{{ name }}Message">{{ data.jobs[name].error or 'Waiting for first update' }}</p><small id="{{ name }}Timing" class="muted">Automatic updates every 60 seconds</small></div>{% endfor %}<a class="button" href="/admin/diagnostics">↓ Download redacted diagnostics</a><p class="muted small">The report excludes keys, password hashes, provider response bodies, and participant usernames.</p></div></details>
 <details class="panel form-panel"><summary><h2>Access controls &amp; logs</h2><span aria-hidden="true">+</span></summary><div class="details-content"><form method="post" action="/admin/action" class="filter-bar" data-confirm="Block requests from this IP address?">{{ form_fields('ban_ip','settings',revision) }}{{ field('ip','Block an IPv4 or IPv6 address') }}<button class="button danger" type="submit">Block address</button></form><div class="button-row">{% for ip in admin.banned_ips %}<form action="/admin/action" method="post">{{ form_fields('unban_ip','settings',revision) }}<input type="hidden" name="ip" value="{{ ip }}"><button class="button small" type="submit">Unblock {{ ip }}</button></form>{% endfor %}</div><h3>Recent access</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Address</th><th>Path</th><th>Status</th></tr></thead><tbody>{% for row in access_log %}<tr><td>{{ fmt_et(row.time) }}</td><td>{{ row.ip }}</td><td>{{ row.method }} {{ row.path }}</td><td>{{ row.status }}</td></tr>{% endfor %}</tbody></table></div><form method="post" action="/admin/action" data-confirm="Clear recent access entries?">{{ form_fields('clear_access','settings',revision) }}<button class="button small" type="submit">Clear access log</button></form><h3>Administrator activity</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Administrator</th><th>Action</th></tr></thead><tbody>{% for row in admin.audit_log|reverse %}<tr><td>{{ row.ts_et }}</td><td>{{ row.admin_user }}</td><td>{{ row.action }}</td></tr>{% endfor %}</tbody></table></div>{% if superadmin %}<form action="/admin/action" method="post" data-confirm="Clear the audit log after saving a private recovery copy?">{{ form_fields('clear_audit','settings',revision) }}<button class="button small" type="submit">Clear audit log</button></form>{% endif %}</div></details>
@@ -2655,16 +3370,56 @@ def upgrade_store(value, defaults, health_defaults):
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
 <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}">
-<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}"></head>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}</head>
 <body {% block attributes %}{% endblock %}>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="shell header-inner"><a class="brand" href="/"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="36" height="36"><span><span data-site-text="site_name">{{ data.site.site_name if data is defined else 'RedHunllef' }}</span><span class="brand-sub">THE COMMUNITY RACE</span></span></a>
-<nav aria-label="Main navigation">{% block navigation %}<a href="/#leaderboard">Leaderboard</a><a data-site-text="community_name" data-site-link="community_url" href="{{ data.site.community_url }}" {% if not data.site.community_url %}hidden{% endif %} target="_blank" rel="noopener">{{ data.site.community_name }}</a><a class="button small" data-site-link="stream_url" href="{{ data.site.stream_url }}" target="_blank" rel="noopener">Watch on Kick <span aria-hidden="true">↗</span></a>{% endblock %}</nav></div></header>
+<nav aria-label="Main navigation">{% block navigation %}<a href="/#leaderboard">Leaderboard</a><a class="play-nav" href="/play">Boss fight</a><a class="community-nav" data-site-text="community_name" data-site-link="community_url" href="{{ data.site.community_url }}" {% if not data.site.community_url %}hidden{% endif %} target="_blank" rel="noopener">{{ data.site.community_name }}</a><a class="button small" data-site-link="stream_url" href="{{ data.site.stream_url }}" target="_blank" rel="noopener">Watch on Kick <span aria-hidden="true">↗</span></a>{% endblock %}</nav></div></header>
 {% block content %}{% endblock %}
-<footer class="shell footer"><span>RedHunllef <span class="muted">· Community first.</span></span><span class="muted">{% block footer %}<a data-site-link="responsible_gambling_url" href="{{ data.site.responsible_gambling_url }}" {% if not data.site.responsible_gambling_url %}hidden{% endif %} target="_blank" rel="noopener">Play responsibly · 18+</a><a href="/admin">Admin</a>{% endblock %}</span></footer>
+{% block site_footer %}<footer class="shell footer"><span>RedHunllef <span class="muted">· Community first.</span></span><span class="muted">{% block footer %}<a data-site-link="responsible_gambling_url" href="{{ data.site.responsible_gambling_url }}" {% if not data.site.responsible_gambling_url %}hidden{% endif %} target="_blank" rel="noopener">Play responsibly · 18+</a>{% endblock %}</span></footer>{% endblock %}
 <div id="toast" class="toast" role="status" hidden></div>
 <script src="{{ url_for('static',filename='app.js',v=asset_version) }}" defer></script>
+{% block scripts %}{% endblock %}
 </body></html>
+```
+
+## templates/boss.html
+
+```html
+{% extends 'base.html' %}
+{% block title %}Community boss fight · RedHunllef{% endblock %}
+{% block attributes %}data-page="boss"{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='boss.css',v=asset_version) }}">{% endblock %}
+{% block scripts %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script>{% endblock %}
+{% block content %}
+<main id="main" class="shell boss-page" data-boss-root data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
+<section class="boss-heading"><div><p class="eyebrow"><span class="dot"></span> COMMUNITY RAID · FREE TO PLAY</p><h1>Small hits.<br><span class="accent">One massive takedown.</span></h1><p class="lead">The Crimson Hunllef has awakened. Bring the whole community. Every hit stays. Every raider counts.</p></div><a class="text-link" href="#howToPlay">New here? How to play ↓</a></section>
+<div class="boss-live"><span id="bossConnection" role="status">Connecting to the shared raid…</span><span>Everyone fights the same boss · Updates every 5 seconds</span></div>
+<p id="bossError" class="notice warning" role="alert" hidden></p>
+<div class="raid-layout">
+<section class="arena panel" aria-labelledby="bossName">
+<div class="arena-heading"><span class="eyebrow">WORLD BOSS / CRIMSON 001</span><span class="badge" id="bossPhase">{{ boss_data.phase }}</span></div>
+<div class="boss-stage" id="bossStage"><div class="rune-ring" aria-hidden="true"></div><div class="rune-ring inner" aria-hidden="true"></div><span class="arena-rune rune-one" aria-hidden="true">✦</span><span class="arena-rune rune-two" aria-hidden="true">✧</span><img class="boss-sprite" src="{{ url_for('static',filename='redlogo.png') }}" alt="The red pixel-art Crimson Hunllef" width="220" height="220"><span id="hitFloat" class="hit-float" aria-hidden="true"></span><span class="boss-shadow" aria-hidden="true"></span></div>
+<div class="boss-name-row"><div><p class="eyebrow">THE COMMUNITY'S NEMESIS</p><h2 id="bossName">Crimson Hunllef</h2></div><span id="bossDay" class="tag">Raid day {{ boss_data.day }}</span></div>
+<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent">100%</span></div>
+<progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}" value="{{ boss_data.hp }}" aria-label="Boss health"></progress>
+<p id="bossStory" class="boss-story">The first strike starts the raid. Let's wake the beast.</p>
+<div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders united</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>hits landed</span></div><div><strong id="bossDamage">{{ '{:,}'.format(boss_data.total_damage) }}</strong><span>damage together</span></div></div>
+</section>
+<section class="attack-panel panel" aria-labelledby="yourTurn"><div class="row"><p class="eyebrow">YOUR TURN TO HIT BACK</p><span class="tag">NO SIGN-UP</span></div><h2 id="yourTurn">Choose your strike.</h2><p class="muted small">Read the weakness. Pick your style. Make it count.</p>
+<div class="weakness-box"><span class="weakness-symbol" aria-hidden="true">✦</span><div><small>CURRENT WEAKNESS</small><strong id="bossWeakness">{{ boss_data.weakness_label }} · 150 damage</strong><span id="wardTimer">Changes in —</span></div></div>
+<div class="strike-options" role="group" aria-label="Attack style"><button type="button" data-style="blade" aria-pressed="true"><span aria-hidden="true">⚔</span><strong>Blade</strong><small>Close &amp; personal</small></button><button type="button" data-style="bow" aria-pressed="false"><span aria-hidden="true">➶</span><strong>Bow</strong><small>Right on target</small></button><button type="button" data-style="magic" aria-pressed="false"><span aria-hidden="true">✧</span><strong>Magic</strong><small>A little chaos</small></button></div>
+<div class="combo-row"><strong>Crimson burst</strong><span id="burstLabel">10 hits to +100 damage</span></div><div class="burst-meter" id="burstMeter" aria-hidden="true">{% for n in range(10) %}<span></span>{% endfor %}</div>
+<button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button><p id="attackHint" class="attack-hint">One manual attack every 60 seconds. No wager required.</p>
+<p id="hitResult" class="hit-result" role="status">Your first hit is waiting.</p>
+<div class="personal-stats"><div><strong id="yourDamage">0</strong><span>your damage</span></div><div><strong id="yourRemaining">40 / 40</strong><span>attacks left today</span></div></div><p class="raider-name">Playing as <strong id="yourName">{{ boss_data.you.name }}</strong></p><p class="muted small" id="raidReset">Raid days start with the first community hit.</p>
+</section></div>
+<section class="instructions panel" id="howToPlay" aria-labelledby="instructionsTitle"><div class="section-title"><div><p class="eyebrow">60 SECONDS TO LEARN. DAYS TO CONQUER.</p><h2 id="instructionsTitle">How to play together</h2></div><span class="tag">TEAMWORK WINS</span></div><ol class="instruction-grid"><li><strong>Read the weakness</strong><p>Pick Blade, Bow, or Magic. A matching strike deals <b>150 damage</b>; other styles deal <b>100</b>. The weakness shifts every 10 minutes.</p></li><li><strong>Land your hit</strong><p>Press Attack, then wait <b>60 seconds</b>. Your tenth personal hit earns a <b>+100 Crimson burst</b>. It stacks with the weakness bonus.</p></li><li><strong>Rally, then return</strong><p>Use up to <b>40 attacks per raid day</b>. Invite the crew back tomorrow. Damage never heals and a missed day never erases your progress.</p></li></ol><div class="raid-fineprint"><p><strong>The goal:</strong> defeat the shared boss. Starting difficulty is 2.4 million HP. Around 100 active people making 20–40 attacks daily should take roughly 4–8 raid days at the starting difficulty. Less participation takes longer. A host can choose a different difficulty for the next raid.</p><p><strong>Fair play:</strong> your browser and internet connection share the limits. People on the same Wi-Fi share one allowance; IPv6 addresses in the same /64 also share it. Keep cookies enabled and use the same browser to keep your raider profile. The first successful community hit starts the 24-hour raid-day schedule. Pausing does not stop that schedule.</p><p><strong>Free, cooperative fun:</strong> no purchases, wagers, cash prizes, or automatic attacks. Everyone who lands a hit helps win. The host saves recovery checkpoints and starts the next raid after victory.</p></div></section>
+<div class="raid-bottom"><section class="panel raid-list"><p class="eyebrow">THE DAMAGE CREW</p><h2>Top raiders</h2><ol id="bossLeaders" class="combat-list"><li class="muted">Land the first hit to lead the charge.</li></ol><p class="muted small">Anonymous names belong to this raid. Every contribution counts.</p></section><section class="panel raid-list"><p class="eyebrow">HAPPENING TOGETHER</p><h2>Recent strikes</h2><ol id="bossRecent" class="combat-list"><li class="muted">The arena is waiting for your community.</li></ol></section></div>
+<details class="panel raid-history"><summary>Past raids <span aria-hidden="true">+</span></summary><ul class="combat-list" id="bossHistory"><li class="muted">The first chapter is yours to write.</li></ul></details>
+<noscript><p class="notice warning">Enable JavaScript and cookies to attack and see other players' live progress.</p></noscript>
+</main>{% endblock %}
+{% block footer %}A free community raid. Built for the Red crew.{% endblock %}
 ```
 
 ## templates/error.html
@@ -2685,6 +3440,7 @@ def upgrade_store(value, defaults, health_defaults):
 <main id="main" class="shell">
 <section class="hero"><div><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
 <aside class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside></section>
+<section class="play-invite panel" aria-labelledby="inviteTitle"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="60" height="60"><div><p class="eyebrow">ONE BOSS. THE WHOLE COMMUNITY.</p><h2 id="inviteTitle">Red needs a raid party.</h2><p>Pick a weapon. Land a hit. Help bring down the Crimson Hunllef together.</p></div><a class="button primary" href="/play">Join the boss fight <span aria-hidden="true">→</span></a></section>
 <section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
 <p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
@@ -2729,7 +3485,7 @@ def upgrade_store(value, defaults, health_defaults):
 {
   "name": "redhunllef-interface-tests",
   "private": true,
-  "scripts": {"test": "node --test test_frontend.cjs"},
+  "scripts": {"test": "node --test test_*.cjs"},
   "devDependencies": {"jsdom": "26.1.0"}
 }
 ```
@@ -2773,12 +3529,13 @@ def render(destination):
                                   "updated_at": now, "ok": True}, admin, runtime.config)
             runtime.commit(admin, runtime.revision, snapshot=snapshot)
             client = app.test_client()
-            for name, url in {"public": "/", "login": "/admin", "error": "/missing"}.items():
+            for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play"}.items():
                 (destination/(name+".html")).write_text(client.get(url).text, encoding="utf-8")
             with client.session_transaction() as session:
                 session.update(user="gingrsnaps", auth_version=1, csrf="fixture-csrf")
-            for tab in ("overview", "race", "players", "settings"):
+            for tab in ("overview", "race", "players", "boss", "settings"):
                 (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
+            (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
             (destination/"public.json").write_text(json.dumps(client.get("/data").json), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
         finally:
@@ -3496,6 +4253,355 @@ class CalculationTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## tests/test_boss.py
+
+```python
+"""Shared raid, HTTP, fairness, concurrency, and portable recovery regressions."""
+import copy
+from concurrent.futures import ThreadPoolExecutor
+import json
+import os
+from pathlib import Path
+import secrets
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from boss import BossError, CommunityBoss, DAY, DEFAULT_HP, fresh_raid, network_identity, validate_boss
+from storage import Store
+from wager_backend import create_app
+
+
+class BossTests(unittest.TestCase):
+    def setUp(self):
+        temp=tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
+        self.root=Path(temp.name)
+        env=patch.dict(os.environ, {'APP_ENV':'test','ADMIN_BOOTSTRAP_PASS':'test-only-password'}, clear=True)
+        env.start(); self.addCleanup(env.stop)
+        self.app=create_app(self.root, testing=True)
+        self.r=self.app.extensions['runtime']; self.b=self.app.extensions['boss']
+        self.addCleanup(self.r.store.close)
+        self.clock=patch('boss.time.time',return_value=1_800_000_000.375)
+        self.time=self.clock.start(); self.addCleanup(self.clock.stop)
+        self.start=self.time.return_value
+
+    def hit(self,guest='a',ip='192.0.2.1',style=None,request_id=None):
+        state=self.b.status(guest,ip)
+        return self.b.attack(guest,ip,style or state['weakness'],state['raid_id'],request_id or secrets.token_hex(16))
+
+    def client(self,ip='192.0.2.1'):
+        c=self.app.test_client(); c.environ_base['REMOTE_ADDR']=ip
+        state=c.get('/play/api/state').json
+        return c,state
+
+    def post(self,c,value,**extra):
+        state=value['state']
+        return c.post('/play/api/attack',json={'raid_id':state['raid_id'],'request_id':secrets.token_hex(16),'style':state['weakness'],**extra},headers={'X-CSRF-Token':value['csrf']})
+
+    def test_two_players_share_health_and_separate_identity(self):
+        a,sa=self.client(); b,sb=self.client('192.0.2.2')
+        first=self.post(a,sa); second=self.post(b,sb)
+        self.assertEqual(first.status_code,200); self.assertEqual(second.status_code,200)
+        current=a.get('/play/api/state').json['state']
+        self.assertEqual(current['hp'],DEFAULT_HP-300)
+        self.assertEqual(current['raiders'],2)
+        self.assertEqual(current['you']['damage'],150)
+        self.assertNotEqual(sa['state']['you']['name'],sb['state']['you']['name'])
+        self.assertEqual(len(current['recent']),2)
+        html=a.get('/play').text
+        self.assertIn('How to play together',html)
+        self.assertIn('40 attacks per raid day',html)
+        self.assertNotIn('href="/admin"',a.get('/').text)
+        self.assertIn('Join the boss fight',a.get('/').text)
+
+    def test_simultaneous_hits_from_distinct_players_are_atomic(self):
+        def attack(i): return self.hit(str(i),f'198.51.100.{i+1}')
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            hits=list(pool.map(attack,range(40)))
+        state=self.b.export()
+        self.assertEqual(state['total_attacks'],40)
+        self.assertEqual(state['hp'],DEFAULT_HP-sum(r['hit']['damage'] for r in hits))
+        validate_boss(state)
+
+    def test_same_network_simultaneous_tabs_only_one_lands(self):
+        def attack(i):
+            try: return self.hit(str(i))['ok']
+            except BossError as exc: return exc.code
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            result=list(pool.map(attack,range(20)))
+        self.assertEqual(result.count(True),1)
+        self.assertEqual(result.count('cooldown'),19)
+
+    def test_cooldown_fractional_seconds_and_browser_limit_across_ips(self):
+        self.hit()
+        self.time.return_value=self.start+59.99
+        with self.assertRaises(BossError) as blocked:self.hit(ip='192.0.2.2')
+        self.assertEqual(blocked.exception.status,429)
+        self.time.return_value=self.start+60
+        self.assertEqual(self.hit(ip='192.0.2.2')['hit']['damage'],150)
+        validate_boss(self.b.export())
+
+    def test_daily_allowance_rollover_and_shared_network(self):
+        for i in range(40):
+            self.time.return_value=self.start+i*60
+            self.hit()
+        self.time.return_value=self.start+40*60
+        with self.assertRaises(BossError) as blocked:self.hit()
+        self.assertEqual(blocked.exception.code,'daily_limit')
+        with self.assertRaises(BossError):self.hit(guest='cookie-cleared')
+        with self.assertRaises(BossError):self.hit(ip='192.0.2.2')
+        self.assertEqual(self.b.status('a','192.0.2.1')['you']['remaining'],0)
+        self.time.return_value=int(self.start)+DAY
+        self.assertEqual(self.hit()['state']['you']['remaining'],39)
+
+    def test_ipv6_normalization_and_mapped_ipv4(self):
+        self.hit(ip='2001:db8::abcd')
+        with self.assertRaises(BossError):self.hit(guest='new',ip='2001:db8::eeff')
+        self.assertEqual(network_identity('::ffff:192.0.2.1'),'192.0.2.1')
+        self.assertEqual(self.hit(guest='other',ip='2001:db8:0:1::1')['hit']['damage'],150)
+
+    def test_weakness_bonus_and_tenth_hit_burst(self):
+        s=self.b.status('a','192.0.2.1')
+        wrong=next(x for x in ('blade','bow','magic') if x!=s['weakness'])
+        self.assertEqual(self.hit(style=wrong)['hit']['damage'],100)
+        for i in range(1,10):
+            self.time.return_value=self.start+i*60
+            result=self.hit()
+        self.assertEqual(result['hit']['damage'],250)
+        self.assertTrue(result['hit']['burst'])
+        self.assertEqual(result['state']['you']['burst_in'],10)
+
+    def test_receipt_retry_after_cooldown_and_victory_is_idempotent(self):
+        first=self.hit(request_id='test-receipt-001')
+        self.time.return_value+=120
+        again=self.hit(request_id='test-receipt-001')
+        self.assertTrue(again['duplicate']); self.assertEqual(first['hit'],again['hit'])
+        self.assertEqual(self.b.export()['total_attacks'],1)
+        # A tiny isolated raid verifies final damage clamping and victory receipts.
+        value=fresh_raid(health=50)
+        with self.r.store.connection(transaction=True) as conn:self.b._write(conn,value)
+        self.b.loaded_at=0
+        final=self.hit(request_id='victory-receipt')
+        self.assertEqual(final['hit']['damage'],50)
+        self.assertEqual(final['state']['hp'],0)
+        self.assertTrue(self.hit(request_id='victory-receipt')['duplicate'])
+        with self.assertRaises(BossError):self.hit(guest='b',ip='192.0.2.2')
+        validate_boss(self.b.export())
+
+    def test_race_settings_and_provider_cache_untouched_by_game(self):
+        before=self.r.store.admin(); snapshot=self.r.store.live('shuffle')
+        self.hit(); self.b.control('pause',self.b.status()['raid_id'])
+        self.assertEqual(self.r.store.admin(),before)
+        self.assertEqual(self.r.store.live('shuffle'),snapshot)
+
+    def test_pause_resume_restart_and_stale_raid(self):
+        first=self.hit(); raid=first['state']['raid_id']
+        self.b.control('pause',raid)
+        with self.assertRaises(BossError):self.hit(guest='b',ip='192.0.2.2')
+        self.b.control('resume',raid)
+        self.assertEqual(self.hit(guest='b',ip='192.0.2.2')['state']['hp'],DEFAULT_HP-300)
+        self.b.control('restart',raid,3_000_000)
+        with self.assertRaises(BossError) as old:self.b.attack('a','192.0.2.1','blade',raid,'old-request-001')
+        self.assertEqual(old.exception.code,'new_raid')
+        state=self.b.export()
+        self.assertEqual(state['hp'],3_000_000); self.assertEqual(len(state['history']),1)
+        self.assertEqual(state['players'],{})
+
+    def test_auth_csrf_malformed_attack_and_forged_damage(self):
+        c,s=self.client()
+        self.assertEqual(c.post('/play/api/attack',json={}).status_code,400)
+        self.assertEqual(self.post(c,s,style=[]).status_code,400)
+        forged=self.post(c,s,damage=99_999_999,cooldown=0,remaining=9999)
+        self.assertEqual(forged.json['hit']['damage'],150)
+        self.assertEqual(self.post(c,s).status_code,429)
+        self.assertEqual(c.post('/admin/boss/action',data={'action':'pause'}).status_code,302)
+        self.assertEqual(c.get('/play/api/state').headers['Cache-Control'],'no-store')
+        # Public state does not reveal persisted identifiers, raw IPs or salt.
+        payload=c.get('/play/api/state').text
+        persisted=self.b.export()
+        for private in (persisted['salt'],'192.0.2.1',*persisted['players'],*persisted['networks']):
+            self.assertNotIn(private,payload)
+
+    def test_admin_controls_require_superadmin_and_restart_confirmation(self):
+        c,s=self.client()
+        with c.session_transaction() as sess:sess.update(user='gingrsnaps',auth_version=1)
+        form={'csrf':s['csrf'],'action':'restart','raid_id':s['state']['raid_id'],'health':'2400000'}
+        self.assertEqual(c.post('/admin/boss/action',data=form).status_code,422)
+        self.assertEqual(c.post('/admin/boss/action',data={**form,'confirm_restart':'yes'}).status_code,303)
+        self.assertIn('Pause attacks',c.get('/admin?tab=boss').text)
+        self.r.admin['users']['helper']=copy.deepcopy(self.r.admin['users']['gingrsnaps'])
+        self.r.commit(self.r.admin,self.r.revision)
+        with c.session_transaction() as sess:sess['user']='helper'
+        self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause'}).status_code,403)
+
+    def test_digitalocean_ip_only_trusted_when_configured(self):
+        a,sa=self.client(); b,sb=self.client()
+        # Spoofing a header on direct hosting cannot get another allowance.
+        a.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.1'
+        b.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.2'
+        self.assertEqual(self.post(a,sa).status_code,200)
+        self.assertEqual(self.post(b,sb).status_code,429)
+        self.app.extensions['settings'].proxy=True
+        self.assertEqual(self.post(b,sb).status_code,200)
+        c,sc=self.client('127.0.0.1')
+        self.assertEqual(self.post(c,sc).status_code,503)
+        c.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.3'
+        c.environ_base['HTTP_X_FORWARDED_FOR']='198.51.100.1'
+        self.assertEqual(self.post(c,sc).status_code,200)
+
+    def test_guest_profile_survives_admin_logout(self):
+        c,s=self.client(); name=s['state']['you']['name']
+        c.post('/admin/logout',data={'csrf':s['csrf']})
+        self.assertEqual(c.get('/play/api/state').json['state']['you']['name'],name)
+
+    def test_recovery_preserves_game_identity_cooldowns_and_progress(self):
+        c,s=self.client(); self.post(c,s)
+        with c.session_transaction() as sess:sess.update(user='gingrsnaps',auth_version=1)
+        recovery=c.get('/admin/recovery-backup').json
+        self.assertEqual(recovery['community_boss'],self.b.export())
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory); (root/'private').mkdir()
+            (root/'private/recovery.seed.json').write_text(json.dumps(recovery))
+            restored=create_app(root,testing=True)
+            try:
+                restored_boss=restored.extensions['boss']
+                self.assertEqual(restored_boss.export(),self.b.export())
+                r=restored.test_client()
+                r.set_cookie('rh_raider',c.get_cookie('rh_raider').value)
+                current=r.get('/play/api/state').json
+                self.assertEqual(current['state']['you']['name'],s['state']['you']['name'])
+                self.assertEqual(current['state']['you']['damage'],150)
+                self.assertEqual(self.post(r,current).status_code,429)
+            finally:restored.extensions['runtime'].store.close()
+
+    def test_corrupt_game_recovery_rolls_back_account_import(self):
+        self.hit()
+        value=copy.deepcopy(self.r.admin); value['community_boss']=self.b.export()
+        value['community_boss']['hp']-=1
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory); (root/'private').mkdir()
+            (root/'private/recovery.seed.json').write_text(json.dumps(value))
+            with self.assertRaises(ValueError):create_app(root,testing=True)
+        bad=self.b.export(); next(iter(bad['players'].values()))['last_attack']=float('nan')
+        with self.assertRaises(ValueError):validate_boss(bad)
+
+    def test_saved_game_survives_process_reconstruction(self):
+        self.hit(); before=self.b.export()
+        store=Store(self.r.config)
+        try:self.assertEqual(CommunityBoss(store).export(),before)
+        finally:store.close()
+
+    def test_one_hundred_active_raiders_need_multiple_days(self):
+        # Simulate 100 real profiles/IPs, 40 matching manual attacks per day.
+        # Server time moves; no real sleeps or network calls are needed.
+        ended_day=None
+        for day in range(4):
+            for turn in range(40):
+                self.time.return_value=self.start+day*DAY+turn*60
+                for player in range(100):
+                    hit=self.hit(f'raider-{player}',f'203.0.113.{player+1}')
+                    if hit['state']['hp']==0:
+                        ended_day=day+1; break
+                if ended_day:break
+            if ended_day:break
+            self.assertGreater(self.b.status()['hp'],0)
+        self.assertEqual(ended_day,4)
+        self.assertGreaterEqual(self.time.return_value-self.start,3*DAY)
+
+
+if __name__=='__main__':unittest.main()
+```
+
+## tests/test_boss_frontend.cjs
+
+```javascript
+/* Real rendered templates; fake clock/transport exercise shared-state behavior. */
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {JSDOM}=require('jsdom');
+const root=path.resolve(__dirname,'..'), fixtures=process.env.DOM_FIXTURES||path.join(root,'.test-fixtures');
+const code=fs.readFileSync(path.join(root,'static/boss.js'),'utf8');
+const flush=async()=>{for(let i=0;i<8;i++)await new Promise(r=>setImmediate(r));};
+const response=(value,status=200)=>({ok:status<400,status,headers:new Map([['content-type','application/json']]),json:async()=>structuredClone(value)});
+function page(name='play') {
+ const dom=new JSDOM(fs.readFileSync(path.join(fixtures,name+'.html'),'utf8'),{url:'https://example.test/play',runScripts:'outside-only'});
+ const w=dom.window,calls=[],timers=new Map(),intervals=new Map();let clock=0,serial=0;
+ let value=JSON.parse(fs.readFileSync(path.join(fixtures,'boss.json'),'utf8'));
+ Object.defineProperty(w.performance,'now',{value:()=>clock});
+ Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
+ w.setTimeout=(fn,delay)=>{const id=++serial;timers.set(id,{fn,at:clock+delay});return id;};w.clearTimeout=id=>timers.delete(id);
+ w.setInterval=fn=>{const id=++serial;intervals.set(id,fn);return id;};
+ let responder=async()=>response(value);
+ w.fetch=async(url,options)=>{calls.push({url,options});return responder(url,options);};
+ w.eval(code);
+ return {w,dom,calls,value,timers,respond(fn){responder=fn;},
+ async advance(ms){clock+=ms;for(const [id,t]of [...timers])if(t.at<=clock){timers.delete(id);t.fn();}for(const fn of intervals.values())fn();await flush();},
+ close(){dom.window.close();}};
+}
+test('game markup has unique IDs, visible instructions and no admin footer',async()=>{
+ const p=page();await flush();const doc=p.w.document, ids=[...doc.querySelectorAll('[id]')].map(e=>e.id);
+ assert.equal(new Set(ids).size,ids.length);assert.match(doc.querySelector('#howToPlay').textContent,/40 attacks/);
+ assert.equal(doc.querySelector('footer a[href="/admin"]'),null);
+ assert.equal(doc.querySelector('#attackButton').disabled,false);p.close();
+});
+test('game polls every five seconds and pauses while hidden',async()=>{
+ const p=page();await flush();assert.equal(p.calls.length,1);await p.advance(5000);assert.equal(p.calls.length,2);
+ Object.defineProperty(p.w.document,'hidden',{value:true,configurable:true});p.w.document.dispatchEvent(new p.w.Event('visibilitychange'));
+ await p.advance(10000);assert.equal(p.calls.length,2);
+ Object.defineProperty(p.w.document,'hidden',{value:false,configurable:true});p.w.document.dispatchEvent(new p.w.Event('visibilitychange'));await flush();
+ assert.equal(p.calls.length,3);assert.ok(p.calls.every(x=>!x.options.method));p.close();
+});
+test('attack sends only server-validated inputs and renders countdown',async()=>{
+ const p=page();await flush();let sent;
+ p.respond(async(url,options)=>{
+  if(options.method==='POST'){
+   sent=JSON.parse(options.body);const s=p.value.state;s.version++;s.hp-=150;s.total_damage=150;s.total_attacks=1;
+   s.you.ready_at=s.server_time+60;s.you.last_request=sent.request_id;s.you.last_hit={damage:150,style:sent.style,weakness:true,burst:false};
+   return response({ok:true,state:s,hit:s.you.last_hit});
+  }return response(p.value);
+ });
+ p.w.document.querySelector('[data-style="bow"]').click();p.w.document.querySelector('#attackButton').click();await flush();
+ assert.deepEqual(Object.keys(sent).sort(),['raid_id','request_id','style']);assert.equal(sent.style,'bow');
+ const post=p.calls.find(c=>c.options.method==='POST');assert.equal(post.options.headers['X-CSRF-Token'],p.value.csrf);
+ assert.equal(p.w.document.querySelector('#attackButton').disabled,true);
+ assert.match(p.w.document.querySelector('#attackButton').textContent,/1:00/);
+ assert.match(p.w.document.querySelector('#hitResult').textContent,/150/);p.close();
+});
+test('uncertain delivery keeps receipt and retry uses same ID',async()=>{
+ const p=page();await flush();const ids=[];
+ p.respond(async(url,options)=>{if(options.method==='POST'){ids.push(JSON.parse(options.body).request_id);throw new Error('Network disconnected');}return response(p.value);});
+ p.w.document.querySelector('#attackButton').click();await flush();
+ assert.match(p.w.document.querySelector('#attackButton').textContent,/Retry last strike/);
+ p.w.document.querySelector('#attackButton').click();await flush();assert.equal(ids.length,2);assert.equal(ids[0],ids[1]);p.close();
+});
+test('older polls cannot reverse boss damage',async()=>{
+ const p=page();await flush();const old=structuredClone(p.value);
+ p.value.state.hp-=250;p.value.state.version++;p.value.state.server_time++;
+ await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.hp);
+ p.respond(async()=>response(old));await p.advance(5000);
+ assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.hp);p.close();
+});
+test('victory and paused raids stop attacks, hostile names render as text',async()=>{
+ const p=page();await flush();p.value.state.status='paused';
+ p.value.state.leaders=[{name:'<img src=x onerror=alert(1)>',damage:100,attacks:1,you:false}];await p.advance(5000);
+ assert.equal(p.w.document.querySelector('#attackButton').disabled,true);
+ assert.equal(p.w.document.querySelector('#bossLeaders img'),null);
+ p.value.state.status='victory';p.value.state.hp=0;await p.advance(5000);
+ assert.match(p.w.document.querySelector('#attackButton').textContent,/Victory/);
+ assert.match(p.w.document.querySelector('#bossStory').textContent,/Red crew/);p.close();
+});
+test('admin boss updates preserve difficulty draft and restart confirmation',async()=>{
+ const p=page('boss');await flush();const input=p.w.document.querySelector('#bossHealthInput');input.value='5000000';
+ const confirm=p.w.document.querySelector('[name="confirm_restart"]');confirm.checked=true;
+ await p.advance(5000);assert.equal(input.value,'5000000');assert.equal(confirm.checked,true);
+ assert.equal(p.w.document.querySelector('footer'),null);p.close();
+});
+```
+
 ## tests/test_frontend.cjs
 
 ```javascript
@@ -3537,7 +4643,7 @@ function page(name, feed=data(name==='public'?'public':'admin')) {
   };
 }
 
-for(const name of ['public','login','overview','race','players','settings','error']) {
+for(const name of ['public','login','overview','race','players','boss','settings','error']) {
   test(name+' has unique IDs, connected labels, and no script errors',async()=>{
     const p=page(name);await flush();
     const ids=[...p.window.document.querySelectorAll('[id]')].map(node=>node.id);
@@ -3773,7 +4879,7 @@ class PostgreSQLTests(unittest.TestCase):
     def cleanup_database(self):
         self.store.close_job()
         with self.store.connection(transaction=True) as conn:
-            for table in ("rh_live", "rh_recovery", "rh_admin"):
+            for table in ("rh_live", "rh_boss", "rh_recovery", "rh_admin"):
                 conn.execute("DELETE FROM " + table + " WHERE name=%s", (self.key,))
             if conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
                 conn.execute("DELETE FROM wager_state WHERE name=%s", (self.key,))
@@ -3868,10 +4974,12 @@ import time
 
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
+from boss import BossError, CommunityBoss, DEFAULT_HP
 from race import calculate, empty, phase, token
 from race_support import (DEFAULT_PRIZES, WEIGHTING_RULES, TEXT_LIMITS, URL_FIELDS,
                           canonical_site, clean_overrides, clean_snapshots, csv_text,
@@ -3881,7 +4989,7 @@ from runtime import Runtime
 from storage import Conflict, StoreError
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "race":"Race", "players":"Players", "settings":"Settings"}
+TABS = {"overview":"Overview", "race":"Race", "players":"Players", "boss":"Community boss", "settings":"Settings"}
 
 
 def account(users, name):
@@ -3908,6 +5016,8 @@ def create_app(root=None, testing=False):
                       SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=timedelta(hours=12))
     app.extensions["runtime"] = runtime
     app.extensions["settings"] = config
+    boss = app.extensions["boss"] = CommunityBoss(runtime.store)
+    guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
     dummy_hash = generate_password_hash(secrets.token_hex(16))
@@ -3933,7 +5043,7 @@ def create_app(root=None, testing=False):
 
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
-        return request.accept_mimetypes.best == "application/json" or request.path in {
+        return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
             "/data", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
@@ -3941,7 +5051,7 @@ def create_app(root=None, testing=False):
         return jsonify(ok=False, error=message, status=status, release=RELEASE), status
 
     def require_csrf():
-        if not secrets.compare_digest(str(request.form.get("csrf", "")), str(session.get("csrf", "!"))):
+        if not secrets.compare_digest(str(request.headers.get("X-CSRF-Token") or request.form.get("csrf", "")), str(session.get("csrf", "!"))):
             abort(400, description="This form expired. Reload the page and try again.")
 
     def protected(fn):
@@ -3957,13 +5067,20 @@ def create_app(root=None, testing=False):
     @app.before_request
     def before():
         g.began, g.user, g.superadmin = time.perf_counter(), None, False
+        # App Platform supplies the visitor address in DO-Connecting-IP. Never
+        # trust this header on a directly exposed/local server.
+        address = request.headers.get("DO-Connecting-IP") if config.proxy else request.remote_addr
+        try:
+            g.client_ip = str(ipaddress.ip_address(address))
+        except (ValueError, TypeError):
+            g.client_ip = None
         if request.path.startswith("/admin"):
             g.revision, g.admin = runtime.sync()
             name, record = account(g.admin["users"], session.get("user"))
             if name and record.get("auth_version", 1) == session.get("auth_version"):
                 g.user = name
                 g.superadmin = name.casefold() == g.admin.get("superadmin", config.superadmin).casefold()
-        if request.path not in {"/healthz", "/readyz"} and request.remote_addr in runtime.admin.get("banned_ips", []):
+        if request.path not in {"/healthz", "/readyz"} and g.client_ip in runtime.admin.get("banned_ips", []):
             abort(403, description="Access from this address has been disabled.")
 
     @app.after_request
@@ -3976,10 +5093,13 @@ def create_app(root=None, testing=False):
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
-        if request.path not in {"/data", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith("/static/"):
+        if getattr(g, "new_guest", None):
+            response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
+                                secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
+        if request.path not in {"/data", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
-                                           ip=request.remote_addr, ms=round((time.perf_counter()-g.began)*1000)))
+                                           ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
         return response
 
     @app.context_processor
@@ -4012,6 +5132,44 @@ def create_app(root=None, testing=False):
     @app.get("/")
     def index():
         return render_template("index.html", data=runtime.public())
+
+    def guest():
+        if not hasattr(g, "guest"):
+            try:
+                value = guest_signer.loads(request.cookies.get("rh_raider", ""), max_age=365*86400)
+                if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{32}", value):
+                    raise BadSignature("Invalid raider identifier")
+                g.guest = value
+            except BadSignature:
+                g.guest = g.new_guest = secrets.token_hex(16)
+        return g.guest
+
+    @app.get("/play")
+    def play():
+        return render_template("boss.html", data=runtime.public(), boss_data=boss.status(guest(), g.client_ip))
+
+    @app.get("/play/api/state")
+    def boss_state():
+        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
+
+    @app.post("/play/api/attack")
+    def boss_attack():
+        require_csrf()
+        identity = guest()
+        if getattr(g, "new_guest", None):
+            return json_error("Enable cookies and reload the game before attacking.", 400)
+        if not g.client_ip:
+            return json_error("The server could not identify your connection. The host should check TRUST_APP_PLATFORM and the DO-Connecting-IP header.", 503)
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return json_error("Send a valid attack request.", 400)
+        try:
+            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id")))
+        except BossError as exc:
+            response = jsonify(ok=False, error=str(exc), code=exc.code, state=boss.status(identity, g.client_ip))
+            if exc.retry_after:
+                response.headers["Retry-After"] = str(exc.retry_after)
+            return response, exc.status
 
     @app.get("/data")
     def data():
@@ -4050,7 +5208,24 @@ def create_app(root=None, testing=False):
         return render_template("admin.html", data=values, tab=tab, form=form, errors=errors or {},
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
-                               access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit), status
+                               access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
+                               boss_data=boss.status() if tab == "boss" else None), status
+
+    @app.post("/admin/boss/action")
+    @protected
+    def boss_control():
+        require_csrf()
+        if not g.superadmin:
+            abort(403, description="Only the Superadmin can change the community raid.")
+        try:
+            action = request.form.get("action", "")
+            if action == "restart" and request.form.get("confirm_restart") != "yes":
+                raise ValueError("Confirm that you want to archive the current raid and start a new one.")
+            boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)))
+            flash("New community raid is ready." if action == "restart" else "Community raid " + ("paused." if action == "pause" else "resumed."))
+            return redirect(url_for("login", tab="boss"), 303)
+        except ValueError as exc:
+            return render_admin("boss", errors={"boss":str(exc)}, status=422)
 
     @app.route("/admin", methods=["GET", "POST"])
     @app.route("/admin/login", methods=["GET", "POST"])
@@ -4059,7 +5234,7 @@ def create_app(root=None, testing=False):
             return render_admin() if g.user else render_template("login.html", error="")
         require_csrf()
         name, password = request.form.get("username", "").strip()[:64], request.form.get("password", "")
-        key = request.remote_addr or "unknown"
+        key = g.client_ip or request.remote_addr or "unknown"
         with auth_lock:
             cutoff = time.monotonic() - 600
             for ip in list(failures):
@@ -4133,6 +5308,7 @@ def create_app(root=None, testing=False):
         with runtime.lock:
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
+            value["community_boss"] = boss.export()
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=recovery.seed.json"})
 
@@ -4338,6 +5514,7 @@ def main():
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
         LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "PostgreSQL" if runtime.store.pg else "local SQLite")
+        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 60s, 40 per raid day. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
             if config.production:
@@ -4372,7 +5549,7 @@ if __name__ == "__main__":
 
 ```json
 {
-  "release": "2026.09.22-local",
+  "release": "2026.09.22-boss",
   "entry_point": "python wager_backend.py",
   "source_files": {
     ".env.example": {
@@ -4388,36 +5565,44 @@ if __name__ == "__main__":
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 4263,
-      "sha256": "44fc40835d61051bdbe83f2ff69d2eb88927e5e55f37a09c1e7a2a1ccfe37deb"
+      "bytes": 5783,
+      "sha256": "5187ad688283f7db26c06748e167fc1fc4204c263208a9b826bb33f20df500bb"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 4172,
-      "sha256": "58ad55b97c35f9f25011b10df7fbe3ce97452649a27a962923800b305a9de151"
+      "bytes": 4990,
+      "sha256": "21dbb328d7f2212cff9aa7b8bcd4e8551917c0fef8c5921f5f4845961bf1d125"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 17323,
-      "sha256": "b85e81ee4637b3b0da4b6f3d0b0a2a89985bdbdafd6f9d6739d267394426df3e"
+      "bytes": 21564,
+      "sha256": "cbec8ec3c0f6066da13cb6c868ee48f29b6a1a5802ce1453f6063a4a56d38784"
     },
     "START_HERE.md": {
-      "bytes": 2175,
-      "sha256": "6cd58070da069bc46aa0cc07b26b8b4be1c3201e424b7810693f2299a4788252"
+      "bytes": 2950,
+      "sha256": "829d98efe64d3d82a8a7f1929be87225f3ff9ec8a5f16f8f2262bd82cecec7c1"
     },
     "app.yaml": {
       "bytes": 1440,
       "sha256": "8593c6d4ed1906bbcd675257f2e71af0e5fda94451704ef7a3d4d7e169bd231e"
     },
+    "boss.py": {
+      "bytes": 17035,
+      "sha256": "1c38f9ab69a066b482debcdc9a2e2f1fee95ccda4c42eba3ccba17297b78dff4"
+    },
     "config.py": {
-      "bytes": 6073,
-      "sha256": "6e1060ebd963fe9e5a43850e3a6c27968495ca7565ba3e2c6d9da444f6af560c"
+      "bytes": 6072,
+      "sha256": "f95a79d5a686d82911a90de6b0b374c73da0df216f06c9d1cff71599088f984a"
+    },
+    "docs/COMMUNITY_BOSS.md": {
+      "bytes": 7282,
+      "sha256": "c215ea951f2e56bb47e0396bdb3990d55be59b9f84fe0ff6414e41ea629af15d"
     },
     "docs/VALIDATION.md": {
-      "bytes": 5296,
-      "sha256": "1ab0814402250540784d15952dc6bb4adca499bfada404227821eeace572d739"
+      "bytes": 6509,
+      "sha256": "0e230afbbd9abfcf976115fc023c1a7829bf72a0e35e577b4d31aa660ce5ccd3"
     },
     "integrations.py": {
       "bytes": 7041,
@@ -4456,8 +5641,16 @@ if __name__ == "__main__":
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 18061,
-      "sha256": "11adefead1598e50d8a10d8e74b514071bf9db993033dbaaefce86da3069ec4c"
+      "bytes": 18060,
+      "sha256": "d340e54bade4fdb3a88c03980500e1bd01e15e8d11a67b03a5c5aaf7575d1655"
+    },
+    "static/boss.css": {
+      "bytes": 9188,
+      "sha256": "9fe896a62436cf4d014614fa33d563bbcb96c03d1fd136de540a848b80fd978a"
+    },
+    "static/boss.js": {
+      "bytes": 10912,
+      "sha256": "6e2dfe14f092dac488ba72d76722c85dce2338be12722983c72778f934527535"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -4468,20 +5661,24 @@ if __name__ == "__main__":
       "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
     },
     "static/style.css": {
-      "bytes": 18352,
-      "sha256": "fdccc104cb1f98987934725419519d6ba065c525b08151167c3e0ed010d65cb1"
+      "bytes": 19314,
+      "sha256": "55b00828a24d71476acd5a8584b988d209cad03d0460098870f3a369fe0feb8e"
     },
     "storage.py": {
-      "bytes": 10998,
-      "sha256": "f5c45adecbd2100b7b0bcde96e3a07ea3145072a5ef2a506a478ac6621150496"
+      "bytes": 11458,
+      "sha256": "3464404fdc2639bc2875a31642077fb140179d724f4365bb42919ba5e9bb2308"
     },
     "store_schema.py": {
       "bytes": 4551,
       "sha256": "b178eaa121bdf4dca84fc1daf5845bebaa04049c9e4302653f577bbb7a4bea98"
     },
     "templates/admin.html": {
-      "bytes": 3982,
-      "sha256": "f0ee24a6b915553881233e1f4f3e70cec6fdf0f3685d61fe77c43008dc6a29ef"
+      "bytes": 4272,
+      "sha256": "71dd587fb2d53c47dacda3261222010fa47207ae5072838d2cb73eadc7b4e8fe"
+    },
+    "templates/admin_boss.html": {
+      "bytes": 3298,
+      "sha256": "e58c141302484d80f67b0032f729ee38b9d6f08543e13b76907ee5fae9064df0"
     },
     "templates/admin_overview.html": {
       "bytes": 2342,
@@ -4496,20 +5693,24 @@ if __name__ == "__main__":
       "sha256": "12dafba7c83f846c25103f05af6ac266c84db667a2aaa08e4df45e3176e288a5"
     },
     "templates/admin_settings.html": {
-      "bytes": 8993,
-      "sha256": "d29d074e0139edd9f430b95415c6df3b3a8833ab38bccb682b3c5d69b26c260e"
+      "bytes": 9046,
+      "sha256": "78f93c3bdcd85560cceaf57deb6f8756fddbf9d373c1ed953623b79066be1d95"
     },
     "templates/base.html": {
-      "bytes": 1983,
-      "sha256": "cf741f66417d343e617b310f0e35dc2261a7aec3f3d277b8327849bde6ec8162"
+      "bytes": 2129,
+      "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
+    },
+    "templates/boss.html": {
+      "bytes": 7683,
+      "sha256": "8214ebeadfd938928909713edb79c35e628007fe2e95cfba9746bf5553839254"
     },
     "templates/error.html": {
       "bytes": 515,
       "sha256": "8c02ec7296f011932263817c387f5126d62238d1d7714bd57d64cb51917474be"
     },
     "templates/index.html": {
-      "bytes": 4246,
-      "sha256": "81af0536c04733b84a37c02e4d2685032f28ab03d842b9ccded523a112f2632d"
+      "bytes": 4700,
+      "sha256": "07e59aec708d27bbd8e4eddc83c1ac9852c9779582536a186b864af8fa0072e8"
     },
     "templates/login.html": {
       "bytes": 1292,
@@ -4520,28 +5721,36 @@ if __name__ == "__main__":
       "sha256": "c221df4a851759c64be861363d83161223a367db24dde7f022c8b39e05a65324"
     },
     "tests/package.json": {
-      "bytes": 160,
-      "sha256": "6b16256bcf607689434a29ef7b06ead1bfea82387fa877c9f41f726395e12557"
+      "bytes": 153,
+      "sha256": "c18c562cf375863cdc2b73e7221e18cdf6c3afd432783690389efc1d0bf4b9cd"
     },
     "tests/render_fixtures.py": {
-      "bytes": 2688,
-      "sha256": "0efc4e2e8ccb6cc26ec3a1c1c2cf2466060381a0f50be677c1d68d819e3e12f1"
+      "bytes": 2828,
+      "sha256": "57428b0809e63a480a4ff6b9def2acf9249a92af992b0e2a24d4c7cac538767b"
     },
     "tests/test_app.py": {
       "bytes": 40670,
       "sha256": "04d0c5621a3260f46b6cb4c13b9e059d4c40aae749700487c9faf8037db82eef"
     },
+    "tests/test_boss.py": {
+      "bytes": 13370,
+      "sha256": "c0e84ba40b7d2f10e3257afcc3c4216b73088ee75d7681269bb5af63c9985f2f"
+    },
+    "tests/test_boss_frontend.cjs": {
+      "bytes": 6142,
+      "sha256": "1d4b4d8e4f86a3c1f0244a78be2c64ede97b9f9bfa9bd6fe6194cab68a2875db"
+    },
     "tests/test_frontend.cjs": {
-      "bytes": 14283,
-      "sha256": "9d6006ea5f499c0d56ad758c97859e0db24b49cdac043728f1e40ca1281e99f3"
+      "bytes": 14290,
+      "sha256": "96fcd4297dbca0466d0ffefac0d0e1404281fffc7f95e9ad824cd813f809e582"
     },
     "tests/test_postgres.py": {
-      "bytes": 5360,
-      "sha256": "88b177212c262aa3e289d155b8d41c5922a9afcf9ba88bb53d9e78e6357dbc89"
+      "bytes": 5371,
+      "sha256": "2a7e5df4bf11122dac324c7ab68c22b39863f4d649fbbc8408bf0dfd57d29961"
     },
     "wager_backend.py": {
-      "bytes": 29370,
-      "sha256": "dce9c159d449732ce3d1df4b3a5e53f7516aa9798dd6f74874f1eba266f89251"
+      "bytes": 33362,
+      "sha256": "319cef286a9d60abf2c0476ab4c906f01b4cb199014461d40824e8d0e6d5d79c"
     }
   }
 }

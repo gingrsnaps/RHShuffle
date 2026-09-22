@@ -1,12 +1,18 @@
-# Verification record — 2026.09.22-local
+# Verification record — 2026.09.22-boss
 
 Verified in the supplied Linux workspace on 2026-09-22.
 
 | Check | Result |
 | --- | --- |
-| Python tests | 57 passed. |
+| Multiplayer | Two separate Chromium browser contexts, distinct visitor IPs, shared HP, automatic 5-second visibility, pause/resume, and personal totals passed. |
+| Atomic hits and fairness | Concurrent distinct players retain all damage; simultaneous requests on one network allow one hit. Fractional cooldowns, daily/browser/network caps, IPv6 /64, and trusted DO headers passed. |
+| Boss receipts and victory | Lost-response retry, final-hit clamping, no extra damage after victory, stale raid rejection, protected host controls, and recovery passed. |
+| Multi-day balance | 100 simulated raiders using 40 matching hits per day defeat 2,400,000 HP on raid day 4; no real waiting or provider calls. |
+| Game interface | Five-second polling, hidden-tab pause, no automatic attacks, uncertain-click retry, stale-response rejection, safe text rendering, and admin draft retention passed. |
+| Homepage/footer | Join the boss fight button reaches /play. Public Admin footer link and dashboard site footer removed; /admin remains available. |
+| Python tests | 75 passed (including 18 game tests). |
 | PostgreSQL integration tests | 4 skipped: no dedicated database supplied. CI provisions one. |
-| DOM and CSS checks | 20 passed with jsdom 26.1.0; no browser build required in production. |
+| DOM and CSS checks | 28 passed with jsdom 26.1.0; no browser build required in production. |
 | Date publication | Bottom confirmation button submits confirmation and persists the edited window. |
 | Superseded failure | An old-window HTTP failure cannot mark the new race as failed or impose its ordinary retry delay. Explicit provider rate limits remain honored. |
 | Concurrent refresh | An active provider check retains one follow-up request; repeated clicks coalesce. An in-flight browser read schedules a follow-up instead of dropping the request. |
@@ -19,14 +25,14 @@ Verified in the supplied Linux workspace on 2026-09-22.
 | Empty board | Waiting, empty source, campaign filter, zero weighted qualification, and failure/recovery checked. |
 | Actual HTTP startup | Passed: child process launched with `python wager_backend.py` in production/local mode with a stale database binding, served `/healthz` and `/admin`, started both automatic jobs, and shut down. |
 | Production without PostgreSQL | Passed with no usable DATABASE_URL and psycopg imports blocked; original accounts and secure HTTPS login remain functional. |
-| Private recovery | Passed: only Superadmin can download; fresh-instance import preserves password changes, accounts, dates, overrides, history, signing key, and saved Top 15. A newer local store wins over seeds; corrupt recovery files stop import without resetting accounts. |
+| Private recovery | Passed: only Superadmin can download; fresh-instance import preserves password changes, accounts, dates, overrides, history, signing key, and saved Top 15, plus boss HP, guest identity, personal contributions, cooldowns, and network allowances. A newer local store wins over seeds; corrupt recovery files stop import without resetting accounts. |
 | Supplied credential files | Match original uploaded bytes. |
-| Original Superadmin | Original password/hash verified; native login and all four dashboard tabs return successfully. |
+| Original Superadmin | Original password/hash verified; native login and all five dashboard tabs return successfully. |
 | Account migration | Preserves every original account field; adds auth_version for session revocation. |
 | Real Shuffle request | Timeout; successful provider connectivity not verified. |
 | Real Kick authorization | Timeout; successful provider connectivity not verified. |
-| Native browser checks | Passed in Chromium 153.0.8010.0 against Waitress with isolated accounts and synthetic providers: login, actual refresh POST/202, bottom-button date confirmation, published rows, expanded 100-user Code Red list, and the private recovery download. Production local-storage mode is used with a cookie override only for the HTTP test fixture; secure production cookies are separately checked over simulated HTTPS. No JavaScript errors; no horizontal overflow at 390 px. |
-| Browser screenshot review | Public page/admin red theme retained; the new private recovery section was reviewed at mobile width. Test previews contain synthetic wagers and stream status. |
+| Native browser checks | Passed in Chromium 153.0.8010.0 against Waitress with isolated accounts and synthetic providers: login, actual refresh POST/202, bottom-button date confirmation, published rows, expanded 100-user Code Red list, the private recovery download, and the community boss controls. Production local-storage mode is used with a cookie override only for the HTTP test fixture; secure production cookies are separately checked over simulated HTTPS. No JavaScript errors; no horizontal overflow at 390 px. |
+| Browser screenshot review | Public page/admin red theme retained; the game and homepage were reviewed on desktop, and the game/recovery views at mobile width. Test previews contain synthetic wagers and stream status. |
 | DigitalOcean deployment | Not performed; no deployed site was provided for validation. |
 
 The Python tests cover valid/invalid/mixed source responses, stale-cache

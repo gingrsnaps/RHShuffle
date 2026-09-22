@@ -36,7 +36,7 @@ function page(name, feed=data(name==='public'?'public':'admin')) {
   };
 }
 
-for(const name of ['public','login','overview','race','players','settings','error']) {
+for(const name of ['public','login','overview','race','players','boss','settings','error']) {
   test(name+' has unique IDs, connected labels, and no script errors',async()=>{
     const p=page(name);await flush();
     const ids=[...p.window.document.querySelectorAll('[id]')].map(node=>node.id);
