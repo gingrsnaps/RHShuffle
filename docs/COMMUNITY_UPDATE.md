@@ -1,4 +1,9 @@
-# Community update — 2026.09.22-community
+# Earlier community update — 2026.09.22-community
+
+This describes the earlier community release. The current boss-admin release
+removes the public tutorial/badge panel and adds avatar uploads and current-raid
+HP edits. It adds Pillow to the normal requirements. See README.md for current
+setup and docs/COMMUNITY_BOSS.md for current host controls.
 
 Run **`python wager_backend.py`**. The imports, web server, source jobs, and game
 remain in one process. No additional service or production dependency was added.

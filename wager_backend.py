@@ -27,6 +27,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
 from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
+from boss_avatar import from_upload, validate_avatar
 from presentation import changes, checkpoint_status, export_marker
 from store_schema import upgrade_store
 from race import calculate, empty, phase, token
@@ -101,7 +102,13 @@ def create_app(root=None, testing=False):
         return jsonify(ok=False, error=message, status=status, release=RELEASE), status
 
     def require_csrf():
-        if not secrets.compare_digest(str(request.headers.get("X-CSRF-Token") or request.form.get("csrf", "")), str(session.get("csrf", "!"))):
+        expected = session.get('csrf')
+        supplied = request.headers.get('X-CSRF-Token') or request.form.get('csrf', '')
+        # A missing session token must never match a known fallback value.
+        # Reject malformed Unicode cleanly before constant-time ASCII comparison.
+        if (not isinstance(expected, str) or not expected or not expected.isascii() or
+            not isinstance(supplied, str) or not supplied or not supplied.isascii() or
+            not secrets.compare_digest(supplied, expected)):
             abort(400, description="This form expired. Reload the page and try again.")
 
     def protected(fn):
@@ -143,6 +150,8 @@ def create_app(root=None, testing=False):
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         if request.path == "/public-state" and response.status_code in {200, 304}:
             response.headers["Cache-Control"] = "public, no-cache"
+        if request.endpoint == 'boss_avatar_image' and response.status_code in {200, 304}:
+            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
         if getattr(g, "new_guest", None):
@@ -221,6 +230,17 @@ def create_app(root=None, testing=False):
     def boss_state():
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
 
+    @app.get('/play/avatar/<digest>.png')
+    def boss_avatar_image(digest):
+        if not re.fullmatch(r'[a-f0-9]{64}', digest):
+            abort(404)
+        data = boss.avatar_image(digest)
+        if data is None:
+            abort(404)
+        response = Response(data, mimetype='image/png')
+        response.set_etag(digest)
+        return response.make_conditional(request)
+
     @app.get("/play/api/contributors")
     def boss_contributors():
         # Keep a host restart from mixing one raid's ID with another's recap.
@@ -228,7 +248,8 @@ def create_app(root=None, testing=False):
             current = boss.summary()
             if request.args.get("raid_id") != current["raid_id"] or current["status"] != "victory":
                 return json_error("The victory recap belongs to a completed raid. Refresh to see the current raid.", 409)
-            return jsonify(ok=True, raid_id=current["raid_id"], contributors=boss.contributors())
+            return jsonify(ok=True, raid_id=current["raid_id"], health_revision=current["health_revision"],
+                           contributors=boss.contributors())
 
     @app.post("/play/api/attack")
     def boss_attack():
@@ -300,15 +321,36 @@ def create_app(root=None, testing=False):
     @app.post("/admin/boss/action")
     @protected
     def boss_control():
+        # g.user is populated only from a current administrator account and its
+        # auth_version, never from a guest cookie or a client-supplied role flag.
+        # Keep every boss configuration write behind this guard, including image decoding.
         require_csrf()
-        if not g.superadmin:
-            abort(403, description="Only the Superadmin can change the community raid.")
         try:
             action = request.form.get("action", "")
             if action == "restart" and request.form.get("confirm_restart") != "yes":
                 raise ValueError("Confirm that you want to archive the current raid and start a new one.")
-            boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)))
-            flash("New community raid is ready." if action == "restart" else "Community raid " + ("paused." if action == "pause" else "resumed."))
+            if action == 'health' and request.form.get('confirm_health') != 'yes':
+                raise ValueError('Confirm that you want to change this raid\'s health.')
+            if action in {'avatar', 'avatar_reset'}:
+                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None)
+            elif action == 'settings':
+                try:
+                    values = dict(name=request.form.get('boss_name', ''),
+                                  damage=int(request.form.get('base_damage', '')),
+                                  weak_damage=int(request.form.get('weak_damage', '')),
+                                  burst_bonus=int(request.form.get('burst_bonus', '')))
+                    settings_revision = int(request.form.get('settings_revision', '-1'))
+                except ValueError:
+                    raise ValueError('Enter whole numbers for damage and reload if this form is out of date.') from None
+                boss.configure(request.form.get('raid_id'), values, settings_revision)
+            else:
+                boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
+                             health_revision=int(request.form.get('health_revision', '-1')) if action == 'health' else None)
+            flash({'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
+                   'health':'Boss health updated. Player contributions and attack allowances were kept.',
+                   'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
+                   'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action])
+            LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
             return redirect(url_for("login", tab="boss"), 303)
         except ValueError as exc:
             return render_admin("boss", errors={"boss":str(exc)}, status=422)
@@ -395,7 +437,7 @@ def create_app(root=None, testing=False):
         with runtime.lock:
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
-            value["community_boss"] = boss.export()
+            value.update(boss.recovery())
             marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
             value["recovery_export"] = marker
             runtime.store.checkpoint(marker)
@@ -416,10 +458,12 @@ def create_app(root=None, testing=False):
             if not value["users"]:
                 raise ValueError("The recovery file contains no administrator accounts.")
             game = validate_boss(value["community_boss"]) if value.get("community_boss") is not None else None
+            avatar = validate_avatar(value.get('community_boss_avatar'))
             review = dict(accounts=len(value["users"]), overrides=len(value["overrides"]),
                           history=len(value["race_history"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
                           start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
-                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]))
+                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]),
+                          avatar=bool(avatar))
             return render_admin("settings", recovery_review=review)
         except (ValueError, RuntimeError, UnicodeDecodeError) as exc:
             return render_admin("settings", errors={"recovery":str(exc)}, status=422)

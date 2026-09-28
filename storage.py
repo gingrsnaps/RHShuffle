@@ -19,6 +19,7 @@ from race_support import read_json, clean_snapshots, race_key, empty_snapshots
 from store_schema import upgrade_store
 from race import empty
 from boss import validate_boss
+from boss_avatar import validate_avatar
 from presentation import valid_marker
 
 LOG = logging.getLogger("redhunllef")
@@ -99,6 +100,7 @@ class Store:
             conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
+            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss_avatar (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_checkpoint (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
             existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
@@ -124,6 +126,7 @@ class Store:
                     secret_key=secrets.token_hex(32), site_settings=self.config.site)
             value, _ = upgrade_store(legacy, self.config.site, {})
             community_boss = value.pop("community_boss", None)
+            avatar = validate_avatar(value.pop("community_boss_avatar", None))
             marker = valid_marker(value.pop("recovery_export", None))
             if community_boss is not None:
                 community_boss = validate_boss(community_boss)
@@ -136,6 +139,8 @@ class Store:
             self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
             if community_boss is not None:
                 self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
+            if avatar is not None:
+                self.avatar_in(conn, avatar)
             if marker is not None:
                 self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?)", (self.key, encode(marker)))
             saved = empty(value["site_settings"])
@@ -155,6 +160,17 @@ class Store:
         if not row:
             raise StoreError("Saved admin state is missing. Restore a verified database backup.")
         return row[0], json.loads(row[1])
+
+    def avatar(self, conn):
+        row = self.query(conn, "SELECT document FROM rh_boss_avatar WHERE name=?", (self.key,)).fetchone()
+        return json.loads(row[0]) if row else None
+
+    def avatar_in(self, conn, value):
+        if value is None:
+            self.query(conn, "DELETE FROM rh_boss_avatar WHERE name=?", (self.key,))
+        else:
+            self.query(conn, "INSERT INTO rh_boss_avatar VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
+                       (self.key, encode(value)))
 
     def checkpoint(self, marker=None):
         if marker is not None:

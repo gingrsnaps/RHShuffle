@@ -53,8 +53,10 @@ class BossTests(unittest.TestCase):
         self.assertNotEqual(sa['state']['you']['name'],sb['state']['you']['name'])
         self.assertEqual(len(current['recent']),2)
         html=a.get('/play').text
-        self.assertIn('How to play together',html)
-        self.assertIn('40 attacks per raid day',html)
+        self.assertIn('id="attackButton"',html)
+        self.assertIn('id="bossHealthBar"',html)
+        self.assertNotIn('How to play together',html)
+        self.assertNotIn('id="howToPlay"',html)
         self.assertNotIn('href="/admin"',a.get('/').text)
         self.assertIn('Join the boss fight',a.get('/').text)
 
@@ -217,7 +219,7 @@ class BossTests(unittest.TestCase):
         for private in (persisted['salt'],'192.0.2.1',*persisted['players'],*persisted['networks']):
             self.assertNotIn(private,payload)
 
-    def test_admin_controls_require_superadmin_and_restart_confirmation(self):
+    def test_admin_controls_require_admin_and_restart_confirmation(self):
         c,s=self.client()
         with c.session_transaction() as sess:sess.update(user='gingrsnaps',auth_version=1)
         form={'csrf':s['csrf'],'action':'restart','raid_id':s['state']['raid_id'],'health':'2400000'}
@@ -227,7 +229,8 @@ class BossTests(unittest.TestCase):
         self.r.admin['users']['helper']=copy.deepcopy(self.r.admin['users']['gingrsnaps'])
         self.r.commit(self.r.admin,self.r.revision)
         with c.session_transaction() as sess:sess['user']='helper'
-        self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause'}).status_code,403)
+        current=self.b.status()['raid_id']
+        self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause','raid_id':current}).status_code,303)
 
     def test_digitalocean_ip_only_trusted_when_configured(self):
         a,sa=self.client(); b,sb=self.client()

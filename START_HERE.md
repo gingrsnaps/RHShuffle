@@ -1,6 +1,6 @@
 # RedHunllef — start here
 
-Release **2026.09.22-no-regen**. No PostgreSQL service or DATABASE_URL is needed.
+Release **2026.09.28-boss-controls**. No PostgreSQL service or DATABASE_URL is needed.
 Extract the complete folder. Install dependencies once:
 
 ```bash
@@ -49,28 +49,33 @@ bar. Verify **Published window**. Both providers update automatically every
 
 The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
 and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.22-no-regen**.
+the release label must show **2026.09.28-boss-controls**.
 
-Open **/play** or click **Join the boss fight** on the homepage. In-game
-instructions explain attacks, weaknesses, Crimson burst, and the daily allowance.
+Open **/play** or click **Join the boss fight** on the homepage. The public page
+is just the game, with no tutorial or long explanation panels.
 The shared boss starts at 2,400,000 HP. One attack per minute, 40 per raid day,
 with a target of roughly 4–8 days for 100 active participants. Game views update
 every 5 seconds. Wager/Kick views still update every 60 seconds.
 
-Host controls live at **/admin?tab=boss**. Save a **private recovery checkpoint**
+Host controls live at **/admin?tab=boss**. Use **Boss avatar** to upload a PNG/JPG/JPEG/WebP,
+or **Current raid health** to change maximum HP while keeping saved damage.
+Only signed-in admins can save these changes. Use **Boss name & damage** to
+rename the boss or adjust future hit damage. The Superadmin still controls admin
+accounts and private recovery downloads. Reinstall requirements for Pillow.
+ Save a **private recovery checkpoint**
 regularly during the raid and before redeploying. It includes health, profiles,
-attack receipts, and cooldowns. App Platform can lose changes after the last
+attack receipts, cooldowns, health edits and the uploaded avatar. App Platform can lose changes after the last
 checkpoint if it replaces the container. No extra launch command is required.
 
 The Admin footer link is removed. Bookmark **/admin** for your dashboard.
 
 Boss health never regenerates. Every confirmed hit remains in the saved raid
 across refreshes, daily resets and process restarts with the same data. Only
-starting a new raid creates a fresh boss. The initial percentage now reflects
+an explicit maximum-HP edit or a confirmed new raid may raise health. The initial percentage now reflects
 saved HP immediately. Save recovery before App Platform redeploys: losing the
 local data file is separate from in-game health regeneration.
 
-This update adds mobile attack controls, cosmetic milestones and badges, the
+Earlier improvements retained here include mobile attack controls, milestones, the
 full victory contributor list, a live homepage boss invitation, compact admin
 connections, side-by-side change review, and recovery checkpoint tracking.
 See `docs/COMMUNITY_UPDATE.md` for all changes. No new process is needed.

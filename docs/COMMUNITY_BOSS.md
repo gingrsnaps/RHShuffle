@@ -1,10 +1,11 @@
 # Community boss — play and host guide
 
 One page, one boss, one community. Open `/play`, choose a style, and press Attack.
-No account, wager, purchase, separate process, or additional dependency is needed.
+No account, wager, purchase or separate process is needed. The standard
+requirements include Pillow for PNG/JPEG/WebP uploads.
 The original `wager_backend.py` launcher serves the game and existing wager site.
 
-## Rules players see in the game
+## Default gameplay rules (admins can change damage values)
 
 - **2,400,000 health** by default. Everyone chips away at the same pool.
 - **One manual attack per 60 seconds**, with up to **40 attacks per raid day**.
@@ -20,24 +21,25 @@ The original `wager_backend.py` launcher serves the game and existing wager site
   do not secretly change the damage rules or punish players who joined late.
 - Victory remains visible. The host chooses when to start another raid.
 
-The server rejects any attempt to heal the same raid or reverse its committed
-damage. Health is always maximum HP minus saved cumulative damage. Cooldowns,
+The server rejects ordinary writes that heal the same raid or reverse its
+committed damage. Only an explicit admin health edit may raise maximum HP. Health is always maximum HP minus saved cumulative damage. Cooldowns,
 weakness changes and daily resets affect attacks only. The browser also rejects
-healing snapshots, and the initial page percentage reflects saved health.
+healing snapshots without a newer host health revision, and the initial page percentage reflects saved health.
 Process restarts retain progress when the same data file is preserved. Losing
 that file through a container replacement is a separate recovery concern below.
 
 The mobile attack dock offers the same controls and cooldown while you scroll.
 Cosmetic milestones at 25%, 50%, and 75% damage change the arena and celebrate
-progress. Badges recognize your first hit, ten bursts (100 hits), and three
-distinct raid days. They grant no damage advantage. Victory's expandable recap
+progress. Participation counters remain recorded; the separate badge explanation
+panel has been removed from the game. Victory's expandable recap
 lists every contributor by raid alias; the ordinary live board shows the Top 10.
-Use **Copy raid link** to invite the community. Errors remain until dismissed,
+Use **Copy link** to invite the community. Errors remain until dismissed,
 retried, or resolved; a routine poll cannot erase an unsuccessful attack message.
 
 ## Why it should last several days
 
-With matching hits, every full ten-attack sequence deals 1,600 damage.
+With the default damage values and matching hits, every full ten-attack sequence
+deals 1,600 damage. Admin damage changes affect these estimates.
 The following estimates assume 100 distinct, active players/networks making
 that many attacks **each day**, all matching the current weakness:
 
@@ -53,9 +55,9 @@ missed weaknesses, and shared connections extend the encounter. Community size
 alone does not guarantee a finish date. A 100-player maximum-activity simulation
 is part of the test suite; the default boss survives the first three allowances.
 
-For later raids, the Superadmin can set **100,000–100,000,000 HP** in the new-raid
-form. The current boss HP cannot be edited accidentally during play. Try the
-default first and adjust the next encounter based on actual participation.
+Signed-in admins can set **100,000–100,000,000 maximum HP** for the current boss
+or a new raid. Current-raid edits require confirmation and preserve all saved
+damage. Setting the maximum below damage already dealt is rejected.
 
 ## Together, without accounts
 
@@ -81,15 +83,46 @@ them sooner. No user-generated chat or custom names need moderation.
 ## Host controls and recovery
 
 Sign in at `/admin` and choose **Community boss**. Admins can view the shared
-stats; only the Superadmin can pause, resume, export private recovery, or start
-a new raid. A restart requires a checked confirmation and guards against an
+stats and change the avatar, name, maximum HP and future attack damage. Admins
+can pause/resume and start new raids. Private recovery downloads and account
+management remain Superadmin-only. A restart requires a checked confirmation and guards against an
 outdated raid ID. It archives the previous result and resets players/allowances.
 The latest ten summaries remain. A complete pre-restart checkpoint is also
 recorded locally; it is not a remote backup.
 
+**Boss avatar** accepts PNG/JPG/JPEG/WebP files up to 4 MB and 16 million pixels.
+Images are decoded, oriented, resized to fit 512 × 512 and saved as metadata-free
+PNG. Animated or malformed files are rejected before changing live data. The
+original upload filename is never used as a filesystem path. The selected
+avatar also appears on the homepage invitation and survives a new raid along
+with the boss name and damage settings. Use
+**Use original avatar** to restore the original boss logo.
+
+**Boss name & damage** accepts a 1–60-character printable name, base and weakness
+damage from 1–10,000, and a burst bonus from 0–10,000. Weakness damage cannot be
+less than base damage. Changes apply to future hits; old receipts and totals are
+retained, even if new damage is lower than a previous hit. Names render as escaped
+text in HTML and through textContent in browser updates. They are never HTML.
+
+Every management request checks a current admin account, session version and
+CSRF token before editing or decoding uploads. Public users cannot manage the
+boss, even with forged role flags or custom HTTP requests. They can view and
+attack normally. Public damage values are calculated on the server, never taken
+from client-supplied damage or HP fields. Stale admin settings forms are rejected.
+
+**Current raid health** changes maximum HP, not accumulated damage. For example,
+with 300 damage already dealt, a new maximum of 3,000,000 leaves 2,999,700 HP.
+Player totals, attack receipts, cooldowns and daily limits stay intact. Raising
+HP can reopen a defeated boss; setting it equal to already-dealt damage ends
+the encounter. This is an explicit host action, never automatic regeneration.
+
+Game and admin views pick up edits every five seconds. The homepage updates
+on its existing 60-second cycle. Polls preserve form drafts; if another health
+edit or a new raid makes your form stale, reload and review before resubmitting.
+
 **Save a private recovery file regularly during a multi-day raid and before a
 planned deployment.** It includes the boss ID, HP, players, network hashes,
-receipts, allowances, timestamps, history, and account/session state. The
+receipts, allowances, timestamps, history, avatar, name, damage settings and account/session state. The
 ordinary race-only backup does not contain the game.
 
 The recovery panel tracks when an export was generated and the progress since

@@ -1,64 +1,58 @@
-# Verification record — 2026.09.22-no-regen
+# Verification record — 2026.09.28-boss-controls
 
-Verified in the supplied Linux workspace on 2026-09-22.
+Verified in the supplied Linux workspace on 2026-09-28 using synthetic accounts,
+images and provider responses. No production raid or account was modified.
 
 | Check | Result |
 | --- | --- |
-| Multiplayer | Two separate Chromium browser contexts, distinct visitor IPs, shared HP, automatic 5-second visibility, pause/resume, and personal totals passed. |
-| Atomic hits and fairness | Concurrent distinct players retain all damage; simultaneous requests on one network allow one hit. Fractional cooldowns, daily/browser/network caps, IPv6 /64, and trusted DO headers passed. |
-| Boss receipts and victory | Lost-response retry, final-hit clamping, no extra damage after victory, stale raid rejection, protected host controls, and recovery passed. |
-| Multi-day balance | 100 simulated raiders using 40 matching hits per day defeat 2,400,000 HP on raid day 4; no real waiting or provider calls. |
-| Game interface | Five-second polling, hidden-tab pause, no automatic attacks, uncertain-click retry, stale-response rejection, safe text rendering, and admin draft retention passed. |
-| Homepage/footer | Join the boss fight button reaches /play. Public Admin footer link and dashboard site footer removed; /admin remains available. |
-| Python tests | 86 passed (including 21 core game and 8 community-update tests); 90 discovered. |
-| PostgreSQL integration tests | 4 skipped: no dedicated database supplied. CI provisions one. |
-| DOM and CSS checks | 35 passed with jsdom 26.1.0; no browser build required in production. |
-| No regeneration | Seven idle days, cooldown/weakness changes, daily allowance reset, pause/resume and cold app initialization with the saved SQLite file retain damage. Consistent-looking writes that heal the same raid or implicitly replace it are rejected without changing storage. |
-| Health display | Initial HTML renders the saved percentage; same-raid HP increases are rejected even with a newer clock/version. Victory remains at zero until a different raid starts. |
-| Change review | Prize/link/text changes are listed; a signed confirmation cannot publish modified values. Valid confirmation publishes the exact reviewed values. |
-| Conditional public state | Unchanged snapshot returns 304 with an empty body and fresh clock; a hit changes the ETag. Browser reuses the cached body without trying to parse 304 as JSON. Private routes remain no-store with no ETag. |
-| Feedback and mobile controls | Successful polls preserve attack errors; explicit dismissal works. Unchanged leader nodes retain identity. Mobile style selection sends the same validated attack request as the main button. |
-| Badges and milestones | 100 real validated hits across three raid days earn all badges with unchanged damage. Old records retain their totals and gain participation-day tracking. Quarter-health milestones and a victory recap of 11 contributors pass. |
-| Recovery tracking/review | Export leaves the admin revision unchanged, progress since export updates, and private upload review validates without changing live state or exposing password hashes. Imported export metadata survives; malformed optional metadata is ignored while game progress remains intact. |
-| Share link | Selectable URL fallback works when clipboard access is unavailable. |
-| Date publication | Bottom confirmation button submits confirmation and persists the edited window. |
-| Superseded failure | An old-window HTTP failure cannot mark the new race as failed or impose its ordinary retry delay. Explicit provider rate limits remain honored. |
-| Concurrent refresh | An active provider check retains one follow-up request; repeated clicks coalesce. An in-flight browser read schedules a follow-up instead of dropping the request. |
-| HTTP date-change and scheduled update | Real Requests transport to a local HTTP fixture: old-range failure, new-range success, then a second automatic publication without a refresh click. Only this isolated test uses an accelerated timer. |
-| Progress feedback | Saved window, checking, completed, and rate-limit retry messages appear on all admin tabs; unsaved input values remain intact. |
-| Windows encoding regression | Exact original CP1252 error reproduced before the fix. Startup and existing-state preservation pass after the fix, using a simulated Windows default on Linux. |
-| Named form collision | Test models the native input/property collision: the old script posts to `/[object HTMLInputElement]`; the corrected script posts to `/admin/action` with CSRF/action/service intact. |
-| Manual refresh publication | Real worker threads with synthetic provider data update both the masked public board and uncensored admin board after an authenticated refresh. |
-| Refresh error handling | JSON 400/401/404/405/500/503 cases checked; native HTML errors still render. |
-| Empty board | Waiting, empty source, campaign filter, zero weighted qualification, and failure/recovery checked. |
-| Actual HTTP startup | Passed: child process launched with `python wager_backend.py` in production/local mode with a stale database binding, served `/healthz` and `/admin`, started both automatic jobs, and shut down. |
-| Production without PostgreSQL | Passed with no usable DATABASE_URL and psycopg imports blocked; original accounts and secure HTTPS login remain functional. |
-| Private recovery | Passed: only Superadmin can download; fresh-instance import preserves password changes, accounts, dates, overrides, history, signing key, and saved Top 15, plus boss HP, guest identity, personal contributions, cooldowns, and network allowances. A newer local store wins over seeds; corrupt recovery files stop import without resetting accounts. |
-| Supplied credential files | Match original uploaded bytes. |
-| Original Superadmin | Original password/hash verified; native login and all five dashboard tabs return successfully. |
-| Account migration | Preserves every original account field; adds auth_version for session revocation. |
-| Real Shuffle request | Timeout; successful provider connectivity not verified. |
-| Real Kick authorization | Timeout; successful provider connectivity not verified. |
-| Native browser checks | Passed in Chromium 153.0.8010.0 against Waitress with isolated accounts and synthetic providers: login, actual refresh POST/202, bottom-button date confirmation, published rows, expanded 100-user Code Red list, the private recovery download, and the community boss controls. Production local-storage mode is used with a cookie override only for the HTTP test fixture; secure production cookies are separately checked over simulated HTTPS. No JavaScript errors; no horizontal overflow at 390 px. |
-| Browser screenshot review | Public page/admin red theme retained; the game and homepage were reviewed on desktop, and the game/recovery views at mobile width. Test previews contain synthetic wagers and stream status. |
-| DigitalOcean deployment | Not performed; no deployed site was provided for validation. |
+| Python suite | 103 discovered: **99 passed**, 4 optional PostgreSQL tests skipped. |
+| DOM/CSS suite | **39 passed** against the real rendered templates using jsdom. |
+| PNG/JPG/JPEG/WebP upload | Actual decoding, 512 × 256 resize of a 900 × 450 source, metadata removal, served PNG bytes, cache headers and conditional 304 response passed. |
+| Invalid uploads | Empty, fake, corrupt, renamed GIF, wrong extension, oversized, excessive-pixel, animated PNG and animated WebP images rejected without changing the existing avatar or raid. |
+| Avatar visibility | Public game, homepage invitation and admin preview render the uploaded URL. Game/admin polling updates the image and preserves health form drafts. Original-logo reset and avatar retention after a new raid passed. |
+| Current raid health | Explicit confirmation and valid bounds required. Edits use the latest committed damage, even if attacks arrive after the form opens. Player totals, network limits and receipts are retained. Stale health revisions and old raid forms cannot overwrite newer edits. |
+| No automatic regeneration | Idle time, daily rollover, pause/resume and cold app restart retain damage. Ordinary writes and browser snapshots cannot refill HP. Only an explicit health edit can reopen the same defeated raid. |
+| Recovery | Fresh-instance import and cold initialization retain avatar bytes, boss name, damage settings, health revision and progress. Existing state wins over a malformed newer seed. Recovery preview rejects a mismatched image checksum without mutation. |
+| Authorization | All seven boss management actions reject guests, unknown accounts, revoked session versions and tampered cookies before image decoding or writes. Forged role flags cannot grant access. Missing, invalid and Unicode CSRF tokens return controlled errors. Ordinary admin sign-in and boss editing pass; private recovery remains Superadmin-only. Removed accounts lose access immediately. |
+| Boss name and damage | Validated settings affect future hits only. A 450-point historical receipt remains valid after lowering damage. Publicly supplied damage, HP, role and settings fields cannot alter server calculations. Invalid names/ranges and stale forms are rejected; storage guards reject unapproved settings changes. Names render as text and admin drafts survive polling. |
+| Public edit isolation | Public pages contain no management forms; management GET requests and writes to read-only game state return 405 without changing saved data. The public can view the chosen avatar and play normally. |
+| Barebones game | Tutorial/story/help elements and footer are absent. Controls, cooldowns, safe retries, milestones, recent hits and victory contributors remain functional in DOM checks. |
+| Multiplayer rules | Concurrent hits retain damage; shared-network requests enforce one hit; cooldowns, IPv6 grouping, daily caps, burst damage and final-hit clamping passed. The 100-player maximum-activity simulation finishes on raid day four. |
+| Existing app functionality | Native login, date publication, original Superadmin import, source normalization, provider worker refreshes, unchanged-data handling, public masking, private Code Red rows, recovery and account roles passed. |
+| Launch | Existing subprocess test exercises Waitress startup via `python wager_backend.py`, local storage and a stale database binding. No management script or separate game worker is needed. |
+| Preserved files | Original provider settings, account seed and both logo assets match the supplied bytes exactly. |
 
-The Python tests cover valid/invalid/mixed source responses, stale-cache
-retention, original field envelopes, date-range requests with no lifetime
-fallback, Kick reauthorization, independent workers, in-flight settings changes,
-protected routes, CSRF, session revocation, login rate limits, account roles,
-CSV safety, overrides, archive/restore confirmation, corrupt-store preservation,
-DST validation, exact monetary calculations, and sole-script startup.
+## Verification limits
 
-DOM checks render the real templates and verify unique IDs/label targets,
-automatic polling, manual polling cadence, state/countdown boundaries, form
-preservation across updates, Code Red expansion/search, text-only username
-rendering, and session/proxy error recovery. They use synthetic source data.
+- The previous turn's native-browser visual attempt could not run: the workspace Chromium
+  executable crashed at launch with SIGSEGV, before loading the app. The earlier
+  release's browser screenshots are not evidence for this release's new layout.
+  No new native-browser claim is made here. Current template/DOM checks and HTTP
+  image/form integration tests passed.
+- No dedicated disposable PostgreSQL database was provided; four optional
+  compatibility tests skipped. Default local SQLite was tested. CI provisions
+  PostgreSQL separately for that optional mode.
+- No DigitalOcean deployment or successful live Shuffle/Kick connection was
+  verified for this release. Provider checks use synthetic responses and local
+  HTTP fixtures. Earlier live provider probes timed out.
+- App Platform container storage is temporary. Recovery tests prove that a saved
+  checkpoint restores its contents; they do not provide automatic remote backups
+  or protect changes made after that checkpoint.
 
-The included PostgreSQL checks cover transactional revision conflicts, separate
-live writes, advisory locks, import from the old JSONB table, and rollback of a
-failed admin save. Run them against a disposable database before relying on a
-first production migration. The code does not substitute a passing mocked SQL
-check for a real database test.
+## Reproduce
 
-The native form-property collision is emulated explicitly in jsdom because its default form implementation does not reproduce this browser behavior. The corrected refresh was also clicked in actual Chromium. Neither verification is a claim of a successful live Shuffle response.
+```bash
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
+```
+
+Optional interface checks require Node only for development:
+
+```bash
+npm --prefix tests install --ignore-scripts
+python tests/render_fixtures.py .test-fixtures
+npm --prefix tests test
+```
+
+All published test counts are from actual executed checks. Generated fixture
+accounts, preview data and runtime databases are excluded from the release ZIP.

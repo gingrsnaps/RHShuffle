@@ -1,6 +1,6 @@
 # RedHunllef — complete configured source
 
-Release **2026.09.22-no-regen**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
+Release **2026.09.28-boss-controls**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
 
 Start with README.md and FILE_STRUCTURE.md. The only launch command is `python wager_backend.py`. FULL_CODE_BLOCKS.md is this generated document and is not recursively repeated inside itself.
 
@@ -85,7 +85,59 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
-# Changes — 2026.09.22-no-regen
+# Changes — 2026.09.28-boss-controls
+
+All current administrator accounts can manage the community boss. Guest users
+cannot access editing forms or submit management actions. Every boss management action
+requires an authenticated current admin session and a valid CSRF token. Account
+management and private recovery downloads remain Superadmin-only.
+
+Add WebP to PNG/JPG/JPEG avatar uploads. Image decoding, resizing, metadata removal,
+size limits and rejection of animation remain. Public viewing of the avatar is
+retained, while upload/reset actions are restricted to admins.
+
+Add boss name and base/weakness/burst damage settings. Names are escaped text.
+Damage is calculated from saved server settings; public request fields cannot
+supply damage or HP. Edits apply to new hits and preserve existing contributions,
+receipts, cooldowns and HP. Settings survive new raids, restarts and recovery.
+Separate settings revisions reject stale admin forms and old display updates.
+
+Harden CSRF validation: missing stored tokens cannot match a predictable fallback;
+malformed Unicode tokens return a controlled error. Tests cover all seven boss
+management actions, guest/unknown/revoked/tampered sessions, forged roles, missing
+and invalid tokens, ordinary admin sign-in, removed accounts and public forgery.
+
+The barebones game, no automatic regeneration, original configured credentials,
+60-second provider checks and sole wager_backend.py launch remain unchanged.
+99 Python checks and 39 DOM/CSS checks passed; four optional PostgreSQL tests
+skipped. See docs/VALIDATION.md for scope and current external testing limits.
+
+## Previous boss admin release — 2026.09.28-boss-admin
+
+The public game page is now barebones: arena, HP, attack controls, cooldowns,
+contributions and history. Long explanations, the tutorial, separate badge panel
+and game footer are removed. Existing combat rules and five-second updates stay.
+
+Superadmin controls now include PNG/JPG avatar upload/reset and confirmed edits
+to the current raid's maximum HP. Health edits preserve cumulative damage,
+player totals, receipts and allowances. A newer health revision distinguishes
+an intentional host edit from accidental regeneration or stale responses.
+
+Images are validated by Pillow, re-encoded without metadata, resized to 512px,
+kept outside the frequently written raid record, and served with a content hash
+and immutable cache header. The homepage, game and admin preview use the same
+image. Recovery checkpoints include the image; new raids retain it.
+
+Existing accounts, provider credentials, saved progress, local-storage default,
+60-second Shuffle/Kick jobs and sole wager_backend.py launcher are retained.
+Install the updated requirements before launching. No remote database is added.
+
+Verification: 94 Python tests and 38 DOM/CSS checks passed; four optional
+PostgreSQL checks skipped. Real-browser checks could not run in this workspace
+because Chromium crashed at launch. Current live providers/deployment were not
+verified; details and limits are in docs/VALIDATION.md.
+
+## Previous no-regeneration release — 2026.09.22-no-regen
 
 No-regeneration guard: the server rejects same-raid writes that increase HP,
 change maximum HP, reverse damage/attack totals, or roll back the version. A
@@ -207,7 +259,7 @@ is always live, with stale-cache preservation only during provider failures.
 ## FILE_STRUCTURE.md
 
 ```markdown
-# File structure — 2026.09.22-no-regen
+# File structure — 2026.09.28-boss-controls
 
 Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
 
@@ -224,7 +276,8 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `README.md` | Setup, deployment, migration, operation, troubleshooting, verification limits. |
 | `START_HERE.md` | Quick launch instructions and original account information. |
 | `app.yaml` | One Python web service, no database component; edit the repository name. |
-| `boss.py` | Server-authoritative shared raid, atomic attacks, guest/network limits, recovery validation. |
+| `boss.py` | Shared raid, atomic attacks, explicit host HP edits and no automatic regeneration. |
+| `boss_avatar.py` | Bounded PNG/JPEG/WebP decoding, metadata removal, resizing and recovery validation. |
 | `config.py` | Credential precedence, deployment configuration, fixed update interval. |
 | `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
 | `docs/COMMUNITY_UPDATE.md` | Approved community improvements, performance changes, upgrade notes and storage options. |
@@ -266,6 +319,7 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
 | `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
 | `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
+| `tests/test_boss_admin.py` | All admin-only boss actions, forged roles, CSRF, image formats, HP/name/damage changes and recovery. |
 | `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
 | `tests/test_community.py` | Conditional HTTP, signed review, badges, legacy preservation and recovery metadata regressions. |
 | `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
@@ -286,31 +340,88 @@ web: python wager_backend.py
 ````markdown
 # RedHunllef Wager Race + Community Boss
 
-Release **2026.09.22-no-regen**. Run the complete app with **`python wager_backend.py`**.
+Release **2026.09.28-boss-controls**. Run the complete app with **`python wager_backend.py`**.
 No PostgreSQL service, database connection string, account-creation script, or
 separate update worker is required. Python's built-in SQLite creates a local
 file automatically. The red theme, original credentials, original Superadmin,
 public Top 15, private Code Red list, and automatic 60-second updates remain.
 
-## Boss health never regenerates
+## This update: admin-only boss controls
 
-Every confirmed hit reduces the current raid's saved health. Cooldowns, weakness
-rotations, daily allowance resets, inactivity, page refreshes and process restarts
-with the same saved data do not restore HP. The server now explicitly rejects
-same-raid writes that increase health or reverse damage. Remaining health is
-calculated from maximum health minus cumulative committed damage.
+The game page now focuses on the arena, attacks, HP, cooldowns and contributions.
+Tutorials, story paragraphs, the badge explanation panel and the game footer
+are removed. Gameplay rules and automatic updates stay the same.
 
-The browser rejects same-raid updates that increase HP even if they carry a
-newer timestamp/version. It retains the last confirmed state and disables fresh
-attacks if valid updates stop arriving. Initial HTML renders the actual health
-percentage, removing the previous brief “100%” label during page loading.
-The host's confirmed **Start a new raid** action creates a different boss.
+Sign in with a current administrator account and open **Admin → Community boss**.
+Both ordinary admins and the Superadmin can manage the boss:
 
-A loss of local files on App Platform is a storage reset, not regeneration.
-This patch cannot recover damage absent from both the saved file and your latest
-recovery checkpoint. Keep one instance, preserve `data/` on persistent hosts,
-and save a private recovery checkpoint before redeploying. Existing configuration
-and game state are not reset by installing these application files.
+- **Boss avatar:** choose a PNG, JPG, JPEG or WebP and press **Upload avatar**.
+  The server validates the image contents, removes metadata and resizes it to
+  fit 512 × 512 pixels. Uploads may be up to 4 MB and 16 million pixels.
+  **Use original avatar** restores the supplied logo. Site branding is unchanged.
+- **Current raid health:** enter the new **Maximum HP**, check the confirmation
+  and press **Save health**. The range is 100,000–100,000,000. Remaining HP is
+  the new maximum minus all damage already dealt. Contributions, cooldowns,
+  allowances and the raid identity are retained. The maximum cannot be below
+  damage already dealt. Raising it can deliberately reopen a defeated boss.
+- **Start a new raid** remains a separate confirmed action. It archives a
+  summary, resets players and allowances, and retains the avatar, name and damage settings.
+- **Boss name & damage:** set the displayed name (1–60 printable characters),
+  base damage, weakness damage and every-tenth-hit burst bonus. Base/weakness
+  damage must be 1–10,000, the bonus 0–10,000, and weakness damage at least base
+  damage. These values apply only to future hits. Saved contributions, old
+  attack receipts and cooldowns remain unchanged. Concurrent settings edits
+  receive a conflict instead of silently replacing a newer admin change.
+
+| Capability | Public visitor | Admin | Superadmin |
+| --- | --- | --- | --- |
+| View the game, avatar, name and current stats | Yes | Yes | Yes |
+| Attack under the saved game rules | Yes | Yes | Yes |
+| Upload/reset avatar; edit name, maximum HP or attack damage | No | Yes | Yes |
+| Pause/resume or start a new raid | No | Yes | Yes |
+| Manage admin accounts or download private recovery files | No | No | Yes |
+
+All boss management writes use a POST-only admin endpoint with a verified current account,
+session version and CSRF token. Guest cookies, public CSRF tokens and supplied
+role flags cannot grant access. Removed accounts and revoked sessions lose access.
+Uploads are decoded only after the authorization checks. Public attacks submit
+a style and receipt; the server computes damage from saved settings and ignores
+forged damage/HP/settings fields. Public pages contain no upload or edit forms.
+Uploaded images remain publicly viewable because they are the game's avatar.
+
+Avatar, name, damage and health edits appear on open game/admin pages within the normal
+five-second update cycle. The homepage invitation uses its normal 60-second
+cycle. Unsaved admin fields are not overwritten by polling. A stale health
+form is rejected if another health edit or a new raid was saved meanwhile.
+
+**Automatic health regeneration remains off.** Attacks, cooldowns, daily resets,
+refreshes, inactivity, pause/resume and process restarts with the same saved
+file never restore HP. Only an explicit host health edit or a new raid can
+raise health. The browser accepts such an edit only with its newer health
+revision; ordinary or stale responses cannot undo committed damage.
+
+Avatar bytes are stored separately from raid counters, so each attack does not
+rewrite the image. Images use versioned URLs and browser caching; state feeds
+contain only the URL. Private recovery checkpoints include the avatar, name, damage settings and HP
+edits. Pillow is the one new Python dependency and is included in requirements.
+
+## Upgrade this installation
+
+1. Download a current **private recovery checkpoint** before updating a hosted
+   instance. Retain your existing `data/` folder on a persistent host.
+2. Replace the application code, templates, static files and requirements with
+   the contents of `redhunllef-rebuilt/` in this ZIP. Keep your current private
+   configuration and newer `private/recovery.seed.json`. This ZIP contains no
+   runtime `data/` folder or blank recovery file that overwrites progress.
+3. Run `python -m pip install -r requirements.txt` (or redeploy with the same
+   build command) to install Pillow along with the existing dependencies.
+4. Run only `python wager_backend.py`. The new local image table is created
+   automatically; existing accounts and raid state take precedence over seeds.
+
+On App Platform, commit the downloaded checkpoint as `private/recovery.seed.json`
+in your private repository before redeploying. Local container files, including
+uploaded avatars, can be lost on replacement. A checkpoint restores only what
+was saved in it. The detailed storage section below explains this limitation.
 
 ## Included community improvements
 
@@ -320,7 +431,7 @@ and game state are not reset by installing these application files.
   and attack without scrolling back up. They share the main button's cooldown
   and safe retry receipt.
 - Cosmetic 25%, 50%, and 75% milestones, arena changes, a victory recap with
-  every contributor, first-hit/ten-burst/three-day badges, and a copy-link button.
+  every contributor, and a copy-link button.
 - Attack errors stay visible until dismissed, retried, or resolved by a
   confirmed receipt. Ordinary successful polls cannot erase them.
 - Compact connection summaries in the dashboard. Expand **Live connections**
@@ -339,34 +450,34 @@ upgrade details. Cosmetic rewards do not increase damage or shorten the raid.
 ## Community boss: ready at /play
 
 Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
-attacks one shared Crimson Hunllef. The red arena uses your original logo,
+attacks one shared Crimson Hunllef. The red arena uses your original logo or uploaded avatar,
 animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
-bonuses, personal progress, badges, milestones, Top 10 raiders, recent hits, and
+bonuses, personal progress, milestones, Top 10 raiders, recent hits, and
 past raid summaries. Victory includes the full contributor list.
-Instructions are built into the page. There is no signup or separate launch step.
+The page contains just the game and its controls. There is no signup or separate launch step.
 The homepage Admin footer link is removed; sign in directly at **`/admin`**.
 The admin dashboard also omits the site footer.
 
-Default balance: **2,400,000 HP**, **one manual attack every 60 seconds**, and
+Default balance (before any admin damage edits): **2,400,000 HP**, **one manual attack every 60 seconds**, and
 **40 attacks per raid day** per browser and shared network. Matching the current
 weakness deals 150 damage instead of 100; every tenth personal hit adds 100.
 A 100-person community making 20–40 mostly matching attacks daily should take
 roughly **4–8 raid days**. This assumes active daily participation, not merely
 100 community members. The fastest tested 100-person scenario finishes on day
 four. Raid days are 24-hour periods from the first successful community hit.
-No damage regenerates. Victory remains until the host opens a new raid.
+No damage regenerates. Victory remains until the host explicitly increases HP or opens a new raid.
 
 The game refreshes every **5 seconds** while visible, with a local countdown
 between updates. Shuffle and Kick continue their original **60-second** checks.
 All attacks and limits are enforced by the server in an atomic transaction.
 A lost-response retry uses the same receipt so that click cannot land twice.
-No WebSocket server, Redis, Node runtime, new dependency, or remote database is
-needed. Keep **one instance** in local mode.
+No WebSocket server, Redis, Node runtime or remote database is needed. Pillow
+handles image decoding. Keep **one instance** in local mode.
 
-**Admin → Community boss** provides pause, resume, new-raid difficulty, and a
-private recovery download. Only the Superadmin may change a raid. Starting a
-new raid requires confirmation and archives a summary; changing the HP there
-applies only to the new raid. Game writes do not change race settings or wagers.
+**Admin → Community boss** provides avatar uploads, boss name, attack damage,
+current-raid maximum HP, pause/resume and new-raid difficulty for signed-in
+admins. Private recovery downloads remain Superadmin-only. Game writes do not
+change race settings or wagers.
 
 Read [docs/COMMUNITY_BOSS.md](docs/COMMUNITY_BOSS.md) for the rules, balancing,
 privacy limits, and recovery process. Multi-day game progress is part of the
@@ -386,7 +497,7 @@ compatibility for existing PostgreSQL installations remains separate.
 
 A new **Private recovery file** download in Settings lets the Superadmin save
 accounts, password hashes, the session signing key, race settings, overrides,
-history, audit entries, bans, the last Top 15, and the complete community boss state. A fresh instance imports it
+history, audit entries, bans, the last Top 15, the complete community boss state, and its uploaded avatar. A fresh instance imports it
 automatically from `private/recovery.seed.json`. Existing saved local state
 always wins over seed files. Original provider credentials stay in the existing
 configuration; the recovery download does not export the provider configuration.
@@ -395,7 +506,7 @@ configuration; the recovery download does not export the provider configuration.
 
 **App Platform local files are temporary.** Redeploying, replacing, or scaling
 an instance can discard changes made inside it. This includes edited race
-dates, passwords, new accounts, overrides, history, and all community boss progress. A replacement starts
+dates, passwords, new accounts, overrides, history, all community boss progress, and uploaded avatars. A replacement starts
 from the files committed to your repository, including your latest recovery
 seed if you supplied one. Live standings and Kick status are fetched again.
 
@@ -461,7 +572,7 @@ a persistent host. Do not delete it to fix an unrelated deployment problem.
    `${race-db.DATABASE_URL}` binding from the service if you added one, because
    DigitalOcean may try to resolve bindings before starting Python. Do not
    delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.22-no-regen** and **Local file ready; no
+5. Deploy. Startup should report **2026.09.28-boss-controls** and **Local file ready; no
    external database is required**. Open the HTTPS app URL and `/admin`.
 6. Reload your browser with Ctrl+F5. Review the published race dates and provider
    results. Publish the desired schedule if the original seeded race has ended.
@@ -629,7 +740,7 @@ and reduced-motion support. No remote fonts or frontend framework are required.
 ## Console output and troubleshooting
 
 ```text
-START RedHunllef 2026.09.22-no-regen listening on 0.0.0.0:8080; storage=local SQLite.
+START RedHunllef 2026.09.28-boss-controls listening on 0.0.0.0:8080; storage=local SQLite.
 STORAGE Local file ready; no external database is required.
 LIVE Automatic Shuffle and Kick checks started; cadence=60s.
 ```
@@ -639,9 +750,9 @@ logs show the requested window, outcome, and duration without API credentials.
 
 | Symptom | Action |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.22-no-regen; use `python wager_backend.py`. |
+| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.28-boss-controls; use `python wager_backend.py`. |
 | DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
-| Missing Flask, Waitress, or tzdata | Install `requirements.txt` with the Python used to launch. |
+| Missing Flask, Waitress, tzdata, or PIL | Install `requirements.txt` with the Python used to launch. |
 | Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
 | Dates do not publish | Use the bottom **Confirm and publish race** button and verify **Published window**. |
 | Refresh appears unchanged | Expand **Live connections**. It distinguishes unchanged/empty results from errors or queued retries. |
@@ -662,7 +773,7 @@ logs show the requested window, outcome, and duration without API credentials.
 
 ## Verification
 
-This release passes **86 Python application/game/calculation tests** and **35 DOM/CSS
+This release passes **99 Python application/game/calculation tests** and **39 DOM/CSS
 checks**. Startup is exercised through an actual Waitress child process using
 `python wager_backend.py`, production mode, and a leftover database placeholder.
 Another check blocks importing psycopg and verifies production login with secure
@@ -720,7 +831,7 @@ shipped. Runtime state and test preview data are excluded from the ZIP.
 ````markdown
 # RedHunllef — start here
 
-Release **2026.09.22-no-regen**. No PostgreSQL service or DATABASE_URL is needed.
+Release **2026.09.28-boss-controls**. No PostgreSQL service or DATABASE_URL is needed.
 Extract the complete folder. Install dependencies once:
 
 ```bash
@@ -769,28 +880,33 @@ bar. Verify **Published window**. Both providers update automatically every
 
 The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
 and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.22-no-regen**.
+the release label must show **2026.09.28-boss-controls**.
 
-Open **/play** or click **Join the boss fight** on the homepage. In-game
-instructions explain attacks, weaknesses, Crimson burst, and the daily allowance.
+Open **/play** or click **Join the boss fight** on the homepage. The public page
+is just the game, with no tutorial or long explanation panels.
 The shared boss starts at 2,400,000 HP. One attack per minute, 40 per raid day,
 with a target of roughly 4–8 days for 100 active participants. Game views update
 every 5 seconds. Wager/Kick views still update every 60 seconds.
 
-Host controls live at **/admin?tab=boss**. Save a **private recovery checkpoint**
+Host controls live at **/admin?tab=boss**. Use **Boss avatar** to upload a PNG/JPG/JPEG/WebP,
+or **Current raid health** to change maximum HP while keeping saved damage.
+Only signed-in admins can save these changes. Use **Boss name & damage** to
+rename the boss or adjust future hit damage. The Superadmin still controls admin
+accounts and private recovery downloads. Reinstall requirements for Pillow.
+ Save a **private recovery checkpoint**
 regularly during the raid and before redeploying. It includes health, profiles,
-attack receipts, and cooldowns. App Platform can lose changes after the last
+attack receipts, cooldowns, health edits and the uploaded avatar. App Platform can lose changes after the last
 checkpoint if it replaces the container. No extra launch command is required.
 
 The Admin footer link is removed. Bookmark **/admin** for your dashboard.
 
 Boss health never regenerates. Every confirmed hit remains in the saved raid
 across refreshes, daily resets and process restarts with the same data. Only
-starting a new raid creates a fresh boss. The initial percentage now reflects
+an explicit maximum-HP edit or a confirmed new raid may raise health. The initial percentage now reflects
 saved HP immediately. Save recovery before App Platform redeploys: losing the
 local data file is separate from in-game health regeneration.
 
-This update adds mobile attack controls, cosmetic milestones and badges, the
+Earlier improvements retained here include mobile attack controls, milestones, the
 full victory contributor list, a live homepage boss invitation, compact admin
 connections, side-by-side change review, and recovery checkpoint tracking.
 See `docs/COMMUNITY_UPDATE.md` for all changes. No new process is needed.
@@ -878,26 +994,53 @@ import secrets
 import threading
 import time
 
+from boss_avatar import image_bytes, validate_avatar
+
 LOG = logging.getLogger("redhunllef")
 DEFAULT_HP = 2_400_000
+MIN_HP, MAX_HP = 100_000, 100_000_000
 COOLDOWN = 60
 DAILY_ATTACKS = 40
 DAY = 86400
 WARD_SECONDS = 600
 POLL_SECONDS = 5
 BASE_DAMAGE, WEAK_DAMAGE, BURST_EVERY, BURST_BONUS = 100, 150, 10, 100
-MAX_HIT = WEAK_DAMAGE + BURST_BONUS
+MAX_DAMAGE = 10_000
+# Historical receipts must remain valid if the host later lowers attack damage.
+MAX_HIT = MAX_DAMAGE * 2
+DEFAULT_NAME = 'Crimson Hunllef'
 STYLES = {"blade": "Blade", "bow": "Bow", "magic": "Magic"}
 MAX_PLAYERS, MAX_NETWORKS = 2000, 4000
 TOKEN = re.compile(r"[a-f0-9]{64}\Z")
 
 
-def rules():
-    """One contract for server validation, page instructions, and browser labels."""
+def combat_settings(value=None):
+    """Validate editable settings separately from immutable player damage totals."""
+    if value is not None and not isinstance(value, dict):
+        raise ValueError('Invalid boss settings.')
+    value = value or {}
+    name = value.get('name', DEFAULT_NAME)
+    if not isinstance(name, str) or not 1 <= len(name) <= 60 or not name.strip() or not name.isprintable():
+        raise ValueError('Boss name must contain 1–60 printable characters.')
+    result = dict(name=name.strip(), damage=value.get('damage', BASE_DAMAGE),
+                  weak_damage=value.get('weak_damage', WEAK_DAMAGE), burst_bonus=value.get('burst_bonus', BURST_BONUS))
+    for field in ('damage', 'weak_damage', 'burst_bonus'):
+        minimum = 0 if field == 'burst_bonus' else 1
+        if type(result[field]) is not int or not minimum <= result[field] <= MAX_DAMAGE:
+            raise ValueError(f'Damage values must be whole numbers up to {MAX_DAMAGE:,}; only the burst bonus may be zero.')
+    if result['weak_damage'] < result['damage']:
+        raise ValueError('Weakness damage must be at least the base damage.')
+    return result
+
+
+def rules(state=None):
+    """One contract for server validation, host controls, and browser labels."""
+    settings = combat_settings((state or {}).get('settings'))
     return dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, raid_day=DAY,
                 poll_seconds=POLL_SECONDS, ward_seconds=WARD_SECONDS, default_hp=DEFAULT_HP,
-                damage=BASE_DAMAGE, weak_damage=WEAK_DAMAGE, burst_every=BURST_EVERY,
-                burst_bonus=BURST_BONUS, styles=dict(STYLES))
+                damage=settings['damage'], weak_damage=settings['weak_damage'], burst_every=BURST_EVERY,
+                burst_bonus=settings['burst_bonus'],
+                styles=dict(STYLES), min_hp=MIN_HP, max_hp=MAX_HP, max_damage=MAX_DAMAGE)
 
 
 def badges(player):
@@ -915,12 +1058,13 @@ class BossError(ValueError):
         self.code, self.status, self.retry_after = code, status, retry_after
 
 
-def fresh_raid(now=None, health=DEFAULT_HP, history=None):
+def fresh_raid(now=None, health=DEFAULT_HP, history=None, settings=None):
     now = int(time.time() if now is None else now)
     return dict(schema=1, id=secrets.token_hex(16), salt=secrets.token_hex(32),
                 version=1, max_hp=health, hp=health, created_at=now, started_at=0,
                 finished_at=0, paused=False, total_attacks=0, total_damage=0,
-                players={}, networks={}, recent=[], history=list(history or [])[-10:])
+                players={}, networks={}, recent=[], history=list(history or [])[-10:],
+                settings=combat_settings(settings), settings_revision=0)
 
 
 def _integer(value, minimum=0, maximum=10**12):
@@ -942,6 +1086,9 @@ def validate_boss(value):
         if not isinstance(value.get(field), str) or not re.fullmatch(pattern, value[field]):
             raise ValueError("The community boss recovery has an invalid identifier.")
     _integer(value.get("version"), 1)
+    _integer(value.get("health_revision", 0))
+    _integer(value.get('settings_revision', 0))
+    combat_settings(value.get('settings'))  # Older raids inherit the original defaults.
     maximum = _integer(value.get("max_hp"), 1, 100_000_000)
     hp = _integer(value.get("hp"), 0, maximum)
     for field in ("created_at", "started_at", "finished_at", "total_attacks", "total_damage"):
@@ -1022,6 +1169,7 @@ class CommunityBoss:
                 self.store.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (store.key, json.dumps(value)))
             else:
                 value = validate_boss(json.loads(row[0]))
+            self.avatar_document = validate_avatar(self.store.avatar(conn))
         self.state, self.loaded_at = value, time.monotonic()
 
     def _read(self, conn, locked=False):
@@ -1031,8 +1179,8 @@ class CommunityBoss:
             raise ValueError("Community boss state is missing. Restore the private recovery checkpoint.")
         return validate_boss(json.loads(row[0]))
 
-    def _write(self, conn, state, *, previous=None, new_raid=False):
-        """Only a deliberate new raid may replenish health.
+    def _write(self, conn, state, *, previous=None, new_raid=False, health_change=False, settings_change=False):
+        """Only an explicit host health edit or new raid may replenish health.
 
         Callers already hold the storage transaction. Compare against the row
         read inside that transaction, never an older viewer/cache snapshot.
@@ -1041,14 +1189,24 @@ class CommunityBoss:
         if state["id"] != previous["id"]:
             if not new_raid:
                 raise BossError("Starting a new boss requires the host's new-raid action.", "new_raid_required", 409)
-        elif (state["max_hp"] != previous["max_hp"] or state["hp"] > previous["hp"]
-              or state["total_damage"] < previous["total_damage"]
+        elif (state["total_damage"] < previous["total_damage"]
               or state["total_attacks"] < previous["total_attacks"]
-              or state["version"] < previous["version"]):
+              or state["version"] < previous["version"]
+              or (not health_change and (state["max_hp"] != previous["max_hp"] or state["hp"] > previous["hp"]
+                  or state.get("health_revision", 0) != previous.get("health_revision", 0)))
+              or (health_change and (state.get("health_revision", 0) != previous.get("health_revision", 0) + 1
+                  or state["total_damage"] != previous["total_damage"] or state["total_attacks"] != previous["total_attacks"]))):
             LOG.error("BOSS Blocked a progress reversal. Saved damage and health were not changed.")
             raise BossError("Boss progress cannot move backwards. Existing damage was preserved.", "progress_reversal", 409)
-        if state["hp"] != state["max_hp"] - state["total_damage"]:
+        if not 0 <= state["hp"] <= state["max_hp"] or state["hp"] != state["max_hp"] - state["total_damage"]:
             raise BossError("Boss health does not match saved damage. Existing progress was preserved.", "invalid_health", 409)
+        if state['id'] == previous['id']:
+            changed = combat_settings(state.get('settings')) != combat_settings(previous.get('settings'))
+            revision, old_revision = state.get('settings_revision', 0), previous.get('settings_revision', 0)
+            if ((not settings_change and (changed or revision != old_revision)) or
+                (settings_change and (revision != old_revision + 1 or state['hp'] != previous['hp'] or
+                 state['total_damage'] != previous['total_damage'] or state['total_attacks'] != previous['total_attacks']))):
+                raise BossError('Boss settings require an explicit admin edit. Existing progress was preserved.', 'settings_guard', 409)
         self.store.query(conn, "UPDATE rh_boss SET document=? WHERE name=?",
                          (json.dumps(state, separators=(",", ":"), allow_nan=False), self.store.key))
 
@@ -1059,10 +1217,12 @@ class CommunityBoss:
         if force or time.monotonic() - self.loaded_at >= POLL_SECONDS:
             with self.store.connection() as conn:
                 self.state = self._read(conn)
+                # Images stay outside the frequently rewritten gameplay record.
+                if self.state.get('avatar_hash') != (self.avatar_document or {}).get('sha256'):
+                    self.avatar_document = validate_avatar(self.store.avatar(conn))
             self.loaded_at = time.monotonic()
 
-    @staticmethod
-    def _project(state, guest, address, now):
+    def _project(self, state, guest, address, now):
         keys = list(STYLES)
         weakness = keys[(int(now) // WARD_SECONDS + int(state["id"][:8], 16)) % 3]
         day = max(0, int((now - state["started_at"]) // DAY)) if state["started_at"] else 0
@@ -1079,11 +1239,13 @@ class CommunityBoss:
         status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
         leaders = sorted(state["players"].items(), key=lambda item: (-item[1]["damage"], item[0]))[:10]
         return dict(server_time=now, raid_id=state["id"], version=state["version"], status=status, connection_ready=bool(address),
+                    name=combat_settings(state.get('settings'))['name'], settings_revision=state.get('settings_revision', 0),
+                    health_revision=state.get("health_revision", 0), avatar_url=self.avatar_url(), avatar_custom=bool(self.avatar_document),
                     hp=state["hp"], max_hp=state["max_hp"], phase=phase, started_at=state["started_at"],
                     finished_at=state["finished_at"], day=day + 1, resets_at=reset,
                     total_damage=state["total_damage"], total_attacks=state["total_attacks"], raiders=len(state["players"]),
                     weakness=weakness, weakness_label=STYLES[weakness], ward_changes_at=(int(now) // WARD_SECONDS + 1) * WARD_SECONDS,
-                    rules=rules(),
+                    rules=rules(state),
                     milestones=[dict(percent=p, label=label, reached=state["total_damage"] * 100 >= state["max_hp"] * p)
                                 for p, label in ((25, "Armor cracked"), (50, "The crew rallies"), (75, "Final stand"), (100, "Crimson conquered"))],
                     you=dict(name=_name(player_key) if guest else "Spectator", damage=player.get("damage", 0),
@@ -1102,8 +1264,34 @@ class CommunityBoss:
             state = self.state
             status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
             return dict(raid_id=state["id"], hp=state["hp"], max_hp=state["max_hp"],
+                        name=combat_settings(state.get('settings'))['name'],
                         status=status, raiders=len(state["players"]), total_attacks=state["total_attacks"],
-                        total_damage=state["total_damage"], version=state["version"])
+                        total_damage=state["total_damage"], version=state["version"],
+                        health_revision=state.get("health_revision", 0), avatar_url=self.avatar_url(), avatar_custom=bool(self.avatar_document))
+
+    def avatar_url(self):
+        return '/play/avatar/' + self.avatar_document['sha256'] + '.png' if self.avatar_document else '/static/redlogo.png'
+
+    def avatar_image(self, digest):
+        with self.lock:
+            self._load()
+            return image_bytes(self.avatar_document) if self.avatar_document and self.avatar_document['sha256'] == digest else None
+
+    def set_avatar(self, raid_id, avatar):
+        avatar = validate_avatar(avatar)
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if raid_id != state['id']:
+                    raise BossError('Another raid started. Reload before changing the avatar.', 'new_raid', 409)
+                previous = copy.deepcopy(state)
+                self.store.backup_in(conn, 'before-boss-avatar', dict(community_boss=state, community_boss_avatar=self.store.avatar(conn)))
+                self.store.avatar_in(conn, avatar)
+                state['version'] += 1
+                state['avatar_hash'] = avatar['sha256'] if avatar else None
+                self._write(conn, state, previous=previous)
+            self.state, self.avatar_document, self.loaded_at = state, avatar, time.monotonic()
+        LOG.info('BOSS Avatar %s; raid progress retained.', 'updated' if avatar else 'reset to original logo')
 
     def contributors(self):
         """Victory recap includes every contributor, using only raid aliases."""
@@ -1123,6 +1311,11 @@ class CommunityBoss:
         with self.lock:
             self._load(force=True)
             return copy.deepcopy(self.state)
+
+    def recovery(self):
+        with self.lock:
+            self._load(force=True)
+            return dict(community_boss=copy.deepcopy(self.state), community_boss_avatar=copy.deepcopy(self.avatar_document))
 
     def attack(self, guest, address, style, raid_id, request_id):
         if not isinstance(style, str) or style not in STYLES or not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", request_id):
@@ -1159,7 +1352,10 @@ class CommunityBoss:
                 player["active_days"] = active_days + int(player.get("day") != day)
                 burst = (player["attacks"] + 1) % BURST_EVERY == 0
                 weak = style == view["weakness"]
-                damage = min(state["hp"], (WEAK_DAMAGE if weak else BASE_DAMAGE) + (BURST_BONUS if burst else 0))
+                # Public requests select a style only. Damage always comes from
+                # the saved, validated admin settings read in this transaction.
+                damage = min(state["hp"], (view['rules']['weak_damage'] if weak else view['rules']['damage'])
+                             + (view['rules']['burst_bonus'] if burst else 0))
                 hit = dict(style=style, damage=damage, weakness=weak, burst=burst, at=int(now))
                 for record in (player, network):
                     record.update(used=(record.get("used", 0) if record.get("day") == day else 0) + 1,
@@ -1186,30 +1382,148 @@ class CommunityBoss:
                          state["max_hp"], COOLDOWN, DAILY_ATTACKS)
             return dict(ok=True, duplicate=False, hit=hit, state=self._project(state, guest, address, now))
 
-    def control(self, action, raid_id, health=DEFAULT_HP):
-        if action not in {"pause", "resume", "restart"}:
+    def configure(self, raid_id, values, settings_revision):
+        """Called only after the HTTP admin-session and CSRF guards succeed."""
+        values = combat_settings(values)
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if raid_id != state['id']:
+                    raise BossError('Another raid started. Reload before changing its settings.', 'new_raid', 409)
+                if settings_revision != state.get('settings_revision', 0):
+                    raise BossError('Another admin saved boss settings. Reload and review before saving.', 'settings_conflict', 409)
+                if values == combat_settings(state.get('settings')):
+                    return
+                previous = copy.deepcopy(state)
+                self.store.backup_in(conn, 'before-boss-settings', dict(community_boss=state))
+                state.update(settings=values, settings_revision=state.get('settings_revision', 0) + 1,
+                             version=state['version'] + 1)
+                self._write(conn, state, previous=previous, settings_change=True)
+            self.state, self.loaded_at = state, time.monotonic()
+        LOG.info('BOSS Name/damage settings saved; base=%s, weakness=%s, burst=%s. Existing hits and HP retained.',
+                 values['damage'], values['weak_damage'], values['burst_bonus'])
+
+    def control(self, action, raid_id, health=DEFAULT_HP, *, health_revision=None):
+        if action not in {"pause", "resume", "restart", "health"}:
             raise BossError("Choose a valid boss action.")
-        if action == "restart":
-            _integer(health, 100_000, 100_000_000)
+        if action in {"restart", "health"}:
+            if type(health) is not int or not MIN_HP <= health <= MAX_HP:
+                raise BossError(f'Enter a whole-number health value from {MIN_HP:,} to {MAX_HP:,}.')
         with self.lock:
             with self.store.connection(transaction=True) as conn:
                 state = self._read(conn, locked=True)
                 if state["id"] != raid_id:
                     raise BossError("Another raid has started. Reload before changing it.", "new_raid", 409)
                 previous = copy.deepcopy(state)
-                if action == "restart":
+                if action == "health":
+                    if health_revision != state.get('health_revision', 0):
+                        raise BossError('Another health edit was saved. Reload and review before changing it again.', 'health_conflict', 409)
+                    if health < state['total_damage']:
+                        raise BossError(f'Health cannot be below the {state["total_damage"]:,} damage already dealt. Player contributions are retained.')
+                    if health == state['max_hp']:
+                        return
+                    self.store.backup_in(conn, 'before-boss-health', dict(community_boss=state))
+                    state.update(max_hp=health, hp=health - state['total_damage'], version=state['version'] + 1,
+                                 health_revision=state.get('health_revision', 0) + 1)
+                    state['finished_at'] = (state['finished_at'] or int(time.time())) if state['hp'] == 0 else 0
+                elif action == "restart":
                     self.store.backup_in(conn, "before-boss-restart", {"community_boss": state})
                     history = state["history"]
                     if state["total_attacks"]:
                         history.append(dict(outcome="Victory" if not state["hp"] else "Restarted", started_at=state["started_at"],
                                             ended_at=state["finished_at"] or int(time.time()), max_hp=state["max_hp"],
                                             damage=state["total_damage"], attacks=state["total_attacks"], raiders=len(state["players"])))
-                    state = fresh_raid(health=health, history=history)
+                    state = fresh_raid(health=health, history=history, settings=previous.get('settings'))
+                    # Preserve the image version so polls need no image-record
+                    # read unless an administrator actually changes the avatar.
+                    state['avatar_hash'] = previous.get('avatar_hash')
                 else:
                     state["paused"], state["version"] = action == "pause", state["version"] + 1
-                self._write(conn, state, previous=previous, new_raid=action == "restart")
+                self._write(conn, state, previous=previous, new_raid=action == "restart", health_change=action == 'health')
             self.state, self.loaded_at = state, time.monotonic()
-        LOG.info("BOSS Host action: %s.", action)
+        if action == 'health':
+            LOG.info('BOSS Maximum HP %s -> %s; %s HP remains; %s saved damage retained. Automatic regeneration stays off.',
+                     previous['max_hp'], state['max_hp'], state['hp'], state['total_damage'])
+        else:
+            LOG.info("BOSS Host action: %s.", action)
+```
+
+## boss_avatar.py
+
+```python
+"""Bounded PNG/JPEG/WebP uploads; store only a decoded, metadata-free PNG.
+
+The image is a separate record, so every hit does not rewrite image bytes.
+Recovery files carry this record alongside the raid, not inside its counters.
+"""
+import base64
+import binascii
+import hashlib
+import io
+import warnings
+
+from PIL import Image, ImageOps, UnidentifiedImageError
+
+MAX_UPLOAD = 4 * 1024 * 1024
+MAX_PIXELS = 16_000_000
+MAX_EDGE = 512
+MAX_SAVED = 1_100_000
+
+
+def from_upload(upload):
+    if not upload or not upload.filename or upload.filename.rsplit('.', 1)[-1].lower() not in {'png', 'jpg', 'jpeg', 'webp'}:
+        raise ValueError('Choose a PNG, JPG, JPEG or WebP image.')
+    raw = upload.read(MAX_UPLOAD + 1)
+    if not raw or len(raw) > MAX_UPLOAD:
+        raise ValueError('Choose an image smaller than 4 MB.')
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(raw)) as source:
+                if source.format not in {'PNG', 'JPEG', 'WEBP'}:
+                    raise ValueError('Only PNG, JPEG and WebP image contents are accepted.')
+                if source.width * source.height > MAX_PIXELS:
+                    raise ValueError('Use an image with at most 16 million pixels.')
+                if getattr(source, 'n_frames', 1) != 1:
+                    raise ValueError('Choose a still image, not an animated image.')
+                source.load()  # Detect truncated/corrupt data before replacing anything.
+                oriented = ImageOps.exif_transpose(source).convert('RGBA')
+                oriented.thumbnail((MAX_EDGE, MAX_EDGE), Image.Resampling.LANCZOS)
+                clean = Image.new('RGBA', oriented.size)
+                clean.paste(oriented)
+                output = io.BytesIO()
+                clean.save(output, format='PNG')
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
+        raise ValueError('That image could not be read safely. Choose another PNG, JPEG or WebP.') from None
+    data = output.getvalue()
+    if len(data) > MAX_SAVED:
+        raise ValueError('The processed image is too large. Choose a simpler image.')
+    return dict(sha256=hashlib.sha256(data).hexdigest(), data=base64.b64encode(data).decode('ascii'))
+
+
+def validate_avatar(value):
+    """Validate an optional recovery image before the import transaction commits."""
+    if value is None:
+        return None
+    if not isinstance(value, dict) or not isinstance(value.get('data'), str) or len(value['data']) > (MAX_SAVED + 2) // 3 * 4:
+        raise ValueError('Invalid boss avatar recovery.')
+    try:
+        raw = base64.b64decode(value['data'], validate=True)
+        if not raw or len(raw) > MAX_SAVED or hashlib.sha256(raw).hexdigest() != value.get('sha256'):
+            raise ValueError('Boss avatar recovery checksum does not match.')
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(raw)) as image:
+                if image.format != 'PNG' or not (1 <= image.width <= MAX_EDGE and 1 <= image.height <= MAX_EDGE) or getattr(image, 'n_frames', 1) != 1:
+                    raise ValueError('Invalid boss avatar dimensions or format.')
+                image.verify()
+    except (binascii.Error, UnicodeEncodeError, UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
+        raise ValueError('Invalid boss avatar recovery image.') from None
+    return dict(sha256=value['sha256'], data=value['data'])
+
+
+def image_bytes(value):
+    return base64.b64decode(value['data'])
 ```
 
 ## config.py
@@ -1222,7 +1536,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.22-no-regen"
+RELEASE = "2026.09.28-boss-controls"
 INTERVAL = 60
 
 
@@ -1311,10 +1625,11 @@ class Config:
 # Community boss — play and host guide
 
 One page, one boss, one community. Open `/play`, choose a style, and press Attack.
-No account, wager, purchase, separate process, or additional dependency is needed.
+No account, wager, purchase or separate process is needed. The standard
+requirements include Pillow for PNG/JPEG/WebP uploads.
 The original `wager_backend.py` launcher serves the game and existing wager site.
 
-## Rules players see in the game
+## Default gameplay rules (admins can change damage values)
 
 - **2,400,000 health** by default. Everyone chips away at the same pool.
 - **One manual attack per 60 seconds**, with up to **40 attacks per raid day**.
@@ -1330,24 +1645,25 @@ The original `wager_backend.py` launcher serves the game and existing wager site
   do not secretly change the damage rules or punish players who joined late.
 - Victory remains visible. The host chooses when to start another raid.
 
-The server rejects any attempt to heal the same raid or reverse its committed
-damage. Health is always maximum HP minus saved cumulative damage. Cooldowns,
+The server rejects ordinary writes that heal the same raid or reverse its
+committed damage. Only an explicit admin health edit may raise maximum HP. Health is always maximum HP minus saved cumulative damage. Cooldowns,
 weakness changes and daily resets affect attacks only. The browser also rejects
-healing snapshots, and the initial page percentage reflects saved health.
+healing snapshots without a newer host health revision, and the initial page percentage reflects saved health.
 Process restarts retain progress when the same data file is preserved. Losing
 that file through a container replacement is a separate recovery concern below.
 
 The mobile attack dock offers the same controls and cooldown while you scroll.
 Cosmetic milestones at 25%, 50%, and 75% damage change the arena and celebrate
-progress. Badges recognize your first hit, ten bursts (100 hits), and three
-distinct raid days. They grant no damage advantage. Victory's expandable recap
+progress. Participation counters remain recorded; the separate badge explanation
+panel has been removed from the game. Victory's expandable recap
 lists every contributor by raid alias; the ordinary live board shows the Top 10.
-Use **Copy raid link** to invite the community. Errors remain until dismissed,
+Use **Copy link** to invite the community. Errors remain until dismissed,
 retried, or resolved; a routine poll cannot erase an unsuccessful attack message.
 
 ## Why it should last several days
 
-With matching hits, every full ten-attack sequence deals 1,600 damage.
+With the default damage values and matching hits, every full ten-attack sequence
+deals 1,600 damage. Admin damage changes affect these estimates.
 The following estimates assume 100 distinct, active players/networks making
 that many attacks **each day**, all matching the current weakness:
 
@@ -1363,9 +1679,9 @@ missed weaknesses, and shared connections extend the encounter. Community size
 alone does not guarantee a finish date. A 100-player maximum-activity simulation
 is part of the test suite; the default boss survives the first three allowances.
 
-For later raids, the Superadmin can set **100,000–100,000,000 HP** in the new-raid
-form. The current boss HP cannot be edited accidentally during play. Try the
-default first and adjust the next encounter based on actual participation.
+Signed-in admins can set **100,000–100,000,000 maximum HP** for the current boss
+or a new raid. Current-raid edits require confirmation and preserve all saved
+damage. Setting the maximum below damage already dealt is rejected.
 
 ## Together, without accounts
 
@@ -1391,15 +1707,46 @@ them sooner. No user-generated chat or custom names need moderation.
 ## Host controls and recovery
 
 Sign in at `/admin` and choose **Community boss**. Admins can view the shared
-stats; only the Superadmin can pause, resume, export private recovery, or start
-a new raid. A restart requires a checked confirmation and guards against an
+stats and change the avatar, name, maximum HP and future attack damage. Admins
+can pause/resume and start new raids. Private recovery downloads and account
+management remain Superadmin-only. A restart requires a checked confirmation and guards against an
 outdated raid ID. It archives the previous result and resets players/allowances.
 The latest ten summaries remain. A complete pre-restart checkpoint is also
 recorded locally; it is not a remote backup.
 
+**Boss avatar** accepts PNG/JPG/JPEG/WebP files up to 4 MB and 16 million pixels.
+Images are decoded, oriented, resized to fit 512 × 512 and saved as metadata-free
+PNG. Animated or malformed files are rejected before changing live data. The
+original upload filename is never used as a filesystem path. The selected
+avatar also appears on the homepage invitation and survives a new raid along
+with the boss name and damage settings. Use
+**Use original avatar** to restore the original boss logo.
+
+**Boss name & damage** accepts a 1–60-character printable name, base and weakness
+damage from 1–10,000, and a burst bonus from 0–10,000. Weakness damage cannot be
+less than base damage. Changes apply to future hits; old receipts and totals are
+retained, even if new damage is lower than a previous hit. Names render as escaped
+text in HTML and through textContent in browser updates. They are never HTML.
+
+Every management request checks a current admin account, session version and
+CSRF token before editing or decoding uploads. Public users cannot manage the
+boss, even with forged role flags or custom HTTP requests. They can view and
+attack normally. Public damage values are calculated on the server, never taken
+from client-supplied damage or HP fields. Stale admin settings forms are rejected.
+
+**Current raid health** changes maximum HP, not accumulated damage. For example,
+with 300 damage already dealt, a new maximum of 3,000,000 leaves 2,999,700 HP.
+Player totals, attack receipts, cooldowns and daily limits stay intact. Raising
+HP can reopen a defeated boss; setting it equal to already-dealt damage ends
+the encounter. This is an explicit host action, never automatic regeneration.
+
+Game and admin views pick up edits every five seconds. The homepage updates
+on its existing 60-second cycle. Polls preserve form drafts; if another health
+edit or a new raid makes your form stale, reload and review before resubmitting.
+
 **Save a private recovery file regularly during a multi-day raid and before a
 planned deployment.** It includes the boss ID, HP, players, network hashes,
-receipts, allowances, timestamps, history, and account/session state. The
+receipts, allowances, timestamps, history, avatar, name, damage settings and account/session state. The
 ordinary race-only backup does not contain the game.
 
 The recovery panel tracks when an export was generated and the progress since
@@ -1461,7 +1808,12 @@ under an ingress IP. See README.md for full deployment and recovery steps.
 ## docs/COMMUNITY_UPDATE.md
 
 ```markdown
-# Community update — 2026.09.22-community
+# Earlier community update — 2026.09.22-community
+
+This describes the earlier community release. The current boss-admin release
+removes the public tutorial/badge panel and adds avatar uploads and current-raid
+HP edits. It adds Pillow to the normal requirements. See README.md for current
+setup and docs/COMMUNITY_BOSS.md for current host controls.
 
 Run **`python wager_backend.py`**. The imports, web server, source jobs, and game
 remain in one process. No additional service or production dependency was added.
@@ -1572,72 +1924,66 @@ date publication and 60-second source cadence are regression-tested.
 
 ## docs/VALIDATION.md
 
-```markdown
-# Verification record — 2026.09.22-no-regen
+````markdown
+# Verification record — 2026.09.28-boss-controls
 
-Verified in the supplied Linux workspace on 2026-09-22.
+Verified in the supplied Linux workspace on 2026-09-28 using synthetic accounts,
+images and provider responses. No production raid or account was modified.
 
 | Check | Result |
 | --- | --- |
-| Multiplayer | Two separate Chromium browser contexts, distinct visitor IPs, shared HP, automatic 5-second visibility, pause/resume, and personal totals passed. |
-| Atomic hits and fairness | Concurrent distinct players retain all damage; simultaneous requests on one network allow one hit. Fractional cooldowns, daily/browser/network caps, IPv6 /64, and trusted DO headers passed. |
-| Boss receipts and victory | Lost-response retry, final-hit clamping, no extra damage after victory, stale raid rejection, protected host controls, and recovery passed. |
-| Multi-day balance | 100 simulated raiders using 40 matching hits per day defeat 2,400,000 HP on raid day 4; no real waiting or provider calls. |
-| Game interface | Five-second polling, hidden-tab pause, no automatic attacks, uncertain-click retry, stale-response rejection, safe text rendering, and admin draft retention passed. |
-| Homepage/footer | Join the boss fight button reaches /play. Public Admin footer link and dashboard site footer removed; /admin remains available. |
-| Python tests | 86 passed (including 21 core game and 8 community-update tests); 90 discovered. |
-| PostgreSQL integration tests | 4 skipped: no dedicated database supplied. CI provisions one. |
-| DOM and CSS checks | 35 passed with jsdom 26.1.0; no browser build required in production. |
-| No regeneration | Seven idle days, cooldown/weakness changes, daily allowance reset, pause/resume and cold app initialization with the saved SQLite file retain damage. Consistent-looking writes that heal the same raid or implicitly replace it are rejected without changing storage. |
-| Health display | Initial HTML renders the saved percentage; same-raid HP increases are rejected even with a newer clock/version. Victory remains at zero until a different raid starts. |
-| Change review | Prize/link/text changes are listed; a signed confirmation cannot publish modified values. Valid confirmation publishes the exact reviewed values. |
-| Conditional public state | Unchanged snapshot returns 304 with an empty body and fresh clock; a hit changes the ETag. Browser reuses the cached body without trying to parse 304 as JSON. Private routes remain no-store with no ETag. |
-| Feedback and mobile controls | Successful polls preserve attack errors; explicit dismissal works. Unchanged leader nodes retain identity. Mobile style selection sends the same validated attack request as the main button. |
-| Badges and milestones | 100 real validated hits across three raid days earn all badges with unchanged damage. Old records retain their totals and gain participation-day tracking. Quarter-health milestones and a victory recap of 11 contributors pass. |
-| Recovery tracking/review | Export leaves the admin revision unchanged, progress since export updates, and private upload review validates without changing live state or exposing password hashes. Imported export metadata survives; malformed optional metadata is ignored while game progress remains intact. |
-| Share link | Selectable URL fallback works when clipboard access is unavailable. |
-| Date publication | Bottom confirmation button submits confirmation and persists the edited window. |
-| Superseded failure | An old-window HTTP failure cannot mark the new race as failed or impose its ordinary retry delay. Explicit provider rate limits remain honored. |
-| Concurrent refresh | An active provider check retains one follow-up request; repeated clicks coalesce. An in-flight browser read schedules a follow-up instead of dropping the request. |
-| HTTP date-change and scheduled update | Real Requests transport to a local HTTP fixture: old-range failure, new-range success, then a second automatic publication without a refresh click. Only this isolated test uses an accelerated timer. |
-| Progress feedback | Saved window, checking, completed, and rate-limit retry messages appear on all admin tabs; unsaved input values remain intact. |
-| Windows encoding regression | Exact original CP1252 error reproduced before the fix. Startup and existing-state preservation pass after the fix, using a simulated Windows default on Linux. |
-| Named form collision | Test models the native input/property collision: the old script posts to `/[object HTMLInputElement]`; the corrected script posts to `/admin/action` with CSRF/action/service intact. |
-| Manual refresh publication | Real worker threads with synthetic provider data update both the masked public board and uncensored admin board after an authenticated refresh. |
-| Refresh error handling | JSON 400/401/404/405/500/503 cases checked; native HTML errors still render. |
-| Empty board | Waiting, empty source, campaign filter, zero weighted qualification, and failure/recovery checked. |
-| Actual HTTP startup | Passed: child process launched with `python wager_backend.py` in production/local mode with a stale database binding, served `/healthz` and `/admin`, started both automatic jobs, and shut down. |
-| Production without PostgreSQL | Passed with no usable DATABASE_URL and psycopg imports blocked; original accounts and secure HTTPS login remain functional. |
-| Private recovery | Passed: only Superadmin can download; fresh-instance import preserves password changes, accounts, dates, overrides, history, signing key, and saved Top 15, plus boss HP, guest identity, personal contributions, cooldowns, and network allowances. A newer local store wins over seeds; corrupt recovery files stop import without resetting accounts. |
-| Supplied credential files | Match original uploaded bytes. |
-| Original Superadmin | Original password/hash verified; native login and all five dashboard tabs return successfully. |
-| Account migration | Preserves every original account field; adds auth_version for session revocation. |
-| Real Shuffle request | Timeout; successful provider connectivity not verified. |
-| Real Kick authorization | Timeout; successful provider connectivity not verified. |
-| Native browser checks | Passed in Chromium 153.0.8010.0 against Waitress with isolated accounts and synthetic providers: login, actual refresh POST/202, bottom-button date confirmation, published rows, expanded 100-user Code Red list, the private recovery download, and the community boss controls. Production local-storage mode is used with a cookie override only for the HTTP test fixture; secure production cookies are separately checked over simulated HTTPS. No JavaScript errors; no horizontal overflow at 390 px. |
-| Browser screenshot review | Public page/admin red theme retained; the game and homepage were reviewed on desktop, and the game/recovery views at mobile width. Test previews contain synthetic wagers and stream status. |
-| DigitalOcean deployment | Not performed; no deployed site was provided for validation. |
+| Python suite | 103 discovered: **99 passed**, 4 optional PostgreSQL tests skipped. |
+| DOM/CSS suite | **39 passed** against the real rendered templates using jsdom. |
+| PNG/JPG/JPEG/WebP upload | Actual decoding, 512 × 256 resize of a 900 × 450 source, metadata removal, served PNG bytes, cache headers and conditional 304 response passed. |
+| Invalid uploads | Empty, fake, corrupt, renamed GIF, wrong extension, oversized, excessive-pixel, animated PNG and animated WebP images rejected without changing the existing avatar or raid. |
+| Avatar visibility | Public game, homepage invitation and admin preview render the uploaded URL. Game/admin polling updates the image and preserves health form drafts. Original-logo reset and avatar retention after a new raid passed. |
+| Current raid health | Explicit confirmation and valid bounds required. Edits use the latest committed damage, even if attacks arrive after the form opens. Player totals, network limits and receipts are retained. Stale health revisions and old raid forms cannot overwrite newer edits. |
+| No automatic regeneration | Idle time, daily rollover, pause/resume and cold app restart retain damage. Ordinary writes and browser snapshots cannot refill HP. Only an explicit health edit can reopen the same defeated raid. |
+| Recovery | Fresh-instance import and cold initialization retain avatar bytes, boss name, damage settings, health revision and progress. Existing state wins over a malformed newer seed. Recovery preview rejects a mismatched image checksum without mutation. |
+| Authorization | All seven boss management actions reject guests, unknown accounts, revoked session versions and tampered cookies before image decoding or writes. Forged role flags cannot grant access. Missing, invalid and Unicode CSRF tokens return controlled errors. Ordinary admin sign-in and boss editing pass; private recovery remains Superadmin-only. Removed accounts lose access immediately. |
+| Boss name and damage | Validated settings affect future hits only. A 450-point historical receipt remains valid after lowering damage. Publicly supplied damage, HP, role and settings fields cannot alter server calculations. Invalid names/ranges and stale forms are rejected; storage guards reject unapproved settings changes. Names render as text and admin drafts survive polling. |
+| Public edit isolation | Public pages contain no management forms; management GET requests and writes to read-only game state return 405 without changing saved data. The public can view the chosen avatar and play normally. |
+| Barebones game | Tutorial/story/help elements and footer are absent. Controls, cooldowns, safe retries, milestones, recent hits and victory contributors remain functional in DOM checks. |
+| Multiplayer rules | Concurrent hits retain damage; shared-network requests enforce one hit; cooldowns, IPv6 grouping, daily caps, burst damage and final-hit clamping passed. The 100-player maximum-activity simulation finishes on raid day four. |
+| Existing app functionality | Native login, date publication, original Superadmin import, source normalization, provider worker refreshes, unchanged-data handling, public masking, private Code Red rows, recovery and account roles passed. |
+| Launch | Existing subprocess test exercises Waitress startup via `python wager_backend.py`, local storage and a stale database binding. No management script or separate game worker is needed. |
+| Preserved files | Original provider settings, account seed and both logo assets match the supplied bytes exactly. |
 
-The Python tests cover valid/invalid/mixed source responses, stale-cache
-retention, original field envelopes, date-range requests with no lifetime
-fallback, Kick reauthorization, independent workers, in-flight settings changes,
-protected routes, CSRF, session revocation, login rate limits, account roles,
-CSV safety, overrides, archive/restore confirmation, corrupt-store preservation,
-DST validation, exact monetary calculations, and sole-script startup.
+## Verification limits
 
-DOM checks render the real templates and verify unique IDs/label targets,
-automatic polling, manual polling cadence, state/countdown boundaries, form
-preservation across updates, Code Red expansion/search, text-only username
-rendering, and session/proxy error recovery. They use synthetic source data.
+- The previous turn's native-browser visual attempt could not run: the workspace Chromium
+  executable crashed at launch with SIGSEGV, before loading the app. The earlier
+  release's browser screenshots are not evidence for this release's new layout.
+  No new native-browser claim is made here. Current template/DOM checks and HTTP
+  image/form integration tests passed.
+- No dedicated disposable PostgreSQL database was provided; four optional
+  compatibility tests skipped. Default local SQLite was tested. CI provisions
+  PostgreSQL separately for that optional mode.
+- No DigitalOcean deployment or successful live Shuffle/Kick connection was
+  verified for this release. Provider checks use synthetic responses and local
+  HTTP fixtures. Earlier live provider probes timed out.
+- App Platform container storage is temporary. Recovery tests prove that a saved
+  checkpoint restores its contents; they do not provide automatic remote backups
+  or protect changes made after that checkpoint.
 
-The included PostgreSQL checks cover transactional revision conflicts, separate
-live writes, advisory locks, import from the old JSONB table, and rollback of a
-failed admin save. Run them against a disposable database before relying on a
-first production migration. The code does not substitute a passing mocked SQL
-check for a real database test.
+## Reproduce
 
-The native form-property collision is emulated explicitly in jsdom because its default form implementation does not reproduce this browser behavior. The corrected refresh was also clicked in actual Chromium. Neither verification is a claim of a successful live Shuffle response.
+```bash
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
 ```
+
+Optional interface checks require Node only for development:
+
+```bash
+npm --prefix tests install --ignore-scripts
+python tests/render_fixtures.py .test-fixtures
+npm --prefix tests test
+```
+
+All published test counts are from actual executed checks. Generated fixture
+accounts, preview data and runtime databases are excluded from the release ZIP.
+````
 
 ## integrations.py
 
@@ -2599,6 +2945,7 @@ Flask==3.1.3
 requests==2.34.2
 waitress==3.0.2
 tzdata==2026.3
+Pillow==12.3.0
 ```
 
 ## runtime.py
@@ -3471,6 +3818,13 @@ python-3.13.12
       });
       if (value.boss) {
         const b = value.boss;
+        text(id("inviteBossName"), b.name || "Crimson Hunllef");
+        const avatar = id("inviteAvatar");
+        if (avatar && b.avatar_url) {
+          if (avatar.getAttribute("src") !== b.avatar_url)
+            avatar.src = b.avatar_url;
+          avatar.classList.toggle("custom-avatar", Boolean(b.avatar_custom));
+        }
         text(
           id("inviteTitle"),
           b.status === "victory"
@@ -3607,7 +3961,7 @@ python-3.13.12
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.22-no-regen")
+      if (result.release && result.release !== "2026.09.28-boss-controls")
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",
@@ -3699,6 +4053,53 @@ python-3.13.12
 
 ```css
 /* A small CSS arena using the original logo; no canvas engine or image bundle. */
+.boss-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin: 26px 0;
+}
+.boss-setting {
+  min-width: 0;
+  border: 1px solid var(--line);
+  padding: 22px;
+  border-radius: 12px;
+}
+.boss-identity-setting {
+  grid-column: 1 / -1;
+}
+.boss-page #bossName,
+[data-mode="admin"] #bossName {
+  overflow-wrap: anywhere;
+}
+[data-mode="admin"] > .section-title > div { min-width: 0; }
+.boss-damage-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 700px) {
+  .boss-damage-fields {
+    grid-template-columns: 1fr;
+  }
+}
+.boss-avatar-preview {
+  display: block;
+  object-fit: contain;
+  margin: 12px 0 20px;
+  border-radius: 12px;
+  background: #160e14;
+  image-rendering: pixelated;
+}
+.boss-sprite.custom-avatar,
+.boss-avatar-preview.custom-avatar {
+  image-rendering: auto;
+}
+@media (max-width: 700px) {
+  .boss-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .boss-page {
   padding-top: 40px;
 }
@@ -4846,19 +5247,23 @@ python-3.13.12
     if (
       state &&
       (next.server_time < state.server_time ||
-        (next.raid_id === state.raid_id && next.version < state.version))
+        (next.raid_id === state.raid_id &&
+          (next.version < state.version ||
+            (next.health_revision || 0) < (state.health_revision || 0) ||
+            (next.settings_revision || 0) < (state.settings_revision || 0))))
     )
       return;
-    // Even a mis-versioned response cannot heal the same boss on screen.
+    // Only a newer explicit host health revision may change maximum HP.
+    // Ordinary snapshots cannot heal the same boss on screen.
     // Keep the last confirmed state and let stale-state handling disable hits;
     // never fabricate a lower HP value while accepting inconsistent counters.
     if (
       state &&
       next.raid_id === state.raid_id &&
-      (next.hp > state.hp ||
-        next.max_hp !== state.max_hp ||
-        next.total_damage < state.total_damage ||
-        next.total_attacks < state.total_attacks)
+      (next.total_damage < state.total_damage ||
+        next.total_attacks < state.total_attacks ||
+        ((next.health_revision || 0) === (state.health_revision || 0) &&
+          (next.hp > state.hp || next.max_hp !== state.max_hp)))
     )
       throw new Error(
         "Boss progress moved backwards; retaining the last confirmed state.",
@@ -4866,6 +5271,14 @@ python-3.13.12
     if (value.csrf) csrf = value.csrf;
     state = next;
     labels = state.rules.styles;
+    text("bossName", state.name || "Crimson Hunllef");
+    root.querySelectorAll("[data-boss-avatar]").forEach((image) => {
+      if (state.avatar_url && image.getAttribute("src") !== state.avatar_url)
+        image.src = state.avatar_url;
+      image.classList.toggle("custom-avatar", Boolean(state.avatar_custom));
+      if (image.classList.contains("boss-sprite"))
+        image.alt = state.name || "Crimson Hunllef";
+    });
     receivedAt = performance.now();
     lastGood = receivedAt;
     if (
@@ -5049,14 +5462,23 @@ python-3.13.12
       );
   }
   async function recap() {
-    if (recapRaid === state.raid_id || recapPending) return;
+    // A host may reopen this same raid with an explicit health edit. Its next
+    // victory needs a fresh contributor list, not the previous victory's cache.
+    const key = `${state.raid_id}:${state.health_revision || 0}`;
+    if (recapRaid === key || recapPending) return;
     recapPending = true;
     const raid = state.raid_id;
     try {
       const { response, value } = await request(
         "/play/api/contributors?raid_id=" + encodeURIComponent(raid),
       );
-      if (!response.ok || value.raid_id !== state.raid_id) return;
+      if (
+        !response.ok ||
+        value.raid_id !== state.raid_id ||
+        state.status !== "victory" ||
+        value.health_revision !== (state.health_revision || 0)
+      )
+        return;
       rows(
         "allContributors",
         value.contributors,
@@ -5072,7 +5494,7 @@ python-3.13.12
         "recapNote",
         "Every contributor is included, using their raid alias.",
       );
-      recapRaid = raid;
+      recapRaid = key;
     } catch (_) {
       text(
         "recapNote",
@@ -5313,6 +5735,10 @@ iVBORw0KGgoAAAANSUhEUgAAAvgAAALuCAYAAADbrWJlAAARinpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4
 ```css
 /* Logo red (#ff2d2d), warm charcoal panels, and lighter red for readable text.
    Filled action buttons use a deeper red so their white labels stay readable. */
+.play-invite img.custom-avatar {
+  image-rendering: auto;
+  object-fit: contain;
+}
 :root {
   color-scheme: dark;
   --bg: #110e11;
@@ -7103,6 +7529,7 @@ from race_support import read_json, clean_snapshots, race_key, empty_snapshots
 from store_schema import upgrade_store
 from race import empty
 from boss import validate_boss
+from boss_avatar import validate_avatar
 from presentation import valid_marker
 
 LOG = logging.getLogger("redhunllef")
@@ -7183,6 +7610,7 @@ class Store:
             conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
+            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss_avatar (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_checkpoint (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
             conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
             existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
@@ -7208,6 +7636,7 @@ class Store:
                     secret_key=secrets.token_hex(32), site_settings=self.config.site)
             value, _ = upgrade_store(legacy, self.config.site, {})
             community_boss = value.pop("community_boss", None)
+            avatar = validate_avatar(value.pop("community_boss_avatar", None))
             marker = valid_marker(value.pop("recovery_export", None))
             if community_boss is not None:
                 community_boss = validate_boss(community_boss)
@@ -7220,6 +7649,8 @@ class Store:
             self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
             if community_boss is not None:
                 self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
+            if avatar is not None:
+                self.avatar_in(conn, avatar)
             if marker is not None:
                 self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?)", (self.key, encode(marker)))
             saved = empty(value["site_settings"])
@@ -7239,6 +7670,17 @@ class Store:
         if not row:
             raise StoreError("Saved admin state is missing. Restore a verified database backup.")
         return row[0], json.loads(row[1])
+
+    def avatar(self, conn):
+        row = self.query(conn, "SELECT document FROM rh_boss_avatar WHERE name=?", (self.key,)).fetchone()
+        return json.loads(row[0]) if row else None
+
+    def avatar_in(self, conn, value):
+        if value is None:
+            self.query(conn, "DELETE FROM rh_boss_avatar WHERE name=?", (self.key,))
+        else:
+            self.query(conn, "INSERT INTO rh_boss_avatar VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
+                       (self.key, encode(value)))
 
     def checkpoint(self, marker=None):
         if marker is not None:
@@ -7443,13 +7885,74 @@ def upgrade_store(value, defaults, health_defaults):
 
 ```html
 <section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
-<div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2>Crimson Hunllef</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
+<div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2 id="bossName">{{ boss_data.name }}</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
 <p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
 <div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss health"></progress><p id="bossStory" class="muted"></p>
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
-<p class="muted small">This panel updates every 5 seconds. Race and provider checks still run every 60 seconds. Boss hits do not change the wager leaderboard.</p>
-{% if superadmin %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form><a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a></div>
-<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives the current result and resets health, personal totals, and allowances. Victory stays visible until you choose this. Save a checkpoint before replacing an unfinished raid.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="100000" max="100000000" step="1" value="{{ boss_rules.default_hp }}" required><small class="muted">{{ '{:,}'.format(boss_rules.default_hp) }} targets roughly 4–8 days with 100 people making 20–40 matching attacks daily.</small></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> I want to end this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% else %}<p class="muted">Ask the Superadmin to pause, resume, or start another raid.</p>{% endif %}
+<p class="muted small">Live · Updates every 5 seconds</p>
+{% if user %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
+<div class="boss-settings-grid">
+  <section class="boss-setting" aria-labelledby="avatarHeading">
+    <h3 id="avatarHeading">Boss avatar</h3>
+    <img class="boss-avatar-preview{% if boss_data.avatar_custom %} custom-avatar{% endif %}"
+         data-boss-avatar src="{{ boss_data.avatar_url }}" alt="Current boss avatar" width="128" height="128">
+    <form method="post" action="/admin/boss/action" enctype="multipart/form-data" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="avatar">
+      <div class="field">
+        <label for="bossAvatarFile">PNG, JPG, JPEG or WebP image</label>
+        <input id="bossAvatarFile" name="avatar" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required>
+        <small class="muted">Up to 4 MB. Resized automatically.</small>
+      </div>
+      <button class="button primary" type="submit">Upload avatar</button>
+    </form>
+    <form method="post" action="/admin/boss/action">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <button class="text-button" type="submit" name="action" value="avatar_reset">Use original avatar</button>
+    </form>
+  </section>
+  <section class="boss-setting" aria-labelledby="healthHeading">
+    <h3 id="healthHeading">Current raid health</h3>
+    <form method="post" action="/admin/boss/action" class="stack" id="bossHealthForm">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="health">
+      <input type="hidden" name="health_revision" value="{{ boss_data.health_revision }}">
+      <div class="field">
+        <label for="bossMaxHealth">Maximum HP</label>
+        <input id="bossMaxHealth" name="health" type="number" min="{{ boss_data.rules.min_hp }}"
+               max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.max_hp }}" required>
+        <small class="muted">Damage already dealt stays. Remaining HP = maximum HP − damage.</small>
+      </div>
+      <p class="muted small">This changes the current boss without clearing players or allowances. Raising HP can reopen a defeated boss. Automatic regeneration stays off.</p>
+      <label class="boss-confirm"><input type="checkbox" name="confirm_health" value="yes" required> Change this raid's health.</label>
+      <button class="button primary" type="submit">Save health</button>
+    </form>
+  </section>
+  <section class="boss-setting boss-identity-setting" aria-labelledby="bossSettingsHeading">
+    <h3 id="bossSettingsHeading">Boss name &amp; damage</h3>
+    <form method="post" action="/admin/boss/action" class="stack" id="bossSettingsForm">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="settings">
+      <input type="hidden" name="settings_revision" value="{{ boss_data.settings_revision }}">
+      <div class="field">
+        <label for="bossNameInput">Boss name</label>
+        <input id="bossNameInput" name="boss_name" maxlength="60" value="{{ boss_data.name }}" required>
+      </div>
+      <div class="boss-damage-fields">
+        <div class="field"><label for="bossBaseDamage">Base damage</label><input id="bossBaseDamage" name="base_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.damage }}" required></div>
+        <div class="field"><label for="bossWeakDamage">Weakness damage</label><input id="bossWeakDamage" name="weak_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.weak_damage }}" required></div>
+        <div class="field"><label for="bossBurstBonus">Burst bonus</label><input id="bossBurstBonus" name="burst_bonus" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.burst_bonus }}" required></div>
+      </div>
+      <p class="muted small">Damage changes apply to future hits. Existing damage and cooldowns stay. The burst bonus applies every tenth hit.</p>
+      <button class="button primary" type="submit">Save boss settings</button>
+    </form>
+  </section>
+</div>
+<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, player totals and allowances. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
 </section>
 
 {% if superadmin %}{% include "recovery_panel.html" %}{% endif %}
@@ -7527,46 +8030,144 @@ def upgrade_store(value, defaults, health_defaults):
 ## templates/boss.html
 
 ```html
-{% extends 'base.html' %}{% from 'icons.html' import icon %}
-{% block title %}Community boss fight · RedHunllef{% endblock %}
+{% extends 'base.html' %}
+{% from 'icons.html' import icon %}
+
+{% block title %}Boss fight · RedHunllef{% endblock %}
 {% block attributes %}data-page="boss"{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='boss.css',v=asset_version) }}">{% endblock %}
-{% block scripts %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script>{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='boss.css', v=asset_version) }}">
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='boss.js', v=asset_version) }}" defer></script>
+{% endblock %}
+
 {% block content %}
-<main id="main" class="shell boss-page" data-boss-root data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
-<section class="boss-heading"><div><p class="eyebrow"><span class="dot"></span> COMMUNITY RAID · FREE TO PLAY</p><h1>Small hits.<br><span class="accent">One massive takedown.</span></h1><p class="lead">The Crimson Hunllef has awakened. Bring the whole community. Every hit stays. Every raider counts.</p></div><a class="text-link" href="#howToPlay">New here? How to play ↓</a></section>
-<div class="boss-live"><span id="bossConnection" role="status">Connecting to the shared raid…</span><span>Everyone fights the same boss · Updates every {{ boss_rules.poll_seconds }} seconds</span></div>
-<p id="bossError" class="notice warning" role="alert" hidden></p><button type="button" id="dismissBossError" class="text-button dismiss-error" hidden>Dismiss message</button>
-<div id="milestoneBanner" class="milestone-banner" role="status" hidden><strong id="milestoneMessage"></strong><button id="dismissMilestone" class="text-button" type="button" aria-label="Dismiss milestone">{{ icon('close') }}</button></div>
-<div class="raid-layout">
-<section class="arena panel" aria-labelledby="bossName">
-<div class="arena-heading"><span class="eyebrow">WORLD BOSS / CRIMSON 001</span><span class="badge" id="bossPhase">{{ boss_data.phase }}</span></div>
-<div class="boss-stage" id="bossStage"><div class="rune-ring" aria-hidden="true"></div><div class="rune-ring inner" aria-hidden="true"></div><span class="arena-rune rune-one" aria-hidden="true">✦</span><span class="arena-rune rune-two" aria-hidden="true">✧</span><img class="boss-sprite" src="{{ url_for('static',filename='redlogo.png') }}" alt="The red pixel-art Crimson Hunllef" width="220" height="220"><span id="hitFloat" class="hit-float" aria-hidden="true"></span><span class="boss-shadow" aria-hidden="true"></span></div>
-<div class="boss-name-row"><div><p class="eyebrow">THE COMMUNITY'S NEMESIS</p><h2 id="bossName">Crimson Hunllef</h2></div><span id="bossDay" class="tag">Raid day {{ boss_data.day }}</span></div>
-<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent">{{ '%.2f'|format(boss_data.hp / boss_data.max_hp * 100) }}%</span></div>
-<progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}" value="{{ boss_data.hp }}" aria-label="Boss health"></progress>
-<p class="muted small">No health regeneration. Every confirmed hit stays for this raid.</p>
-<ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
-<p id="bossStory" class="boss-story">The first strike starts the raid. Let's wake the beast.</p>
-<div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders united</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>hits landed</span></div><div><strong id="bossDamage">{{ '{:,}'.format(boss_data.total_damage) }}</strong><span>damage together</span></div></div>
-</section>
-<section class="attack-panel panel" aria-labelledby="yourTurn"><div class="row"><p class="eyebrow">YOUR TURN TO HIT BACK</p><span class="tag">NO SIGN-UP</span></div><h2 id="yourTurn">Choose your strike.</h2><p class="muted small">Read the weakness. Pick your style. Make it count.</p>
-<div class="weakness-box"><span class="weakness-symbol" aria-hidden="true">✦</span><div><small>CURRENT WEAKNESS</small><strong id="bossWeakness">{{ boss_data.weakness_label }} · {{ boss_rules.weak_damage }} damage</strong><span id="wardTimer">Changes in —</span></div></div>
-<div class="strike-options" role="group" aria-label="Attack style">{% for key,label in boss_rules.styles.items() %}<button type="button" data-style="{{ key }}" aria-pressed="{{ 'true' if loop.first else 'false' }}"><span aria-hidden="true">{{ icon(key,26) }}</span><strong>{{ label }}</strong><small>{{ 'Close & personal' if key=='blade' else 'Right on target' if key=='bow' else 'A little chaos' }}</small></button>{% endfor %}</div>
-<div class="combo-row"><strong>Crimson burst</strong><span id="burstLabel">{{ boss_rules.burst_every }} hits to +{{ boss_rules.burst_bonus }} damage</span></div><div class="burst-meter" id="burstMeter" aria-hidden="true">{% for n in range(boss_rules.burst_every) %}<span></span>{% endfor %}</div>
-<button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button><p id="attackHint" class="attack-hint">One manual attack every {{ boss_rules.cooldown }} seconds. No wager required.</p>
-<p id="hitResult" class="hit-result" role="status">Your first hit is waiting.</p>
-<div class="personal-stats"><div><strong id="yourDamage">0</strong><span>your damage</span></div><div><strong id="yourRemaining">{{ boss_rules.daily_attacks }} / {{ boss_rules.daily_attacks }}</strong><span>attacks left today</span></div><div><strong id="yourActiveDays">0</strong><span>raid days played</span></div></div><p class="raider-name">Playing as <strong id="yourName">{{ boss_data.you.name }}</strong></p><p class="muted small" id="raidReset">Raid days start with the first community hit.</p>
-</section></div>
-<section class="panel raid-recognition"><div class="section-title"><div><p class="eyebrow">YOUR PART IN THE STORY</p><h2>Your raid badges</h2></div><div class="share-tools"><button class="button small" id="copyRaidLink" type="button">{{ icon('link',18) }} Copy raid link</button><span id="shareResult" class="small muted" role="status"></span><input id="shareUrl" type="text" readonly aria-label="Raid link to copy" hidden></div></div><ul id="yourBadges" class="badge-grid"></ul><p class="muted small">Cosmetic achievements for this raid. Your browser keeps your profile; badges do not change damage.</p></section>
-<section id="victoryRecap" class="panel victory-recap" hidden><p class="eyebrow">CRIMSON CONQUERED</p><h2>One community. One incredible takedown.</h2><p id="victorySummary"></p><details><summary>Every raider who made it happen <span aria-hidden="true">+</span></summary><p id="recapNote" class="muted small">All contributors are listed by their raid aliases.</p><ol id="allContributors" class="combat-list"></ol></details></section>
-<section class="instructions panel" id="howToPlay" aria-labelledby="instructionsTitle"><div class="section-title"><div><p class="eyebrow">{{ boss_rules.cooldown }} SECONDS TO LEARN. DAYS TO CONQUER.</p><h2 id="instructionsTitle">How to play together</h2></div><span class="tag">TEAMWORK WINS</span></div><ol class="instruction-grid"><li><strong>Read the weakness</strong><p>Pick Blade, Bow, or Magic. A matching strike deals <b>{{ boss_rules.weak_damage }} damage</b>; other styles deal <b>{{ boss_rules.damage }}</b>. The weakness shifts every {{ boss_rules.ward_seconds // 60 }} minutes.</p></li><li><strong>Land your hit</strong><p>Press Attack, then wait <b>{{ boss_rules.cooldown }} seconds</b>. Every {{ boss_rules.burst_every }} personal hits earns a <b>+{{ boss_rules.burst_bonus }} Crimson burst</b>. It stacks with the weakness bonus.</p></li><li><strong>Rally, then return</strong><p>Use up to <b>{{ boss_rules.daily_attacks }} attacks per raid day</b>. Invite the crew back tomorrow. Damage never heals and a missed day never erases your progress.</p></li></ol><div class="raid-fineprint"><p><strong>The goal:</strong> defeat the shared boss. Starting difficulty is {{ '{:,}'.format(boss_rules.default_hp) }} HP. Around 100 active people making 20–40 attacks daily should take roughly 4–8 raid days at the starting difficulty. Less participation takes longer. A host can choose a different difficulty for the next raid.</p><p><strong>Fair play:</strong> your browser and internet connection share the limits. People on the same Wi-Fi share one allowance; IPv6 addresses in the same /64 also share it. Keep cookies enabled and use the same browser to keep your raider profile. The first successful community hit starts the 24-hour raid-day schedule. Pausing does not stop that schedule.</p><p><strong>Free, cooperative fun:</strong> no purchases, wagers, cash prizes, or automatic attacks. Everyone who lands a hit helps win. The host saves recovery checkpoints and starts the next raid after victory.</p></div></section>
-<div class="raid-bottom"><section class="panel raid-list"><p class="eyebrow">THE DAMAGE CREW</p><h2>Top raiders</h2><ol id="bossLeaders" class="combat-list"><li class="muted">Land the first hit to lead the charge.</li></ol><p class="muted small">Anonymous names belong to this raid. Every contribution counts.</p></section><section class="panel raid-list"><p class="eyebrow">HAPPENING TOGETHER</p><h2>Recent strikes</h2><ol id="bossRecent" class="combat-list"><li class="muted">The arena is waiting for your community.</li></ol></section></div>
-<details class="panel raid-history"><summary>Past raids <span aria-hidden="true">+</span></summary><ul class="combat-list" id="bossHistory"><li class="muted">The first chapter is yours to write.</li></ul></details>
-<section class="mobile-attack-dock" aria-label="Quick attack controls"><div><label for="dockStyle">Your strike</label><select id="dockStyle">{% for key,label in boss_rules.styles.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select><small id="dockRemaining">{{ boss_rules.daily_attacks }} attacks left</small></div><button type="button" class="button primary" id="dockAttack" disabled>Connecting…</button></section>
-<noscript><p class="notice warning">Enable JavaScript and cookies to attack and see other players' live progress.</p></noscript>
-</main>{% endblock %}
-{% block footer %}A free community raid. Built for the Red crew.{% endblock %}
+<main id="main" class="shell boss-page" data-boss-root
+      data-boss-bootstrap="{{ {'state': boss_data, 'csrf': csrf()} | tojson | forceescape }}">
+  <div class="boss-live">
+    <span id="bossConnection" role="status">Connecting…</span>
+    <div class="share-tools">
+      <button class="button small" id="copyRaidLink" type="button">{{ icon('link', 18) }} Copy link</button>
+      <span id="shareResult" class="small muted" role="status"></span>
+      <input id="shareUrl" type="text" readonly aria-label="Raid link to copy" hidden>
+    </div>
+  </div>
+
+  <p id="bossError" class="notice warning" role="alert" hidden></p>
+  <button type="button" id="dismissBossError" class="text-button dismiss-error" hidden>Dismiss</button>
+  <div id="milestoneBanner" class="milestone-banner" role="status" hidden>
+    <strong id="milestoneMessage"></strong>
+    <button id="dismissMilestone" class="text-button" type="button" aria-label="Dismiss milestone">{{ icon('close') }}</button>
+  </div>
+
+  <div class="raid-layout">
+    <section class="arena panel" aria-labelledby="bossName">
+      <div class="arena-heading">
+        <h1 class="eyebrow">BOSS FIGHT</h1>
+        <span class="badge" id="bossPhase">{{ boss_data.phase }}</span>
+      </div>
+      <div class="boss-stage" id="bossStage">
+        <div class="rune-ring" aria-hidden="true"></div>
+        <div class="rune-ring inner" aria-hidden="true"></div>
+        <span class="arena-rune rune-one" aria-hidden="true">✦</span>
+        <span class="arena-rune rune-two" aria-hidden="true">✧</span>
+        <img class="boss-sprite{% if boss_data.avatar_custom %} custom-avatar{% endif %}" data-boss-avatar src="{{ boss_data.avatar_url }}"
+             alt="{{ boss_data.name }}" width="220" height="220">
+        <span id="hitFloat" class="hit-float" aria-hidden="true"></span>
+        <span class="boss-shadow" aria-hidden="true"></span>
+      </div>
+      <div class="boss-name-row">
+        <h2 id="bossName">{{ boss_data.name }}</h2>
+        <span id="bossDay" class="tag">Raid day {{ boss_data.day }}</span>
+      </div>
+      <div class="hp-label">
+        <strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong>
+        <span id="bossPercent">{{ '%.2f' | format(boss_data.hp / boss_data.max_hp * 100) }}%</span>
+      </div>
+      <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}"
+                value="{{ boss_data.hp }}" aria-label="Boss health"></progress>
+      <ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
+      <div class="raid-stats">
+        <div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>Raiders</span></div>
+        <div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>Hits</span></div>
+        <div><strong id="bossDamage">{{ '{:,}'.format(boss_data.total_damage) }}</strong><span>Damage</span></div>
+      </div>
+    </section>
+
+    <section class="attack-panel panel" aria-labelledby="yourTurn">
+      <h2 id="yourTurn">Attack</h2>
+      <div class="weakness-box">
+        <span class="weakness-symbol" aria-hidden="true">✦</span>
+        <div>
+          <small>WEAKNESS</small>
+          <strong id="bossWeakness">{{ boss_data.weakness_label }} · {{ boss_data.rules.weak_damage }} damage</strong>
+          <span id="wardTimer">—</span>
+        </div>
+      </div>
+      <div class="strike-options" role="group" aria-label="Attack style">
+        {% for key, label in boss_data.rules.styles.items() %}
+        <button type="button" data-style="{{ key }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">
+          <span aria-hidden="true">{{ icon(key, 26) }}</span>
+          <strong>{{ label }}</strong>
+        </button>
+        {% endfor %}
+      </div>
+      <div class="combo-row">
+        <strong>Crimson burst</strong>
+        <span id="burstLabel">{{ boss_data.you.burst_in }} hits to +{{ boss_data.rules.burst_bonus }} damage</span>
+      </div>
+      <div class="burst-meter" id="burstMeter" aria-hidden="true">
+        {% for n in range(boss_data.rules.burst_every) %}<span></span>{% endfor %}
+      </div>
+      <button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button>
+      <p id="hitResult" class="hit-result" role="status"></p>
+      <div class="personal-stats">
+        <div><strong id="yourDamage">{{ '{:,}'.format(boss_data.you.damage) }}</strong><span>Your damage</span></div>
+        <div><strong id="yourRemaining">{{ boss_data.you.remaining }} / {{ boss_data.rules.daily_attacks }}</strong><span>Attacks left</span></div>
+        <div><strong id="yourActiveDays">{{ boss_data.you.active_days }}</strong><span>Raid days</span></div>
+      </div>
+      <p class="raider-name"><strong id="yourName">{{ boss_data.you.name }}</strong></p>
+    </section>
+  </div>
+
+  <section id="victoryRecap" class="panel victory-recap" hidden>
+    <h2>Victory</h2>
+    <details>
+      <summary>All raiders <span aria-hidden="true">+</span></summary>
+      <ol id="allContributors" class="combat-list"></ol>
+    </details>
+  </section>
+
+  <div class="raid-bottom">
+    <section class="panel raid-list">
+      <h2>Top raiders</h2>
+      <ol id="bossLeaders" class="combat-list"></ol>
+    </section>
+    <section class="panel raid-list">
+      <h2>Recent hits</h2>
+      <ol id="bossRecent" class="combat-list"></ol>
+    </section>
+  </div>
+  <details class="panel raid-history">
+    <summary>Past raids <span aria-hidden="true">+</span></summary>
+    <ul class="combat-list" id="bossHistory"></ul>
+  </details>
+
+  <section class="mobile-attack-dock" aria-label="Quick attack controls">
+    <div>
+      <label for="dockStyle">Style</label>
+      <select id="dockStyle">
+        {% for key, label in boss_data.rules.styles.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+      </select>
+      <small id="dockRemaining">{{ boss_data.you.remaining }} / {{ boss_data.rules.daily_attacks }} attacks left</small>
+    </div>
+    <button type="button" class="button primary" id="dockAttack" disabled>Connecting…</button>
+  </section>
+  <noscript><p class="notice warning">JavaScript is required to play.</p></noscript>
+</main>
+{% endblock %}
+{% block site_footer %}{% endblock %}
 ```
 
 ## templates/change_review.html
@@ -7612,8 +8213,8 @@ def upgrade_store(value, defaults, health_defaults):
 <section class="hero"><div><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
 <aside class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside></section>
 <section class="play-invite panel" aria-labelledby="inviteTitle">
-<img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="52" height="52">
-<div class="invite-copy"><p class="eyebrow">ONE BOSS. THE WHOLE COMMUNITY.</p><h2 id="inviteTitle">{{ 'The crew conquered Crimson.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
+<img id="inviteAvatar" src="{{ data.boss.avatar_url }}" class="{% if data.boss.avatar_custom %}custom-avatar{% endif %}" alt="" width="52" height="52">
+<div class="invite-copy"><p class="eyebrow"><span id="inviteBossName">{{ data.boss.name }}</span> · COMMUNITY BOSS</p><h2 id="inviteTitle">{{ 'The crew conquered Crimson.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
 <p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p>
 <progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Community boss health"></progress></div>
 <a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Join the boss fight' }}</span> <span aria-hidden="true">→</span></a>
@@ -7661,12 +8262,12 @@ def upgrade_store(value, defaults, health_defaults):
 ```html
 <section class="panel form-panel" id="recovery"><p class="eyebrow">KEEP YOUR COMMUNITY'S PROGRESS</p><h2>Private recovery checkpoint</h2>
 <div class="checkpoint-status"><strong id="checkpointLabel">{{ data.checkpoint.label }}</strong><p id="checkpointDetails">{{ data.checkpoint.details }}</p><small id="checkpointTime">{{ 'Last export generated: ' ~ fmt_et(data.checkpoint.generated_at) if data.checkpoint.generated_at else 'No export generated yet.' }}</small></div>
-<p class="muted">Includes administrator accounts, password hashes, the signing key, race settings, saved standings, and boss progress. Keep this file private.</p>
+<p class="muted">Includes administrator accounts, password hashes, the signing key, race settings, saved standings, boss progress, and the uploaded boss avatar. Keep this file private.</p>
 <a class="button primary" href="/admin/recovery-backup" data-recovery-download>↓ Download private recovery file</a>
 <p class="small muted">“Generated” means the server prepared a download. It does not confirm that you saved it elsewhere. On App Platform, add the latest file as <code>private/recovery.seed.json</code> to your private repository before redeploying. A new instance imports it automatically; existing saved state always wins. Local copies alone do not survive a container replacement.</p>
 <details class="nested" {% if recovery_review %}open{% endif %}><summary>Check a recovery file before restoring <span aria-hidden="true">+</span></summary>
 <form method="post" action="/admin/recovery-preview" enctype="multipart/form-data" class="filter-bar"><input type="hidden" name="csrf" value="{{ csrf() }}"><div class="field grow"><label for="recoveryFile">Private recovery JSON</label><input id="recoveryFile" name="recovery" type="file" accept=".json,application/json" required></div><button type="submit" class="button">Review recovery file</button></form>
-{% if recovery_review %}<div class="recovery-review"><h3>Validated recovery file</h3><dl><dt>Race dates</dt><dd>{{ recovery_review.start }} → {{ recovery_review.end }}</dd><dt>Accounts</dt><dd>{{ recovery_review.accounts }} administrators</dd><dt>Race data</dt><dd>{{ recovery_review.rows }} saved places · {{ recovery_review.overrides }} overrides · {{ recovery_review.history }} archived races</dd><dt>Community boss</dt><dd>{% if recovery_review.game %}{{ '{:,}'.format(recovery_review.game.hp) }} / {{ '{:,}'.format(recovery_review.game.max_hp) }} HP · {{ recovery_review.game.raiders }} raiders · {{ recovery_review.game.attacks }} hits{% else %}No boss record; a fresh raid will be created on a new instance.{% endif %}</dd></dl><p class="small muted">This review changes nothing. To restore on a fresh deployment, place this file in <code>private/recovery.seed.json</code>. Use the separate race-backup restore form for replacing only a live race.</p></div>{% endif %}
+{% if recovery_review %}<div class="recovery-review"><h3>Validated recovery file</h3><dl><dt>Race dates</dt><dd>{{ recovery_review.start }} → {{ recovery_review.end }}</dd><dt>Accounts</dt><dd>{{ recovery_review.accounts }} administrators</dd><dt>Race data</dt><dd>{{ recovery_review.rows }} saved places · {{ recovery_review.overrides }} overrides · {{ recovery_review.history }} archived races</dd><dt>Community boss</dt><dd>{% if recovery_review.game %}{{ '{:,}'.format(recovery_review.game.hp) }} / {{ '{:,}'.format(recovery_review.game.max_hp) }} HP · {{ recovery_review.game.raiders }} raiders · {{ recovery_review.game.attacks }} hits{% else %}No boss record; a fresh raid will be created on a new instance.{% endif %}</dd><dt>Boss avatar</dt><dd>{{ 'Custom image included' if recovery_review.avatar else 'Original logo' }}</dd></dl><p class="small muted">This review changes nothing. To restore on a fresh deployment, place this file in <code>private/recovery.seed.json</code>. Use the separate race-backup restore form for replacing only a live race.</p></div>{% endif %}
 </details></section>
 ```
 
@@ -8508,8 +9109,10 @@ class BossTests(unittest.TestCase):
         self.assertNotEqual(sa['state']['you']['name'],sb['state']['you']['name'])
         self.assertEqual(len(current['recent']),2)
         html=a.get('/play').text
-        self.assertIn('How to play together',html)
-        self.assertIn('40 attacks per raid day',html)
+        self.assertIn('id="attackButton"',html)
+        self.assertIn('id="bossHealthBar"',html)
+        self.assertNotIn('How to play together',html)
+        self.assertNotIn('id="howToPlay"',html)
         self.assertNotIn('href="/admin"',a.get('/').text)
         self.assertIn('Join the boss fight',a.get('/').text)
 
@@ -8672,7 +9275,7 @@ class BossTests(unittest.TestCase):
         for private in (persisted['salt'],'192.0.2.1',*persisted['players'],*persisted['networks']):
             self.assertNotIn(private,payload)
 
-    def test_admin_controls_require_superadmin_and_restart_confirmation(self):
+    def test_admin_controls_require_admin_and_restart_confirmation(self):
         c,s=self.client()
         with c.session_transaction() as sess:sess.update(user='gingrsnaps',auth_version=1)
         form={'csrf':s['csrf'],'action':'restart','raid_id':s['state']['raid_id'],'health':'2400000'}
@@ -8682,7 +9285,8 @@ class BossTests(unittest.TestCase):
         self.r.admin['users']['helper']=copy.deepcopy(self.r.admin['users']['gingrsnaps'])
         self.r.commit(self.r.admin,self.r.revision)
         with c.session_transaction() as sess:sess['user']='helper'
-        self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause'}).status_code,403)
+        current=self.b.status()['raid_id']
+        self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause','raid_id':current}).status_code,303)
 
     def test_digitalocean_ip_only_trusted_when_configured(self):
         a,sa=self.client(); b,sb=self.client()
@@ -8762,142 +9366,879 @@ class BossTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## tests/test_boss_admin.py
+
+```python
+"""Host edits must preserve raid progress and validate real image bytes."""
+import copy
+import io
+import json
+import os
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from PIL import Image, PngImagePlugin
+
+from boss import BossError, DEFAULT_HP, fresh_raid, validate_boss
+from boss_avatar import image_bytes
+from wager_backend import create_app
+
+
+def picture(fmt='PNG', size=(900, 450)):
+    stream = io.BytesIO()
+    metadata = PngImagePlugin.PngInfo()
+    metadata.add_text('Comment', 'Private image metadata')
+    Image.new('RGB', size, '#d82832').save(stream, format=fmt, pnginfo=metadata)
+    return stream.getvalue()
+
+
+class BossAdminTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.root = Path(directory.name)
+        environment = patch.dict(os.environ, {
+            'APP_ENV': 'test', 'ADMIN_BOOTSTRAP_PASS': 'test-only-password',
+        }, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+        self.app = create_app(self.root, testing=True)
+        self.runtime = self.app.extensions['runtime']
+        self.boss = self.app.extensions['boss']
+        self.addCleanup(self.runtime.store.close)
+        self.client = self.app.test_client()
+        self.client.environ_base['REMOTE_ADDR'] = '192.0.2.1'
+        self.csrf = self.client.get('/play/api/state').json['csrf']
+        with self.client.session_transaction() as session:
+            session.update(user='gingrsnaps', auth_version=1)
+
+    def form(self, action, **fields):
+        state = self.boss.status()
+        return dict(csrf=self.csrf, action=action, raid_id=state['raid_id'],
+                    health_revision=str(state['health_revision']), settings_revision=str(state['settings_revision']), **fields)
+
+    def post(self, action, **fields):
+        return self.client.post('/admin/boss/action', data=self.form(action, **fields))
+
+    def upload(self, raw=None, filename='boss.png'):
+        return self.post('avatar', avatar=(io.BytesIO(raw if raw is not None else picture()), filename))
+
+    def hit(self, guest='one', ip='192.0.2.1'):
+        state = self.boss.status(guest, ip)
+        return self.boss.attack(guest, ip, state['weakness'], state['raid_id'], 'request-' + guest)
+
+    def test_png_jpg_jpeg_webp_are_decoded_resized_and_cacheable_without_metadata(self):
+        for fmt, filename in [('PNG', 'boss.png'), ('JPEG', '../../boss.JPG'), ('JPEG', 'boss.jpeg'), ('WEBP', 'boss.webp')]:
+            with self.subTest(fmt=fmt):
+                self.assertEqual(self.upload(picture(fmt), filename).status_code, 303)
+                view = self.boss.status()
+                self.assertTrue(view['avatar_custom'])
+                response = self.client.get(view['avatar_url'])
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.mimetype, 'image/png')
+                self.assertIn('immutable', response.headers['Cache-Control'])
+                self.assertEqual(response.headers['X-Content-Type-Options'], 'nosniff')
+                with Image.open(io.BytesIO(response.data)) as saved:
+                    self.assertEqual(saved.size, (512, 256))
+                    self.assertNotIn('Comment', saved.info)
+                    self.assertNotIn('exif', saved.info)
+                cached = self.client.get(view['avatar_url'], headers={'If-None-Match': response.headers['ETag']})
+                self.assertEqual(cached.status_code, 304)
+                self.assertEqual(cached.data, b'')
+                self.assertIn(view['avatar_url'], self.client.get('/play').text)
+                self.assertIn(view['avatar_url'], self.client.get('/').text)
+                self.assertIn(view['avatar_url'], self.client.get('/admin?tab=boss').text)
+                self.assertNotIn('community_boss_avatar', self.client.get('/play/api/state').text)
+                self.assertNotIn(self.boss.avatar_document['data'], self.client.get('/public-state').text)
+
+    def test_invalid_images_cannot_replace_existing_avatar_or_raid(self):
+        self.upload()
+        before = self.boss.recovery()
+        gif = picture('GIF', (20, 20))
+        for raw, filename in [(b'', 'boss.png'), (b'<script>alert(1)</script>', 'boss.png'),
+                              (gif, 'boss.png'), (picture()[:40], 'boss.png'),
+                              (picture(), 'boss.svg'), (b'x' * (4 * 1024 * 1024 + 1), 'boss.jpg')]:
+            with self.subTest(filename=filename, length=len(raw)):
+                self.assertEqual(self.upload(raw, filename).status_code, 422)
+                self.assertEqual(self.boss.recovery(), before)
+        with patch('boss_avatar.MAX_PIXELS', 100):
+            self.assertEqual(self.upload(picture(size=(11, 10))).status_code, 422)
+        frames = [Image.new('RGBA', (10, 10), color) for color in ('red', 'blue')]
+        animation = io.BytesIO()
+        frames[0].save(animation, format='PNG', save_all=True, append_images=frames[1:], duration=100, loop=0)
+        self.assertEqual(self.upload(animation.getvalue()).status_code, 422)
+        animation = io.BytesIO()
+        frames[0].save(animation, format='WEBP', save_all=True, append_images=frames[1:], duration=100, loop=0)
+        self.assertEqual(self.upload(animation.getvalue(), 'boss.webp').status_code, 422)
+        self.assertEqual(self.boss.recovery(), before)
+
+    def test_avatar_changes_keep_progress_accounts_and_cooldowns(self):
+        self.hit()
+        raid = self.boss.export()
+        admin = self.runtime.store.admin()
+        self.assertEqual(self.upload().status_code, 303)
+        current = self.boss.export()
+        for field in ('id', 'hp', 'max_hp', 'total_damage', 'total_attacks', 'players', 'networks'):
+            self.assertEqual(current[field], raid[field])
+        self.assertEqual(self.runtime.store.admin(), admin)
+        with self.assertRaises(BossError) as blocked:
+            self.hit('two', '192.0.2.1')
+        self.assertEqual(blocked.exception.code, 'cooldown')
+        image_url = self.boss.status()['avatar_url']
+        self.boss.control('restart', current['id'])
+        self.boss.loaded_at = 0
+        self.assertEqual(self.boss.status()['avatar_url'], image_url)
+        self.assertEqual(self.post('avatar_reset').status_code, 303)
+        self.assertEqual(self.boss.status()['avatar_url'], '/static/redlogo.png')
+        self.assertEqual(self.client.get(image_url).status_code, 404)
+
+    def test_explicit_health_edit_uses_latest_damage_and_keeps_allowances(self):
+        self.hit()
+        form = self.form('health', health='3000000', confirm_health='yes')
+        self.hit('two', '192.0.2.2')  # A hit after the host opened the form is not lost.
+        before = self.boss.export()
+        self.assertEqual(self.client.post('/admin/boss/action', data=form).status_code, 303)
+        current = self.boss.export()
+        self.assertEqual(current['hp'], 3_000_000 - 300)
+        self.assertEqual(current['health_revision'], 1)
+        for field in ('id', 'total_damage', 'total_attacks', 'players', 'networks'):
+            self.assertEqual(current[field], before[field])
+        self.assertEqual(self.post('health', health='2000000', confirm_health='yes').status_code, 303)
+        self.assertEqual(self.boss.status()['hp'], 2_000_000 - 300)
+        with patch('boss.time.time', return_value=current['started_at'] + 7 * 86400):
+            self.boss.loaded_at = 0
+            self.assertEqual(self.boss.status()['hp'], 2_000_000 - 300)
+        validate_boss(self.boss.export())
+
+    def test_health_edit_requires_confirmation_valid_range_and_current_revision(self):
+        before = self.boss.export()
+        for fields in ({'health': '3000000'}, {'health': 'oops', 'confirm_health': 'yes'},
+                       {'health': '0', 'confirm_health': 'yes'}, {'health': '100000001', 'confirm_health': 'yes'}):
+            self.assertEqual(self.post('health', **fields).status_code, 422)
+            self.assertEqual(self.boss.export(), before)
+        old = self.form('health', health='3000000', confirm_health='yes')
+        self.assertEqual(self.post('health', health='4000000', confirm_health='yes').status_code, 303)
+        self.assertEqual(self.client.post('/admin/boss/action', data=old).status_code, 422)
+        self.assertEqual(self.boss.status()['max_hp'], 4_000_000)
+        self.boss.control('restart', before['id'])
+        self.assertEqual(self.client.post('/admin/boss/action', data=old).status_code, 422)
+        self.assertEqual(self.boss.status()['max_hp'], DEFAULT_HP)
+
+    def test_completed_raid_only_reopens_after_explicit_health_edit(self):
+        small = fresh_raid(health=50)
+        with self.runtime.store.connection(transaction=True) as conn:
+            self.boss._write(conn, small, new_raid=True)
+        self.boss.loaded_at = 0
+        self.hit()
+        self.assertEqual(self.boss.status()['status'], 'victory')
+        self.upload()
+        self.assertEqual(self.boss.status()['hp'], 0)
+        self.assertEqual(self.post('health', health='100000', confirm_health='yes').status_code, 303)
+        self.assertEqual(self.boss.status()['hp'], 99_950)
+        self.assertEqual(self.boss.status()['status'], 'active')
+        self.assertEqual(self.boss.status()['total_damage'], 50)
+        validate_boss(self.boss.export())
+
+    def test_private_recovery_and_cold_start_keep_avatar_and_health_edits(self):
+        self.hit()
+        self.upload()
+        self.post('health', health='3000000', confirm_health='yes')
+        self.post('settings', boss_name='The Scarlet Beast', base_damage='120', weak_damage='180', burst_bonus='90')
+        saved = self.boss.recovery()
+        checkpoint = self.client.get('/admin/recovery-backup').json
+        for field in saved:
+            self.assertEqual(checkpoint[field], saved[field])
+        # Existing state takes precedence, even with a malformed new seed.
+        (self.root / 'private').mkdir(exist_ok=True)
+        (self.root / 'private/recovery.seed.json').write_text('{}', encoding='utf-8')
+        restarted = create_app(self.root, testing=True)
+        self.addCleanup(restarted.extensions['runtime'].store.close)
+        self.assertEqual(restarted.extensions['boss'].recovery(), saved)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'private').mkdir()
+            (root / 'private/recovery.seed.json').write_text(json.dumps(checkpoint), encoding='utf-8')
+            restored = create_app(root, testing=True)
+            self.addCleanup(restored.extensions['runtime'].store.close)
+            self.assertEqual(restored.extensions['boss'].recovery(), saved)
+            url = restored.extensions['boss'].status()['avatar_url']
+            self.assertEqual(restored.test_client().get(url).data, image_bytes(saved['community_boss_avatar']))
+            restored.extensions['runtime'].store.close()
+        preview = self.client.post('/admin/recovery-preview', data={
+            'csrf': self.csrf, 'recovery': (io.BytesIO(json.dumps(checkpoint).encode()), 'checkpoint.json'),
+        })
+        self.assertEqual(preview.status_code, 200)
+        self.assertIn('Custom image included', preview.text)
+        checkpoint['community_boss_avatar']['sha256'] = '0' * 64
+        response = self.client.post('/admin/recovery-preview', data={
+            'csrf': self.csrf, 'recovery': (io.BytesIO(json.dumps(checkpoint).encode()), 'checkpoint.json'),
+        })
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('checksum', response.text)
+        self.assertEqual(self.boss.recovery(), saved)
+
+    def test_upload_and_health_require_admin_and_csrf(self):
+        for action, fields in [('avatar', {'avatar': (io.BytesIO(picture()), 'boss.png')}),
+                               ('health', {'health': '3000000', 'confirm_health': 'yes'})]:
+            form = self.form(action, **fields)
+            form['csrf'] = 'forged'
+            self.assertEqual(self.client.post('/admin/boss/action', data=form).status_code, 400)
+        self.runtime.admin['users']['helper'] = copy.deepcopy(self.runtime.admin['users']['gingrsnaps'])
+        self.runtime.commit(self.runtime.admin, self.runtime.revision)
+        with self.client.session_transaction() as session:
+            session['user'] = 'helper'
+        self.assertIn('id="bossAvatarFile"', self.client.get('/admin?tab=boss').text)
+        self.assertEqual(self.upload().status_code, 303)
+        self.assertEqual(self.post('health', health='3000000', confirm_health='yes').status_code, 303)
+        self.assertEqual(self.client.get('/admin/recovery-backup').status_code, 403)
+        before = self.boss.recovery()
+        with self.client.session_transaction() as session:
+            session.pop('user')
+        self.assertEqual(self.upload().status_code, 302)
+        self.assertEqual(self.post('health', health='3000000', confirm_health='yes').status_code, 302)
+        self.assertEqual(self.boss.recovery(), before)
+
+    def test_every_boss_write_rejects_guests_forged_roles_and_revoked_sessions(self):
+        before = self.boss.recovery()
+        for mode in ('guest', 'unknown-account', 'revoked', 'bad-cookie', 'bad-csrf', 'missing-token', 'unicode-token'):
+            self.client.delete_cookie('session')
+            with self.client.session_transaction() as session:
+                session.update(csrf=self.csrf, is_admin=True, role='superadmin')
+                if mode != 'guest':
+                    session.update(user='missing' if mode == 'unknown-account' else 'gingrsnaps',
+                                   auth_version=0 if mode == 'revoked' else 1)
+                if mode == 'missing-token':
+                    session.pop('csrf')
+            if mode == 'bad-cookie':
+                self.client.set_cookie('session', 'forged-not-signed')
+            for action in ('avatar', 'avatar_reset', 'health', 'settings', 'pause', 'resume', 'restart'):
+                with self.subTest(mode=mode, action=action), patch('wager_backend.from_upload') as decode:
+                    form = self.form(action, health='3000000', confirm_health='yes', confirm_restart='yes',
+                                     boss_name='Unauthorized', base_damage='9000', weak_damage='9999', burst_bonus='9999',
+                                     role='superadmin', is_admin='true', user='gingrsnaps')
+                    if action == 'avatar':
+                        form['avatar'] = (io.BytesIO(picture('WEBP')), 'boss.webp')
+                    if mode == 'bad-csrf':
+                        form['csrf'] = 'forged'
+                    if mode == 'missing-token':
+                        form['csrf'] = '!'
+                    if mode == 'unicode-token':
+                        form['csrf'] = '🔥'
+                    response = self.client.post('/admin/boss/action', data=form, headers={
+                        'Accept': 'application/json', 'X-Admin': 'true', 'X-User': 'gingrsnaps',
+                    })
+                    self.assertEqual(response.status_code, 400 if mode in {'bad-csrf', 'missing-token', 'unicode-token'} else 401)
+                    decode.assert_not_called()
+                    self.assertEqual(self.boss.recovery(), before)
+
+    def test_regular_admin_can_sign_in_and_manage_boss_but_not_export_accounts(self):
+        self.runtime.admin['users']['helper'] = copy.deepcopy(self.runtime.admin['users']['gingrsnaps'])
+        self.runtime.commit(self.runtime.admin, self.runtime.revision)
+        self.client.post('/admin/logout', data={'csrf': self.csrf})
+        self.csrf = self.client.get('/play/api/state').json['csrf']
+        login = self.client.post('/admin', data={'csrf': self.csrf, 'username': 'helper', 'password': 'test-only-password'})
+        self.assertEqual(login.status_code, 303)
+        self.csrf = self.client.get('/play/api/state').json['csrf']
+        page = self.client.get('/admin?tab=boss').text
+        self.assertIn('id="bossSettingsForm"', page)
+        self.assertIn('image/webp', page)
+        self.assertNotIn('Download private recovery file', page)
+        self.assertEqual(self.post('settings', boss_name='Ruby Colossus', base_damage='120', weak_damage='180', burst_bonus='75').status_code, 303)
+        self.assertEqual(self.upload(picture('WEBP'), 'boss.webp').status_code, 303)
+        self.assertEqual(self.post('health', health='3500000', confirm_health='yes').status_code, 303)
+        for action in ('pause', 'resume', 'avatar_reset'):
+            self.assertEqual(self.post(action).status_code, 303)
+        self.assertEqual(self.post('restart', health='2500000', confirm_restart='yes').status_code, 303)
+        self.assertEqual(self.boss.status()['name'], 'Ruby Colossus')
+        self.assertEqual(self.boss.status()['rules']['weak_damage'], 180)
+        self.assertEqual(self.client.get('/admin/recovery-backup').status_code, 403)
+        # Deleting an admin invalidates its existing browser session immediately.
+        self.runtime.admin['users'].pop('helper')
+        self.runtime.commit(self.runtime.admin, self.runtime.revision)
+        before = self.boss.export()
+        self.assertEqual(self.post('pause').status_code, 302)
+        self.assertEqual(self.boss.export(), before)
+
+    def test_damage_settings_apply_to_future_hits_and_public_forgery_has_no_effect(self):
+        self.assertEqual(self.post('settings', boss_name='Ruby Colossus', base_damage='300', weak_damage='400', burst_bonus='50').status_code, 303)
+        # Keep signed admin cookies within their real 12-hour lifetime while
+        # advancing the combat clock through ten one-minute cooldowns.
+        with patch('boss.time.time', return_value=self.boss.export()['created_at']) as clock:
+            for index in range(10):
+                clock.return_value += 60
+                state = self.boss.status('player', '192.0.2.10')
+                result = self.boss.attack('player', '192.0.2.10', state['weakness'], state['raid_id'], f'damage-hit-{index}')
+                self.assertEqual(result['hit']['damage'], 450 if index == 9 else 400)
+            saved = self.boss.export()
+            self.assertEqual(self.post('settings', boss_name='Ruby Colossus', base_damage='10', weak_damage='20', burst_bonus='0').status_code, 303)
+            after = self.boss.export()
+            for field in ('id', 'hp', 'players', 'networks', 'total_damage', 'total_attacks'):
+                self.assertEqual(after[field], saved[field])
+            retry = self.boss.attack('player', '192.0.2.10', 'blade', saved['id'], 'damage-hit-9')
+            self.assertTrue(retry['duplicate'])
+            self.assertEqual(retry['hit']['damage'], 450)
+            guest = self.app.test_client()
+            snapshot = guest.get('/play/api/state').json
+            forged = guest.post('/play/api/attack', json={
+                'raid_id': snapshot['state']['raid_id'], 'style': snapshot['state']['weakness'], 'request_id': 'forged-damage-attempt',
+                'damage': 99_999_999, 'hp': 0, 'name': 'Changed', 'settings_revision': 999,
+                'settings': {'damage': 9999}, 'role': 'superadmin', 'action': 'health',
+            }, headers={'X-CSRF-Token': snapshot['csrf']})
+            self.assertEqual(forged.status_code, 200)
+            self.assertEqual(forged.json['hit']['damage'], 20)
+            self.assertEqual(self.boss.status()['name'], 'Ruby Colossus')
+            self.assertEqual(self.boss.status()['hp'], saved['hp'] - 20)
+            validate_boss(self.boss.export())  # Old 450-point receipts remain valid.
+
+    def test_name_and_damage_validation_stale_forms_and_storage_write_guard(self):
+        values = dict(boss_name='Ruby Colossus', base_damage='100', weak_damage='150', burst_bonus='100')
+        before = self.boss.export()
+        for invalid in ({'boss_name': ''}, {'boss_name': 'x' * 61}, {'boss_name': 'bad\nname'},
+                        {'base_damage': '0'}, {'weak_damage': '99'}, {'weak_damage': '10001'},
+                        {'burst_bonus': '-1'}, {'burst_bonus': '0.5'}, {'base_damage': 'true'}):
+            self.assertEqual(self.post('settings', **{**values, **invalid}).status_code, 422)
+            self.assertEqual(self.boss.export(), before)
+        stale = self.form('settings', **values)
+        self.assertEqual(self.post('settings', **values).status_code, 303)
+        self.assertEqual(self.client.post('/admin/boss/action', data=stale).status_code, 422)
+        saved = self.boss.export()
+        bypass = copy.deepcopy(saved)
+        bypass['settings']['damage'] = 10
+        with self.assertRaises(BossError) as blocked:
+            with self.runtime.store.connection(transaction=True) as conn:
+                self.boss._write(conn, bypass)
+        self.assertEqual(blocked.exception.code, 'settings_guard')
+        self.assertEqual(self.boss.export(), saved)
+        stale = self.form('settings', **values)
+        self.post('restart', confirm_restart='yes')
+        self.assertEqual(self.client.post('/admin/boss/action', data=stale).status_code, 422)
+        self.assertEqual(self.boss.status()['name'], 'Ruby Colossus')
+
+    def test_public_pages_have_no_editor_and_boss_names_render_as_text(self):
+        name = '<img src=x onerror=alert(1)>'
+        self.post('settings', boss_name=name, base_damage='100', weak_damage='150', burst_bonus='100')
+        guest = self.app.test_client()
+        for url in ('/', '/play'):
+            page = guest.get(url).text
+            self.assertIn('&lt;img', page)
+            self.assertNotIn(name, page)
+            for editor in ('bossAvatarFile', 'bossNameInput', 'bossMaxHealth', 'bossSettingsForm'):
+                self.assertNotIn('id="' + editor + '"', page)
+            self.assertNotIn('action="/admin/boss/action"', page)
+        before = self.boss.recovery()
+        self.assertEqual(guest.get('/admin/boss/action?action=health&health=0').status_code, 405)
+        self.assertEqual(guest.post('/play/api/state', json={'hp': 0}).status_code, 405)
+        self.assertEqual(guest.get('/admin?tab=boss').status_code, 200)
+        self.assertNotIn('bossSettingsForm', guest.get('/admin?tab=boss').text)
+        self.assertEqual(self.boss.recovery(), before)
+
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
 ## tests/test_boss_frontend.cjs
 
 ```javascript
 /* Real rendered templates; fake clock/transport exercise shared-state behavior. */
-const {test}=require('node:test');
-const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const path=require('node:path');
-const {JSDOM}=require('jsdom');
-const root=path.resolve(__dirname,'..'), fixtures=process.env.DOM_FIXTURES||path.join(root,'.test-fixtures');
-const code=fs.readFileSync(path.join(root,'static/boss.js'),'utf8');
-const flush=async()=>{for(let i=0;i<8;i++)await new Promise(r=>setImmediate(r));};
-const response=(value,status=200)=>({ok:status<400,status,headers:new Map([['content-type','application/json']]),json:async()=>structuredClone(value)});
-function page(name='play') {
- const dom=new JSDOM(fs.readFileSync(path.join(fixtures,name+'.html'),'utf8'),{url:'https://example.test/play',runScripts:'outside-only'});
- const w=dom.window,calls=[],timers=new Map(),intervals=new Map();let clock=0,serial=0;
- let value=JSON.parse(fs.readFileSync(path.join(fixtures,'boss.json'),'utf8'));
- Object.defineProperty(w.performance,'now',{value:()=>clock});
- Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
- w.setTimeout=(fn,delay)=>{const id=++serial;timers.set(id,{fn,at:clock+delay});return id;};w.clearTimeout=id=>timers.delete(id);
- w.setInterval=fn=>{const id=++serial;intervals.set(id,fn);return id;};
- let responder=async()=>response(value);
- w.fetch=async(url,options)=>{calls.push({url,options});return responder(url,options);};
- w.eval(code);
- return {w,dom,calls,value,timers,respond(fn){responder=fn;},
- async advance(ms){clock+=ms;for(const [id,t]of [...timers])if(t.at<=clock){timers.delete(id);t.fn();}for(const fn of intervals.values())fn();await flush();},
- close(){dom.window.close();}};
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { JSDOM } = require("jsdom");
+const root = path.resolve(__dirname, ".."),
+  fixtures = process.env.DOM_FIXTURES || path.join(root, ".test-fixtures");
+const code = fs.readFileSync(path.join(root, "static/boss.js"), "utf8");
+const flush = async () => {
+  for (let i = 0; i < 8; i++) await new Promise((r) => setImmediate(r));
+};
+const response = (value, status = 200) => ({
+  ok: status < 400,
+  status,
+  headers: new Map([["content-type", "application/json"]]),
+  json: async () => structuredClone(value),
+});
+function page(name = "play") {
+  const dom = new JSDOM(
+    fs.readFileSync(path.join(fixtures, name + ".html"), "utf8"),
+    { url: "https://example.test/play", runScripts: "outside-only" },
+  );
+  const w = dom.window,
+    calls = [],
+    timers = new Map(),
+    intervals = new Map();
+  let clock = 0,
+    serial = 0;
+  let value = JSON.parse(
+    fs.readFileSync(path.join(fixtures, "boss.json"), "utf8"),
+  );
+  Object.defineProperty(w.performance, "now", { value: () => clock });
+  Object.defineProperty(w.document, "hidden", {
+    value: false,
+    configurable: true,
+  });
+  w.setTimeout = (fn, delay) => {
+    const id = ++serial;
+    timers.set(id, { fn, at: clock + delay });
+    return id;
+  };
+  w.clearTimeout = (id) => timers.delete(id);
+  w.setInterval = (fn) => {
+    const id = ++serial;
+    intervals.set(id, fn);
+    return id;
+  };
+  let responder = async () => response(value);
+  w.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return responder(url, options);
+  };
+  w.eval(code);
+  return {
+    w,
+    dom,
+    calls,
+    value,
+    timers,
+    respond(fn) {
+      responder = fn;
+    },
+    async advance(ms) {
+      clock += ms;
+      for (const [id, t] of [...timers])
+        if (t.at <= clock) {
+          timers.delete(id);
+          t.fn();
+        }
+      for (const fn of intervals.values()) fn();
+      await flush();
+    },
+    close() {
+      dom.window.close();
+    },
+  };
 }
-test('game markup has unique IDs, visible instructions and no admin footer',async()=>{
- const p=page();await flush();const doc=p.w.document, ids=[...doc.querySelectorAll('[id]')].map(e=>e.id);
- assert.equal(new Set(ids).size,ids.length);assert.match(doc.querySelector('#howToPlay').textContent,/40 attacks/);
- assert.equal(doc.querySelector('footer a[href="/admin"]'),null);
- assert.equal(doc.querySelector('#attackButton').disabled,false);p.close();
+test("bare game has unique IDs, working controls and no explanations or footer", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    ids = [...doc.querySelectorAll("[id]")].map((e) => e.id);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(doc.querySelector("#howToPlay"), null);
+  assert.equal(doc.querySelector("#bossStory"), null);
+  assert.equal(doc.querySelector("#attackHint"), null);
+  assert.equal(doc.querySelector('footer a[href="/admin"]'), null);
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
 });
-test('game polls every five seconds and pauses while hidden',async()=>{
- const p=page();await flush();assert.equal(p.calls.length,1);await p.advance(5000);assert.equal(p.calls.length,2);
- Object.defineProperty(p.w.document,'hidden',{value:true,configurable:true});p.w.document.dispatchEvent(new p.w.Event('visibilitychange'));
- await p.advance(10000);assert.equal(p.calls.length,2);
- Object.defineProperty(p.w.document,'hidden',{value:false,configurable:true});p.w.document.dispatchEvent(new p.w.Event('visibilitychange'));await flush();
- assert.equal(p.calls.length,3);assert.ok(p.calls.every(x=>!x.options.method));p.close();
+test("game polls every five seconds and pauses while hidden", async () => {
+  const p = page();
+  await flush();
+  assert.equal(p.calls.length, 1);
+  await p.advance(5000);
+  assert.equal(p.calls.length, 2);
+  Object.defineProperty(p.w.document, "hidden", {
+    value: true,
+    configurable: true,
+  });
+  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
+  await p.advance(10000);
+  assert.equal(p.calls.length, 2);
+  Object.defineProperty(p.w.document, "hidden", {
+    value: false,
+    configurable: true,
+  });
+  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
+  await flush();
+  assert.equal(p.calls.length, 3);
+  assert.ok(p.calls.every((x) => !x.options.method));
+  p.close();
 });
-test('attack sends only server-validated inputs and renders countdown',async()=>{
- const p=page();await flush();let sent;
- p.respond(async(url,options)=>{
-  if(options.method==='POST'){
-   sent=JSON.parse(options.body);const s=p.value.state;s.version++;s.hp-=150;s.total_damage=150;s.total_attacks=1;
-   s.you.ready_at=s.server_time+60;s.you.last_request=sent.request_id;s.you.last_hit={damage:150,style:sent.style,weakness:true,burst:false};
-   return response({ok:true,state:s,hit:s.you.last_hit});
-  }return response(p.value);
- });
- p.w.document.querySelector('[data-style="bow"]').click();p.w.document.querySelector('#attackButton').click();await flush();
- assert.deepEqual(Object.keys(sent).sort(),['raid_id','request_id','style']);assert.equal(sent.style,'bow');
- const post=p.calls.find(c=>c.options.method==='POST');assert.equal(post.options.headers['X-CSRF-Token'],p.value.csrf);
- assert.equal(p.w.document.querySelector('#attackButton').disabled,true);
- assert.match(p.w.document.querySelector('#attackButton').textContent,/1:00/);
- assert.match(p.w.document.querySelector('#hitResult').textContent,/150/);p.close();
+test("attack sends only server-validated inputs and renders countdown", async () => {
+  const p = page();
+  await flush();
+  let sent;
+  p.respond(async (url, options) => {
+    if (options.method === "POST") {
+      sent = JSON.parse(options.body);
+      const s = p.value.state;
+      s.version++;
+      s.hp -= 150;
+      s.total_damage = 150;
+      s.total_attacks = 1;
+      s.you.ready_at = s.server_time + 60;
+      s.you.last_request = sent.request_id;
+      s.you.last_hit = {
+        damage: 150,
+        style: sent.style,
+        weakness: true,
+        burst: false,
+      };
+      return response({ ok: true, state: s, hit: s.you.last_hit });
+    }
+    return response(p.value);
+  });
+  p.w.document.querySelector('[data-style="bow"]').click();
+  p.w.document.querySelector("#attackButton").click();
+  await flush();
+  assert.deepEqual(Object.keys(sent).sort(), [
+    "raid_id",
+    "request_id",
+    "style",
+  ]);
+  assert.equal(sent.style, "bow");
+  const post = p.calls.find((c) => c.options.method === "POST");
+  assert.equal(post.options.headers["X-CSRF-Token"], p.value.csrf);
+  assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
+  assert.match(p.w.document.querySelector("#attackButton").textContent, /1:00/);
+  assert.match(p.w.document.querySelector("#hitResult").textContent, /150/);
+  p.close();
 });
-test('uncertain delivery keeps receipt and retry uses same ID',async()=>{
- const p=page();await flush();const ids=[];
- p.respond(async(url,options)=>{if(options.method==='POST'){ids.push(JSON.parse(options.body).request_id);throw new Error('Network disconnected');}return response(p.value);});
- p.w.document.querySelector('#attackButton').click();await flush();
- assert.match(p.w.document.querySelector('#attackButton').textContent,/Retry last strike/);
- p.w.document.querySelector('#attackButton').click();await flush();assert.equal(ids.length,2);assert.equal(ids[0],ids[1]);p.close();
+test("uncertain delivery keeps receipt and retry uses same ID", async () => {
+  const p = page();
+  await flush();
+  const ids = [];
+  p.respond(async (url, options) => {
+    if (options.method === "POST") {
+      ids.push(JSON.parse(options.body).request_id);
+      throw new Error("Network disconnected");
+    }
+    return response(p.value);
+  });
+  p.w.document.querySelector("#attackButton").click();
+  await flush();
+  assert.match(
+    p.w.document.querySelector("#attackButton").textContent,
+    /Retry last strike/,
+  );
+  p.w.document.querySelector("#attackButton").click();
+  await flush();
+  assert.equal(ids.length, 2);
+  assert.equal(ids[0], ids[1]);
+  p.close();
 });
-test('older polls cannot reverse boss damage',async()=>{
- const p=page();await flush();const old=structuredClone(p.value);
- p.value.state.hp-=250;p.value.state.version++;p.value.state.server_time++;
- await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.hp);
- p.respond(async()=>response(old));await p.advance(5000);
- assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.hp);p.close();
+test("older polls cannot reverse boss damage", async () => {
+  const p = page();
+  await flush();
+  const old = structuredClone(p.value);
+  p.value.state.hp -= 250;
+  p.value.state.version++;
+  p.value.state.server_time++;
+  await p.advance(5000);
+  assert.equal(
+    p.w.document.querySelector("#bossHealthBar").value,
+    p.value.state.hp,
+  );
+  p.respond(async () => response(old));
+  await p.advance(5000);
+  assert.equal(
+    p.w.document.querySelector("#bossHealthBar").value,
+    p.value.state.hp,
+  );
+  p.close();
 });
-test('victory and paused raids stop attacks, hostile names render as text',async()=>{
- const p=page();await flush();p.value.state.status='paused';
- p.value.state.leaders=[{name:'<img src=x onerror=alert(1)>',damage:100,attacks:1,you:false}];await p.advance(5000);
- assert.equal(p.w.document.querySelector('#attackButton').disabled,true);
- assert.equal(p.w.document.querySelector('#bossLeaders img'),null);
- p.value.state.status='victory';p.value.state.hp=0;await p.advance(5000);
- assert.match(p.w.document.querySelector('#attackButton').textContent,/Victory/);
- assert.match(p.w.document.querySelector('#bossStory').textContent,/Red crew/);p.close();
+test("victory and paused raids stop attacks, hostile names render as text", async () => {
+  const p = page();
+  await flush();
+  p.value.state.status = "paused";
+  p.value.state.leaders = [
+    {
+      name: "<img src=x onerror=alert(1)>",
+      damage: 100,
+      attacks: 1,
+      you: false,
+    },
+  ];
+  await p.advance(5000);
+  assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
+  assert.equal(p.w.document.querySelector("#bossLeaders img"), null);
+  p.value.state.status = "victory";
+  p.value.state.hp = 0;
+  await p.advance(5000);
+  assert.match(
+    p.w.document.querySelector("#attackButton").textContent,
+    /Victory/,
+  );
+  assert.equal(p.w.document.querySelector("#victoryRecap").hidden, false);
+  p.close();
 });
-test('admin boss updates preserve difficulty draft and restart confirmation',async()=>{
- const p=page('boss');await flush();const input=p.w.document.querySelector('#bossHealthInput');input.value='5000000';
- const confirm=p.w.document.querySelector('[name="confirm_restart"]');confirm.checked=true;
- await p.advance(5000);assert.equal(input.value,'5000000');assert.equal(confirm.checked,true);
- assert.equal(p.w.document.querySelector('footer'),null);p.close();
+test("admin boss updates preserve difficulty draft and restart confirmation", async () => {
+  const p = page("boss");
+  await flush();
+  const input = p.w.document.querySelector("#bossHealthInput");
+  input.value = "5000000";
+  const confirm = p.w.document.querySelector('[name="confirm_restart"]');
+  confirm.checked = true;
+  await p.advance(5000);
+  assert.equal(input.value, "5000000");
+  assert.equal(confirm.checked, true);
+  assert.equal(p.w.document.querySelector("footer"), null);
+  p.close();
 });
 
-test('a successful background poll cannot erase an attack error',async()=>{
- const p=page();await flush();
- p.respond(async(url,options)=>options.method==='POST'?response({error:'Your shared connection is cooling down.'},429):response(p.value));
- p.w.document.querySelector('#attackButton').click();await flush();
- await p.advance(5000);await p.advance(5000);
- const error=p.w.document.querySelector('#bossError');
- assert.equal(error.hidden,false);assert.match(error.textContent,/shared connection/);
- p.w.document.querySelector('#dismissBossError').click();assert.equal(error.hidden,true);p.close();
+test("a successful background poll cannot erase an attack error", async () => {
+  const p = page();
+  await flush();
+  p.respond(async (url, options) =>
+    options.method === "POST"
+      ? response({ error: "Your shared connection is cooling down." }, 429)
+      : response(p.value),
+  );
+  p.w.document.querySelector("#attackButton").click();
+  await flush();
+  await p.advance(5000);
+  await p.advance(5000);
+  const error = p.w.document.querySelector("#bossError");
+  assert.equal(error.hidden, false);
+  assert.match(error.textContent, /shared connection/);
+  p.w.document.querySelector("#dismissBossError").click();
+  assert.equal(error.hidden, true);
+  p.close();
 });
 
-test('unchanged contributor rows survive polls and mobile styles share attack controls',async()=>{
- const p=page();await flush();
- p.value.state.leaders=[{name:'Raider ABCDEF12',damage:150,attacks:1,you:false}];await p.advance(5000);
- const row=p.w.document.querySelector('#bossLeaders li');await p.advance(5000);
- assert.strictEqual(p.w.document.querySelector('#bossLeaders li'),row);
- const style=p.w.document.querySelector('#dockStyle');style.value='magic';style.dispatchEvent(new p.w.Event('change'));
- assert.equal(p.w.document.querySelector('[data-style="magic"]').getAttribute('aria-pressed'),'true');
- let sent;p.respond(async(url,options)=>{if(options.method==='POST'){sent=JSON.parse(options.body);return response({error:'Fixture rejection'},400);}return response(p.value);});
- p.w.document.querySelector('#dockAttack').click();await flush();assert.equal(sent.style,'magic');p.close();
+test("unchanged contributor rows survive polls and mobile styles share attack controls", async () => {
+  const p = page();
+  await flush();
+  p.value.state.leaders = [
+    { name: "Raider ABCDEF12", damage: 150, attacks: 1, you: false },
+  ];
+  await p.advance(5000);
+  const row = p.w.document.querySelector("#bossLeaders li");
+  await p.advance(5000);
+  assert.strictEqual(p.w.document.querySelector("#bossLeaders li"), row);
+  const style = p.w.document.querySelector("#dockStyle");
+  style.value = "magic";
+  style.dispatchEvent(new p.w.Event("change"));
+  assert.equal(
+    p.w.document
+      .querySelector('[data-style="magic"]')
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  let sent;
+  p.respond(async (url, options) => {
+    if (options.method === "POST") {
+      sent = JSON.parse(options.body);
+      return response({ error: "Fixture rejection" }, 400);
+    }
+    return response(p.value);
+  });
+  p.w.document.querySelector("#dockAttack").click();
+  await flush();
+  assert.equal(sent.style, "magic");
+  p.close();
 });
 
-test('copy link supplies selectable text if clipboard access is unavailable',async()=>{
- const p=page();await flush();p.w.document.querySelector('#copyRaidLink').click();await flush();
- const field=p.w.document.querySelector('#shareUrl');assert.equal(field.hidden,false);
- assert.equal(field.value,'https://example.test/play');assert.equal(field.selectionEnd,field.value.length);p.close();
+test("copy link supplies selectable text if clipboard access is unavailable", async () => {
+  const p = page();
+  await flush();
+  p.w.document.querySelector("#copyRaidLink").click();
+  await flush();
+  const field = p.w.document.querySelector("#shareUrl");
+  assert.equal(field.hidden, false);
+  assert.equal(field.value, "https://example.test/play");
+  assert.equal(field.selectionEnd, field.value.length);
+  p.close();
 });
 
-test('same-raid updates cannot refill health even with a newer version or clock',async()=>{
- const p=page();await flush();
- p.value.state.hp-=150;p.value.state.total_damage=150;p.value.state.total_attacks=1;p.value.state.version++;
- await p.advance(5000);const hp=p.value.state.hp;
- p.value.state.hp+=150;p.value.state.total_damage=0;p.value.state.total_attacks=0;
- for(const versionBump of [0,10]){
-  p.value.state.version+=versionBump;p.value.state.server_time+=5;
-  await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,hp);
-  assert.equal(p.w.document.querySelector('#bossDamage').textContent,'150');
- }
- p.close();
+test("same-raid updates cannot refill health even with a newer version or clock", async () => {
+  const p = page();
+  await flush();
+  p.value.state.hp -= 150;
+  p.value.state.total_damage = 150;
+  p.value.state.total_attacks = 1;
+  p.value.state.version++;
+  await p.advance(5000);
+  const hp = p.value.state.hp;
+  p.value.state.hp += 150;
+  p.value.state.total_damage = 0;
+  p.value.state.total_attacks = 0;
+  for (const versionBump of [0, 10]) {
+    p.value.state.version += versionBump;
+    p.value.state.server_time += 5;
+    await p.advance(5000);
+    assert.equal(p.w.document.querySelector("#bossHealthBar").value, hp);
+    assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
+  }
+  p.close();
 });
 
-test('victory stays at zero until a different raid starts',async()=>{
- const p=page();await flush();
- p.value.state.hp=0;p.value.state.total_damage=p.value.state.max_hp;p.value.state.status='victory';p.value.state.version++;
- await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,0);
- p.value.state.hp=p.value.state.max_hp;p.value.state.total_damage=0;p.value.state.status='waiting';p.value.state.version++;
- await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,0);
- p.value.state.raid_id='new-host-started-raid';p.value.state.server_time+=10;
- await p.advance(5000);assert.equal(p.w.document.querySelector('#bossHealthBar').value,p.value.state.max_hp);
- p.close();
+test("victory stays at zero until a different raid starts", async () => {
+  const p = page();
+  await flush();
+  p.value.state.hp = 0;
+  p.value.state.total_damage = p.value.state.max_hp;
+  p.value.state.status = "victory";
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
+  p.value.state.hp = p.value.state.max_hp;
+  p.value.state.total_damage = 0;
+  p.value.state.status = "waiting";
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
+  p.value.state.raid_id = "new-host-started-raid";
+  p.value.state.server_time += 10;
+  await p.advance(5000);
+  assert.equal(
+    p.w.document.querySelector("#bossHealthBar").value,
+    p.value.state.max_hp,
+  );
+  p.close();
+});
+
+test("explicit host health revisions update the current raid without losing damage", async () => {
+  const p = page();
+  await flush();
+  p.value.state.hp -= 150;
+  p.value.state.total_damage = 150;
+  p.value.state.total_attacks = 1;
+  p.value.state.version++;
+  await p.advance(5000);
+  const old = structuredClone(p.value);
+  p.value.state.max_hp += 500000;
+  p.value.state.hp += 500000;
+  p.value.state.version++;
+  p.value.state.health_revision = 1;
+  await p.advance(5000);
+  const bar = p.w.document.querySelector("#bossHealthBar");
+  assert.equal(bar.value, p.value.state.hp);
+  assert.equal(bar.max, p.value.state.max_hp);
+  assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
+  const saved = bar.value;
+  old.state.server_time += 100;
+  old.state.version += 100;
+  p.respond(async () => response(old));
+  await p.advance(5000);
+  assert.equal(bar.value, saved);
+  p.close();
+});
+
+test("avatar polls refresh the arena and admin preview while preserving host drafts", async () => {
+  for (const name of ["play", "boss"]) {
+    const p = page(name);
+    await flush();
+    const doc = p.w.document;
+    if (name === "boss") {
+      doc.querySelector("#bossMaxHealth").value = "5000000";
+      doc.querySelector('[name="confirm_health"]').checked = true;
+    }
+    const url = "/play/avatar/" + "a".repeat(64) + ".png";
+    p.value.state.avatar_url = url;
+    p.value.state.avatar_custom = true;
+    p.value.state.version++;
+    await p.advance(5000);
+    assert.equal(
+      doc.querySelector("[data-boss-avatar]").getAttribute("src"),
+      url,
+    );
+    assert.equal(
+      doc
+        .querySelector("[data-boss-avatar]")
+        .classList.contains("custom-avatar"),
+      true,
+    );
+    if (name === "boss") {
+      assert.equal(doc.querySelector("#bossMaxHealth").value, "5000000");
+      assert.equal(doc.querySelector('[name="confirm_health"]').checked, true);
+      assert.equal(doc.querySelector('[name="health_revision"]').value, "0");
+    }
+    p.close();
+  }
+});
+
+test("a revived raid refreshes its contributor recap on the next victory", async () => {
+  const p = page();
+  await flush();
+  let recaps = 0;
+  p.respond(async (url) => {
+    if (url.startsWith("/play/api/contributors")) {
+      recaps++;
+      return response({
+        raid_id: p.value.state.raid_id,
+        health_revision: p.value.state.health_revision || 0,
+        contributors: [
+          {
+            name: "Raider " + recaps,
+            attacks: recaps,
+            damage: p.value.state.total_damage,
+          },
+        ],
+      });
+    }
+    return response(p.value);
+  });
+  const s = p.value.state;
+  s.hp = 0;
+  s.total_damage = s.max_hp;
+  s.status = "victory";
+  s.version++;
+  await p.advance(5000);
+  assert.equal(recaps, 1);
+  assert.match(
+    p.w.document.querySelector("#allContributors").textContent,
+    /Raider 1/,
+  );
+  s.max_hp += 500;
+  s.hp = 500;
+  s.health_revision = 1;
+  s.status = "active";
+  s.version++;
+  await p.advance(5000);
+  assert.equal(p.w.document.querySelector("#victoryRecap").hidden, true);
+  s.hp = 0;
+  s.total_damage += 500;
+  s.status = "victory";
+  s.version++;
+  await p.advance(5000);
+  assert.equal(recaps, 2);
+  assert.match(
+    p.w.document.querySelector("#allContributors").textContent,
+    /Raider 2/,
+  );
+  p.close();
+});
+
+test("boss name and damage updates use text and preserve admin settings drafts", async () => {
+  for (const name of ["play", "boss"]) {
+    const p = page(name);
+    await flush();
+    const doc = p.w.document;
+    if (name === "boss") {
+      doc.querySelector("#bossNameInput").value = "Unsaved boss";
+      doc.querySelector("#bossBaseDamage").value = "200";
+    }
+    p.value.state.name = "<img src=x onerror=alert(1)>";
+    p.value.state.rules.damage = 120;
+    p.value.state.rules.weak_damage = 180;
+    p.value.state.rules.burst_bonus = 80;
+    p.value.state.settings_revision = 1;
+    p.value.state.version++;
+    await p.advance(5000);
+    assert.equal(
+      doc.querySelector("#bossName").textContent,
+      p.value.state.name,
+    );
+    assert.equal(doc.querySelector("#bossName img"), null);
+    if (name === "play") {
+      assert.match(
+        doc.querySelector("#bossWeakness").textContent,
+        /180 damage/,
+      );
+      assert.match(doc.querySelector("#burstLabel").textContent, /80 damage/);
+      assert.equal(doc.querySelector(".boss-sprite").alt, p.value.state.name);
+      assert.equal(doc.querySelector("#bossNameInput"), null);
+      assert.equal(doc.querySelector("#bossAvatarFile"), null);
+    } else {
+      assert.equal(doc.querySelector("#bossNameInput").value, "Unsaved boss");
+      assert.equal(doc.querySelector("#bossBaseDamage").value, "200");
+      assert.equal(doc.querySelector('[name="settings_revision"]').value, "0");
+    }
+    p.close();
+  }
 });
 ```
 
@@ -9377,7 +10718,7 @@ class PostgreSQLTests(unittest.TestCase):
     def cleanup_database(self):
         self.store.close_job()
         with self.store.connection(transaction=True) as conn:
-            for table in ("rh_live", "rh_boss", "rh_checkpoint", "rh_recovery", "rh_admin"):
+            for table in ("rh_live", "rh_boss", "rh_boss_avatar", "rh_checkpoint", "rh_recovery", "rh_admin"):
                 conn.execute("DELETE FROM " + table + " WHERE name=%s", (self.key,))
             if conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
                 conn.execute("DELETE FROM wager_state WHERE name=%s", (self.key,))
@@ -9478,6 +10819,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
 from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
+from boss_avatar import from_upload, validate_avatar
 from presentation import changes, checkpoint_status, export_marker
 from store_schema import upgrade_store
 from race import calculate, empty, phase, token
@@ -9552,7 +10894,13 @@ def create_app(root=None, testing=False):
         return jsonify(ok=False, error=message, status=status, release=RELEASE), status
 
     def require_csrf():
-        if not secrets.compare_digest(str(request.headers.get("X-CSRF-Token") or request.form.get("csrf", "")), str(session.get("csrf", "!"))):
+        expected = session.get('csrf')
+        supplied = request.headers.get('X-CSRF-Token') or request.form.get('csrf', '')
+        # A missing session token must never match a known fallback value.
+        # Reject malformed Unicode cleanly before constant-time ASCII comparison.
+        if (not isinstance(expected, str) or not expected or not expected.isascii() or
+            not isinstance(supplied, str) or not supplied or not supplied.isascii() or
+            not secrets.compare_digest(supplied, expected)):
             abort(400, description="This form expired. Reload the page and try again.")
 
     def protected(fn):
@@ -9594,6 +10942,8 @@ def create_app(root=None, testing=False):
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         if request.path == "/public-state" and response.status_code in {200, 304}:
             response.headers["Cache-Control"] = "public, no-cache"
+        if request.endpoint == 'boss_avatar_image' and response.status_code in {200, 304}:
+            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
         if getattr(g, "new_guest", None):
@@ -9672,6 +11022,17 @@ def create_app(root=None, testing=False):
     def boss_state():
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
 
+    @app.get('/play/avatar/<digest>.png')
+    def boss_avatar_image(digest):
+        if not re.fullmatch(r'[a-f0-9]{64}', digest):
+            abort(404)
+        data = boss.avatar_image(digest)
+        if data is None:
+            abort(404)
+        response = Response(data, mimetype='image/png')
+        response.set_etag(digest)
+        return response.make_conditional(request)
+
     @app.get("/play/api/contributors")
     def boss_contributors():
         # Keep a host restart from mixing one raid's ID with another's recap.
@@ -9679,7 +11040,8 @@ def create_app(root=None, testing=False):
             current = boss.summary()
             if request.args.get("raid_id") != current["raid_id"] or current["status"] != "victory":
                 return json_error("The victory recap belongs to a completed raid. Refresh to see the current raid.", 409)
-            return jsonify(ok=True, raid_id=current["raid_id"], contributors=boss.contributors())
+            return jsonify(ok=True, raid_id=current["raid_id"], health_revision=current["health_revision"],
+                           contributors=boss.contributors())
 
     @app.post("/play/api/attack")
     def boss_attack():
@@ -9751,15 +11113,36 @@ def create_app(root=None, testing=False):
     @app.post("/admin/boss/action")
     @protected
     def boss_control():
+        # g.user is populated only from a current administrator account and its
+        # auth_version, never from a guest cookie or a client-supplied role flag.
+        # Keep every boss configuration write behind this guard, including image decoding.
         require_csrf()
-        if not g.superadmin:
-            abort(403, description="Only the Superadmin can change the community raid.")
         try:
             action = request.form.get("action", "")
             if action == "restart" and request.form.get("confirm_restart") != "yes":
                 raise ValueError("Confirm that you want to archive the current raid and start a new one.")
-            boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)))
-            flash("New community raid is ready." if action == "restart" else "Community raid " + ("paused." if action == "pause" else "resumed."))
+            if action == 'health' and request.form.get('confirm_health') != 'yes':
+                raise ValueError('Confirm that you want to change this raid\'s health.')
+            if action in {'avatar', 'avatar_reset'}:
+                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None)
+            elif action == 'settings':
+                try:
+                    values = dict(name=request.form.get('boss_name', ''),
+                                  damage=int(request.form.get('base_damage', '')),
+                                  weak_damage=int(request.form.get('weak_damage', '')),
+                                  burst_bonus=int(request.form.get('burst_bonus', '')))
+                    settings_revision = int(request.form.get('settings_revision', '-1'))
+                except ValueError:
+                    raise ValueError('Enter whole numbers for damage and reload if this form is out of date.') from None
+                boss.configure(request.form.get('raid_id'), values, settings_revision)
+            else:
+                boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
+                             health_revision=int(request.form.get('health_revision', '-1')) if action == 'health' else None)
+            flash({'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
+                   'health':'Boss health updated. Player contributions and attack allowances were kept.',
+                   'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
+                   'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action])
+            LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
             return redirect(url_for("login", tab="boss"), 303)
         except ValueError as exc:
             return render_admin("boss", errors={"boss":str(exc)}, status=422)
@@ -9846,7 +11229,7 @@ def create_app(root=None, testing=False):
         with runtime.lock:
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
-            value["community_boss"] = boss.export()
+            value.update(boss.recovery())
             marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
             value["recovery_export"] = marker
             runtime.store.checkpoint(marker)
@@ -9867,10 +11250,12 @@ def create_app(root=None, testing=False):
             if not value["users"]:
                 raise ValueError("The recovery file contains no administrator accounts.")
             game = validate_boss(value["community_boss"]) if value.get("community_boss") is not None else None
+            avatar = validate_avatar(value.get('community_boss_avatar'))
             review = dict(accounts=len(value["users"]), overrides=len(value["overrides"]),
                           history=len(value["race_history"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
                           start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
-                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]))
+                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]),
+                          avatar=bool(avatar))
             return render_admin("settings", recovery_review=review)
         except (ValueError, RuntimeError, UnicodeDecodeError) as exc:
             return render_admin("settings", errors={"recovery":str(exc)}, status=422)
@@ -10121,7 +11506,7 @@ if __name__ == "__main__":
 
 ```json
 {
-  "release": "2026.09.22-no-regen",
+  "release": "2026.09.28-boss-controls",
   "entry_point": "python wager_backend.py",
   "source_files": {
     ".env.example": {
@@ -10137,48 +11522,52 @@ if __name__ == "__main__":
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 8538,
-      "sha256": "3523711f4cb57e31cfa70a2391c4c8fef2b181c8aec5e0ec0bb4ee3c6d186ab7"
+      "bytes": 11623,
+      "sha256": "b9f6fe823983b4ed81197634c7f6cceaca2132ce3939bfc67f99d061b8f9b621"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 5545,
-      "sha256": "7d27005c4de332e0a4b2c9199c5f54ebee61f7223a4b9534f18f267996ae0a1e"
+      "bytes": 5781,
+      "sha256": "6878359f150748e89808658edbd6d613dbffba23659d3c93136366a29547e829"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 24893,
-      "sha256": "9e5cbf928c9d4aeaf6fe6a4cb85917e4b801ba36d84f2edd0504db2e101a6552"
+      "bytes": 28656,
+      "sha256": "d3f9c4c65470cf4c5308af5dd1054ac1285f77b9e6f8013da6834a313a3862e7"
     },
     "START_HERE.md": {
-      "bytes": 3634,
-      "sha256": "bcf539c26846746d9a28a0ee3c55a05806e36b6ccbe89ecc5fed172e2982bcd3"
+      "bytes": 4062,
+      "sha256": "5afe040ae229913537335472600d8b42f5f17050fb03d1ce2d1234c350b70957"
     },
     "app.yaml": {
       "bytes": 1440,
       "sha256": "8593c6d4ed1906bbcd675257f2e71af0e5fda94451704ef7a3d4d7e169bd231e"
     },
     "boss.py": {
-      "bytes": 21533,
-      "sha256": "bbdce5bbe49068ce912ef52acae075c29ce3c72eb8856850532d34ac4528f04b"
+      "bytes": 30275,
+      "sha256": "339eb072bdea4d3c404fbba1d96d2543b9cb486b9797432c7b536dff3a3e453c"
+    },
+    "boss_avatar.py": {
+      "bytes": 3708,
+      "sha256": "d4cc504b1a090ca026fdf4ede179aad701680da3679acfa1194967abe49f88c0"
     },
     "config.py": {
-      "bytes": 6076,
-      "sha256": "03fee73392c638f8141bc16afae97f1ec964f9c8a0a66033699e161b3a41e6c8"
+      "bytes": 6081,
+      "sha256": "4f80277d81c32c7b127eb0573275dc928de3c3e102362a954a9a0dd300c6ec39"
     },
     "docs/COMMUNITY_BOSS.md": {
-      "bytes": 8627,
-      "sha256": "4eb2d99fb0bffcd07f18c24904bbde49b900b8a1138833ef801237367cf00320"
+      "bytes": 10918,
+      "sha256": "ca70dcb5536a5c3fdb4f1f5cb2ccf2a851addb70fbacd05d54ed9f90433f39c5"
     },
     "docs/COMMUNITY_UPDATE.md": {
-      "bytes": 6592,
-      "sha256": "e41bd37fb9de4b9cd218d2a47fc8fdae65131d6dfa5610112be3c84e60e00546"
+      "bytes": 6898,
+      "sha256": "557767296ac3a359143f287e9ccc1867fc593c3075206e7cba3c7815eb19080a"
     },
     "docs/VALIDATION.md": {
-      "bytes": 8304,
-      "sha256": "3f0fcebab1d5208f19c19daceaa95ccc7b79476922689a0db6e1fee97b7f8f8a"
+      "bytes": 5279,
+      "sha256": "fabe2e84f24279c3b7547e8679754c546613b7dcd5f8b6bfb1b82512875c3be2"
     },
     "integrations.py": {
       "bytes": 7041,
@@ -10209,8 +11598,8 @@ if __name__ == "__main__":
       "sha256": "c77064a44093905f671aec742f1e9638eec34b1f295e89420053f17d3a7245a4"
     },
     "requirements.txt": {
-      "bytes": 61,
-      "sha256": "40f8bcf597ac5177f2f022e3ae5f787addb8e211c35f5d3505b7d778f4d0092d"
+      "bytes": 76,
+      "sha256": "4c1a45a322ba363062403c67632144a14742dfa8d2d4df090620a13da7d9d13d"
     },
     "runtime.py": {
       "bytes": 17577,
@@ -10221,16 +11610,16 @@ if __name__ == "__main__":
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 26302,
-      "sha256": "aef66fd070cf9097cc7891b444f55b691c80e0ef846a131303f8145c5f5c1e62"
+      "bytes": 26639,
+      "sha256": "03856583cff01f657e1c40a0d6b4ca52d246f2c704aae52bf8c9025404496808"
     },
     "static/boss.css": {
-      "bytes": 17522,
-      "sha256": "60462a65fb07ed1b250785bae279b8d8b915b43ebb8ee99069cf3e7713be0357"
+      "bytes": 18490,
+      "sha256": "4e048a1cfa2159d8e42cb098c2a54e7afef42b5776e8bf1d11b36fdea618dbcc"
     },
     "static/boss.js": {
-      "bytes": 21115,
-      "sha256": "8993d004c796d869b1398994cbcd0799deea3b7c49aca7ddec133acc3f5f4a49"
+      "bytes": 22191,
+      "sha256": "e1c770199bd4ed6cc3155bccdf9174de979f16a8b71b4645ed932640d01e0d05"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -10241,12 +11630,12 @@ if __name__ == "__main__":
       "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
     },
     "static/style.css": {
-      "bytes": 29950,
-      "sha256": "b9e7475adfab9c94c1227e89f4f04c78ca2092e47ffcf3d11d62b37534eeef2f"
+      "bytes": 30033,
+      "sha256": "e4819b9fed73309a9012580f1c24fa310ea87f7d8f96d96fd09c03ffdb349845"
     },
     "storage.py": {
-      "bytes": 12506,
-      "sha256": "3ca15a54aa6c05e89b39a48ffe37dd633e892510f42bd839334bfe7845ab796a"
+      "bytes": 13356,
+      "sha256": "4ffad9851e7cd8faf38bf49145ef3064220103f9474ac418692cc326c4bdc21b"
     },
     "store_schema.py": {
       "bytes": 4551,
@@ -10257,8 +11646,8 @@ if __name__ == "__main__":
       "sha256": "e6b28d2823e3ff5adf0d29da480113294fd377b5a8b81a761e79596c99a8ebd9"
     },
     "templates/admin_boss.html": {
-      "bytes": 3418,
-      "sha256": "8d9cc42104cc350983566189a84232cf3dea0792ad1d22d95589b56eb995df45"
+      "bytes": 7527,
+      "sha256": "c264ffdd6ca06032d4def68de756175c190d5cfe91ad95ad930ca309ee1f7432"
     },
     "templates/admin_overview.html": {
       "bytes": 1785,
@@ -10281,8 +11670,8 @@ if __name__ == "__main__":
       "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
     },
     "templates/boss.html": {
-      "bytes": 10194,
-      "sha256": "eff0e63fabd0e928afa6f7fc32efed711a4194fafbfddd2210e8108d3721b897"
+      "bytes": 6742,
+      "sha256": "6200b49104772c3c71f07acc9761f55f9010a9a6dbe4a4e28193181db4b1ab34"
     },
     "templates/change_review.html": {
       "bytes": 690,
@@ -10297,8 +11686,8 @@ if __name__ == "__main__":
       "sha256": "7d99dc9ee58e6f0827b2a3583cb028477ae304b078f3b1311e766594f189ce3c"
     },
     "templates/index.html": {
-      "bytes": 5205,
-      "sha256": "f9b3aa126e783a265bf563e328b5c56d1292fd5fcac0e94067aa174acbb7241b"
+      "bytes": 5309,
+      "sha256": "dc863bca1713c88507d834218a3f982f90a5536c3598ebe7c19c32805f89d39c"
     },
     "templates/login.html": {
       "bytes": 1292,
@@ -10309,8 +11698,8 @@ if __name__ == "__main__":
       "sha256": "c221df4a851759c64be861363d83161223a367db24dde7f022c8b39e05a65324"
     },
     "templates/recovery_panel.html": {
-      "bytes": 2709,
-      "sha256": "e87b62a59d25f64ad491420a719d5a93bee5b3ca3cbe23a04daf97e48119316a"
+      "bytes": 2840,
+      "sha256": "3c015db9a845348874c940ca06b85f1a3573eb7dea176eda6c233a7ba549eaa6"
     },
     "tests/package.json": {
       "bytes": 153,
@@ -10325,12 +11714,16 @@ if __name__ == "__main__":
       "sha256": "f348e4f060a45c441a41522cbdcb83b984e575d3a864ef778c7d9be38beb4e22"
     },
     "tests/test_boss.py": {
-      "bytes": 15850,
-      "sha256": "b835f5c16bcd9f7b3b047417427abd6cc349c4fe46d8c6fe726011c8aafc29d1"
+      "bytes": 16000,
+      "sha256": "27643e7e8e5baeadfc3975474b5546285493853333fb8808998da0583380d1a0"
+    },
+    "tests/test_boss_admin.py": {
+      "bytes": 22297,
+      "sha256": "6a0794e510263fb1fabd821fc16967dc964821290c45082dd6aafb2e45395748"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 9438,
-      "sha256": "077321bfefedf85540e30cc95f653684a55bba453738507940a000b5ccf375ea"
+      "bytes": 15808,
+      "sha256": "7f66fa0947d6857c348ee6f064e6424a7262f421dc5bf74190b1217b1aa7ecb3"
     },
     "tests/test_community.py": {
       "bytes": 9063,
@@ -10341,12 +11734,12 @@ if __name__ == "__main__":
       "sha256": "fdb795df14a376ca6dd4cad95c970dae7e2dd1f2c329b0f3009c259d42626295"
     },
     "tests/test_postgres.py": {
-      "bytes": 5388,
-      "sha256": "0adf58c3fe35941c08a0bc407d834fa533a05b268e26e046ef87abac59c20ead"
+      "bytes": 5406,
+      "sha256": "f2162763c7736fb5b83a8fe9edd921d7f159ec0420c4d0aad985c4d3fcfd80fa"
     },
     "wager_backend.py": {
-      "bytes": 37753,
-      "sha256": "614641ff663728d54bba52335fb59f75de0daaafdcad4a1c4b39c1a50d6add11"
+      "bytes": 40685,
+      "sha256": "9c47a80bd792948ce11a81505759956329a335d5db676c91ea2821b5f448eb73"
     }
   }
 }

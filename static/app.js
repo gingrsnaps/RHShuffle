@@ -548,6 +548,13 @@
       });
       if (value.boss) {
         const b = value.boss;
+        text(id("inviteBossName"), b.name || "Crimson Hunllef");
+        const avatar = id("inviteAvatar");
+        if (avatar && b.avatar_url) {
+          if (avatar.getAttribute("src") !== b.avatar_url)
+            avatar.src = b.avatar_url;
+          avatar.classList.toggle("custom-avatar", Boolean(b.avatar_custom));
+        }
         text(
           id("inviteTitle"),
           b.status === "victory"
@@ -684,7 +691,7 @@
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.22-no-regen")
+      if (result.release && result.release !== "2026.09.28-boss-controls")
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",

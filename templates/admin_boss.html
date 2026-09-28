@@ -1,11 +1,72 @@
 <section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
-<div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2>Crimson Hunllef</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
+<div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2 id="bossName">{{ boss_data.name }}</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
 <p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
 <div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss health"></progress><p id="bossStory" class="muted"></p>
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
-<p class="muted small">This panel updates every 5 seconds. Race and provider checks still run every 60 seconds. Boss hits do not change the wager leaderboard.</p>
-{% if superadmin %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form><a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a></div>
-<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives the current result and resets health, personal totals, and allowances. Victory stays visible until you choose this. Save a checkpoint before replacing an unfinished raid.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="100000" max="100000000" step="1" value="{{ boss_rules.default_hp }}" required><small class="muted">{{ '{:,}'.format(boss_rules.default_hp) }} targets roughly 4–8 days with 100 people making 20–40 matching attacks daily.</small></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> I want to end this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% else %}<p class="muted">Ask the Superadmin to pause, resume, or start another raid.</p>{% endif %}
+<p class="muted small">Live · Updates every 5 seconds</p>
+{% if user %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
+<div class="boss-settings-grid">
+  <section class="boss-setting" aria-labelledby="avatarHeading">
+    <h3 id="avatarHeading">Boss avatar</h3>
+    <img class="boss-avatar-preview{% if boss_data.avatar_custom %} custom-avatar{% endif %}"
+         data-boss-avatar src="{{ boss_data.avatar_url }}" alt="Current boss avatar" width="128" height="128">
+    <form method="post" action="/admin/boss/action" enctype="multipart/form-data" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="avatar">
+      <div class="field">
+        <label for="bossAvatarFile">PNG, JPG, JPEG or WebP image</label>
+        <input id="bossAvatarFile" name="avatar" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required>
+        <small class="muted">Up to 4 MB. Resized automatically.</small>
+      </div>
+      <button class="button primary" type="submit">Upload avatar</button>
+    </form>
+    <form method="post" action="/admin/boss/action">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <button class="text-button" type="submit" name="action" value="avatar_reset">Use original avatar</button>
+    </form>
+  </section>
+  <section class="boss-setting" aria-labelledby="healthHeading">
+    <h3 id="healthHeading">Current raid health</h3>
+    <form method="post" action="/admin/boss/action" class="stack" id="bossHealthForm">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="health">
+      <input type="hidden" name="health_revision" value="{{ boss_data.health_revision }}">
+      <div class="field">
+        <label for="bossMaxHealth">Maximum HP</label>
+        <input id="bossMaxHealth" name="health" type="number" min="{{ boss_data.rules.min_hp }}"
+               max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.max_hp }}" required>
+        <small class="muted">Damage already dealt stays. Remaining HP = maximum HP − damage.</small>
+      </div>
+      <p class="muted small">This changes the current boss without clearing players or allowances. Raising HP can reopen a defeated boss. Automatic regeneration stays off.</p>
+      <label class="boss-confirm"><input type="checkbox" name="confirm_health" value="yes" required> Change this raid's health.</label>
+      <button class="button primary" type="submit">Save health</button>
+    </form>
+  </section>
+  <section class="boss-setting boss-identity-setting" aria-labelledby="bossSettingsHeading">
+    <h3 id="bossSettingsHeading">Boss name &amp; damage</h3>
+    <form method="post" action="/admin/boss/action" class="stack" id="bossSettingsForm">
+      <input type="hidden" name="csrf" value="{{ csrf() }}">
+      <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="settings">
+      <input type="hidden" name="settings_revision" value="{{ boss_data.settings_revision }}">
+      <div class="field">
+        <label for="bossNameInput">Boss name</label>
+        <input id="bossNameInput" name="boss_name" maxlength="60" value="{{ boss_data.name }}" required>
+      </div>
+      <div class="boss-damage-fields">
+        <div class="field"><label for="bossBaseDamage">Base damage</label><input id="bossBaseDamage" name="base_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.damage }}" required></div>
+        <div class="field"><label for="bossWeakDamage">Weakness damage</label><input id="bossWeakDamage" name="weak_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.weak_damage }}" required></div>
+        <div class="field"><label for="bossBurstBonus">Burst bonus</label><input id="bossBurstBonus" name="burst_bonus" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.burst_bonus }}" required></div>
+      </div>
+      <p class="muted small">Damage changes apply to future hits. Existing damage and cooldowns stay. The burst bonus applies every tenth hit.</p>
+      <button class="button primary" type="submit">Save boss settings</button>
+    </form>
+  </section>
+</div>
+<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, player totals and allowances. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
 </section>
 
 {% if superadmin %}{% include "recovery_panel.html" %}{% endif %}

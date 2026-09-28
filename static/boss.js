@@ -175,19 +175,23 @@
     if (
       state &&
       (next.server_time < state.server_time ||
-        (next.raid_id === state.raid_id && next.version < state.version))
+        (next.raid_id === state.raid_id &&
+          (next.version < state.version ||
+            (next.health_revision || 0) < (state.health_revision || 0) ||
+            (next.settings_revision || 0) < (state.settings_revision || 0))))
     )
       return;
-    // Even a mis-versioned response cannot heal the same boss on screen.
+    // Only a newer explicit host health revision may change maximum HP.
+    // Ordinary snapshots cannot heal the same boss on screen.
     // Keep the last confirmed state and let stale-state handling disable hits;
     // never fabricate a lower HP value while accepting inconsistent counters.
     if (
       state &&
       next.raid_id === state.raid_id &&
-      (next.hp > state.hp ||
-        next.max_hp !== state.max_hp ||
-        next.total_damage < state.total_damage ||
-        next.total_attacks < state.total_attacks)
+      (next.total_damage < state.total_damage ||
+        next.total_attacks < state.total_attacks ||
+        ((next.health_revision || 0) === (state.health_revision || 0) &&
+          (next.hp > state.hp || next.max_hp !== state.max_hp)))
     )
       throw new Error(
         "Boss progress moved backwards; retaining the last confirmed state.",
@@ -195,6 +199,14 @@
     if (value.csrf) csrf = value.csrf;
     state = next;
     labels = state.rules.styles;
+    text("bossName", state.name || "Crimson Hunllef");
+    root.querySelectorAll("[data-boss-avatar]").forEach((image) => {
+      if (state.avatar_url && image.getAttribute("src") !== state.avatar_url)
+        image.src = state.avatar_url;
+      image.classList.toggle("custom-avatar", Boolean(state.avatar_custom));
+      if (image.classList.contains("boss-sprite"))
+        image.alt = state.name || "Crimson Hunllef";
+    });
     receivedAt = performance.now();
     lastGood = receivedAt;
     if (
@@ -378,14 +390,23 @@
       );
   }
   async function recap() {
-    if (recapRaid === state.raid_id || recapPending) return;
+    // A host may reopen this same raid with an explicit health edit. Its next
+    // victory needs a fresh contributor list, not the previous victory's cache.
+    const key = `${state.raid_id}:${state.health_revision || 0}`;
+    if (recapRaid === key || recapPending) return;
     recapPending = true;
     const raid = state.raid_id;
     try {
       const { response, value } = await request(
         "/play/api/contributors?raid_id=" + encodeURIComponent(raid),
       );
-      if (!response.ok || value.raid_id !== state.raid_id) return;
+      if (
+        !response.ok ||
+        value.raid_id !== state.raid_id ||
+        state.status !== "victory" ||
+        value.health_revision !== (state.health_revision || 0)
+      )
+        return;
       rows(
         "allContributors",
         value.contributors,
@@ -401,7 +422,7 @@
         "recapNote",
         "Every contributor is included, using their raid alias.",
       );
-      recapRaid = raid;
+      recapRaid = key;
     } catch (_) {
       text(
         "recapNote",

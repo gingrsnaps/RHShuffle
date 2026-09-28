@@ -1,4 +1,4 @@
-# File structure — 2026.09.22-no-regen
+# File structure — 2026.09.28-boss-controls
 
 Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
 
@@ -15,7 +15,8 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `README.md` | Setup, deployment, migration, operation, troubleshooting, verification limits. |
 | `START_HERE.md` | Quick launch instructions and original account information. |
 | `app.yaml` | One Python web service, no database component; edit the repository name. |
-| `boss.py` | Server-authoritative shared raid, atomic attacks, guest/network limits, recovery validation. |
+| `boss.py` | Shared raid, atomic attacks, explicit host HP edits and no automatic regeneration. |
+| `boss_avatar.py` | Bounded PNG/JPEG/WebP decoding, metadata removal, resizing and recovery validation. |
 | `config.py` | Credential precedence, deployment configuration, fixed update interval. |
 | `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
 | `docs/COMMUNITY_UPDATE.md` | Approved community improvements, performance changes, upgrade notes and storage options. |
@@ -57,6 +58,7 @@ Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; su
 | `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
 | `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
 | `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
+| `tests/test_boss_admin.py` | All admin-only boss actions, forged roles, CSRF, image formats, HP/name/damage changes and recovery. |
 | `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
 | `tests/test_community.py` | Conditional HTTP, signed review, badges, legacy preservation and recovery metadata regressions. |
 | `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |

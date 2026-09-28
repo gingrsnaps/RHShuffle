@@ -1,5 +1,9 @@
 /* Logo red (#ff2d2d), warm charcoal panels, and lighter red for readable text.
    Filled action buttons use a deeper red so their white labels stay readable. */
+.play-invite img.custom-avatar {
+  image-rendering: auto;
+  object-fit: contain;
+}
 :root {
   color-scheme: dark;
   --bg: #110e11;

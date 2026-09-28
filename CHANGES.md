@@ -1,4 +1,56 @@
-# Changes — 2026.09.22-no-regen
+# Changes — 2026.09.28-boss-controls
+
+All current administrator accounts can manage the community boss. Guest users
+cannot access editing forms or submit management actions. Every boss management action
+requires an authenticated current admin session and a valid CSRF token. Account
+management and private recovery downloads remain Superadmin-only.
+
+Add WebP to PNG/JPG/JPEG avatar uploads. Image decoding, resizing, metadata removal,
+size limits and rejection of animation remain. Public viewing of the avatar is
+retained, while upload/reset actions are restricted to admins.
+
+Add boss name and base/weakness/burst damage settings. Names are escaped text.
+Damage is calculated from saved server settings; public request fields cannot
+supply damage or HP. Edits apply to new hits and preserve existing contributions,
+receipts, cooldowns and HP. Settings survive new raids, restarts and recovery.
+Separate settings revisions reject stale admin forms and old display updates.
+
+Harden CSRF validation: missing stored tokens cannot match a predictable fallback;
+malformed Unicode tokens return a controlled error. Tests cover all seven boss
+management actions, guest/unknown/revoked/tampered sessions, forged roles, missing
+and invalid tokens, ordinary admin sign-in, removed accounts and public forgery.
+
+The barebones game, no automatic regeneration, original configured credentials,
+60-second provider checks and sole wager_backend.py launch remain unchanged.
+99 Python checks and 39 DOM/CSS checks passed; four optional PostgreSQL tests
+skipped. See docs/VALIDATION.md for scope and current external testing limits.
+
+## Previous boss admin release — 2026.09.28-boss-admin
+
+The public game page is now barebones: arena, HP, attack controls, cooldowns,
+contributions and history. Long explanations, the tutorial, separate badge panel
+and game footer are removed. Existing combat rules and five-second updates stay.
+
+Superadmin controls now include PNG/JPG avatar upload/reset and confirmed edits
+to the current raid's maximum HP. Health edits preserve cumulative damage,
+player totals, receipts and allowances. A newer health revision distinguishes
+an intentional host edit from accidental regeneration or stale responses.
+
+Images are validated by Pillow, re-encoded without metadata, resized to 512px,
+kept outside the frequently written raid record, and served with a content hash
+and immutable cache header. The homepage, game and admin preview use the same
+image. Recovery checkpoints include the image; new raids retain it.
+
+Existing accounts, provider credentials, saved progress, local-storage default,
+60-second Shuffle/Kick jobs and sole wager_backend.py launcher are retained.
+Install the updated requirements before launching. No remote database is added.
+
+Verification: 94 Python tests and 38 DOM/CSS checks passed; four optional
+PostgreSQL checks skipped. Real-browser checks could not run in this workspace
+because Chromium crashed at launch. Current live providers/deployment were not
+verified; details and limits are in docs/VALIDATION.md.
+
+## Previous no-regeneration release — 2026.09.22-no-regen
 
 No-regeneration guard: the server rejects same-raid writes that increase HP,
 change maximum HP, reverse damage/attack totals, or roll back the version. A
