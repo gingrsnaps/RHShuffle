@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.09.28-community-polish** — complete configured package.
+Release **2026.09.29-player-access** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -36,8 +36,14 @@ Hits are **unlimited per day and week**, with a **30-second cooldown**. The eigh
 achievements and their existing display remain unchanged. Boss screens check every
 5 seconds; Shuffle/Kick check automatically every 60 seconds.
 
-This update adds player recovery codes, admin-approved households, cosmetic Red
-rally, next-raid presets, edit previews, boss admin history and clearer live status.
+This update fixes community access and saved usernames. Players use signed browser
+cookies; shared IPs no longer block registration or share attack cooldowns. Changing
+IP addresses and missing proxy headers no longer disable an existing player.
+**Do not reset the raid or clear cookies to install this fix.** Preserve existing
+saved data and reload the game after updating. Recovery codes restore a lost cookie.
+Cosmetic rally, next-raid presets, edit previews, boss admin history and live status
+remain available. Connection-release and household-approval controls are retired
+because those restrictions no longer apply.
 Original credentials, logos, live feeds, private Code Red list and admin-only boss
 uploads/name/HP/damage controls remain intact.
 

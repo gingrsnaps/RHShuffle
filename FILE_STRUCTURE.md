@@ -1,6 +1,6 @@
 # Complete file structure
 
-Release **2026.09.28-community-polish**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.09.29-player-access**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -12,9 +12,9 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `Procfile` | Runs python wager_backend.py. |
 | `README.md` | Complete update, operation, recovery and DigitalOcean instructions. |
 | `START_HERE.md` | Short installation and launch instructions. |
-| `abuse_guard.py` | Bounded rejected-request throttles and temporary admin flags. |
+| `abuse_guard.py` | Per-browser rejected-request throttles and temporary admin flags. |
 | `app.yaml` | Single-service DigitalOcean App Platform template. |
-| `boss.py` | Authoritative multiplayer rules, player recovery and admin controls. |
+| `boss.py` | Independent signed-browser players, multiplayer rules, recovery and admin controls. |
 | `boss_avatar.py` | Image validation, resizing and safe PNG avatar storage. |
 | `boss_extras.py` | Cosmetic rally, pace estimates and private boss admin history. |
 | `boss_progress.py` | Private names and the unchanged eight achievement calculations. |
@@ -63,6 +63,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
 

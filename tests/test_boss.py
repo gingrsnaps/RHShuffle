@@ -70,9 +70,9 @@ class BossTests(unittest.TestCase):
         self.assertEqual(state['hp'],DEFAULT_HP-sum(r['hit']['damage'] for r in hits))
         validate_boss(state)
 
-    def test_same_network_simultaneous_tabs_only_one_lands(self):
+    def test_same_identity_simultaneous_tabs_only_one_lands(self):
         def attack(i):
-            try: return self.hit(str(i))['ok']
+            try: return self.hit('same-browser')['ok']
             except BossError as exc: return exc.code
         with ThreadPoolExecutor(max_workers=10) as pool:
             result=list(pool.map(attack,range(20)))
@@ -88,13 +88,13 @@ class BossTests(unittest.TestCase):
         self.assertEqual(self.hit(ip='192.0.2.2')['hit']['damage'],150)
         validate_boss(self.b.export())
 
-    def test_unlimited_hits_and_shared_network_cooldown(self):
+    def test_unlimited_hits_and_per_player_cooldown(self):
         for i in range(100):
             self.time.return_value=self.start+i*30
             self.hit()
         self.assertEqual(self.b.status('a','192.0.2.1')['you']['attacks'],100)
         self.assertIsNone(self.b.status('a','192.0.2.1')['you']['remaining'])
-        with self.assertRaises(BossError) as blocked:self.hit(guest='cookie-cleared')
+        with self.assertRaises(BossError) as blocked:self.hit(guest='a')
         self.assertEqual(blocked.exception.code,'cooldown')
         self.time.return_value += 30
         self.assertEqual(self.hit()['state']['you']['attacks'],101)
@@ -103,7 +103,8 @@ class BossTests(unittest.TestCase):
 
     def test_ipv6_normalization_and_mapped_ipv4(self):
         self.hit(ip='2001:db8::abcd')
-        with self.assertRaises(BossError):self.hit(guest='new',ip='2001:db8::eeff')
+        with self.assertRaises(BossError):self.hit(guest='a',ip='2001:db8::eeff')
+        self.assertTrue(self.hit(guest='new',ip='2001:db8::eeff')['ok'])
         self.assertEqual(network_identity('::ffff:192.0.2.1'),'192.0.2.1')
         self.assertEqual(self.hit(guest='other',ip='2001:db8:0:1::1')['hit']['damage'],150)
 
@@ -233,20 +234,26 @@ class BossTests(unittest.TestCase):
         current=self.b.status()['raid_id']
         self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause','raid_id':current}).status_code,303)
 
-    def test_digitalocean_ip_only_trusted_when_configured(self):
-        a,sa=self.client(); b,sb=self.client()
-        # Spoofing a header on direct hosting cannot get another allowance.
-        a.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.1'
-        b.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.2'
-        self.assertEqual(self.post(a,sa).status_code,200)
-        self.assertEqual(self.post(b,sb).status_code,429)
-        self.app.extensions['settings'].proxy=True
-        self.assertEqual(self.post(b,sb).status_code,200)
-        c,sc=self.client('127.0.0.1')
-        self.assertEqual(self.post(c,sc).status_code,503)
-        c.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.3'
-        c.environ_base['HTTP_X_FORWARDED_FOR']='198.51.100.1'
-        self.assertEqual(self.post(c,sc).status_code,200)
+    def test_proxy_headers_do_not_change_identity_or_reset_cooldowns(self):
+        from flask import g
+        a, sa = self.client(); b, sb = self.client()
+        a.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.1'
+        b.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.2'
+        with self.app.test_request_context('/healthz', environ_base={'REMOTE_ADDR':'192.0.2.1'}, headers={'DO-Connecting-IP':'198.51.100.1'}):
+            self.app.preprocess_request()
+            self.assertEqual(g.client_ip, '192.0.2.1')  # Still untrusted on a direct host.
+        self.assertEqual(self.post(a, sa).status_code, 200)
+        self.assertEqual(self.post(b, sb).status_code, 200)
+        self.app.extensions['settings'].proxy = True
+        with self.app.test_request_context('/healthz', environ_base={'REMOTE_ADDR':'192.0.2.1'}, headers={'DO-Connecting-IP':'198.51.100.1'}):
+            self.app.preprocess_request()
+            self.assertEqual(g.client_ip, '198.51.100.1')
+        self.assertEqual(self.post(b, sb).status_code, 429)
+        c, sc = self.client('127.0.0.1')
+        self.assertEqual(self.post(c, sc).status_code, 200)  # No IP header needed to play.
+        c.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.3'
+        c.environ_base['HTTP_X_FORWARDED_FOR'] = '198.51.100.1'
+        self.assertEqual(self.post(c, sc).status_code, 429)
 
     def test_guest_profile_survives_admin_logout(self):
         c,s=self.client(); name=s['state']['you']['name']

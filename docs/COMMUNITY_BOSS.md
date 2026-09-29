@@ -18,11 +18,17 @@ admins can see submitted names. The admin Top 5 contains full names. A Shuffle
 spelling match does not verify an account or connection. The game does not claim
 access to a Shuffle IP mapping.
 
-One registered player per connection is the default. Admins can approve a household
-of 2–10 players, each with a separate browser identity and 30-second cooldown. This
-is a player-registration allowance, not an attack quota. IPv6 privacy addresses
-are grouped by /64. Admins can release stale connection claims without deleting
-names or contributions.
+Each player is identified by a persistent signed browser cookie. Shared IPv4,
+IPv6, VPN, carrier and proxy addresses do not restrict how many players can join.
+The same cookie keeps its saved username and cooldown when IPs change. Tabs sharing
+a cookie are the same player; separate browser identities get independent cooldowns.
+Game writes still require a valid cookie and CSRF token. Missing IP headers do not
+block registration, recovery or attacks. No household approval or raid reset is
+needed. Old network records are retained for compatibility, not used for admission.
+
+A browser identity is not proof of a unique human; cookie deletion can create a
+new player. Existing names cannot be claimed just by typing them. Use the original
+browser or a valid recovery code to restore an existing profile.
 
 A private recovery code restores the original identity after cookie loss. The
 server stores a digest; the code is shown once when created. A replacement revokes
@@ -47,7 +53,7 @@ change the current boss automatically. Before sufficient data exists, the preset
 health amounts are only starting suggestions.
 
 Rejected requests are counted in bounded, in-memory windows. Bursts are briefly
-throttled and visible as private diagnostic flags, without automatic bans. Valid
+throttled per signed browser and visible as private diagnostic flags, without automatic bans or shared-IP lockouts. Valid
 eligible attacks bypass that guard and keep their regular 30-second cadence.
 
 Screens poll every five seconds. Hidden browser tabs resume on visibility. The

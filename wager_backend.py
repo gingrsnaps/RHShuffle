@@ -235,10 +235,9 @@ def create_app(root=None, testing=False):
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
 
     def guard_key(identity, category):
-        # Registration/recovery share an IP bucket; rejected attacks also use
-        # this bucket so clearing a cookie cannot reset a flood. Eligible hits
-        # explicitly bypass it, including approved household players.
-        return abuse.key('', g.client_ip or request.remote_addr or 'unknown')
+        # Rejected requests belong to a signed browser, not every person behind
+        # its proxy. One bad client must never lock a shared community network.
+        return abuse.key(identity, '')
 
     def throttled(category, identity, alias):
         wait = abuse.retry_after(category, guard_key(identity, category))
@@ -268,7 +267,7 @@ def create_app(root=None, testing=False):
     def boss_recover():
         require_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None) or not g.client_ip:
+        if getattr(g, 'new_guest', None):
             return json_error('Enable cookies and reload before recovering.', 400)
         limited = throttled('recovery', identity, '')
         if limited: return limited
@@ -293,7 +292,7 @@ def create_app(root=None, testing=False):
     def boss_profile():
         require_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None) or not g.client_ip:
+        if getattr(g, 'new_guest', None):
             return json_error('Enable cookies and reload before saving your username.', 400)
         limited = throttled('registration', identity, '')
         if limited: return limited
@@ -354,8 +353,6 @@ def create_app(root=None, testing=False):
         identity = guest()
         if getattr(g, "new_guest", None):
             return json_error("Enable cookies and reload the game before attacking.", 400)
-        if not g.client_ip:
-            return json_error("The server could not identify your connection. The host should check TRUST_APP_PLATFORM and the DO-Connecting-IP header.", 503)
         body = request.get_json(silent=True)
         view = boss.status(identity, g.client_ip)
         valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)
@@ -796,7 +793,7 @@ def main():
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
         LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
-        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
+        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Identity and cooldowns follow signed browser cookies, never shared IPs. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
             if config.production:

@@ -1,6 +1,6 @@
 # RedHunllef — complete configured code
 
-Release **2026.09.28-community-polish**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
+Release **2026.09.29-player-access**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
 
 Run only `python wager_backend.py`. Keep all supporting files together and preserve existing `data/` and private configuration when updating. The eight achievements are unchanged; hits remain unlimited per day/week with a 30-second cooldown. No external SQL or backup service is required.
 
@@ -69,7 +69,29 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
-# Changes — 2026.09.28-community-polish
+# Changes — 2026.09.29-player-access
+
+## Fixed community access and username persistence
+
+- Removed shared-IP registration limits and shared-IP attack cooldowns. Reproduced
+  98 of 100 players blocked behind two IPs before the fix.
+- Saved names and cooldowns follow the existing signed browser identity. IP changes
+  no longer make a saved profile appear unregistered.
+- Registration, recovery and attacks work without a proxy visitor-IP header.
+  Arbitrary forwarding headers are still not trusted as verified identities.
+- Rejected-request throttling belongs to a browser instead of a whole network.
+- A confirmed name save wins over older polls and earlier request timestamps.
+- Retired household-approval and connection-release UI; no approvals or raid reset
+  are needed. Old submitted admin forms return a clear retired-control message.
+- Kept every original account/configuration/logo, raid, player key, recovery code,
+  contribution, achievement, avatar, combat setting and admin permission.
+- Added concurrent 100-player shared-proxy tests and persistence/race regressions.
+
+Hits stay unlimited per day/week, with one attack per player every 30 seconds.
+The only launch command remains `python wager_backend.py`; JSON storage needs no
+SQL service or extra setup. Existing local saves must be preserved when updating.
+
+## Previous release — 2026.09.28-community-polish
 
 Implemented suggestions 2–9. Excluded the achievement-display change (#1) and
 external checkpoints (#10). No daily/weekly hit limits, new dependency, service,
@@ -117,7 +139,7 @@ See README for local-file lifetime on DigitalOcean App Platform.
 ```markdown
 # Complete file structure
 
-Release **2026.09.28-community-polish**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.09.29-player-access**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -129,9 +151,9 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `Procfile` | Runs python wager_backend.py. |
 | `README.md` | Complete update, operation, recovery and DigitalOcean instructions. |
 | `START_HERE.md` | Short installation and launch instructions. |
-| `abuse_guard.py` | Bounded rejected-request throttles and temporary admin flags. |
+| `abuse_guard.py` | Per-browser rejected-request throttles and temporary admin flags. |
 | `app.yaml` | Single-service DigitalOcean App Platform template. |
-| `boss.py` | Authoritative multiplayer rules, player recovery and admin controls. |
+| `boss.py` | Independent signed-browser players, multiplayer rules, recovery and admin controls. |
 | `boss_avatar.py` | Image validation, resizing and safe PNG avatar storage. |
 | `boss_extras.py` | Cosmetic rally, pace estimates and private boss admin history. |
 | `boss_progress.py` | Private names and the unchanged eight achievement calculations. |
@@ -180,6 +202,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
 
@@ -199,12 +222,31 @@ web: python wager_backend.py
 ````markdown
 # RedHunllef
 
-Release **2026.09.28-community-polish**. This is the complete configured application.
+Release **2026.09.29-player-access**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## What this update includes
+## Boss access repair
+
+The earlier version reserved one player per visible IP and checked that a saved
+profile still used that IP. A shared proxy could make the whole community look
+like one or two players. A changing mobile/VPN/proxy address made an existing
+username appear unsaved. Reproduction: 100 browsers behind two IPs admitted only
+two players before this repair.
+
+Player admission, username ownership and the 30-second cooldown now follow the
+**signed browser cookie**, independently of network addresses. Shared connections
+need no approval. A missing or changing proxy IP header cannot disable gameplay.
+Rejected-request throttles are isolated per browser, so one client's mistakes do
+not lock other players out. Delayed polls cannot undo a confirmed username save.
+
+**No raid reset, cookie clearing or data deletion is needed.** Existing profile
+keys, names, recovery codes, badges, health, damage and administrator accounts are
+retained. Use the same browser; if its cookie was previously lost, use your saved
+player recovery code. A username alone cannot reclaim someone else's profile.
+
+## Retained improvements
 
 Suggestions **2–9** are implemented. Suggestions **1 and 10** are excluded:
 the eight achievements and their progress display are unchanged, and no external
@@ -214,7 +256,7 @@ backup service or storage account has been added.
 | --- | --- |
 | Returning players | A saved name collapses to “Playing as…” with an Edit button. |
 | Player recovery | A private recovery code restores the original player after cookie loss, including hits, badges and cooldown. |
-| Shared connections | Admins can approve 2–10 separate players on a household connection. The default remains one. |
+| Shared connections | Everyone can join automatically, with a separate signed player identity and cooldown. |
 | Boss planning | Recent damage/hour, an estimated time remaining, and presets that fill the **next raid** HP field. Nothing adjusts HP automatically. |
 | Red rally | Fifteen distinct raiders hitting within ten minutes unlock a cosmetic arena effect for that raid. No damage bonus. |
 | Safer host edits | Live HP before/after and damage previews, plus the last 100 boss admin actions with account, time and changed values. |
@@ -225,7 +267,7 @@ backup service or storage account has been added.
 
 **Hits have no daily or weekly limit.** A player can keep attacking whenever the
 **30-second server cooldown** expires. Achievements are milestones, not attack
-quotas. Approved household players each retain their own 30-second cooldown.
+quotas. Every player retains their own 30-second cooldown on shared connections.
 An eligible hit remains allowed even when rejected-request throttling is active.
 
 ## Keep your current progress when updating
@@ -322,7 +364,7 @@ export is the available checkpoint method on App Platform. On a persistent Linux
 host, preserve the `data/` folder during code updates.
 
 Use `TRUST_APP_PLATFORM=1` only behind App Platform ingress. The app then uses
-`DO-Connecting-IP` for player connections. On a directly exposed/local host, leave
+`DO-Connecting-IP` for admin request logging and existing access controls. Game identity does not depend on that header. On a directly exposed/local host, leave
 it unset or `0`. Arbitrary client forwarding headers are not accepted as identity.
 
 ## Accounts and automatic updates
@@ -330,7 +372,7 @@ it unset or `0`. Arbitrary client forwarding headers are not accepted as identit
 `/admin` renders the login or dashboard directly. All management routes require a
 current admin account, an unrevoked session, and CSRF protection for writes.
 The Superadmin manages administrator accounts and downloads full private recovery.
-Other current admins can manage boss controls, avatars, household allowances and
+Other current admins can manage boss controls and avatars, and
 view full player names in the private Top 5.
 
 Both Shuffle and Kick are checked **automatically every 60 seconds**, by independent
@@ -385,13 +427,17 @@ raid. It requires the same saved app secret and profile data; it cannot restore 
 profile after all server saves have been lost. Anyone with a valid code can use
 that player profile, so do not post it publicly.
 
-One username per connection remains the default. If several real household members
-share an IP, an admin can approve that connection using an already registered
-player's name and a total allowance of 2–10 players. Each uses a separate browser
-profile and retains a separate 30-second cooldown. The allowance caps registered
-household identities, **not hits**. To reduce it, release other connection claims
-first. A Shuffle spelling match or an IP is never treated as account ownership
-verification; the current feed does not provide a trustworthy player-IP mapping.
+Each signed browser identity owns one saved username. Independent players on the
+same IP, VPN, carrier network or proxy can play together without approval. Multiple
+tabs sharing one browser cookie share one player and one cooldown. An IP change
+neither renames a player nor gives an extra hit. Old connection/household records
+are accepted when reading existing saves but are no longer admission rules.
+
+A cookie identifies a browser, not a verified person. Clearing cookies or using a
+new browser can create a different identity with a different name; the game does
+not claim to prevent every multi-account bot. It retains server cooldowns,
+idempotent receipts, per-browser request throttles and admin-only controls. Names
+remain self-reported; a Shuffle spelling match is not ownership verification.
 
 ## Boss administration
 
@@ -410,9 +456,9 @@ Use **Community boss** in the admin menu:
   **at the observed pace**. Before enough activity exists, 10M/25M/50M are starting
   suggestions, not promised durations. Presets only fill the new-raid field.
 - Start a new raid only after confirming. Names, recovery digests, achievements,
-  household allowances, avatar and combat settings carry forward. Current raid
+  avatar and combat settings carry forward. Current raid
   contributions/cooldowns reset and the previous raid is summarized in history.
-- View the uncensored Top 5, shared connection allowances, the last 100 saved boss
+- View the uncensored Top 5, the last 100 saved boss
   admin actions and temporary rejected-request flags. Normal timer-perfect hits
   are never flagged merely for regular timing. Flags are diagnostic, not bans.
 
@@ -457,11 +503,12 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-The release passed 124 backend tests and 54 DOM/interface checks. Coverage includes
+The release passed 132 backend tests and 57 DOM/interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
-validation, nonregenerating HP, unlimited attacks, recovery-code privacy, household
-cooldowns, migration, atomic-write failures and simultaneous writers. The final
-storage optimization was rechecked against all 14 new behavior tests.
+validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
+cooldowns, migration, atomic-write failures and simultaneous writers. New regression
+checks include 100 concurrent players sharing one proxy, absent IP headers, changing
+addresses, names retained after restart, and delayed browser responses.
 
 No live Shuffle/Kick request or DigitalOcean deployment was performed during these
 checks. Provider tests use synthetic responses; native browser visual rendering was
@@ -482,7 +529,7 @@ npm --prefix tests test
 ````markdown
 # Start RedHunllef
 
-Release **2026.09.28-community-polish** — complete configured package.
+Release **2026.09.29-player-access** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -518,8 +565,14 @@ Hits are **unlimited per day and week**, with a **30-second cooldown**. The eigh
 achievements and their existing display remain unchanged. Boss screens check every
 5 seconds; Shuffle/Kick check automatically every 60 seconds.
 
-This update adds player recovery codes, admin-approved households, cosmetic Red
-rally, next-raid presets, edit previews, boss admin history and clearer live status.
+This update fixes community access and saved usernames. Players use signed browser
+cookies; shared IPs no longer block registration or share attack cooldowns. Changing
+IP addresses and missing proxy headers no longer disable an existing player.
+**Do not reset the raid or clear cookies to install this fix.** Preserve existing
+saved data and reload the game after updating. Recovery codes restore a lost cookie.
+Cosmetic rally, next-raid presets, edit previews, boss admin history and live status
+remain available. Connection-release and household-approval controls are retired
+because those restrictions no longer apply.
 Original credentials, logos, live feeds, private Code Red list and admin-only boss
 uploads/name/HP/damage controls remain intact.
 
@@ -704,7 +757,7 @@ def rules(state=None):
     """One contract for server validation, host controls, and browser labels."""
     settings = combat_settings((state or {}).get('settings'))
     return dict(cooldown=COOLDOWN, daily_attacks=DAILY_ATTACKS, raid_day=DAY,
-                poll_seconds=POLL_SECONDS, ward_seconds=WARD_SECONDS, default_hp=DEFAULT_HP,
+                poll_seconds=POLL_SECONDS, ward_seconds=WARD_SECONDS, default_hp=DEFAULT_HP, identity_mode="browser",
                 damage=settings['damage'], weak_damage=settings['weak_damage'], burst_every=BURST_EVERY,
                 burst_bonus=settings['burst_bonus'],
                 styles=dict(STYLES), min_hp=MIN_HP, max_hp=MAX_HP, max_damage=MAX_DAMAGE)
@@ -892,16 +945,17 @@ class CommunityBoss:
         day = max(0, int((now - state["started_at"]) // DAY)) if state["started_at"] else 0
         reset = state["started_at"] + (day + 1) * DAY if state["started_at"] else 0
         player_key = _key(state, "player", guest) if guest else ""
-        network_key = _key(state, "network", network_identity(address)) if address else ""
-        player, network = state["players"].get(player_key, {}), state["networks"].get(network_key, {})
+        player = state["players"].get(player_key, {})
         profile = state.get("profiles", {}).get(player_key, {})
-        identity_ready = bool(profile and profile.get('network') == network_key)
-        shared = identity_ready and state.get('households', {}).get(network_key, 1) > 1
-        ready = max(player.get("last_attack", 0), 0 if shared else network.get("last_attack", 0)) + COOLDOWN
+        # A proxy, household, campus or carrier may expose one IP for many
+        # people. The signed browser cookie owns the profile and its cooldown.
+        # Legacy network records remain readable but never decide who can play.
+        identity_ready = bool(profile)
+        ready = player.get("last_attack", 0) + COOLDOWN
         phase = "Awakening" if state["hp"] > state["max_hp"] * .75 else "Enraged" if state["hp"] > state["max_hp"] * .25 else "Last stand"
         status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
         leaders = sorted(state["players"].items(), key=lambda item: (-item[1]["damage"], item[0]))[:10]
-        return dict(server_time=now, raid_id=state["id"], version=state["version"], status=status, connection_ready=bool(address),
+        return dict(server_time=now, raid_id=state["id"], version=state["version"], status=status, connection_ready=bool(guest),
                     name=combat_settings(state.get('settings'))['name'], settings_revision=state.get('settings_revision', 0),
                     health_revision=state.get("health_revision", 0), avatar_url=self.avatar_url(), avatar_custom=bool(self.avatar_document),
                     hp=state["hp"], max_hp=state["max_hp"], phase=phase, started_at=state["started_at"],
@@ -914,7 +968,7 @@ class CommunityBoss:
                     you=dict(name=_name(player_key) if guest else "Spectator", damage=player.get("damage", 0),
                              attacks=player.get("attacks", 0), remaining=None, ready_at=ready,
                              display_name=profile.get("name", ""), identity_ready=identity_ready,
-                             recovery_saved=bool(profile.get("recovery_hash")), shared_connection=bool(shared),
+                             recovery_saved=bool(profile.get("recovery_hash")), shared_connection=False,
                              burst_in=BURST_EVERY - player.get("attacks", 0) % BURST_EVERY,
                              active_days=profile.get("active_days", player.get("active_days", 1 if player else 0)),
                              badges=badges(profile or player, now),
@@ -924,10 +978,10 @@ class CommunityBoss:
                     recent=copy.deepcopy(state["recent"]), history=copy.deepcopy(state["history"]))
 
     def register(self, guest, address, raid_id, name):
-        """One self-reported username per connection, bound to its signed cookie.
+        """Persist a private name for this signed browser, independently of IP.
 
-        IPs are not account authentication: NAT/VPN users can share a connection.
-        Only the owner browser can rename/rebind; admins can release a stale claim.
+        Existing profile keys and stats are untouched. Recovery codes remain
+        the way to restore a lost cookie; matching a name or IP proves nothing.
         """
         name = username(name)
         now = time.time()
@@ -937,53 +991,33 @@ class CommunityBoss:
                 if raid_id != state['id']:
                     raise BossError('Another raid started. Refresh before saving your name.', 'new_raid', 409)
                 previous = copy.deepcopy(state)
-                pk, nk = _key(state, 'player', guest), _key(state, 'network', network_identity(address))
+                pk = _key(state, 'player', guest)
                 profiles = state.setdefault('profiles', {})
-                others = sum(key != pk and p['network'] == nk for key, p in profiles.items())
-                if others >= state.get('households', {}).get(nk, 1):
-                    raise BossError('This connection already has a player. Recover your profile below, use the original browser, or ask an admin for a household allowance.', 'connection_claimed', 409)
                 for key, profile in profiles.items():
                     if key != pk and profile['name'].casefold() == name.casefold():
                         raise BossError('That username is already registered. Use your recovery code or original browser.', 'name_claimed', 409)
                 own = profiles.get(pk)
-                if own and own['name'] == name and own['network'] == nk:
+                if own and own['name'] == name:
                     self.state, self.loaded_at = state, time.monotonic()
                     return self._project(state, guest, address, now)
                 if own and now - own['named_at'] < COOLDOWN:
-                    raise BossError('Wait 30 seconds before changing your name or connection again.', 'profile_cooldown', 429,
+                    raise BossError('Wait 30 seconds before changing your name again.', 'profile_cooldown', 429,
                                     max(1, math.ceil(COOLDOWN - now + own['named_at'])))
                 if not own and len(profiles) >= MAX_PLAYERS:
                     raise BossError('The player registry is full. Contact an admin.', 'capacity', 409)
                 if own:
-                    own.update(name=name, network=nk, named_at=now)
+                    own.update(name=name, named_at=now)
                 else:
-                    profiles[pk] = new_profile(name, nk, now, state['players'].get(pk))
+                    # Retain the legacy field shape for portable old-save recovery.
+                    # It is a browser-specific reservation, not an IP claim.
+                    profiles[pk] = new_profile(name, _key(state, 'reservation', guest), now, state['players'].get(pk))
                 state['version'] += 1
                 self._write(conn, state, previous=previous)
             self.state, self.loaded_at = state, time.monotonic()
             return self._project(state, guest, address, now)
 
     def release_profile(self, raid_id, name, *, actor="System"):
-        """Admin-only recovery for a lost cookie/shared-IP claim; retains damage."""
-        name = username(name)
-        with self.lock:
-            with self.store.connection(transaction=True) as conn:
-                state = self._read(conn, locked=True)
-                if raid_id != state['id']:
-                    raise BossError('Another raid started. Reload first.', 'new_raid', 409)
-                previous = copy.deepcopy(state)
-                key = next((k for k, p in state.get('profiles', {}).items() if p['name'].casefold() == name.casefold()), None)
-                if key is None:
-                    raise BossError('No registered player has that username.')
-                self.store.backup_in(conn, 'before-player-release', dict(community_boss=state))
-                # Preserve the name and achievements on the original browser.
-                # A random non-address reservation frees the former IP only.
-                state['profiles'][key]['network'] = secrets.token_hex(32)
-                state['profiles'][key]['named_at'] = 0
-                audit(state, 'Release connection', actor, {'player': name, 'connection': 'Reserved'}, {'player': name, 'connection': 'Released'})
-                state['version'] += 1
-                self._write(conn, state, previous=previous)
-            self.state, self.loaded_at = state, time.monotonic()
+        raise BossError("Connection claims are retired. Each player can join directly; no release or raid reset is needed.", "retired_control", 409)
 
     def save_recovery(self, guest, code_hash):
         """Store only a digest. The full bearer code is displayed once to its owner."""
@@ -1011,47 +1045,21 @@ class CommunityBoss:
                 if raid_id != state['id']:
                     raise BossError('A new raid started. Reload before recovering.', 'new_raid', 409)
                 previous = copy.deepcopy(state)
-                pk, nk = _key(state, 'player', guest), _key(state, 'network', network_identity(address))
+                pk = _key(state, 'player', guest)
                 profiles = state.get('profiles', {})
                 profile = profiles.get(pk, {})
                 if not hmac.compare_digest(profile.get('recovery_hash', ''), code_hash):
                     raise BossError('That recovery code is invalid or was replaced.', 'invalid_recovery', 400)
-                others = sum(key != pk and p['network'] == nk for key, p in profiles.items())
-                if others >= state.get('households', {}).get(nk, 1):
-                    raise BossError('This connection belongs to another player. Ask an admin for a household allowance before recovering here.', 'connection_claimed', 409)
                 # Same browser key restores all hits and cooldowns exactly. The
                 # HTTP layer validates the signed code before calling this method.
-                profile.update(network=nk, named_at=time.time())
+                # No network binding is changed or required during recovery.
                 state['version'] += 1
                 self._write(conn, state, previous=previous)
             self.state, self.loaded_at = state, time.monotonic()
             return self._project(state, guest, address, time.time())
 
     def household(self, raid_id, name, slots, *, actor="System"):
-        name = username(name)
-        if type(slots) is not int or not 1 <= slots <= 10:
-            raise BossError('Choose 1–10 players for this shared connection.')
-        with self.lock:
-            with self.store.connection(transaction=True) as conn:
-                state = self._read(conn, locked=True)
-                if raid_id != state['id']:
-                    raise BossError('Another raid started. Reload first.', 'new_raid', 409)
-                previous = copy.deepcopy(state)
-                profiles = state.get('profiles', {})
-                profile = next((p for p in profiles.values() if p['name'].casefold() == name.casefold()), None)
-                if profile is None: raise BossError('Save the first household player name before approving this connection.')
-                nk = profile['network']
-                used = sum(p['network'] == nk for p in profiles.values())
-                if slots < used: raise BossError('Release the other player connections before lowering this allowance.')
-                households = state.setdefault('households', {})
-                old = households.get(nk, 1)
-                if old == slots: return
-                if slots == 1: households.pop(nk, None)
-                else: households[nk] = slots
-                audit(state, 'Household allowance', actor, {'player': name, 'slots': old}, {'player': name, 'slots': slots})
-                state['version'] += 1
-                self._write(conn, state, previous=previous)
-            self.state, self.loaded_at = state, time.monotonic()
+        raise BossError("Household approvals are no longer needed. Shared connections support all players automatically.", "retired_control", 409)
 
     def admin_status(self):
         """Private top five. Public projections always keep anonymous aliases."""
@@ -1062,8 +1070,6 @@ class CommunityBoss:
             leaders = sorted(self.state['players'].items(), key=lambda item: (-item[1]['damage'], item[0]))[:5]
             result['balance'] = balance_view(self.state, time.time())
             result['admin_history'] = list(reversed(copy.deepcopy(self.state.get('admin_history', []))))
-            result['households'] = [dict(players=[p['name'] for p in profiles.values() if p['network'] == key], slots=slots)
-                                     for key, slots in self.state.get('households', {}).items()]
             result['admin_leaders'] = [dict(name=profiles.get(key, {}).get('name', _name(key)),
                                             alias=_name(key), name_provided=key in profiles,
                                             damage=p['damage'], attacks=p['attacks']) for key, p in leaders]
@@ -1141,7 +1147,7 @@ class CommunityBoss:
                 if raid_id != state["id"]:
                     raise BossError("A new raid has started. Review the new boss before attacking.", "new_raid", 409)
                 view = self._project(state, guest, address, now)
-                pk, nk = _key(state, "player", guest), _key(state, "network", network_identity(address))
+                pk = _key(state, "player", guest)
                 existing = state["players"].get(pk, {})
                 # A retry of an acknowledged click never lands a second hit,
                 # including retries after victory or after the cooldown ends.
@@ -1151,15 +1157,13 @@ class CommunityBoss:
                     raise BossError("The host paused the raid." if state["paused"] and state["hp"] else "The community has already defeated this boss.", view["status"], 409)
                 if now < view["you"]["ready_at"]:
                     retry = max(1, math.ceil(view["you"]["ready_at"] - now))
-                    raise BossError("Your browser or shared connection is cooling down. Wait for the timer.", "cooldown", 429, retry)
+                    raise BossError("Your player is cooling down. Wait for the timer.", "cooldown", 429, retry)
                 if require_profile and not view['you']['identity_ready']:
-                    raise BossError('Save your username for this connection before attacking.', 'username_required', 409)
+                    raise BossError('Save your username once in this browser before attacking.', 'username_required', 409)
                 day = view["day"] - 1
-                state["networks"] = {key: p for key, p in state["networks"].items() if p["day"] >= day - 1}
-                if (pk not in state["players"] and len(state["players"]) >= MAX_PLAYERS) or (nk not in state["networks"] and len(state["networks"]) >= MAX_NETWORKS):
+                if pk not in state["players"] and len(state["players"]) >= MAX_PLAYERS:
                     raise BossError("This raid has reached its player capacity. The host can start a new raid.", "capacity", 409)
                 player = state["players"].setdefault(pk, dict(attacks=0, damage=0))
-                network = state["networks"].setdefault(nk, {})
                 # Older saves cannot reconstruct every past participation day.
                 # Credit one known day, then count future distinct days exactly.
                 active_days = player.get("active_days", 1 if player["attacks"] else 0)
@@ -1171,9 +1175,8 @@ class CommunityBoss:
                 damage = min(state["hp"], (view['rules']['weak_damage'] if weak else view['rules']['damage'])
                              + (view['rules']['burst_bonus'] if burst else 0))
                 hit = dict(style=style, damage=damage, weakness=weak, burst=burst, at=int(now))
-                for record in (player, network):
-                    record.update(used=(record.get("used", 0) if record.get("day") == day else 0) + 1,
-                                  day=day, last_attack=now)
+                player.update(used=(player.get("used", 0) if player.get("day") == day else 0) + 1,
+                              day=day, last_attack=now)
                 # Preserve fractional seconds so early clicks never shorten
                 # the server-enforced cooldown.
                 player.update(attacks=player["attacks"] + 1, damage=player["damage"] + damage,
@@ -1534,8 +1537,9 @@ def badges(player, now=0):
 def validate_profiles(profiles, limit, households=None):
     if not isinstance(profiles, dict) or len(profiles) > limit:
         raise ValueError('Invalid community player profiles.')
-    names, networks = set(), {}
-    households = households or {}
+    names = set()
+    # Network/household fields are accepted for recovery compatibility only.
+    # Multiple independent profiles may have the same legacy network value.
     for key, p in profiles.items():
         if not isinstance(key, str) or not re.fullmatch(r'[a-f0-9]{64}', key) or not isinstance(p, dict):
             raise ValueError('Invalid community player profile.')
@@ -1543,10 +1547,9 @@ def validate_profiles(profiles, limit, households=None):
         network = p.get('network')
         if not isinstance(network, str) or not re.fullmatch(r'[a-f0-9]{64}', network):
             raise ValueError('Invalid private connection identifier.')
-        if name.casefold() in names or networks.get(network, 0) >= households.get(network, 1):
-            raise ValueError('Duplicate community username or connection.')
+        if name.casefold() in names:
+            raise ValueError('Duplicate community username.')
         names.add(name.casefold())
-        networks[network] = networks.get(network, 0) + 1
         if 'recovery_hash' in p and (not isinstance(p['recovery_hash'], str) or not re.fullmatch(r'[a-f0-9]{64}', p['recovery_hash'])):
             raise ValueError('Invalid private recovery digest.')
         if 'recovery_at' in p and (type(p['recovery_at']) not in (int, float) or not 0 <= p['recovery_at'] <= 10**12):
@@ -1580,7 +1583,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.28-community-polish"
+RELEASE = "2026.09.29-player-access"
 INTERVAL = 60
 
 
@@ -1677,11 +1680,17 @@ admins can see submitted names. The admin Top 5 contains full names. A Shuffle
 spelling match does not verify an account or connection. The game does not claim
 access to a Shuffle IP mapping.
 
-One registered player per connection is the default. Admins can approve a household
-of 2–10 players, each with a separate browser identity and 30-second cooldown. This
-is a player-registration allowance, not an attack quota. IPv6 privacy addresses
-are grouped by /64. Admins can release stale connection claims without deleting
-names or contributions.
+Each player is identified by a persistent signed browser cookie. Shared IPv4,
+IPv6, VPN, carrier and proxy addresses do not restrict how many players can join.
+The same cookie keeps its saved username and cooldown when IPs change. Tabs sharing
+a cookie are the same player; separate browser identities get independent cooldowns.
+Game writes still require a valid cookie and CSRF token. Missing IP headers do not
+block registration, recovery or attacks. No household approval or raid reset is
+needed. Old network records are retained for compatibility, not used for admission.
+
+A browser identity is not proof of a unique human; cookie deletion can create a
+new player. Existing names cannot be claimed just by typing them. Use the original
+browser or a valid recovery code to restore an existing profile.
 
 A private recovery code restores the original identity after cookie loss. The
 server stores a digest; the code is shown once when created. A replacement revokes
@@ -1706,7 +1715,7 @@ change the current boss automatically. Before sufficient data exists, the preset
 health amounts are only starting suggestions.
 
 Rejected requests are counted in bounded, in-memory windows. Bursts are briefly
-throttled and visible as private diagnostic flags, without automatic bans. Valid
+throttled per signed browser and visible as private diagnostic flags, without automatic bans or shared-IP lockouts. Valid
 eligible attacks bypass that guard and keep their regular 30-second cadence.
 
 Screens poll every five seconds. Hidden browser tabs resume on visibility. The
@@ -1721,7 +1730,7 @@ after the latest export can still be lost. No external backup service was added.
 ## docs/COMMUNITY_UPDATE.md
 
 ```markdown
-# Community comfort update
+# Community comfort update and access repair
 
 Approved scope: suggestions 2–9. Excluded: achievement-progress redesign and
 external checkpoint storage. Unlimited daily/weekly hits and the 30-second cooldown
@@ -1730,12 +1739,12 @@ are unchanged. `boss_progress.badges()` is unchanged from the preceding release.
 | Area | Implementation |
 | --- | --- |
 | Identity | Existing cookie key retained during recovery; signed random recovery bearer code, saved digest, CSRF-protected POSTs, no code in URLs/logs/public feeds. |
-| Households | Explicit admin allowance on a salted connection identifier; default one claim, per-player cooldown for approved households. |
+| Shared connections | No IP admission limit; each signed browser retains its username and 30-second cooldown. Old network fields remain readable for migration. |
 | Activity | Bounded minute buckets for approximate pace; bounded rolling distinct-player set for a cosmetic rally. |
 | Admin history | At most 100 actor/time/before/after entries, committed with the successful game edit. |
 | UI | Stable keyed lists, preserved form drafts, remembered style, safe text rendering, compact totals, exact details, reduced-motion styling. |
 | Source freshness | Success time is separate from rows/content-change time; existing automatic 60-second jobs remain. |
-| Abuse | At most 4,000 short-lived request buckets and 50 temporary flags. Eligible hits and receipt retries are not throttled. No automatic bans. |
+| Abuse | Per-browser isolation, at most 4,000 short-lived request buckets and 50 temporary flags. Eligible hits and receipt retries are not throttled. No automatic bans. |
 | Saves | Atomic UTF-8 JSON, OS file lock, flushed replacement, cached reads; prior local save imported without overwriting it. |
 
 The public page remains focused on the game. Recovery controls and exact totals
@@ -1743,27 +1752,34 @@ are collapsed; detailed host controls stay in the authenticated admin panel.
 
 There is no new runtime dependency. Optional browser-development checks use Node,
 but deploying and running the app requires only the existing Python requirements.
+
+The player-access repair also orders browser updates by committed revision and
+discards polls started before an in-flight player write. Saving a username does
+not require resetting the boss. Identity fields never come from arbitrary IP headers.
 ```
 
 ## docs/VALIDATION.md
 
 ```markdown
-# Validation — 2026.09.28-community-polish
+# Validation — 2026.09.29-player-access
 
-The complete Python suite passed **124 tests**. The final file-cache optimization
-was then checked against all **14 new behavior tests**. **54 DOM/interface checks**
-passed, including ten new checks for the added controls and status labels.
+All **132 backend tests** were validated across the suite and targeted reruns.
+The initial suite passed 130; two assertions that expected the retired shared-IP
+restriction were updated to test per-player cooldowns and passed on rerun. **57 DOM/interface checks**
+passed, including the new shared-proxy, saved-name and delayed-response regressions.
 
 | Area | Verified behavior |
 | --- | --- |
 | JSON saves | Fresh startup, retained accounts, cold restart, corrupt-file refusal, failed atomic replacement rollback, two simultaneous store instances retaining every hit. |
+| Names | Retained after IP/header changes, refresh, application restart and new raid. Cookie is not silently replaced on reload. Recovery can share a network with another active player. |
+| Isolation | One browser flooding rejected registrations does not stop other browsers on the same IP. Name collisions cannot claim another player. |
 | Migration | Previous SQLite accounts/revision/live snapshot/raid imported exactly; old file unchanged; no SQLite created on a fresh install. |
 | Recovery codes | Authenticated owner issuance, CSRF rejection, forgery and replaced-code rejection, digest-only storage, original alias/hits/badges/receipt/cooldown retained. |
-| Households | Guests cannot approve; admin allowance admits only its slot count; separate 30-second cooldowns; default per-connection fairness retained. |
+| Community access | 100 concurrent browser identities register and attack through one proxy IP, then each attacks again after 30 seconds. No approvals. Same-identity simultaneous clicks still allow only one hit. |
 | Unlimited hits | Repeated eligible hits accepted beyond previous daily counts; rejected-request throttle does not block an eligible hit. Existing week-long gameplay/achievement tests pass. |
 | Rally/estimates | Distinct rolling-window players, repeat-player deduplication, window expiry, next-raid reset, cosmetic unlock, no automatic HP/damage changes. |
 | Admin edits | Private persistent actor/before/after history, existing avatar/name/HP/damage permissions and stale revision checks. |
-| Interface | Identity collapse/edit, safe code recovery, remembered style, rally display, exact large-integer previews, presets without submission, private history clearing on session expiry. |
+| Interface | Identity collapse/edit, safe code recovery, remembered style, rally display, exact previews, presets without submission, private history clearing on expiry, saved names winning over stale polls, and attack controls pausing during profile writes. |
 | Status | Five-second boss polling, 60-second provider polling, distinct source success/change timestamps, dynamic boss victory name, ETag reuse and reconnect behavior. |
 | Existing features | Native login, race date publication, provider envelopes, safe failure responses, Code Red Top 100, public masking, uploads and recovery export. |
 
@@ -3758,7 +3774,7 @@ python-3.13.12
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.28-community-polish")
+      if (result.release && result.release !== "2026.09.29-player-access")
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",
@@ -5118,7 +5134,9 @@ python-3.13.12
     busy = false,
     timer,
     polling = false,
-    authExpired = false;
+    authExpired = false,
+    pendingWrites = 0,
+    mutationEpoch = 0;
   let receivedAt = performance.now(),
     lastGood = -Infinity,
     pending = null,
@@ -5268,16 +5286,20 @@ python-3.13.12
       throw new Error(
         "The game returned an incomplete update. Reload in a moment.",
       );
-    // A slow poll must not undo an attack or bring back a replaced raid.
-    if (
-      state &&
-      (next.server_time < state.server_time ||
-        (next.raid_id === state.raid_id &&
+    // Committed revisions outrank request clocks: a username save can wait
+    // behind another hit while a poll starts later and returns first.
+    if (state) {
+      const sameRaid = next.raid_id === state.raid_id;
+      if (
+        (sameRaid &&
           (next.version < state.version ||
             (next.health_revision || 0) < (state.health_revision || 0) ||
-            (next.settings_revision || 0) < (state.settings_revision || 0))))
-    )
-      return;
+            (next.settings_revision || 0) < (state.settings_revision || 0))) ||
+        ((!sameRaid || next.version === state.version) &&
+          next.server_time < state.server_time)
+      )
+        return;
+    }
     // Only a newer explicit host health revision may change maximum HP.
     // Ordinary snapshots cannot heal the same boss on screen.
     // Keep the last confirmed state and let stale-state handling disable hits;
@@ -5547,17 +5569,6 @@ python-3.13.12
       );
     }
     rows(
-      "householdList",
-      (state.households || []).map((h, i) => ({ ...h, id: String(i) })),
-      "No household exceptions. One player per connection is the default.",
-      (h) =>
-        item(
-          h.players.join(", ") || "Released connection",
-          `${h.players.length} registered · ${h.slots} allowed`,
-          "30s each",
-        ),
-    );
-    rows(
       "bossAdminHistory",
       (state.admin_history || []).map((h, i) => ({
         ...h,
@@ -5588,7 +5599,7 @@ python-3.13.12
       (f) =>
         item(
           `${f.alias} · ${f.category}`,
-          `${f.rejected} rejected requests · Connection ${f.tag}`,
+          `${f.rejected} rejected requests · Browser ${f.tag}`,
           new Date(f.at * 1000).toLocaleTimeString(),
         ),
     );
@@ -5854,36 +5865,39 @@ python-3.13.12
     const active = ["waiting", "active"].includes(state.status);
     // An unacknowledged click can be retried even if its first delivery caused
     // a cooldown or victory. The backend returns the original receipt.
-    const retry = Boolean(pending && !busy && !stale);
+    const retry = Boolean(pending && !busy && !stale && !pendingWrites);
     const ready =
       active &&
       state.connection_ready &&
       state.you.identity_ready &&
       seconds >= state.you.ready_at &&
       !stale &&
-      !busy;
+      !busy &&
+      !pendingWrites;
     button.disabled = !(armed && (retry || ready));
     button.textContent = busy
       ? "Landing your hit…"
-      : stale
-        ? "Reconnecting…"
-        : pending
-          ? "Retry last strike"
-          : state.status === "victory"
-            ? "Victory · We did it!"
-            : state.status === "paused"
-              ? "Raid paused"
-              : !state.connection_ready
-                ? "Connection setup needed"
-                : !state.you.identity_ready
-                  ? "Save your username to play"
-                  : seconds < state.you.ready_at
-                    ? `Next strike in ${duration(state.you.ready_at - seconds)}`
-                    : !armed
-                      ? inputMode === "keyboard"
-                        ? "Release the key to re-arm"
-                        : "Move off the button to re-arm"
-                      : `Attack with ${labels[selected]} →`;
+      : pendingWrites
+        ? "Saving your player…"
+        : stale
+          ? "Reconnecting…"
+          : pending
+            ? "Retry last strike"
+            : state.status === "victory"
+              ? "Victory · We did it!"
+              : state.status === "paused"
+                ? "Raid paused"
+                : !state.connection_ready
+                  ? "Connection setup needed"
+                  : !state.you.identity_ready
+                    ? "Save your username to play"
+                    : seconds < state.you.ready_at
+                      ? `Next strike in ${duration(state.you.ready_at - seconds)}`
+                      : !armed
+                        ? inputMode === "keyboard"
+                          ? "Release the key to re-arm"
+                          : "Move off the button to re-arm"
+                        : `Attack with ${labels[selected]} →`;
     text(
       "attackHint",
       pending
@@ -5891,7 +5905,7 @@ python-3.13.12
         : state.status === "victory"
           ? "You helped write this chapter. The host can open the next raid."
           : !state.you.identity_ready
-            ? "Save your username for this connection."
+            ? "Save your username once in this browser."
             : `One strike every ${state.rules.cooldown}s · ${selected === state.weakness ? state.rules.weak_damage : state.rules.damage} damage${state.you.burst_in === 1 ? " + " + state.rules.burst_bonus + " burst" : ""}`,
     );
     if (dockButton) {
@@ -5911,6 +5925,12 @@ python-3.13.12
       text("bossConnection", "Reconnecting · Showing the last confirmed state");
   }
   async function request(url, options = {}) {
+    const write = options.method === "POST";
+    if (write) {
+      mutationEpoch++;
+      pendingWrites++;
+      tick();
+    }
     const controller = new AbortController(),
       timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -5928,12 +5948,23 @@ python-3.13.12
       return { response, value: await response.json() };
     } finally {
       clearTimeout(timeout);
+      if (write) {
+        pendingWrites--;
+        tick();
+        // Refresh after applying the POST result, including failures. This also
+        // replaces any stale poll discarded while the player was being saved.
+        if (!pendingWrites) {
+          clearTimeout(timer);
+          timer = setTimeout(poll, 0);
+        }
+      }
     }
   }
   async function poll() {
     clearTimeout(timer);
-    if (document.hidden || polling || authExpired) return;
+    if (document.hidden || polling || authExpired || pendingWrites) return;
     polling = true;
+    const epoch = mutationEpoch;
     try {
       const { response, value } = await request(
         admin ? "/admin/boss/status" : "/play/api/state",
@@ -5947,11 +5978,7 @@ python-3.13.12
             "Sign in again to see private names.",
             () => null,
           );
-          for (const id of [
-            "bossAdminHistory",
-            "householdList",
-            "bossAbuseFlags",
-          ])
+          for (const id of ["bossAdminHistory", "bossAbuseFlags"])
             rows(id, [], "Sign in again to view this information.", () => null);
           root.querySelectorAll("form button, form input").forEach((el) => {
             el.disabled = true;
@@ -5963,7 +5990,7 @@ python-3.13.12
         }
         throw new Error(value.error || "The raid is temporarily unavailable.");
       }
-      apply(value);
+      if (epoch === mutationEpoch && !pendingWrites) apply(value);
     } catch (_) {
       text("bossConnection", "Reconnecting · Your saved damage is safe");
       tick();
@@ -8450,20 +8477,7 @@ def upgrade_store(value, defaults, health_defaults):
     </form>
   </section>
 </div>
-<details class="nested"><summary>Shared connections <span aria-hidden="true">+</span></summary>
-<p class="muted small">Allow a household to use separate browsers on one connection. Each player keeps a 30-second cooldown. This is an admin exception, not Shuffle account verification.</p>
-<ul id="householdList" class="combat-list"></ul>
-<form method="post" action="/admin/boss/action" class="stack">
-<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="household">
-<div class="field"><label for="householdName">An existing player on that connection</label><input id="householdName" name="player_name" maxlength="64" required></div>
-<div class="field"><label for="householdSlots">Allowed players</label><input id="householdSlots" name="slots" type="number" min="1" max="10" value="2" required><small class="muted">1 restores the default after other claims are released. This does not limit anyone's hits.</small></div>
-<button class="button" type="submit">Save allowance</button></form></details>
-<details class="nested"><summary>Release a player connection <span aria-hidden="true">+</span></summary>
-<p class="muted small">Use when a shared or changed IP blocks someone. This releases the connection only; the original browser keeps its username and badges. A player with a saved recovery code can restore their original profile. Saved damage stays.</p>
-<form method="post" action="/admin/boss/action" class="stack">
-<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="release_player">
-<div class="field"><label for="releasePlayerName">Full registered username</label><input id="releasePlayerName" name="player_name" maxlength="64" required></div>
-<label class="boss-confirm"><input type="checkbox" name="confirm_release" value="yes" required> Release this connection.</label><button class="button" type="submit">Release connection</button></form></details>
+<p class="muted small">Player access uses a signed browser cookie. Shared networks can play together without approvals. Each player has a 30-second cooldown. Names survive refreshes, IP changes and new raids; recovery codes restore lost cookies.</p>
 <details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, current raid totals and cooldowns. Names and achievement progress carry forward. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div id="raidPresets" class="preset-row" aria-label="Health presets for the next raid"></div><p id="presetBasis" class="muted small"></p><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
 <details class="nested"><summary>Boss admin history <span aria-hidden="true">+</span></summary>
 <p class="muted small">Last 100 saved actions. Player hits are tracked separately.</p><ol id="bossAdminHistory" class="combat-list audit-list"></ol></details>
@@ -8650,7 +8664,7 @@ def upgrade_store(value, defaults, health_defaults):
         <label for="playerUsername">Community / Shuffle username</label>
         <div class="player-name-row"><input id="playerUsername" name="username" maxlength="64" required
           autocomplete="username" value="{{ boss_data.you.display_name }}"><button class="button small" type="submit">Save</button></div>
-        <small class="muted">One player per connection. Your submitted name is visible to admins only.</small>
+        <small class="muted">Your name stays on this browser. Other players see only your raider alias.</small>
         <span id="playerNameResult" class="small" role="status"></span>
       </form>
       <details id="profileRecovery" class="profile-recovery">
@@ -9688,9 +9702,9 @@ class BossTests(unittest.TestCase):
         self.assertEqual(state['hp'],DEFAULT_HP-sum(r['hit']['damage'] for r in hits))
         validate_boss(state)
 
-    def test_same_network_simultaneous_tabs_only_one_lands(self):
+    def test_same_identity_simultaneous_tabs_only_one_lands(self):
         def attack(i):
-            try: return self.hit(str(i))['ok']
+            try: return self.hit('same-browser')['ok']
             except BossError as exc: return exc.code
         with ThreadPoolExecutor(max_workers=10) as pool:
             result=list(pool.map(attack,range(20)))
@@ -9706,13 +9720,13 @@ class BossTests(unittest.TestCase):
         self.assertEqual(self.hit(ip='192.0.2.2')['hit']['damage'],150)
         validate_boss(self.b.export())
 
-    def test_unlimited_hits_and_shared_network_cooldown(self):
+    def test_unlimited_hits_and_per_player_cooldown(self):
         for i in range(100):
             self.time.return_value=self.start+i*30
             self.hit()
         self.assertEqual(self.b.status('a','192.0.2.1')['you']['attacks'],100)
         self.assertIsNone(self.b.status('a','192.0.2.1')['you']['remaining'])
-        with self.assertRaises(BossError) as blocked:self.hit(guest='cookie-cleared')
+        with self.assertRaises(BossError) as blocked:self.hit(guest='a')
         self.assertEqual(blocked.exception.code,'cooldown')
         self.time.return_value += 30
         self.assertEqual(self.hit()['state']['you']['attacks'],101)
@@ -9721,7 +9735,8 @@ class BossTests(unittest.TestCase):
 
     def test_ipv6_normalization_and_mapped_ipv4(self):
         self.hit(ip='2001:db8::abcd')
-        with self.assertRaises(BossError):self.hit(guest='new',ip='2001:db8::eeff')
+        with self.assertRaises(BossError):self.hit(guest='a',ip='2001:db8::eeff')
+        self.assertTrue(self.hit(guest='new',ip='2001:db8::eeff')['ok'])
         self.assertEqual(network_identity('::ffff:192.0.2.1'),'192.0.2.1')
         self.assertEqual(self.hit(guest='other',ip='2001:db8:0:1::1')['hit']['damage'],150)
 
@@ -9851,20 +9866,26 @@ class BossTests(unittest.TestCase):
         current=self.b.status()['raid_id']
         self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause','raid_id':current}).status_code,303)
 
-    def test_digitalocean_ip_only_trusted_when_configured(self):
-        a,sa=self.client(); b,sb=self.client()
-        # Spoofing a header on direct hosting cannot get another allowance.
-        a.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.1'
-        b.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.2'
-        self.assertEqual(self.post(a,sa).status_code,200)
-        self.assertEqual(self.post(b,sb).status_code,429)
-        self.app.extensions['settings'].proxy=True
-        self.assertEqual(self.post(b,sb).status_code,200)
-        c,sc=self.client('127.0.0.1')
-        self.assertEqual(self.post(c,sc).status_code,503)
-        c.environ_base['HTTP_DO_CONNECTING_IP']='198.51.100.3'
-        c.environ_base['HTTP_X_FORWARDED_FOR']='198.51.100.1'
-        self.assertEqual(self.post(c,sc).status_code,200)
+    def test_proxy_headers_do_not_change_identity_or_reset_cooldowns(self):
+        from flask import g
+        a, sa = self.client(); b, sb = self.client()
+        a.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.1'
+        b.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.2'
+        with self.app.test_request_context('/healthz', environ_base={'REMOTE_ADDR':'192.0.2.1'}, headers={'DO-Connecting-IP':'198.51.100.1'}):
+            self.app.preprocess_request()
+            self.assertEqual(g.client_ip, '192.0.2.1')  # Still untrusted on a direct host.
+        self.assertEqual(self.post(a, sa).status_code, 200)
+        self.assertEqual(self.post(b, sb).status_code, 200)
+        self.app.extensions['settings'].proxy = True
+        with self.app.test_request_context('/healthz', environ_base={'REMOTE_ADDR':'192.0.2.1'}, headers={'DO-Connecting-IP':'198.51.100.1'}):
+            self.app.preprocess_request()
+            self.assertEqual(g.client_ip, '198.51.100.1')
+        self.assertEqual(self.post(b, sb).status_code, 429)
+        c, sc = self.client('127.0.0.1')
+        self.assertEqual(self.post(c, sc).status_code, 200)  # No IP header needed to play.
+        c.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.3'
+        c.environ_base['HTTP_X_FORWARDED_FOR'] = '198.51.100.1'
+        self.assertEqual(self.post(c, sc).status_code, 429)
 
     def test_guest_profile_survives_admin_logout(self):
         c,s=self.client(); name=s['state']['you']['name']
@@ -10047,8 +10068,9 @@ class BossAdminTests(unittest.TestCase):
             self.assertEqual(current[field], raid[field])
         self.assertEqual(self.runtime.store.admin(), admin)
         with self.assertRaises(BossError) as blocked:
-            self.hit('two', '192.0.2.1')
+            self.boss.attack('one', '192.0.2.99', 'blade', current['id'], 'new-request-after-avatar')
         self.assertEqual(blocked.exception.code, 'cooldown')
+        self.assertTrue(self.hit('two', '192.0.2.1')['ok'])
         image_url = self.boss.status()['avatar_url']
         self.boss.control('restart', current['id'])
         self.boss.loaded_at = 0
@@ -11163,6 +11185,87 @@ test("last checked ages between polls and exact totals remain available", async 
   assert.match(doc.querySelector("#exactRaidTotals").textContent, /2,400,000/);
   p.close();
 });
+
+test("a committed username revision wins over an older request timestamp", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "SavedWithoutReset";
+  doc.querySelector("#playerUsername").dispatchEvent(new p.w.Event("input"));
+  p.respond(async (url) => {
+    if (url.endsWith("/profile")) {
+      p.value.state.version++;
+      p.value.state.server_time -= 1;
+      p.value.state.you.display_name = "SavedWithoutReset";
+      p.value.state.you.identity_ready = true;
+    }
+    return response(p.value);
+  });
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(
+    doc.querySelector("#playingAs").textContent,
+    "SavedWithoutReset",
+  );
+  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
+
+test("a delayed pre-save poll cannot replace the confirmed player name", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  const old = structuredClone(p.value);
+  let release;
+  p.respond(async (url) => {
+    if (url.endsWith("/profile")) {
+      p.value.state.version++;
+      p.value.state.you.display_name = "LatestName";
+      return response(p.value);
+    }
+    return new Promise((resolve) => {
+      release = () => resolve(response(old));
+    });
+  });
+  await p.advance(5000);
+  assert.equal(typeof release, "function");
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "LatestName";
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  release();
+  await flush();
+  assert.equal(doc.querySelector("#playingAs").textContent, "LatestName");
+  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
+  p.close();
+});
+
+test("player writes briefly disable attacks without clearing a saved identity", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  let finish;
+  p.respond(
+    async () =>
+      new Promise((resolve) => {
+        finish = () => resolve(response(p.value));
+      }),
+  );
+  doc.querySelector("#makeRecoveryCode").click();
+  await flush();
+  assert.equal(doc.querySelector("#attackButton").disabled, true);
+  assert.match(doc.querySelector("#playingAs").textContent, /FixtureRaider/);
+  finish();
+  await flush();
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
 ```
 
 ## tests/test_comfort_update.py
@@ -11312,15 +11415,15 @@ class ComfortTests(unittest.TestCase):
         self.assertEqual(self.post(b, '/play/api/recover', code=new).status_code, 200)
         self.assertEqual(b.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
 
-    def test_household_approval_is_private_and_retains_per_player_cooldowns(self):
+    def test_household_approvals_are_retired_and_per_player_cooldowns_remain(self):
         a = self.player('Alice'); b = self.player(); host = self.admin()
-        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 409)
+        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
         self.assertEqual(self.action(b, 'household', player_name='Alice', slots='2').status_code, 302)
-        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='2').status_code, 303)
+        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='2').status_code, 422)
         self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
         self.assertEqual(self.hit(a).status_code, 200); self.assertEqual(self.hit(b).status_code, 200)
         self.assertEqual(self.hit(a).status_code, 429); self.assertEqual(self.hit(b).status_code, 429)
-        c = self.player(); self.assertEqual(self.post(c, '/play/api/profile', username='Charlie').status_code, 409)
+        c = self.player(); self.assertEqual(self.post(c, '/play/api/profile', username='Charlie').status_code, 200)
         self.assertEqual(self.action(host, 'household', player_name='Alice', slots='1').status_code, 422)
         validate_boss(self.b.export())
         public = c.get('/play/api/state').text
@@ -11866,6 +11969,163 @@ test('source success and last content change have separate labels',async()=>{
 });
 ```
 
+## tests/test_player_access.py
+
+```python
+"""Real HTTP regressions for community access and persistent player names."""
+from concurrent.futures import ThreadPoolExecutor
+import copy
+from pathlib import Path
+import tempfile
+import unittest
+
+import test_comfort_update as support
+from boss import CommunityBoss, validate_boss
+from wager_backend import create_app
+
+
+class PlayerAccessTests(unittest.TestCase):
+    setUp = support.ComfortTests.setUp
+    player = support.ComfortTests.player
+    post = support.ComfortTests.post
+    hit = support.ComfortTests.hit
+    admin = support.ComfortTests.admin
+    action = support.ComfortTests.action
+
+    def test_100_players_share_one_proxy_and_all_attack_without_approvals(self):
+        self.app.extensions['settings'].proxy = True
+        clients = []
+        for i in range(100):
+            c = self.app.test_client()
+            c.environ_base.update(REMOTE_ADDR='10.0.0.1', HTTP_DO_CONNECTING_IP='192.0.2.1')
+            c.get('/play/api/state')
+            clients.append(c)
+        def register_and_hit(i):
+            c = clients[i]
+            registered = self.post(c, '/play/api/profile', username=f'CommunityMember{i:03}')
+            if registered.status_code != 200: return ('registration', registered.status_code)
+            return ('attack', self.hit(c).status_code)
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            results = list(pool.map(register_and_hit, range(100)))
+        self.assertEqual(results, [('attack', 200)] * 100)
+        before = self.b.export()
+        self.assertEqual(len(before['players']), 100)
+        self.assertEqual(before['total_attacks'], 100)
+        self.assertEqual(len(before['profiles']), 100)
+        self.assertEqual(self.hit(clients[0]).status_code, 429)
+        # Everybody gets their own next turn, not a shared connection cooldown.
+        self.clock.return_value += 30
+        with ThreadPoolExecutor(max_workers=12) as pool:
+            self.assertEqual(list(pool.map(lambda c: self.hit(c).status_code, clients)), [200]*100)
+        state = self.b.export()
+        self.assertEqual(state['total_attacks'], 200)
+        self.assertEqual(state['hp'], state['max_hp'] - state['total_damage'])
+        self.assertEqual(len(state.get('households', {})), 0)
+        validate_boss(state)
+
+    def test_name_survives_ip_changes_refresh_restart_and_new_raid(self):
+        c = self.player('StickyName'); self.hit(c)
+        saved = self.b.export()
+        for ip in ('192.0.2.2', '198.51.100.8', '2001:db8::a', '2001:db8:1::b'):
+            c.environ_base['REMOTE_ADDR'] = ip
+            current = c.get('/play/api/state').json['state']
+            self.assertEqual(current['you']['display_name'], 'StickyName')
+            self.assertTrue(current['you']['identity_ready'])
+            self.assertIn('StickyName', c.get('/play').text)
+            self.assertEqual(self.hit(c).status_code, 429)
+        self.assertEqual(self.b.export(), saved)  # Polls do not rewrite a name or reset progress.
+        rebuilt = create_app(self.root, testing=True)
+        same = rebuilt.test_client()
+        same.set_cookie('rh_raider', c.get_cookie('rh_raider').value)
+        self.assertEqual(same.get('/play/api/state').json['state']['you']['display_name'], 'StickyName')
+        self.assertEqual(rebuilt.extensions['boss'].export(), saved)
+        self.clock.return_value += 30
+        v = same.get('/play/api/state').json
+        hit = same.post('/play/api/attack',json=dict(raid_id=v['state']['raid_id'],style='blade',request_id='retained-cookie-hit'),headers={'X-CSRF-Token':v['csrf']})
+        self.assertEqual(hit.status_code, 200)
+        rebuilt.extensions['boss'].control('restart', saved['id'])
+        self.assertEqual(same.get('/play/api/state').json['state']['you']['display_name'], 'StickyName')
+        self.assertTrue(same.get('/play/api/state').json['state']['you']['identity_ready'])
+
+    def test_missing_or_changing_proxy_header_never_discards_a_player(self):
+        self.app.extensions['settings'].proxy = True
+        a = self.player('NoHeader'); self.assertEqual(self.hit(a).status_code, 200)
+        a.environ_base['HTTP_DO_CONNECTING_IP'] = '192.0.2.44'
+        self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'NoHeader')
+        a.environ_base['HTTP_DO_CONNECTING_IP'] = 'not-an-ip'
+        self.clock.return_value += 30
+        self.assertEqual(self.hit(a).status_code, 200)
+        # The malformed header still is not trusted as a client IP.
+        self.assertNotIn('not-an-ip', str(self.b.export()))
+
+    def test_one_rejecting_browser_cannot_throttle_other_players_on_same_ip(self):
+        bad = self.player()
+        for _ in range(25): self.post(bad, '/play/api/profile', username='')
+        self.assertEqual(self.post(bad, '/play/api/profile', username='BadClient').status_code, 429)
+        for i in range(30):
+            c = self.player(f'Unaffected{i}')
+            self.assertEqual(self.hit(c).status_code, 200)
+        self.assertEqual(self.b.export()['total_attacks'], 30)
+
+    def test_valid_recovery_can_use_a_network_with_other_active_players(self):
+        a = self.player('RecoverMe', '192.0.2.1'); self.hit(a)
+        code = self.post(a, '/play/api/recovery-code').json['code']
+        b = self.player('ExistingPlayer', '192.0.2.2'); self.hit(b)
+        recovered = self.player(ip='192.0.2.2')
+        response = self.post(recovered, '/play/api/recover', code=code)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['state']['you']['display_name'], 'RecoverMe')
+        self.assertEqual(self.hit(recovered).status_code, 429)
+        self.clock.return_value += 30
+        self.assertEqual(self.hit(recovered).status_code, 200)
+        self.assertEqual(self.hit(b).status_code, 200)
+        self.assertEqual(len(self.b.export()['players']), 2)
+
+    def test_reloading_never_reissues_the_raider_identity_cookie(self):
+        c = self.player('PersistentCookie'); cookie = c.get_cookie('rh_raider').value
+        for _ in range(5):
+            for path in ('/play', '/play/api/state'):
+                response = c.get(path)
+                self.assertFalse(any(h.startswith('rh_raider=') for h in response.headers.getlist('Set-Cookie')))
+                self.assertEqual(c.get_cookie('rh_raider').value, cookie)
+                self.assertIn('PersistentCookie', response.text)
+
+    def test_legacy_network_claims_and_household_limits_do_not_require_a_reset(self):
+        a = self.player('Existing'); self.hit(a)
+        before = self.b.export()
+        profile = next(iter(before['profiles'].values()))
+        legacy = copy.deepcopy(before)
+        legacy['networks'][profile['network']] = {'last_attack': self.clock.return_value + 300, 'day':0, 'used':500}
+        legacy['households'] = {profile['network']:2}
+        with self.r.store.connection(transaction=True) as conn: self.b._write(conn, legacy)
+        self.b.loaded_at = 0
+        current = self.b.export()
+        self.assertEqual(current, legacy)
+        for i in range(10):
+            c = self.player(f'NewMember{i}'); self.assertEqual(self.hit(c).status_code, 200)
+        after = self.b.export()
+        pk = next(iter(before['profiles']))
+        self.assertEqual(after['profiles'][pk], before['profiles'][pk])
+        self.assertEqual(after['players'][pk], before['players'][pk])
+        self.assertEqual(after['id'], before['id'])
+        self.assertEqual(after['total_attacks'], before['total_attacks'] + 10)
+        self.assertLess(after['hp'], before['hp'])
+        validate_boss(after)
+
+    def test_name_collision_does_not_give_access_to_someone_elses_profile(self):
+        a = self.player('ReservedName'); self.hit(a)
+        b = self.player()
+        self.assertEqual(self.post(b, '/play/api/profile', username='reservedname').status_code, 409)
+        self.assertEqual(self.hit(b).status_code, 409)
+        self.assertNotIn('ReservedName', b.get('/play/api/state').text)
+        self.assertEqual(self.post(b, '/play/api/profile', username='OwnName').status_code, 200)
+        self.assertEqual(self.hit(b).status_code, 200)
+        self.assertNotEqual(a.get('/play/api/state').json['state']['you']['name'], b.get('/play/api/state').json['state']['you']['name'])
+
+
+if __name__ == '__main__': unittest.main()
+```
+
 ## tests/test_raid_update.py
 
 ```python
@@ -11930,16 +12190,16 @@ class RaidUpdateTests(unittest.TestCase):
         self.assertEqual(self.attack(c).status_code, 200)
         self.assertEqual(self.b.export()['total_attacks'], 1)
 
-    def test_one_username_per_ip_and_own_cookie_across_ip_changes(self):
+    def test_distinct_players_share_ip_and_names_survive_ip_changes(self):
         a, _ = self.client(name='Alice'); b, _ = self.client()
-        self.assertEqual(self.name(b, 'Bob').status_code, 409)
+        self.assertEqual(self.name(b, 'Bob').status_code, 200)
         self.assertNotIn('Alice', b.get('/play/api/state').text)
         self.attack(a)
         a.environ_base['REMOTE_ADDR'] = '192.0.2.2'
         self.assertEqual(self.attack(a).status_code, 429)
         self.clock.return_value += 30
-        self.assertEqual(self.attack(a).status_code, 409)
-        self.assertEqual(self.name(a, 'Alice').status_code, 200)
+        self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
+        self.assertTrue(a.get('/play/api/state').json['state']['you']['identity_ready'])
         self.assertEqual(self.attack(a).status_code, 200)
         self.assertEqual(self.name(b, 'Alice').status_code, 409)
         self.assertEqual(self.name(b, 'Bob').status_code, 200)
@@ -12090,10 +12350,10 @@ class RaidUpdateTests(unittest.TestCase):
         form = dict(csrf=csrf, raid_id=current['raid_id'], action='release_player', player_name='Claimed', confirm_release='yes')
         self.assertEqual(player.post('/admin/boss/action', data=form).status_code, 302)
         self.assertEqual(admin.post('/admin/boss/action', data={**form,'csrf':'wrong'}).status_code, 400)
-        self.assertEqual(admin.post('/admin/boss/action', data=form).status_code, 303)
+        self.assertEqual(admin.post('/admin/boss/action', data=form).status_code, 422)
         replacement, _ = self.client()
         self.assertEqual(self.name(replacement, 'Replacement').status_code, 200)
-        self.assertEqual(self.attack(player).status_code, 409)
+        self.assertEqual(self.attack(player).status_code, 200)
         hpform = dict(csrf=csrf, raid_id=current['raid_id'], action='remaining_health', health='0', health_revision='0', confirm_health='yes')
         self.assertEqual(admin.post('/admin/boss/action', data=hpform).status_code, 303)
         self.assertEqual(self.b.status()['hp'], 0)
@@ -12343,10 +12603,9 @@ def create_app(root=None, testing=False):
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
 
     def guard_key(identity, category):
-        # Registration/recovery share an IP bucket; rejected attacks also use
-        # this bucket so clearing a cookie cannot reset a flood. Eligible hits
-        # explicitly bypass it, including approved household players.
-        return abuse.key('', g.client_ip or request.remote_addr or 'unknown')
+        # Rejected requests belong to a signed browser, not every person behind
+        # its proxy. One bad client must never lock a shared community network.
+        return abuse.key(identity, '')
 
     def throttled(category, identity, alias):
         wait = abuse.retry_after(category, guard_key(identity, category))
@@ -12376,7 +12635,7 @@ def create_app(root=None, testing=False):
     def boss_recover():
         require_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None) or not g.client_ip:
+        if getattr(g, 'new_guest', None):
             return json_error('Enable cookies and reload before recovering.', 400)
         limited = throttled('recovery', identity, '')
         if limited: return limited
@@ -12401,7 +12660,7 @@ def create_app(root=None, testing=False):
     def boss_profile():
         require_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None) or not g.client_ip:
+        if getattr(g, 'new_guest', None):
             return json_error('Enable cookies and reload before saving your username.', 400)
         limited = throttled('registration', identity, '')
         if limited: return limited
@@ -12462,8 +12721,6 @@ def create_app(root=None, testing=False):
         identity = guest()
         if getattr(g, "new_guest", None):
             return json_error("Enable cookies and reload the game before attacking.", 400)
-        if not g.client_ip:
-            return json_error("The server could not identify your connection. The host should check TRUST_APP_PLATFORM and the DO-Connecting-IP header.", 503)
         body = request.get_json(silent=True)
         view = boss.status(identity, g.client_ip)
         valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)
@@ -12904,7 +13161,7 @@ def main():
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
         LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
-        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
+        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Identity and cooldowns follow signed browser cookies, never shared IPs. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
             if config.production:
@@ -12939,7 +13196,7 @@ if __name__ == "__main__":
 
 ```json
 {
-  "release": "2026.09.28-community-polish",
+  "release": "2026.09.29-player-access",
   "packaging": "complete",
   "entry_point": "python wager_backend.py",
   "storage": "local JSON (automatic)",
@@ -12973,24 +13230,24 @@ if __name__ == "__main__":
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 2121,
-      "sha256": "4c91fe6fa82c04fc6e82e0de0aa239c9492a364617f1d54f91cf88cca21c2f74"
+      "bytes": 3461,
+      "sha256": "b4a8b2a2f81a5a8b01575bc822f8c608fb40163cc8683dce9d6607048139d034"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 5337,
-      "sha256": "53300ad98c9eb0e19799d243a171bded17fbb27c25f9597be877aee9137175d7"
+      "bytes": 5471,
+      "sha256": "d37cf69420cd17a394c463f8a76a4daeedf20f6c85f33fdb3fdbf05c27664616"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 15695,
-      "sha256": "471dc2f6cbd16d34ab40f6b28b8eaf1deb7f3f9a587f2ccf16f99941718a6d65"
+      "bytes": 17122,
+      "sha256": "e37c83e4906edc07b1331a9a9cff9ce65c09cb7949d31df2bd10776e7e0391dd"
     },
     "START_HERE.md": {
-      "bytes": 2091,
-      "sha256": "aa17f8afc18cd8a79f6d2e158cb3daaa83769009d3bfd374f9626adaf79c9ab0"
+      "bytes": 2545,
+      "sha256": "a0a0370e54e9a97c22e8ae8431c1712b2ec2bca31b2651d0f44ed92cdc64b6ce"
     },
     "abuse_guard.py": {
       "bytes": 2063,
@@ -13001,8 +13258,8 @@ if __name__ == "__main__":
       "sha256": "1a57629c19f2f3a294691d2fd6b74d5355f4311c10201858598058093bfc878b"
     },
     "boss.py": {
-      "bytes": 41531,
-      "sha256": "8097be53614b0d0fee335d1e7a4e7703da08d79f241682cc59ff889a666c30d4"
+      "bytes": 37554,
+      "sha256": "fca3fcc7162e711cf907dbb9f474cd6ec9f3cac9e0d1be71c3add50aeba9e48b"
     },
     "boss_avatar.py": {
       "bytes": 3708,
@@ -13013,24 +13270,24 @@ if __name__ == "__main__":
       "sha256": "dd7e5464f9e63c5afd9ffd6e1897318bcbdcf368028adf547c3ac4c150020a8d"
     },
     "boss_progress.py": {
-      "bytes": 5258,
-      "sha256": "c1f31ed9a5b5f4a3e109b91b85a47ad7b38025123dad7a43aff6bdc8b2c3a481"
+      "bytes": 5234,
+      "sha256": "509a8f5b6537588a639123112f869f26fcecab5473e3f9d31c347d26cf5be419"
     },
     "config.py": {
-      "bytes": 5330,
-      "sha256": "6e841639039d5d9c0787cc506b1fed7bb7c5b0adabe6d7bb3089398643a9c5ba"
+      "bytes": 5327,
+      "sha256": "954572a23e7e92018f6ca5c88f7538ebdad999907116df4a145ecd81588547fa"
     },
     "docs/COMMUNITY_BOSS.md": {
-      "bytes": 3540,
-      "sha256": "2baa6e80b7748d0b4641aa0f591c454469e0cd2118a8e0788edb5972c959d8a5"
+      "bytes": 4032,
+      "sha256": "6aa8fc79d99cd0a41988d94e3273a195c29d14c47bb859d4cc4b8b950e685ae2"
     },
     "docs/COMMUNITY_UPDATE.md": {
-      "bytes": 1716,
-      "sha256": "1a0d876cff180e628474639d80ee537f5343403f326b417e2a0695edb8d84832"
+      "bytes": 2025,
+      "sha256": "0acf9ed9d50e9701a7877d6b8447fab8c16d90dea1b5a837d2b5c5cc5e69cbd7"
     },
     "docs/VALIDATION.md": {
-      "bytes": 2869,
-      "sha256": "7f54d8c91759b923ea2cc42ea73cf85f5d5db9dec1148449ec468c8ec56f865f"
+      "bytes": 3438,
+      "sha256": "8953867170ca619f9c7376902ed14388cce42e71a5784345aa0f8c5d337b54c4"
     },
     "integrations.py": {
       "bytes": 7041,
@@ -13069,16 +13326,16 @@ if __name__ == "__main__":
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 26880,
-      "sha256": "74751986f52849f39d5a9ca7ab05902a1e7e032da7607f8788e9836b2ecb1794"
+      "bytes": 26877,
+      "sha256": "38c0a28989d21f17bea731fcb15910531bac2ce64e104bb149c69b6e9cc87a0b"
     },
     "static/boss.css": {
       "bytes": 22172,
       "sha256": "48902dc3cbada39b92b6b4cff8bfb319437302c094aff9cfc2253a82760486fc"
     },
     "static/boss.js": {
-      "bytes": 37551,
-      "sha256": "38ae0971f33d1eab98ead5151bc50629c9a11258614b987c794c0c948e7b1bef"
+      "bytes": 38037,
+      "sha256": "8738eaf6f0092918ea4d273d5792750c1da84ceda81084f845c7dabe20e737c4"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -13105,8 +13362,8 @@ if __name__ == "__main__":
       "sha256": "fe0a2bae07c842ca2d084c96e91616c1e5aae80d32c0c34c796335a8a2c97f9e"
     },
     "templates/admin_boss.html": {
-      "bytes": 12876,
-      "sha256": "1871c8ae58c9b9cdda50f0fd4f6776a5b8782388dab629c0d3891815cd053f5d"
+      "bytes": 11045,
+      "sha256": "7a2bc09f5b6eff45a15ac7e1357055039e5e1c8b87e324f57f624c29df625ad2"
     },
     "templates/admin_overview.html": {
       "bytes": 1785,
@@ -13129,8 +13386,8 @@ if __name__ == "__main__":
       "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
     },
     "templates/boss.html": {
-      "bytes": 9361,
-      "sha256": "76002e1ddaa47fb938017f3b447219bddb4d736d996585f4f5ac31ac8c3179b7"
+      "bytes": 9362,
+      "sha256": "ae7445b6e8c03de01198b92cf509568f37cad82cdabba2156fecefa5abd5b044"
     },
     "templates/change_review.html": {
       "bytes": 690,
@@ -13173,20 +13430,20 @@ if __name__ == "__main__":
       "sha256": "da032a0e70ec5bc238adde670312e45439fe03839b33384e50d61f22fd72aa62"
     },
     "tests/test_boss.py": {
-      "bytes": 16066,
-      "sha256": "57bd25b8aeed8d1750bf6363d36b7a1bdf1ccb6935d6982bbb2589e07453e641"
+      "bytes": 16673,
+      "sha256": "7954398a96c8dcdf72b63082a6d3db624a46c9b125bc76b09ff9ecebc06bc8b7"
     },
     "tests/test_boss_admin.py": {
-      "bytes": 23011,
-      "sha256": "8b829125f51c00d8cb206857d26ac45ff97b57d5ce5ca1a38a4a7ed34e4bbf70"
+      "bytes": 23132,
+      "sha256": "0135081f79b247dd4c9e8a582e948715f2ea9a854aeb1adcba1cf49707e6e59a"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 27756,
-      "sha256": "db0b391e04511e338cb1021ba32da671ec36dba5df1cc2190d947213fa1472e6"
+      "bytes": 30379,
+      "sha256": "68280f0dd5e99a69c7e732e33cdd3425cb8150d9838400b5eddd86c37b356f5b"
     },
     "tests/test_comfort_update.py": {
-      "bytes": 14097,
-      "sha256": "2057a478ff36dde8a89f99f282e1f90922ad0a8027fc18f01baa4b17a8f832eb"
+      "bytes": 14098,
+      "sha256": "923a35e0d2e1e7e4fe16d65ff5e91e1cf6137286dd26c1c88d0d92b951ffaed1"
     },
     "tests/test_community.py": {
       "bytes": 9228,
@@ -13196,13 +13453,17 @@ if __name__ == "__main__":
       "bytes": 16897,
       "sha256": "9c586be46edbac59571842f55b16adb604173c0d5537f079924adaf369d051da"
     },
+    "tests/test_player_access.py": {
+      "bytes": 8262,
+      "sha256": "c4a13b8b93882dcd9c89b730be450dc37995efbfb23ffd01d623f91cd06592cc"
+    },
     "tests/test_raid_update.py": {
-      "bytes": 12826,
-      "sha256": "fd0a583e525540a04f00ad521afde222a66f51f86fcc472b0925909d3fcc6234"
+      "bytes": 12891,
+      "sha256": "ba4fa7f9396e2c9539b42e2ffba7e1b567b95efa8010d845b3c27e593213a3b2"
     },
     "wager_backend.py": {
-      "bytes": 47661,
-      "sha256": "39ab3316b81dc60905faa61363cc6a737423b67d9cd9d1c806c7bde3131819fb"
+      "bytes": 47402,
+      "sha256": "dc0f4b3e8270a72a78edf2232c67ae8b76ab66396b7c09c003004f79f6734a9c"
     }
   }
 }

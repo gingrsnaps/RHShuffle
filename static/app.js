@@ -695,7 +695,7 @@
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.28-community-polish")
+      if (result.release && result.release !== "2026.09.29-player-access")
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",

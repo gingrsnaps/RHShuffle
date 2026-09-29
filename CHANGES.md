@@ -1,4 +1,26 @@
-# Changes — 2026.09.28-community-polish
+# Changes — 2026.09.29-player-access
+
+## Fixed community access and username persistence
+
+- Removed shared-IP registration limits and shared-IP attack cooldowns. Reproduced
+  98 of 100 players blocked behind two IPs before the fix.
+- Saved names and cooldowns follow the existing signed browser identity. IP changes
+  no longer make a saved profile appear unregistered.
+- Registration, recovery and attacks work without a proxy visitor-IP header.
+  Arbitrary forwarding headers are still not trusted as verified identities.
+- Rejected-request throttling belongs to a browser instead of a whole network.
+- A confirmed name save wins over older polls and earlier request timestamps.
+- Retired household-approval and connection-release UI; no approvals or raid reset
+  are needed. Old submitted admin forms return a clear retired-control message.
+- Kept every original account/configuration/logo, raid, player key, recovery code,
+  contribution, achievement, avatar, combat setting and admin permission.
+- Added concurrent 100-player shared-proxy tests and persistence/race regressions.
+
+Hits stay unlimited per day/week, with one attack per player every 30 seconds.
+The only launch command remains `python wager_backend.py`; JSON storage needs no
+SQL service or extra setup. Existing local saves must be preserved when updating.
+
+## Previous release — 2026.09.28-community-polish
 
 Implemented suggestions 2–9. Excluded the achievement-display change (#1) and
 external checkpoints (#10). No daily/weekly hit limits, new dependency, service,

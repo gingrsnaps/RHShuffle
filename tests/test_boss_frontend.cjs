@@ -851,3 +851,84 @@ test("last checked ages between polls and exact totals remain available", async 
   assert.match(doc.querySelector("#exactRaidTotals").textContent, /2,400,000/);
   p.close();
 });
+
+test("a committed username revision wins over an older request timestamp", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "SavedWithoutReset";
+  doc.querySelector("#playerUsername").dispatchEvent(new p.w.Event("input"));
+  p.respond(async (url) => {
+    if (url.endsWith("/profile")) {
+      p.value.state.version++;
+      p.value.state.server_time -= 1;
+      p.value.state.you.display_name = "SavedWithoutReset";
+      p.value.state.you.identity_ready = true;
+    }
+    return response(p.value);
+  });
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(
+    doc.querySelector("#playingAs").textContent,
+    "SavedWithoutReset",
+  );
+  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
+
+test("a delayed pre-save poll cannot replace the confirmed player name", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  const old = structuredClone(p.value);
+  let release;
+  p.respond(async (url) => {
+    if (url.endsWith("/profile")) {
+      p.value.state.version++;
+      p.value.state.you.display_name = "LatestName";
+      return response(p.value);
+    }
+    return new Promise((resolve) => {
+      release = () => resolve(response(old));
+    });
+  });
+  await p.advance(5000);
+  assert.equal(typeof release, "function");
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "LatestName";
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  release();
+  await flush();
+  assert.equal(doc.querySelector("#playingAs").textContent, "LatestName");
+  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
+  p.close();
+});
+
+test("player writes briefly disable attacks without clearing a saved identity", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  let finish;
+  p.respond(
+    async () =>
+      new Promise((resolve) => {
+        finish = () => resolve(response(p.value));
+      }),
+  );
+  doc.querySelector("#makeRecoveryCode").click();
+  await flush();
+  assert.equal(doc.querySelector("#attackButton").disabled, true);
+  assert.match(doc.querySelector("#playingAs").textContent, /FixtureRaider/);
+  finish();
+  await flush();
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});

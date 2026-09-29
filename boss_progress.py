@@ -59,8 +59,9 @@ def badges(player, now=0):
 def validate_profiles(profiles, limit, households=None):
     if not isinstance(profiles, dict) or len(profiles) > limit:
         raise ValueError('Invalid community player profiles.')
-    names, networks = set(), {}
-    households = households or {}
+    names = set()
+    # Network/household fields are accepted for recovery compatibility only.
+    # Multiple independent profiles may have the same legacy network value.
     for key, p in profiles.items():
         if not isinstance(key, str) or not re.fullmatch(r'[a-f0-9]{64}', key) or not isinstance(p, dict):
             raise ValueError('Invalid community player profile.')
@@ -68,10 +69,9 @@ def validate_profiles(profiles, limit, households=None):
         network = p.get('network')
         if not isinstance(network, str) or not re.fullmatch(r'[a-f0-9]{64}', network):
             raise ValueError('Invalid private connection identifier.')
-        if name.casefold() in names or networks.get(network, 0) >= households.get(network, 1):
-            raise ValueError('Duplicate community username or connection.')
+        if name.casefold() in names:
+            raise ValueError('Duplicate community username.')
         names.add(name.casefold())
-        networks[network] = networks.get(network, 0) + 1
         if 'recovery_hash' in p and (not isinstance(p['recovery_hash'], str) or not re.fullmatch(r'[a-f0-9]{64}', p['recovery_hash'])):
             raise ValueError('Invalid private recovery digest.')
         if 'recovery_at' in p and (type(p['recovery_at']) not in (int, float) or not 0 <= p['recovery_at'] <= 10**12):

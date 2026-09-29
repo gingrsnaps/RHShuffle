@@ -59,16 +59,16 @@ class RaidUpdateTests(unittest.TestCase):
         self.assertEqual(self.attack(c).status_code, 200)
         self.assertEqual(self.b.export()['total_attacks'], 1)
 
-    def test_one_username_per_ip_and_own_cookie_across_ip_changes(self):
+    def test_distinct_players_share_ip_and_names_survive_ip_changes(self):
         a, _ = self.client(name='Alice'); b, _ = self.client()
-        self.assertEqual(self.name(b, 'Bob').status_code, 409)
+        self.assertEqual(self.name(b, 'Bob').status_code, 200)
         self.assertNotIn('Alice', b.get('/play/api/state').text)
         self.attack(a)
         a.environ_base['REMOTE_ADDR'] = '192.0.2.2'
         self.assertEqual(self.attack(a).status_code, 429)
         self.clock.return_value += 30
-        self.assertEqual(self.attack(a).status_code, 409)
-        self.assertEqual(self.name(a, 'Alice').status_code, 200)
+        self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
+        self.assertTrue(a.get('/play/api/state').json['state']['you']['identity_ready'])
         self.assertEqual(self.attack(a).status_code, 200)
         self.assertEqual(self.name(b, 'Alice').status_code, 409)
         self.assertEqual(self.name(b, 'Bob').status_code, 200)
@@ -219,10 +219,10 @@ class RaidUpdateTests(unittest.TestCase):
         form = dict(csrf=csrf, raid_id=current['raid_id'], action='release_player', player_name='Claimed', confirm_release='yes')
         self.assertEqual(player.post('/admin/boss/action', data=form).status_code, 302)
         self.assertEqual(admin.post('/admin/boss/action', data={**form,'csrf':'wrong'}).status_code, 400)
-        self.assertEqual(admin.post('/admin/boss/action', data=form).status_code, 303)
+        self.assertEqual(admin.post('/admin/boss/action', data=form).status_code, 422)
         replacement, _ = self.client()
         self.assertEqual(self.name(replacement, 'Replacement').status_code, 200)
-        self.assertEqual(self.attack(player).status_code, 409)
+        self.assertEqual(self.attack(player).status_code, 200)
         hpform = dict(csrf=csrf, raid_id=current['raid_id'], action='remaining_health', health='0', health_revision='0', confirm_health='yes')
         self.assertEqual(admin.post('/admin/boss/action', data=hpform).status_code, 303)
         self.assertEqual(self.b.status()['hp'], 0)

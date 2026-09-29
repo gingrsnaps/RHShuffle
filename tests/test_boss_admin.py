@@ -115,8 +115,9 @@ class BossAdminTests(unittest.TestCase):
             self.assertEqual(current[field], raid[field])
         self.assertEqual(self.runtime.store.admin(), admin)
         with self.assertRaises(BossError) as blocked:
-            self.hit('two', '192.0.2.1')
+            self.boss.attack('one', '192.0.2.99', 'blade', current['id'], 'new-request-after-avatar')
         self.assertEqual(blocked.exception.code, 'cooldown')
+        self.assertTrue(self.hit('two', '192.0.2.1')['ok'])
         image_url = self.boss.status()['avatar_url']
         self.boss.control('restart', current['id'])
         self.boss.loaded_at = 0

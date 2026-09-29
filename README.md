@@ -1,11 +1,30 @@
 # RedHunllef
 
-Release **2026.09.28-community-polish**. This is the complete configured application.
+Release **2026.09.29-player-access**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## What this update includes
+## Boss access repair
+
+The earlier version reserved one player per visible IP and checked that a saved
+profile still used that IP. A shared proxy could make the whole community look
+like one or two players. A changing mobile/VPN/proxy address made an existing
+username appear unsaved. Reproduction: 100 browsers behind two IPs admitted only
+two players before this repair.
+
+Player admission, username ownership and the 30-second cooldown now follow the
+**signed browser cookie**, independently of network addresses. Shared connections
+need no approval. A missing or changing proxy IP header cannot disable gameplay.
+Rejected-request throttles are isolated per browser, so one client's mistakes do
+not lock other players out. Delayed polls cannot undo a confirmed username save.
+
+**No raid reset, cookie clearing or data deletion is needed.** Existing profile
+keys, names, recovery codes, badges, health, damage and administrator accounts are
+retained. Use the same browser; if its cookie was previously lost, use your saved
+player recovery code. A username alone cannot reclaim someone else's profile.
+
+## Retained improvements
 
 Suggestions **2–9** are implemented. Suggestions **1 and 10** are excluded:
 the eight achievements and their progress display are unchanged, and no external
@@ -15,7 +34,7 @@ backup service or storage account has been added.
 | --- | --- |
 | Returning players | A saved name collapses to “Playing as…” with an Edit button. |
 | Player recovery | A private recovery code restores the original player after cookie loss, including hits, badges and cooldown. |
-| Shared connections | Admins can approve 2–10 separate players on a household connection. The default remains one. |
+| Shared connections | Everyone can join automatically, with a separate signed player identity and cooldown. |
 | Boss planning | Recent damage/hour, an estimated time remaining, and presets that fill the **next raid** HP field. Nothing adjusts HP automatically. |
 | Red rally | Fifteen distinct raiders hitting within ten minutes unlock a cosmetic arena effect for that raid. No damage bonus. |
 | Safer host edits | Live HP before/after and damage previews, plus the last 100 boss admin actions with account, time and changed values. |
@@ -26,7 +45,7 @@ backup service or storage account has been added.
 
 **Hits have no daily or weekly limit.** A player can keep attacking whenever the
 **30-second server cooldown** expires. Achievements are milestones, not attack
-quotas. Approved household players each retain their own 30-second cooldown.
+quotas. Every player retains their own 30-second cooldown on shared connections.
 An eligible hit remains allowed even when rejected-request throttling is active.
 
 ## Keep your current progress when updating
@@ -123,7 +142,7 @@ export is the available checkpoint method on App Platform. On a persistent Linux
 host, preserve the `data/` folder during code updates.
 
 Use `TRUST_APP_PLATFORM=1` only behind App Platform ingress. The app then uses
-`DO-Connecting-IP` for player connections. On a directly exposed/local host, leave
+`DO-Connecting-IP` for admin request logging and existing access controls. Game identity does not depend on that header. On a directly exposed/local host, leave
 it unset or `0`. Arbitrary client forwarding headers are not accepted as identity.
 
 ## Accounts and automatic updates
@@ -131,7 +150,7 @@ it unset or `0`. Arbitrary client forwarding headers are not accepted as identit
 `/admin` renders the login or dashboard directly. All management routes require a
 current admin account, an unrevoked session, and CSRF protection for writes.
 The Superadmin manages administrator accounts and downloads full private recovery.
-Other current admins can manage boss controls, avatars, household allowances and
+Other current admins can manage boss controls and avatars, and
 view full player names in the private Top 5.
 
 Both Shuffle and Kick are checked **automatically every 60 seconds**, by independent
@@ -186,13 +205,17 @@ raid. It requires the same saved app secret and profile data; it cannot restore 
 profile after all server saves have been lost. Anyone with a valid code can use
 that player profile, so do not post it publicly.
 
-One username per connection remains the default. If several real household members
-share an IP, an admin can approve that connection using an already registered
-player's name and a total allowance of 2–10 players. Each uses a separate browser
-profile and retains a separate 30-second cooldown. The allowance caps registered
-household identities, **not hits**. To reduce it, release other connection claims
-first. A Shuffle spelling match or an IP is never treated as account ownership
-verification; the current feed does not provide a trustworthy player-IP mapping.
+Each signed browser identity owns one saved username. Independent players on the
+same IP, VPN, carrier network or proxy can play together without approval. Multiple
+tabs sharing one browser cookie share one player and one cooldown. An IP change
+neither renames a player nor gives an extra hit. Old connection/household records
+are accepted when reading existing saves but are no longer admission rules.
+
+A cookie identifies a browser, not a verified person. Clearing cookies or using a
+new browser can create a different identity with a different name; the game does
+not claim to prevent every multi-account bot. It retains server cooldowns,
+idempotent receipts, per-browser request throttles and admin-only controls. Names
+remain self-reported; a Shuffle spelling match is not ownership verification.
 
 ## Boss administration
 
@@ -211,9 +234,9 @@ Use **Community boss** in the admin menu:
   **at the observed pace**. Before enough activity exists, 10M/25M/50M are starting
   suggestions, not promised durations. Presets only fill the new-raid field.
 - Start a new raid only after confirming. Names, recovery digests, achievements,
-  household allowances, avatar and combat settings carry forward. Current raid
+  avatar and combat settings carry forward. Current raid
   contributions/cooldowns reset and the previous raid is summarized in history.
-- View the uncensored Top 5, shared connection allowances, the last 100 saved boss
+- View the uncensored Top 5, the last 100 saved boss
   admin actions and temporary rejected-request flags. Normal timer-perfect hits
   are never flagged merely for regular timing. Flags are diagnostic, not bans.
 
@@ -258,11 +281,12 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-The release passed 124 backend tests and 54 DOM/interface checks. Coverage includes
+The release passed 132 backend tests and 57 DOM/interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
-validation, nonregenerating HP, unlimited attacks, recovery-code privacy, household
-cooldowns, migration, atomic-write failures and simultaneous writers. The final
-storage optimization was rechecked against all 14 new behavior tests.
+validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
+cooldowns, migration, atomic-write failures and simultaneous writers. New regression
+checks include 100 concurrent players sharing one proxy, absent IP headers, changing
+addresses, names retained after restart, and delayed browser responses.
 
 No live Shuffle/Kick request or DigitalOcean deployment was performed during these
 checks. Provider tests use synthetic responses; native browser visual rendering was

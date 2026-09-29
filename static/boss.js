@@ -46,7 +46,9 @@
     busy = false,
     timer,
     polling = false,
-    authExpired = false;
+    authExpired = false,
+    pendingWrites = 0,
+    mutationEpoch = 0;
   let receivedAt = performance.now(),
     lastGood = -Infinity,
     pending = null,
@@ -196,16 +198,20 @@
       throw new Error(
         "The game returned an incomplete update. Reload in a moment.",
       );
-    // A slow poll must not undo an attack or bring back a replaced raid.
-    if (
-      state &&
-      (next.server_time < state.server_time ||
-        (next.raid_id === state.raid_id &&
+    // Committed revisions outrank request clocks: a username save can wait
+    // behind another hit while a poll starts later and returns first.
+    if (state) {
+      const sameRaid = next.raid_id === state.raid_id;
+      if (
+        (sameRaid &&
           (next.version < state.version ||
             (next.health_revision || 0) < (state.health_revision || 0) ||
-            (next.settings_revision || 0) < (state.settings_revision || 0))))
-    )
-      return;
+            (next.settings_revision || 0) < (state.settings_revision || 0))) ||
+        ((!sameRaid || next.version === state.version) &&
+          next.server_time < state.server_time)
+      )
+        return;
+    }
     // Only a newer explicit host health revision may change maximum HP.
     // Ordinary snapshots cannot heal the same boss on screen.
     // Keep the last confirmed state and let stale-state handling disable hits;
@@ -475,17 +481,6 @@
       );
     }
     rows(
-      "householdList",
-      (state.households || []).map((h, i) => ({ ...h, id: String(i) })),
-      "No household exceptions. One player per connection is the default.",
-      (h) =>
-        item(
-          h.players.join(", ") || "Released connection",
-          `${h.players.length} registered · ${h.slots} allowed`,
-          "30s each",
-        ),
-    );
-    rows(
       "bossAdminHistory",
       (state.admin_history || []).map((h, i) => ({
         ...h,
@@ -516,7 +511,7 @@
       (f) =>
         item(
           `${f.alias} · ${f.category}`,
-          `${f.rejected} rejected requests · Connection ${f.tag}`,
+          `${f.rejected} rejected requests · Browser ${f.tag}`,
           new Date(f.at * 1000).toLocaleTimeString(),
         ),
     );
@@ -782,36 +777,39 @@
     const active = ["waiting", "active"].includes(state.status);
     // An unacknowledged click can be retried even if its first delivery caused
     // a cooldown or victory. The backend returns the original receipt.
-    const retry = Boolean(pending && !busy && !stale);
+    const retry = Boolean(pending && !busy && !stale && !pendingWrites);
     const ready =
       active &&
       state.connection_ready &&
       state.you.identity_ready &&
       seconds >= state.you.ready_at &&
       !stale &&
-      !busy;
+      !busy &&
+      !pendingWrites;
     button.disabled = !(armed && (retry || ready));
     button.textContent = busy
       ? "Landing your hit…"
-      : stale
-        ? "Reconnecting…"
-        : pending
-          ? "Retry last strike"
-          : state.status === "victory"
-            ? "Victory · We did it!"
-            : state.status === "paused"
-              ? "Raid paused"
-              : !state.connection_ready
-                ? "Connection setup needed"
-                : !state.you.identity_ready
-                  ? "Save your username to play"
-                  : seconds < state.you.ready_at
-                    ? `Next strike in ${duration(state.you.ready_at - seconds)}`
-                    : !armed
-                      ? inputMode === "keyboard"
-                        ? "Release the key to re-arm"
-                        : "Move off the button to re-arm"
-                      : `Attack with ${labels[selected]} →`;
+      : pendingWrites
+        ? "Saving your player…"
+        : stale
+          ? "Reconnecting…"
+          : pending
+            ? "Retry last strike"
+            : state.status === "victory"
+              ? "Victory · We did it!"
+              : state.status === "paused"
+                ? "Raid paused"
+                : !state.connection_ready
+                  ? "Connection setup needed"
+                  : !state.you.identity_ready
+                    ? "Save your username to play"
+                    : seconds < state.you.ready_at
+                      ? `Next strike in ${duration(state.you.ready_at - seconds)}`
+                      : !armed
+                        ? inputMode === "keyboard"
+                          ? "Release the key to re-arm"
+                          : "Move off the button to re-arm"
+                        : `Attack with ${labels[selected]} →`;
     text(
       "attackHint",
       pending
@@ -819,7 +817,7 @@
         : state.status === "victory"
           ? "You helped write this chapter. The host can open the next raid."
           : !state.you.identity_ready
-            ? "Save your username for this connection."
+            ? "Save your username once in this browser."
             : `One strike every ${state.rules.cooldown}s · ${selected === state.weakness ? state.rules.weak_damage : state.rules.damage} damage${state.you.burst_in === 1 ? " + " + state.rules.burst_bonus + " burst" : ""}`,
     );
     if (dockButton) {
@@ -839,6 +837,12 @@
       text("bossConnection", "Reconnecting · Showing the last confirmed state");
   }
   async function request(url, options = {}) {
+    const write = options.method === "POST";
+    if (write) {
+      mutationEpoch++;
+      pendingWrites++;
+      tick();
+    }
     const controller = new AbortController(),
       timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -856,12 +860,23 @@
       return { response, value: await response.json() };
     } finally {
       clearTimeout(timeout);
+      if (write) {
+        pendingWrites--;
+        tick();
+        // Refresh after applying the POST result, including failures. This also
+        // replaces any stale poll discarded while the player was being saved.
+        if (!pendingWrites) {
+          clearTimeout(timer);
+          timer = setTimeout(poll, 0);
+        }
+      }
     }
   }
   async function poll() {
     clearTimeout(timer);
-    if (document.hidden || polling || authExpired) return;
+    if (document.hidden || polling || authExpired || pendingWrites) return;
     polling = true;
+    const epoch = mutationEpoch;
     try {
       const { response, value } = await request(
         admin ? "/admin/boss/status" : "/play/api/state",
@@ -875,11 +890,7 @@
             "Sign in again to see private names.",
             () => null,
           );
-          for (const id of [
-            "bossAdminHistory",
-            "householdList",
-            "bossAbuseFlags",
-          ])
+          for (const id of ["bossAdminHistory", "bossAbuseFlags"])
             rows(id, [], "Sign in again to view this information.", () => null);
           root.querySelectorAll("form button, form input").forEach((el) => {
             el.disabled = true;
@@ -891,7 +902,7 @@
         }
         throw new Error(value.error || "The raid is temporarily unavailable.");
       }
-      apply(value);
+      if (epoch === mutationEpoch && !pendingWrites) apply(value);
     } catch (_) {
       text("bossConnection", "Reconnecting · Your saved damage is safe");
       tick();

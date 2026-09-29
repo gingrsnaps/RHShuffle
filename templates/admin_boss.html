@@ -90,20 +90,7 @@
     </form>
   </section>
 </div>
-<details class="nested"><summary>Shared connections <span aria-hidden="true">+</span></summary>
-<p class="muted small">Allow a household to use separate browsers on one connection. Each player keeps a 30-second cooldown. This is an admin exception, not Shuffle account verification.</p>
-<ul id="householdList" class="combat-list"></ul>
-<form method="post" action="/admin/boss/action" class="stack">
-<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="household">
-<div class="field"><label for="householdName">An existing player on that connection</label><input id="householdName" name="player_name" maxlength="64" required></div>
-<div class="field"><label for="householdSlots">Allowed players</label><input id="householdSlots" name="slots" type="number" min="1" max="10" value="2" required><small class="muted">1 restores the default after other claims are released. This does not limit anyone's hits.</small></div>
-<button class="button" type="submit">Save allowance</button></form></details>
-<details class="nested"><summary>Release a player connection <span aria-hidden="true">+</span></summary>
-<p class="muted small">Use when a shared or changed IP blocks someone. This releases the connection only; the original browser keeps its username and badges. A player with a saved recovery code can restore their original profile. Saved damage stays.</p>
-<form method="post" action="/admin/boss/action" class="stack">
-<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="release_player">
-<div class="field"><label for="releasePlayerName">Full registered username</label><input id="releasePlayerName" name="player_name" maxlength="64" required></div>
-<label class="boss-confirm"><input type="checkbox" name="confirm_release" value="yes" required> Release this connection.</label><button class="button" type="submit">Release connection</button></form></details>
+<p class="muted small">Player access uses a signed browser cookie. Shared networks can play together without approvals. Each player has a 30-second cooldown. Names survive refreshes, IP changes and new raids; recovery codes restore lost cookies.</p>
 <details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, current raid totals and cooldowns. Names and achievement progress carry forward. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div id="raidPresets" class="preset-row" aria-label="Health presets for the next raid"></div><p id="presetBasis" class="muted small"></p><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
 <details class="nested"><summary>Boss admin history <span aria-hidden="true">+</span></summary>
 <p class="muted small">Last 100 saved actions. Player hits are tracked separately.</p><ol id="bossAdminHistory" class="combat-list audit-list"></ol></details>

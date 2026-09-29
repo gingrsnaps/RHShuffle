@@ -142,15 +142,15 @@ class ComfortTests(unittest.TestCase):
         self.assertEqual(self.post(b, '/play/api/recover', code=new).status_code, 200)
         self.assertEqual(b.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
 
-    def test_household_approval_is_private_and_retains_per_player_cooldowns(self):
+    def test_household_approvals_are_retired_and_per_player_cooldowns_remain(self):
         a = self.player('Alice'); b = self.player(); host = self.admin()
-        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 409)
+        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
         self.assertEqual(self.action(b, 'household', player_name='Alice', slots='2').status_code, 302)
-        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='2').status_code, 303)
+        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='2').status_code, 422)
         self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
         self.assertEqual(self.hit(a).status_code, 200); self.assertEqual(self.hit(b).status_code, 200)
         self.assertEqual(self.hit(a).status_code, 429); self.assertEqual(self.hit(b).status_code, 429)
-        c = self.player(); self.assertEqual(self.post(c, '/play/api/profile', username='Charlie').status_code, 409)
+        c = self.player(); self.assertEqual(self.post(c, '/play/api/profile', username='Charlie').status_code, 200)
         self.assertEqual(self.action(host, 'household', player_name='Alice', slots='1').status_code, 422)
         validate_boss(self.b.export())
         public = c.get('/play/api/state').text
