@@ -1,21 +1,22 @@
-"""Small transactional store: admin state and live snapshots are separate rows.
+"""Atomic UTF-8 file storage. No database service, SQL runtime, or setup command.
 
-SQLite is automatic and needs no database service. PostgreSQL remains an
-explicit opt-in for existing deployments. App Platform local files are
-temporary; private recovery exports can seed a replacement instance.
+One small JSON document holds current state. A process lock serializes writers,
+including a brief local deployment overlap. Writes use fsync + atomic replace;
+a failed write never publishes half a raid. Keep one App Platform instance.
 """
 from contextlib import contextmanager
 import copy
-import hashlib
 import json
 import logging
+import os
+from pathlib import Path
 import secrets
-import sqlite3
+import tempfile
 import threading
 import time
 
 from werkzeug.security import generate_password_hash
-from race_support import read_json, clean_snapshots, race_key, empty_snapshots
+from race_support import read_json, clean_snapshots, race_key
 from store_schema import upgrade_store
 from race import empty
 from boss import validate_boss
@@ -37,220 +38,247 @@ def encode(value):
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
 
 
+def atomic_json(path, value):
+    """Create the replacement beside its target so rename stays atomic."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as output:
+            output.write(encode(value))
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+        if os.name != "nt":
+            directory = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
 class Store:
     def __init__(self, config):
-        self.config, self.key = config, config.state_key
-        self.pg = bool(config.db_url)
-        self.lock, self.conn, self.job_local = threading.RLock(), None, threading.local()
-        if not self.pg:
-            config.db_path.parent.mkdir(parents=True, exist_ok=True)
-            if config.ignored_database_url:
-                LOG.info("STORAGE Using local storage; DATABASE_URL is ignored because STORAGE_MODE=local.")
+        self.config, self.key, self.pg = config, config.state_key, False
+        self.path = config.state_path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock = threading.RLock()
+        self.cached, self.stamp = None, None
         self.initialize()
 
-    def connect(self):
-        if self.pg:
+    @contextmanager
+    def _file_lock(self):
+        # The lock file is separate from the atomically replaced state file.
+        with open(str(self.path) + ".lock", "a+b") as handle:
+            if os.name == "nt":
+                import msvcrt
+                handle.seek(0, os.SEEK_END)
+                if not handle.tell():
+                    handle.write(b"0"); handle.flush()
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(handle, fcntl.LOCK_EX)
             try:
-                import psycopg
-            except ImportError:
-                raise StoreError("Optional PostgreSQL support is not installed. Install requirements-postgres.txt or use STORAGE_MODE=local.") from None
-            options = dict(autocommit=True, connect_timeout=8, sslmode=self.config.sslmode,
-                           options="-c statement_timeout=8000 -c lock_timeout=5000")
-            if self.config.sslrootcert:
-                options["sslrootcert"] = self.config.sslrootcert
-            return psycopg.connect(self.config.db_url, **options)
-        conn = sqlite3.connect(self.config.db_path, check_same_thread=False, isolation_level=None, timeout=8)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        return conn
+                yield
+            finally:
+                if os.name == "nt":
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(handle, fcntl.LOCK_UN)
+
+    def _remember(self, value):
+        # We just committed these exact bytes. Avoid re-parsing them on the next
+        # poll while still noticing another process's atomic replacement.
+        stat = self.path.stat()
+        self.cached = value
+        self.stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+
+    def _disk(self):
+        if not self.path.exists():
+            if self.cached is not None:
+                raise StoreError("The saved state file is missing. Restore it; accounts were not reset.")
+            return None
+        stat = self.path.stat()
+        stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+        if stamp != self.stamp:
+            value = read_json(self.path)
+            if (not isinstance(value, dict) or value.get("format") != 1 or value.get("key") != self.key
+                    or type(value.get("revision")) is not int or value["revision"] < 1
+                    or not isinstance(value.get("admin"), dict) or not isinstance(value.get("live"), dict)):
+                raise StoreError("The saved state file is invalid. It was not overwritten.")
+            self.cached, self.stamp = value, stamp
+        return self.cached
 
     @contextmanager
     def connection(self, transaction=False):
-        # No network provider call or template rendering occurs inside this lock.
+        """Existing call sites use this as a transaction, not a SQL connection."""
         with self.lock:
             try:
-                if self.conn is None or (self.pg and self.conn.closed):
-                    self.conn = self.connect()
-                if transaction:
-                    self.conn.execute("BEGIN" if self.pg else "BEGIN IMMEDIATE")
-                yield self.conn
-                if transaction:
-                    self.conn.execute("COMMIT")
-            except BaseException as exc:
-                if transaction and self.conn:
-                    try:
-                        self.conn.execute("ROLLBACK")
-                    except Exception:
-                        pass
-                if isinstance(exc, (Conflict, ValueError, RuntimeError)):
-                    raise
-                if not isinstance(exc, Exception):
-                    raise
-                self.close()
-                message = "Database operation failed. Check connectivity, TLS, permissions, and runtime settings." if self.pg else "Local storage could not be read or written. Check disk space and the data folder permissions; do not delete your saved file."
-                raise StoreError(message) from None
-
-    def query(self, conn, sql, params=()):
-        return conn.execute(sql.replace("?", "%s") if self.pg else sql, params)
+                with self._file_lock():
+                    current = self._disk()
+                    value = copy.deepcopy(current) if transaction else current
+                    yield value
+                    if transaction and value != current:
+                        atomic_json(self.path, value)
+                        self._remember(value)
+            except (Conflict, ValueError, RuntimeError):
+                raise
+            except OSError as exc:
+                LOG.error("STORAGE Local file operation failed (%s).", type(exc).__name__)
+                raise StoreError("Local storage could not be read or written. Check free space and the data folder permissions; keep your saved file.") from None
 
     def initialize(self):
-        with self.connection(transaction=True) as conn:
-            if self.pg:
-                conn.execute("SELECT pg_advisory_xact_lock(728364092)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss_avatar (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_checkpoint (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
-            existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
-            if existing:
-                # Validate saved state rather than overwriting an unreadable account store.
-                upgrade_store(json.loads(existing[0]), self.config.site, {})
-                LOG.info("ACCOUNTS Existing accounts and settings retained.")
+        with self.lock, self._file_lock():
+            existing = self._disk()
+            if existing is not None:
+                upgrade_store(existing["admin"], self.config.site, {})
+                if not existing['admin'].get('users'):
+                    raise StoreError('Saved account store contains no accounts. It was not replaced.')
+                if existing.get('boss') is not None:
+                    validate_boss(existing['boss'])
+                validate_avatar(existing.get('avatar'))
+                LOG.info("ACCOUNTS Existing accounts, settings and raid retained from JSON.")
                 return
-            legacy = None
-            source = "first-run defaults"
-            if self.pg and conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
-                old = self.query(conn, "SELECT payload FROM wager_state WHERE name=?", (self.key,)).fetchone()
-                if old:
-                    legacy, source = old[0], "previous PostgreSQL state"
-            if legacy is None:
+            value = self._import_sqlite()
+            if value is None:
+                legacy, source = None, "first-run defaults"
                 for path in (self.config.recovery, self.config.legacy, self.config.seed):
                     if path.is_file():
                         legacy, source = read_json(path), path.name
                         break
-            if legacy is None:
-                legacy = dict(version=7, users={self.config.superadmin: dict(
-                    pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
-                    secret_key=secrets.token_hex(32), site_settings=self.config.site)
-            value, _ = upgrade_store(legacy, self.config.site, {})
-            community_boss = value.pop("community_boss", None)
-            avatar = validate_avatar(value.pop("community_boss_avatar", None))
-            marker = valid_marker(value.pop("recovery_export", None))
-            if community_boss is not None:
-                community_boss = validate_boss(community_boss)
-            if not value["users"]:
-                raise StoreError("Saved account store contains no accounts. The original was not replaced.")
-            self.backup_in(conn, "before-rebuild-import", {"admin": legacy, "source": source})
-            snapshots = clean_snapshots(value.pop("leaderboard_snapshots"), race_key(value["site_settings"]))
-            value.pop("health", None)
-            value["superadmin"] = self.config.superadmin
-            self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
-            if community_boss is not None:
-                self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
-            if avatar is not None:
-                self.avatar_in(conn, avatar)
-            if marker is not None:
-                self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?)", (self.key, encode(marker)))
-            saved = empty(value["site_settings"])
-            saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
-                         updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),
-                         count=len(snapshots["last_top15"]), warning="Only the saved Top 15 is available until Shuffle responds." if snapshots["last_top15"] else "")
-            saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
-                                    raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
-            self.live_in(conn, "shuffle", saved)
-            LOG.info("MIGRATION Imported %s; original accounts, hashes, and dates preserved. Recovery copy recorded.", source)
-        if not self.pg:
-            self.config.db_path.chmod(0o600)
+                if legacy is None:
+                    legacy = dict(version=7, users={self.config.superadmin: dict(
+                        pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
+                        secret_key=secrets.token_hex(32), site_settings=self.config.site)
+                admin, _ = upgrade_store(legacy, self.config.site, {})
+                game = admin.pop("community_boss", None)
+                game = validate_boss(game) if game is not None else None
+                avatar = validate_avatar(admin.pop("community_boss_avatar", None))
+                marker = valid_marker(admin.pop("recovery_export", None))
+                if not admin["users"]:
+                    raise StoreError("Saved account store contains no accounts. The original was not replaced.")
+                snapshots = clean_snapshots(admin.pop("leaderboard_snapshots"), race_key(admin["site_settings"]))
+                admin.pop("health", None)
+                admin["superadmin"] = self.config.superadmin
+                saved = empty(admin["site_settings"])
+                saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
+                             updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),
+                             count=len(snapshots["last_top15"]), warning="Only the saved Top 15 is available until Shuffle responds." if snapshots["last_top15"] else "")
+                saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
+                                        raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
+                value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved},
+                             boss=game, avatar=avatar, checkpoint=marker, recoveries=[])
+                self.backup_in(value, "before-rebuild-import", {"admin": legacy, "source": source})
+                LOG.info("MIGRATION Imported %s; original accounts, hashes and dates retained.", source)
+            atomic_json(self.path, value)
+            self._remember(value)
+            LOG.info("STORAGE JSON save ready. No SQL or extra service is used.")
+
+    def _import_sqlite(self):
+        """One-time, read-only bridge from the previous release. Never delete it."""
+        path = self.config.db_path
+        if not path.is_file():
+            return None
+        import sqlite3  # Standard library, used only for the old-save import.
+        try:
+            with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as old:
+                old.execute("BEGIN")
+                row = old.execute("SELECT revision,document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
+                if not row:
+                    raise StoreError("The previous local save has no matching account record. It was not replaced.")
+                admin = json.loads(row[1])
+                upgrade_store(admin, self.config.site, {})
+                if not admin.get('users'):
+                    raise StoreError('The previous local save has no accounts. It was not replaced.')
+                tables = {r[0] for r in old.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                value = dict(format=1, key=self.key, revision=row[0], admin=admin,
+                             live={r[0]: json.loads(r[1]) for r in old.execute("SELECT service,document FROM rh_live WHERE name=?", (self.key,))},
+                             recoveries=[])
+                for field, table in (("boss", "rh_boss"), ("avatar", "rh_boss_avatar"), ("checkpoint", "rh_checkpoint")):
+                    row = old.execute(f"SELECT document FROM {table} WHERE name=?", (self.key,)).fetchone() if table in tables else None
+                    value[field] = json.loads(row[0]) if row else None
+                if value['boss'] is not None: validate_boss(value['boss'])
+                validate_avatar(value['avatar'])
+                if 'rh_recovery' in tables:
+                    for reason, created, document in old.execute("SELECT reason,created,document FROM rh_recovery WHERE name=? ORDER BY created DESC LIMIT 10", (self.key,)):
+                        self.backup_in(value, reason, json.loads(document), created=created)
+        except (sqlite3.Error, ValueError) as exc:
+            raise StoreError("The old local save could not be imported. Keep it intact; no default accounts or raid replaced it.") from exc
+        LOG.info("MIGRATION Previous SQLite save imported into JSON; old file left intact. New writes use JSON only.")
+        return value
 
     def admin(self):
-        with self.connection() as conn:
-            row = self.query(conn, "SELECT revision, document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
-        if not row:
-            raise StoreError("Saved admin state is missing. Restore a verified database backup.")
-        return row[0], json.loads(row[1])
+        with self.connection() as value:
+            return value['revision'], copy.deepcopy(value['admin'])
+
+    def boss_read(self, conn):
+        return copy.deepcopy(conn.get('boss'))
+
+    def boss_write(self, conn, value):
+        conn['boss'] = copy.deepcopy(value)
 
     def avatar(self, conn):
-        row = self.query(conn, "SELECT document FROM rh_boss_avatar WHERE name=?", (self.key,)).fetchone()
-        return json.loads(row[0]) if row else None
+        return copy.deepcopy(conn.get('avatar'))
 
     def avatar_in(self, conn, value):
-        if value is None:
-            self.query(conn, "DELETE FROM rh_boss_avatar WHERE name=?", (self.key,))
-        else:
-            self.query(conn, "INSERT INTO rh_boss_avatar VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
-                       (self.key, encode(value)))
+        conn['avatar'] = copy.deepcopy(value)
 
     def checkpoint(self, marker=None):
         if marker is not None:
             marker = valid_marker(marker)
-            if marker is None:
-                raise ValueError("Invalid recovery export metadata.")
-        with self.connection(transaction=marker is not None) as conn:
-            if marker is not None:
-                self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
-                           (self.key, encode(marker)))
-            row = self.query(conn, "SELECT document FROM rh_checkpoint WHERE name=?", (self.key,)).fetchone()
-        return valid_marker(json.loads(row[0])) if row else None
+            if marker is None: raise ValueError("Invalid recovery export metadata.")
+        with self.connection(transaction=marker is not None) as value:
+            if marker is not None: value['checkpoint'] = marker
+            return copy.deepcopy(value.get('checkpoint'))
 
     def live(self, service):
-        with self.connection() as conn:
-            row = self.query(conn, "SELECT document FROM rh_live WHERE name=? AND service=?", (self.key, service)).fetchone()
-        return json.loads(row[0]) if row else None
+        with self.connection() as value:
+            return copy.deepcopy(value['live'].get(service))
 
     def live_in(self, conn, service, value):
-        self.query(conn, "INSERT INTO rh_live VALUES (?, ?, ?) ON CONFLICT(name,service) DO UPDATE SET document=excluded.document",
-                   (self.key, service, encode(value)))
+        conn['live'][service] = copy.deepcopy(value)
 
     def publish(self, service, value, expected_revision=None):
         with self.connection(transaction=True) as conn:
-            if expected_revision is not None:
-                sql = "SELECT revision FROM rh_admin WHERE name=?" + (" FOR UPDATE" if self.pg else "")
-                if self.query(conn, sql, (self.key,)).fetchone()[0] != expected_revision:
-                    raise Conflict("Race settings changed during the provider check; a new check is queued.")
+            if expected_revision is not None and conn['revision'] != expected_revision:
+                raise Conflict("Race settings changed during the provider check; a new check is queued.")
             self.live_in(conn, service, value)
 
     def save(self, value, revision, *, snapshot=None, backup_reason=None):
         with self.connection(transaction=True) as conn:
-            old = self.query(conn, "SELECT revision, document FROM rh_admin WHERE name=?" + (" FOR UPDATE" if self.pg else ""), (self.key,)).fetchone()
-            if not old or old[0] != revision:
+            if conn['revision'] != revision:
                 raise Conflict("Another administrator saved changes. Reload and review before saving again.")
             if backup_reason:
-                rows = self.query(conn, "SELECT service,document FROM rh_live WHERE name=?", (self.key,)).fetchall()
-                self.backup_in(conn, backup_reason, {"admin": json.loads(old[1]), "live": {r[0]: json.loads(r[1]) for r in rows}})
-            self.query(conn, "UPDATE rh_admin SET document=?,revision=revision+1 WHERE name=?", (encode(value), self.key))
-            if snapshot is not None:
-                self.live_in(conn, "shuffle", snapshot)
+                self.backup_in(conn, backup_reason, {'admin': conn['admin'], 'live': conn['live']})
+            conn['admin'], conn['revision'] = copy.deepcopy(value), revision + 1
+            if snapshot is not None: self.live_in(conn, 'shuffle', snapshot)
         return revision + 1
 
-    def backup_in(self, conn, reason, document):
-        self.query(conn, "INSERT INTO rh_recovery VALUES (?, ?, ?, ?, ?)",
-                   (secrets.token_hex(16), self.key, reason, int(time.time()), encode(document)))
+    def backup_in(self, conn, reason, document, *, created=None):
+        # Local recovery copies are bounded and are NOT a remote backup service.
+        created = int(time.time()) if created is None else created
+        folder = self.path.parent / 'recovery'
+        name = f"{created}-{secrets.token_hex(8)}.json"
+        atomic_json(folder / name, dict(reason=reason, created=created, document=document))
+        records = conn.setdefault('recoveries', [])
+        records.append(dict(file=name, reason=reason, created=created))
+        conn['recoveries'] = records[-10:]
+        # Retain a few additional files so a failed parent commit never deletes
+        # a recovery file still referenced by the committed state.
+        for path in sorted(folder.glob('*.json'), key=lambda p: p.stat().st_mtime_ns, reverse=True)[20:]:
+            path.unlink(missing_ok=True)
 
     @contextmanager
     def job(self, service):
-        # Reuse one dedicated connection per provider thread. Session locks
-        # prevent duplicate provider calls during an overlapping deployment.
-        if not self.pg:
-            yield True
-            return
-        conn = getattr(self.job_local, "conn", None)
-        try:
-            if conn is None or conn.closed:
-                conn = self.job_local.conn = self.connect()
-            key = int.from_bytes(hashlib.blake2b((self.key + service).encode(), digest_size=8).digest(), "big", signed=True)
-            acquired = conn.execute("SELECT pg_try_advisory_lock(%s)", (key,)).fetchone()[0]
-        except Exception:
-            self.close_job()
-            raise StoreError("Provider coordination could not reach PostgreSQL. The next scheduled check will retry.") from None
-        try:
-            yield acquired
-        finally:
-            if acquired:
-                try:
-                    conn.execute("SELECT pg_advisory_unlock(%s)", (key,))
-                except Exception:
-                    self.close_job()
+        yield True
 
     def close_job(self):
-        conn = getattr(self.job_local, "conn", None)
-        if conn:
-            conn.close()
-        self.job_local.conn = None
+        pass
 
     def close(self):
-        with self.lock:
-            if self.conn:
-                self.conn.close()
-            self.conn = None
+        pass

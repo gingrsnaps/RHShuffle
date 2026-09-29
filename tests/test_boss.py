@@ -40,6 +40,7 @@ class BossTests(unittest.TestCase):
 
     def post(self,c,value,**extra):
         state=value['state']
+        c.post('/play/api/profile', json={'raid_id':state['raid_id'], 'username':state['you']['name']}, headers={'X-CSRF-Token':value['csrf']})
         return c.post('/play/api/attack',json={'raid_id':state['raid_id'],'request_id':secrets.token_hex(16),'style':state['weakness'],**extra},headers={'X-CSRF-Token':value['csrf']})
 
     def test_two_players_share_health_and_separate_identity(self):
@@ -80,25 +81,25 @@ class BossTests(unittest.TestCase):
 
     def test_cooldown_fractional_seconds_and_browser_limit_across_ips(self):
         self.hit()
-        self.time.return_value=self.start+59.99
+        self.time.return_value=self.start+29.99
         with self.assertRaises(BossError) as blocked:self.hit(ip='192.0.2.2')
         self.assertEqual(blocked.exception.status,429)
-        self.time.return_value=self.start+60
+        self.time.return_value=self.start+30
         self.assertEqual(self.hit(ip='192.0.2.2')['hit']['damage'],150)
         validate_boss(self.b.export())
 
-    def test_daily_allowance_rollover_and_shared_network(self):
-        for i in range(40):
-            self.time.return_value=self.start+i*60
+    def test_unlimited_hits_and_shared_network_cooldown(self):
+        for i in range(100):
+            self.time.return_value=self.start+i*30
             self.hit()
-        self.time.return_value=self.start+40*60
-        with self.assertRaises(BossError) as blocked:self.hit()
-        self.assertEqual(blocked.exception.code,'daily_limit')
-        with self.assertRaises(BossError):self.hit(guest='cookie-cleared')
-        with self.assertRaises(BossError):self.hit(ip='192.0.2.2')
-        self.assertEqual(self.b.status('a','192.0.2.1')['you']['remaining'],0)
+        self.assertEqual(self.b.status('a','192.0.2.1')['you']['attacks'],100)
+        self.assertIsNone(self.b.status('a','192.0.2.1')['you']['remaining'])
+        with self.assertRaises(BossError) as blocked:self.hit(guest='cookie-cleared')
+        self.assertEqual(blocked.exception.code,'cooldown')
+        self.time.return_value += 30
+        self.assertEqual(self.hit()['state']['you']['attacks'],101)
         self.time.return_value=int(self.start)+DAY
-        self.assertEqual(self.hit()['state']['you']['remaining'],39)
+        self.assertEqual(self.hit()['state']['you']['attacks'],102)
 
     def test_ipv6_normalization_and_mapped_ipv4(self):
         self.hit(ip='2001:db8::abcd')
@@ -150,14 +151,14 @@ class BossTests(unittest.TestCase):
             self.assertEqual(view['hp'], hit['state']['hp'])
             self.assertEqual(view['total_damage'], 150)
             self.assertEqual(self.b.export(), saved)
-        self.assertEqual(view['you']['remaining'], 40)
+        self.assertIsNone(view['you']['remaining'])
         self.b.control('pause', saved['id'])
         self.time.return_value += DAY
         self.b.control('resume', saved['id'])
         self.assertEqual(self.b.status()['hp'], saved['hp'])
         # Reloaded HTML must not briefly label a damaged boss as 100% health.
         page = self.app.test_client().get('/play')
-        self.assertIn(f'id="bossPercent">{saved["hp"] / saved["max_hp"] * 100:.2f}%</span>', page.text)
+        self.assertIn(f'id="bossPercent">{(saved["max_hp"] - saved["hp"]) / saved["max_hp"] * 100:.2f}% defeated</span>', page.text)
 
     def test_cold_app_restart_retains_all_committed_damage(self):
         self.hit()
@@ -289,22 +290,20 @@ class BossTests(unittest.TestCase):
         try:self.assertEqual(CommunityBoss(store).export(),before)
         finally:store.close()
 
-    def test_one_hundred_active_raiders_need_multiple_days(self):
-        # Simulate 100 real profiles/IPs, 40 matching manual attacks per day.
-        # Server time moves; no real sleeps or network calls are needed.
-        ended_day=None
-        for day in range(4):
-            for turn in range(40):
-                self.time.return_value=self.start+day*DAY+turn*60
-                for player in range(100):
-                    hit=self.hit(f'raider-{player}',f'203.0.113.{player+1}')
-                    if hit['state']['hp']==0:
-                        ended_day=day+1; break
-                if ended_day:break
-            if ended_day:break
-            self.assertGreater(self.b.status()['hp'],0)
-        self.assertEqual(ended_day,4)
-        self.assertGreaterEqual(self.time.return_value-self.start,3*DAY)
+    def test_one_hundred_raiders_can_keep_attacking_without_a_daily_cap(self):
+        # 100 profiles all using weaknesses: 150 rounds defeat default HP.
+        # This deliberately verifies the faster requested uncapped balance.
+        finished = False
+        for turn in range(150):
+            self.time.return_value=self.start+turn*30
+            for player in range(100):
+                hit=self.hit(f'raider-{player}',f'203.0.113.{player+1}')
+                if hit['state']['hp']==0:
+                    finished=True; break
+            if finished: break
+        self.assertTrue(finished)
+        self.assertEqual(turn,149)
+        self.assertEqual(self.time.return_value-self.start,4470)
 
 
 if __name__=='__main__':unittest.main()

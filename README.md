@@ -1,486 +1,278 @@
-# RedHunllef Wager Race + Community Boss
+# RedHunllef
 
-Release **2026.09.28-boss-controls**. Run the complete app with **`python wager_backend.py`**.
-No PostgreSQL service, database connection string, account-creation script, or
-separate update worker is required. Python's built-in SQLite creates a local
-file automatically. The red theme, original credentials, original Superadmin,
-public Top 15, private Code Red list, and automatic 60-second updates remain.
+Release **2026.09.28-community-polish**. This is the complete configured application.
+Run **`python wager_backend.py`**. All supporting modules load automatically.
+There is no database server, SQL setup, extra worker, scheduler or account-creation
+command. The app saves its state to `data/state.json` automatically.
 
-## This update: admin-only boss controls
+## What this update includes
 
-The game page now focuses on the arena, attacks, HP, cooldowns and contributions.
-Tutorials, story paragraphs, the badge explanation panel and the game footer
-are removed. Gameplay rules and automatic updates stay the same.
+Suggestions **2–9** are implemented. Suggestions **1 and 10** are excluded:
+the eight achievements and their progress display are unchanged, and no external
+backup service or storage account has been added.
 
-Sign in with a current administrator account and open **Admin → Community boss**.
-Both ordinary admins and the Superadmin can manage the boss:
+| Change | Result |
+| --- | --- |
+| Returning players | A saved name collapses to “Playing as…” with an Edit button. |
+| Player recovery | A private recovery code restores the original player after cookie loss, including hits, badges and cooldown. |
+| Shared connections | Admins can approve 2–10 separate players on a household connection. The default remains one. |
+| Boss planning | Recent damage/hour, an estimated time remaining, and presets that fill the **next raid** HP field. Nothing adjusts HP automatically. |
+| Red rally | Fifteen distinct raiders hitting within ten minutes unlock a cosmetic arena effect for that raid. No damage bonus. |
+| Safer host edits | Live HP before/after and damage previews, plus the last 100 boss admin actions with account, time and changed values. |
+| Cleaner interface | Remembered attack style, compact large totals with exact values available, consistent boss names, steady attack controls and restrained red accents. |
+| Clearer refresh status | Boss “Last checked” age, and separate successful provider checks versus content-change times in admin. |
+| Request protection | Bursts of rejected attacks/registration attempts are briefly throttled and flagged to admins. No automatic bans. |
+| Simpler saves | Atomic UTF-8 JSON, with automatic import of the previous local save. No SQL is used for ongoing operation. |
 
-- **Boss avatar:** choose a PNG, JPG, JPEG or WebP and press **Upload avatar**.
-  The server validates the image contents, removes metadata and resizes it to
-  fit 512 × 512 pixels. Uploads may be up to 4 MB and 16 million pixels.
-  **Use original avatar** restores the supplied logo. Site branding is unchanged.
-- **Current raid health:** enter the new **Maximum HP**, check the confirmation
-  and press **Save health**. The range is 100,000–100,000,000. Remaining HP is
-  the new maximum minus all damage already dealt. Contributions, cooldowns,
-  allowances and the raid identity are retained. The maximum cannot be below
-  damage already dealt. Raising it can deliberately reopen a defeated boss.
-- **Start a new raid** remains a separate confirmed action. It archives a
-  summary, resets players and allowances, and retains the avatar, name and damage settings.
-- **Boss name & damage:** set the displayed name (1–60 printable characters),
-  base damage, weakness damage and every-tenth-hit burst bonus. Base/weakness
-  damage must be 1–10,000, the bonus 0–10,000, and weakness damage at least base
-  damage. These values apply only to future hits. Saved contributions, old
-  attack receipts and cooldowns remain unchanged. Concurrent settings edits
-  receive a conflict instead of silently replacing a newer admin change.
+**Hits have no daily or weekly limit.** A player can keep attacking whenever the
+**30-second server cooldown** expires. Achievements are milestones, not attack
+quotas. Approved household players each retain their own 30-second cooldown.
+An eligible hit remains allowed even when rejected-request throttling is active.
 
-| Capability | Public visitor | Admin | Superadmin |
-| --- | --- | --- | --- |
-| View the game, avatar, name and current stats | Yes | Yes | Yes |
-| Attack under the saved game rules | Yes | Yes | Yes |
-| Upload/reset avatar; edit name, maximum HP or attack damage | No | Yes | Yes |
-| Pause/resume or start a new raid | No | Yes | Yes |
-| Manage admin accounts or download private recovery files | No | No | Yes |
+## Keep your current progress when updating
 
-All boss management writes use a POST-only admin endpoint with a verified current account,
-session version and CSRF token. Guest cookies, public CSRF tokens and supplied
-role flags cannot grant access. Removed accounts and revoked sessions lose access.
-Uploads are decoded only after the authorization checks. Public attacks submit
-a style and receipt; the server computes damage from saved settings and ignores
-forged damage/HP/settings fields. Public pages contain no upload or edit forms.
-Uploaded images remain publicly viewable because they are the game's avatar.
-
-Avatar, name, damage and health edits appear on open game/admin pages within the normal
-five-second update cycle. The homepage invitation uses its normal 60-second
-cycle. Unsaved admin fields are not overwritten by polling. A stale health
-form is rejected if another health edit or a new raid was saved meanwhile.
-
-**Automatic health regeneration remains off.** Attacks, cooldowns, daily resets,
-refreshes, inactivity, pause/resume and process restarts with the same saved
-file never restore HP. Only an explicit host health edit or a new raid can
-raise health. The browser accepts such an edit only with its newer health
-revision; ordinary or stale responses cannot undo committed damage.
-
-Avatar bytes are stored separately from raid counters, so each attack does not
-rewrite the image. Images use versioned URLs and browser caching; state feeds
-contain only the URL. Private recovery checkpoints include the avatar, name, damage settings and HP
-edits. Pillow is the one new Python dependency and is included in requirements.
-
-## Upgrade this installation
-
-1. Download a current **private recovery checkpoint** before updating a hosted
-   instance. Retain your existing `data/` folder on a persistent host.
-2. Replace the application code, templates, static files and requirements with
-   the contents of `redhunllef-rebuilt/` in this ZIP. Keep your current private
-   configuration and newer `private/recovery.seed.json`. This ZIP contains no
-   runtime `data/` folder or blank recovery file that overwrites progress.
-3. Run `python -m pip install -r requirements.txt` (or redeploy with the same
-   build command) to install Pillow along with the existing dependencies.
-4. Run only `python wager_backend.py`. The new local image table is created
-   automatically; existing accounts and raid state take precedence over seeds.
-
-On App Platform, commit the downloaded checkpoint as `private/recovery.seed.json`
-in your private repository before redeploying. Local container files, including
-uploaded avatars, can be lost on replacement. A checkpoint restores only what
-was saved in it. The detailed storage section below explains this limitation.
-
-## Included community improvements
-
-- A shorter homepage with live boss health, raider count, and a play button that
-  reflects an active, paused, or completed raid.
-- Fixed mobile attack controls: choose a style, see your remaining allowance,
-  and attack without scrolling back up. They share the main button's cooldown
-  and safe retry receipt.
-- Cosmetic 25%, 50%, and 75% milestones, arena changes, a victory recap with
-  every contributor, and a copy-link button.
-- Attack errors stay visible until dismissed, retried, or resolved by a
-  confirmed receipt. Ordinary successful polls cannot erase them.
-- Compact connection summaries in the dashboard. Expand **Live connections**
-  to see timings and provider controls; new failures open the details automatically.
-- Side-by-side review before publishing changed dates, prizes, text, links,
-  channel, or campaign. Confirmation is signed, expires after 15 minutes, and
-  applies only to the exact changes reviewed.
-- Private recovery export tracking, progress since the last export, and a
-  read-only recovery-file review with account/race/game totals.
-- Conditional public updates, retained unchanged game rows, animation without
-  forced layout reads, shared game-rule constants, and readable JS/CSS source.
-
-See [docs/COMMUNITY_UPDATE.md](docs/COMMUNITY_UPDATE.md) for implementation and
-upgrade details. Cosmetic rewards do not increase damage or shorten the raid.
-
-## Community boss: ready at /play
-
-Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
-attacks one shared Crimson Hunllef. The red arena uses your original logo or uploaded avatar,
-animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
-bonuses, personal progress, milestones, Top 10 raiders, recent hits, and
-past raid summaries. Victory includes the full contributor list.
-The page contains just the game and its controls. There is no signup or separate launch step.
-The homepage Admin footer link is removed; sign in directly at **`/admin`**.
-The admin dashboard also omits the site footer.
-
-Default balance (before any admin damage edits): **2,400,000 HP**, **one manual attack every 60 seconds**, and
-**40 attacks per raid day** per browser and shared network. Matching the current
-weakness deals 150 damage instead of 100; every tenth personal hit adds 100.
-A 100-person community making 20–40 mostly matching attacks daily should take
-roughly **4–8 raid days**. This assumes active daily participation, not merely
-100 community members. The fastest tested 100-person scenario finishes on day
-four. Raid days are 24-hour periods from the first successful community hit.
-No damage regenerates. Victory remains until the host explicitly increases HP or opens a new raid.
-
-The game refreshes every **5 seconds** while visible, with a local countdown
-between updates. Shuffle and Kick continue their original **60-second** checks.
-All attacks and limits are enforced by the server in an atomic transaction.
-A lost-response retry uses the same receipt so that click cannot land twice.
-No WebSocket server, Redis, Node runtime or remote database is needed. Pillow
-handles image decoding. Keep **one instance** in local mode.
-
-**Admin → Community boss** provides avatar uploads, boss name, attack damage,
-current-raid maximum HP, pause/resume and new-raid difficulty for signed-in
-admins. Private recovery downloads remain Superadmin-only. Game writes do not
-change race settings or wagers.
-
-Read [docs/COMMUNITY_BOSS.md](docs/COMMUNITY_BOSS.md) for the rules, balancing,
-privacy limits, and recovery process. Multi-day game progress is part of the
-private recovery checkpoint; save it regularly and before redeploying.
-
-## Storage and existing functionality
-
-The previous release refused to start in production without PostgreSQL. That
-requirement is removed. Storage now defaults to `STORAGE_MODE=local`, including
-on DigitalOcean App Platform. A leftover `DATABASE_URL` is ignored in local
-mode, so an unresolved database placeholder cannot stop startup. Web security
-still uses production cookies and proxy handling; local storage does not turn
-on Flask debug mode or weaken login protection.
-
-The PostgreSQL driver is removed from the normal dependency list. Optional
-compatibility for existing PostgreSQL installations remains separate.
-
-A new **Private recovery file** download in Settings lets the Superadmin save
-accounts, password hashes, the session signing key, race settings, overrides,
-history, audit entries, bans, the last Top 15, the complete community boss state, and its uploaded avatar. A fresh instance imports it
-automatically from `private/recovery.seed.json`. Existing saved local state
-always wins over seed files. Original provider credentials stay in the existing
-configuration; the recovery download does not export the provider configuration.
-
-## What persists on App Platform
-
-**App Platform local files are temporary.** Redeploying, replacing, or scaling
-an instance can discard changes made inside it. This includes edited race
-dates, passwords, new accounts, overrides, history, all community boss progress, and uploaded avatars. A replacement starts
-from the files committed to your repository, including your latest recovery
-seed if you supplied one. Live standings and Kick status are fetched again.
-
-The recovery download is a manual checkpoint, not automatic cloud persistence.
-Save a new copy after important changes and add it to your private repository
-before a planned redeploy. Changes since your last checkpoint can still be lost
-in an unexpected container replacement. The admin panel and startup logs state
-this limitation. Keep the app at **one instance** because each instance has its
-own local file.
-
-On a persistent Linux host, the same local file survives process restarts as
-long as its disk is preserved. The application cannot make App Platform's
-container disk persistent. DigitalOcean documents this behavior here:
-[App Platform data storage](https://docs.digitalocean.com/products/app-platform/how-to/store-data/).
-
-## Install and run
-
-Use Python 3.12 or newer. The package pins Python 3.13.12 for App Platform.
+1. Stop the running app before replacing its code. Keep a copy of the existing folder.
+2. Merge the application files from this complete ZIP into the existing folder.
+   Preserve your current `data/`, `private/`, root settings/account files, and
+   environment settings. Do not replace newer private files with the bundled
+   original seed. Do not create another nested project folder.
+3. Keep **every root `.py` module** beside `wager_backend.py`; they are imports,
+   not separate programs to launch. Missing `race_support.py` means the package
+   was not copied in full; it is not a pip package.
+4. Install the requirements, then start the same launcher:
 
 ```bash
 python -m pip install -r requirements.txt
 python wager_backend.py
 ```
 
-Local URLs: `http://127.0.0.1:8080/` and `http://127.0.0.1:8080/admin`.
-Install dependencies once during setup/build. Supporting Python modules are
-imported automatically. Node is not required to run the website.
+On an existing persistent disk, startup first uses `data/state.json`. If that file
+does not yet exist and the previous `data/redhunllef.sqlite3` exists, the app
+imports its accounts, hashes, settings, live snapshots, boss, avatar and recovery
+metadata into JSON. That import uses Python's built-in SQLite reader only once.
+The old file is left intact. Keep it as a rollback copy; it is no longer updated.
+A malformed existing save stops startup with a clear message instead of resetting
+accounts or raid progress.
 
-The default local file is `data/redhunllef.sqlite3`. The app creates it and its
-tables automatically. Paths resolve from the installed project, so startup also
-works from another working directory. Preserve `data/` when updating files on
-a persistent host. Do not delete it to fix an unrelated deployment problem.
+If your older installation set `LOCAL_DATABASE_PATH`, retain it for the one-time
+import. `STATE_FILE` can select a different JSON path, but no setting is required.
+Existing JSON wins over old files and seeds. Do not delete it to reset an account.
 
-## DigitalOcean App Platform: no database setup
+**App Platform deployment is different:** its replacement container cannot see
+the old container's local files. Before redeploying, use the existing Superadmin
+**Settings → Private recovery file** download and put the latest file in your
+private repository as `private/recovery.seed.json`. Startup imports it on a fresh
+filesystem. Changes made after that download will not be in that recovery file.
 
-1. Replace the application files in your **private** GitHub repository with the
-   contents of `redhunllef-rebuilt/` from this ZIP. Keep your existing provider
-   configuration and any newer recovery file. If the code lives in a subfolder,
-   choose that folder as the service's source directory.
-2. Configure a **Python Web Service** with **one instance**. You do not need to
-   add a database component.
-3. Use these settings:
+## Fresh installation
 
-   | Setting | Value |
-   | --- | --- |
-   | Build command | `python -m pip install -r requirements.txt` |
-   | Run command | `python wager_backend.py` |
-   | HTTP port | `8080` |
-   | Health check | `/healthz` |
-   | Instances | `1` |
+Extract the entire `redhunllef-rebuilt/` folder, open a terminal in it, and use the
+two commands above. Visit `http://localhost:8080`, `/play`, and `/admin`.
 
-4. Set the following runtime environment variables:
+The original supplied Superadmin is **gingrsnaps / enok2121**. The bundled original
+account hashes and Shuffle/Kick configuration are preserved. Existing saved
+accounts and changed passwords take precedence. There is no `manage_admin.py`
+step. The configured ZIP and `FULL_CODE_BLOCKS.md` contain private configuration;
+keep them in your private repository.
 
-   | Name | Value |
-   | --- | --- |
-   | `APP_ENV` | `production` |
-   | `STORAGE_MODE` | `local` (also the default when omitted) |
-   | `PORT` | `8080` |
-   | `TRUST_APP_PLATFORM` | `1` |
-   | `SESSION_COOKIE_SECURE` | `always` |
+Requirements include Waitress, Pillow and timezone data. If an import such as
+`waitress`, `PIL` or `tzdata` is missing, run `python -m pip install -r requirements.txt`
+using the same Python environment that runs the app. `PIL` is supplied by Pillow.
+No Node, frontend build, database package or separate game process is needed.
 
-   `DATABASE_URL` is unnecessary and ignored in local mode. Remove an obsolete
-   `${race-db.DATABASE_URL}` binding from the service if you added one, because
-   DigitalOcean may try to resolve bindings before starting Python. Do not
-   delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.28-boss-controls** and **Local file ready; no
-   external database is required**. Open the HTTPS app URL and `/admin`.
-6. Reload your browser with Ctrl+F5. Review the published race dates and provider
-   results. Publish the desired schedule if the original seeded race has ended.
-7. After important changes, use **Settings → Private recovery file** and follow
-   the recovery instructions below.
+## DigitalOcean App Platform
 
-The included `app.yaml` has one web service and no database component or database
-binding. Replace its repository placeholder before importing it. If your app
-already has other components, edit its existing configuration instead of
-replacing it wholesale with this standalone template. The `.env.example` file
-is a reference; the app does not automatically read `.env` files.
+Use one **Web Service** from the private GitHub repository containing these files.
+Set the source directory to the folder containing `wager_backend.py`.
 
-`/healthz` checks the process. `/readyz` also checks storage and source freshness;
-it can return 503 before the first successful source update or during an outage.
-Use `/healthz` for deployment health checks so a Shuffle outage does not trigger
-repeated container replacements.
+**Build command**
 
-## Original login, credentials, and dates
-
-The original login is **gingrsnaps / enok2121**. Existing accounts keep their
-current passwords when their local file or newer recovery seed is retained.
-The protected Superadmin can add administrators from Settings. No management
-script is required.
-
-| File | Purpose |
-| --- | --- |
-| `private/settings.json` | Original Shuffle key, Kick client ID/secret, channel, campaign, defaults, and links. |
-| `private/admin_store.seed.json` | Original account/password hash, saved dates, and original records. |
-| `private/recovery.seed.json` | Optional newer checkpoint downloaded by you; not supplied as a blank file. |
-
-The two supplied private configuration files and both logo assets match the
-original uploaded bytes. Keep the configured ZIP, full-code document, recovery
-files, and repository private. Public APIs never expose account hashes or
-provider credentials.
-
-Nonempty provider environment values override packaged credentials:
-`SHUFFLE_API_KEY` (or legacy `API_KEY`), `KICK_CLIENT_ID`, and `KICK_CLIENT_SECRET`.
-The remaining precedence is root `settings.json`, root `integrations.json`, then
-`private/settings.json`. An explicit `SETTINGS_PATH` disables the implicit
-private settings fallback. Restart after changing provider credentials.
-
-The original admin seed saves **August 4–11, 2026, 6 PM Eastern**. The original
-settings defaults instead contain August 18–25. Saved admin dates win. Neither
-window is silently advanced at startup. Newer local state or your recovery seed
-keeps its saved dates.
-
-## Save and restore a private recovery file
-
-1. Sign in as the Superadmin and open **Settings → Private recovery file**.
-2. Choose **Download private recovery file**. The filename is
-   `recovery.seed.json`. It contains password hashes and a session signing key;
-   store it privately. The dashboard records when the export was generated and
-   reports later hits, damage, and changes. It cannot confirm that you saved the
-   download elsewhere. Expand **Check a recovery file before restoring** to
-   validate its contents and review totals without changing the running site.
-3. For a fresh App Platform deployment, add that file to your private GitHub
-   repository as **`private/recovery.seed.json`**, then redeploy.
-4. The app imports it automatically if no saved state exists. Check your login,
-   dates, overrides, history, boss health, and personal raid progress. The saved Top 15 appears until a live check
-   loads the complete current standings. The uncensored Code Red list and Kick
-   status are fetched again.
-
-A recovery seed never overwrites a populated local store. On a persistent host,
-back up the existing project and `data/` before any deliberate replacement.
-A corrupt recovery file stops import with an error rather than resetting your
-accounts to the original defaults.
-
-The ordinary **Download race backup** remains available to administrators and
-excludes passwords/account records and the community boss. Its restore form previews the saved race
-before replacing the current race; current accounts stay intact. Use the private
-recovery download when account recovery is needed. Internal rollback checkpoints
-remain local and do not protect against App Platform discarding the container.
-
-## Upgrade an existing installation
-
-Keep the current `data/` folder, any newer root settings/integrations files,
-and any newer `private/recovery.seed.json`. Replace the application modules,
-templates, and assets together. Back up before replacing files, install the
-requirements, then run the same sole launcher.
-
-For a fresh local store, initialization checks a recovery seed first, then
-root `admin_store.json`, then the original packaged account seed. Existing saved
-state takes priority over all seeds. Legacy files are read without modification;
-password hashes are preserved. The migration records a private local checkpoint.
-
-If you actually have newer accounts/settings in PostgreSQL, this local build
-does not automatically copy them. Keep the database intact and export those
-records before switching to local storage. Optional PostgreSQL compatibility
-is described at the end of this README.
-
-## Race publication and live updates
-
-- Change dates under **Race → Save race settings → Confirm and publish race**.
-  A side-by-side table lists every changed setting. Review it and use the
-  bottom confirmation button. Changing the form after
-  reviewing requires a new review. **Published window** shows saved dates;
-  edited form values remain a draft until confirmed.
-- Independent Shuffle and Kick jobs start automatically and run every **60
-  seconds**. There is no live-mode switch or second worker command. Slow calls
-  do not hold up the website or the other provider.
-- Both public/admin pages use the same published snapshot and poll every 60
-  seconds while visible. Returning to a hidden tab checks immediately. Public
-  `/public-state` requests use ETags; unchanged data returns a body-free 304 and
-  a fresh server-time header. Admin and personal game responses remain no-store.
-- Manual refreshes queue one follow-up even if a check is already running.
-  Repeated clicks coalesce. The admin briefly polls every two seconds after a
-  manual request or date publication, then returns to its normal cadence.
-- Every admin tab has a connection summary and expandable provider results.
-  New failures open the details. A queued retry displays its reason and retry
-  time. Request tickets connect completion to the requested refresh.
-- Successes and failures from old settings cannot publish over a newer race.
-  An old ordinary retry delay is cleared when dates change; provider rate limits
-  and explicit `Retry-After` instructions are still honored.
-- Failed checks retain the last results and mark them delayed. An error never
-  fabricates zero wagers or labels Kick offline. Future races wait for their
-  start; ended races continue checking their saved range for final corrections.
-- Shuffle uses the original affiliate endpoint and `startTime`/`endTime` range.
-  A rejected range never falls back to lifetime totals. Decimal calculations,
-  original sum/max aggregation, $0.01 qualification, and existing weighting and
-  prizes remain. Invalid source rows are disclosed; a wholly invalid response
-  retains the previous board.
-- Kick uses app-token authorization, caches tokens, and retries authentication
-  once after HTTP 401. Unknown status differs from confirmed offline.
-
-The earlier native form-action collision, JSON error handling, UTF-8 startup
-fix, stopped-worker recovery, and draft preservation remain included. Provider
-latency and browser scheduling can delay delivery; a 60-second interval does
-not mean the external provider necessarily publishes new results every minute.
-
-## Visitor IP addresses on DigitalOcean
-
-`TRUST_APP_PLATFORM=1` tells the app to use the validated **DO-Connecting-IP**
-header for visitor identity. DigitalOcean documents that header; do not use
-`X-Forwarded-For` as a substitute for per-player cooldowns. Without the expected
-header, game attacks are unavailable with a clear setup response instead of
-silently sharing an ingress address across all players.
-
-Set `TRUST_APP_PLATFORM=0` on a local/direct Python host. Forwarded headers are
-then ignored. Enable the App Platform setting only behind its trusted ingress;
-placing a directly accessible server behind an untrusted header permits spoofing.
-Official reference: [DigitalOcean client IP header](https://docs.digitalocean.com/support/where-can-i-find-the-client-ip-address-of-a-request-connecting-to-my-app/).
-
-## Dashboard and appearance
-
-**Overview** shows the countdown, prize pool, player count, source freshness,
-and shortcuts to race and boss controls. **Race** edits Eastern Time dates, all 15 prizes,
-site text, links, channel, and campaign. DST edge cases receive field errors.
-
-**Players** shows full usernames, weighted/raw totals, filters, exports, and
-editable weighted overrides. Expand **Community wagerers** for up to 100
-confirmed Code Red users, with search and copy buttons. Public usernames stay
-masked as two characters plus six asterisks. Default loaded-player capacity is
-300, configurable with `FULL_LEADERBOARD_MAX` from 100 to 10,000; filters operate
-on loaded records. Overrides do not change source/raw totals.
-
-**Settings** contains passwords, Superadmin account management, race backups,
-private recovery, race history, redacted diagnostics, IP bans, and activity logs.
-Native forms/navigation remain usable without JavaScript; automatic browser
-updates require JavaScript.
-
-The red theme uses the original logo's #ff2d2d, burgundy panels, red active tabs,
-and darker red buttons. It includes responsive layouts, keyboard focus states,
-and reduced-motion support. No remote fonts or frontend framework are required.
-
-## Console output and troubleshooting
-
-```text
-START RedHunllef 2026.09.28-boss-controls listening on 0.0.0.0:8080; storage=local SQLite.
-STORAGE Local file ready; no external database is required.
-LIVE Automatic Shuffle and Kick checks started; cadence=60s.
+```bash
+python -m pip install -r requirements.txt
 ```
 
-Hosted local storage also logs the App Platform persistence limitation. Provider
-logs show the requested window, outcome, and duration without API credentials.
+**Run command**
 
-| Symptom | Action |
+```bash
+python wager_backend.py
+```
+
+| Setting | Value |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.28-boss-controls; use `python wager_backend.py`. |
-| DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
-| Missing Flask, Waitress, tzdata, or PIL | Install `requirements.txt` with the Python used to launch. |
-| Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
-| Dates do not publish | Use the bottom **Confirm and publish race** button and verify **Published window**. |
-| Refresh appears unchanged | Expand **Live connections**. It distinguishes unchanged/empty results from errors or queued retries. |
-| Credentials fail with HTTP 401/403 | Check the provider permissions and selected credential source in diagnostics. |
-| Edits disappeared after a redeploy | A new container started from repository seeds. Restore your saved checkpoint; unsaved-to-checkpoint changes cannot be recovered from the discarded disk. |
-| Local storage cannot be read/written | Check disk space and directory permissions; preserve the existing file. |
+| HTTP port | `8080` |
+| Health check | `/healthz` |
+| Instance count | `1` |
+| `APP_ENV` | `production` |
+| `PORT` | `8080` |
+| `TRUST_APP_PLATFORM` | `1` |
+| `SESSION_COOKIE_SECURE` | `always` |
 
-## Game troubleshooting
+`app.yaml` contains the same deployment shape; replace its GitHub repository
+placeholder if you import that specification. `Procfile` uses the same launcher.
+Remove an obsolete database binding from the App Platform environment: the
+platform may try to resolve that binding before Python starts. This build ignores
+`DATABASE_URL` and `STORAGE_MODE`; it never connects to PostgreSQL.
 
-| Symptom | Action |
+Keep one instance. Each App Platform instance has its own temporary filesystem,
+so multiple replicas would split the raid. A process restart that keeps the same
+data folder preserves progress; a container replacement or redeployment does not.
+DigitalOcean documents this restriction in
+[Store Data in App Platform](https://docs.digitalocean.com/products/app-platform/how-to/store-data/).
+This release adds no external persistence service. The existing manual recovery
+export is the available checkpoint method on App Platform. On a persistent Linux
+host, preserve the `data/` folder during code updates.
+
+Use `TRUST_APP_PLATFORM=1` only behind App Platform ingress. The app then uses
+`DO-Connecting-IP` for player connections. On a directly exposed/local host, leave
+it unset or `0`. Arbitrary client forwarding headers are not accepted as identity.
+
+## Accounts and automatic updates
+
+`/admin` renders the login or dashboard directly. All management routes require a
+current admin account, an unrevoked session, and CSRF protection for writes.
+The Superadmin manages administrator accounts and downloads full private recovery.
+Other current admins can manage boss controls, avatars, household allowances and
+view full player names in the private Top 5.
+
+Both Shuffle and Kick are checked **automatically every 60 seconds**, by independent
+threads inside the sole launch process. There is no live-data switch or manual-only
+mode. The public leaderboard and admin provider views refresh every 60 seconds;
+a manual source refresh shows progress until the check finishes. Boss public and
+admin views refresh every **5 seconds**. Hidden browser tabs pause their own polling
+and catch up when visible; the server's source jobs continue.
+
+The original seed's race window is historical. To publish the intended window,
+open **Race**, edit the Eastern Time dates, choose **Save race settings**, review the
+changes, then **Confirm and publish race**. Check the published window in
+**Live connections**. A successful source check does not necessarily mean wager
+values changed; both times are shown separately. Failures retain previously
+confirmed data and show the reason. No lifetime-wager fallback or fabricated data
+replaces a failed live response.
+
+The public leaderboard masks names. The admin Players tab retains the collapsible
+first 100 confirmed Code Red wagerers, search, full names, exports and overrides.
+Provider keys are read from the original private configuration, with nonempty
+runtime environment overrides available for `SHUFFLE_API_KEY`, `KICK_CLIENT_ID`
+and `KICK_CLIENT_SECRET`.
+
+## Community boss
+
+Open `/play` or the homepage boss button. Save a self-reported Community/Shuffle
+username once, then choose Blade, Bow or Magic. Your full submitted name is visible
+to you and administrators; other visitors see a raider alias.
+
+| Rule | Behavior |
 | --- | --- |
-| “Connection setup needed” | On App Platform set `TRUST_APP_PLATFORM=1` and check that ingress supplies `DO-Connecting-IP`. For direct/local hosting use `0`. Do not run a directly exposed server with proxy trust enabled. |
-| Shared cooldown on Wi-Fi | Intended: one network shares the 60-second cooldown and 40-hit allowance. A separate signed browser identity also keeps its own allowance when its network changes. |
-| “Retry last strike” | The response was lost. Click it to resend the same receipt safely. A state update may confirm the hit first. It never auto-attacks. |
-| Progress changed after deploy | Local container state was replaced. A new instance starts from your last committed `private/recovery.seed.json`, or a fresh boss if it has none. |
-| Raider name changed | Cookies were cleared/expired, a different browser is in use, or the host started a new raid. No account sign-in is needed. |
-| Old raid form rejected | Another raid started after you opened the tab. Reload to review it before submitting controls again. |
+| Attack cooldown | 30 seconds, checked by the server. |
+| Daily/weekly quota | None. |
+| Default damage | 100 base, 150 weakness, +100 burst every tenth hit. Admin-editable. |
+| Weakness | Random stable draw every 10 minutes, shared by all players. Repeats are valid. |
+| Health | Never regenerates automatically. Confirmed damage stays saved. |
+| Progress bar | 0% to 100% defeated, based on remaining/max HP. |
+| Input re-arm | Mouse pointer must leave the attack button; keyboard must release its activation key; touch taps work on release. |
+| Red rally | 15 distinct raiders in a rolling 10-minute window; cosmetic arena lighting lasts until a new raid. |
+| Achievements | Existing eight badges and progress display retained; achievement history carries across raids. |
+
+The pointer rule discourages a stationary clicker. It cannot prove that a human
+clicked; the server independently enforces identity, cooldowns, damage and
+idempotent receipts. Retrying an unconfirmed hit never deals damage twice.
+
+Expand **Player recovery**, create a code, and save the text file somewhere private.
+Only a digest of the code is saved. The full code is shown in that response, not
+published in game feeds or stored in browser local storage. Creating a replacement
+invalidates the previous code. The code restores the same player identity, so it
+does not erase cooldowns, receipts or contributions. It also works after a new
+raid. It requires the same saved app secret and profile data; it cannot restore a
+profile after all server saves have been lost. Anyone with a valid code can use
+that player profile, so do not post it publicly.
+
+One username per connection remains the default. If several real household members
+share an IP, an admin can approve that connection using an already registered
+player's name and a total allowance of 2–10 players. Each uses a separate browser
+profile and retains a separate 30-second cooldown. The allowance caps registered
+household identities, **not hits**. To reduce it, release other connection claims
+first. A Shuffle spelling match or an IP is never treated as account ownership
+verification; the current feed does not provide a trustworthy player-IP mapping.
+
+## Boss administration
+
+Use **Community boss** in the admin menu:
+
+- Upload PNG, JPG, JPEG or WebP. The server validates real image content, file size,
+  dimensions and animation before resizing to a safe PNG. Public visitors can view
+  the avatar; only current admins can replace or reset it.
+- Rename the boss and set future base/weakness/burst damage. The preview shows both
+  normal and tenth-hit totals together. Existing damage is retained.
+- Change maximum HP or set remaining HP explicitly. The preview uses current
+  confirmed health. Saving requires confirmation; stale admin revisions cannot
+  overwrite another admin's edit. Raising health is an explicit admin heal.
+- Review recent pace and time remaining. Estimates require at least five minutes,
+  ten hits and positive damage. Presets target roughly three, five or seven days
+  **at the observed pace**. Before enough activity exists, 10M/25M/50M are starting
+  suggestions, not promised durations. Presets only fill the new-raid field.
+- Start a new raid only after confirming. Names, recovery digests, achievements,
+  household allowances, avatar and combat settings carry forward. Current raid
+  contributions/cooldowns reset and the previous raid is summarized in history.
+- View the uncensored Top 5, shared connection allowances, the last 100 saved boss
+  admin actions and temporary rejected-request flags. Normal timer-perfect hits
+  are never flagged merely for regular timing. Flags are diagnostic, not bans.
+
+Whole-number maximum HP accepts `1` through `9,007,199,254,740,991` (the browser's
+largest exact integer). Remaining HP accepts `0` through the current maximum;
+zero defeats the boss. Damage components accept `0` through that same exact-integer
+maximum. Every actual hit is capped by remaining HP. There is no smaller arbitrary
+HP/damage cap. The numeric capacity of a single raid is distinct from a daily or
+weekly quota.
+
+## Save files and recovery
+
+| Path | Purpose |
+| --- | --- |
+| `data/state.json` | Current accounts, race settings, live snapshots, raid, profiles, avatar and history. |
+| `data/state.json.lock` | Automatic process lock for file transactions. |
+| `data/recovery/` | Bounded local copies made before important admin changes; no external service. |
+| `private/recovery.seed.json` | Optional existing manual recovery export used only when no current local save exists. |
+| `private/admin_store.seed.json` | Original supplied account seed for a fresh install. |
+| `private/settings.json` | Original supplied provider configuration. |
+
+All state writes use UTF-8, flush to disk, and replace the current file atomically.
+Readers see a complete old or new save. A write failure does not acknowledge a new
+hit; safe receipt retries handle an uncertain response. Local recovery copies live
+on the same disk and do not survive loss of an App Platform container.
+
+The private recovery export includes accounts, secret, race configuration, saved
+Top 15, boss avatar, private profiles, contribution totals and boss admin history.
+It is not exposed publicly. A restored Top 15 remains a snapshot until the next
+successful live source check. The recovery status records when an export was
+created, not proof that someone saved it externally.
+
+## File structure and complete code
+
+See `FILE_STRUCTURE.md` for every shipped file and its purpose.
+`FULL_CODE_BLOCKS.md` contains every application text file in its own full code
+block; the ZIP contains those ready-to-use files plus the original logos.
+
+The previous optional `requirements-postgres.txt` and `tests/test_postgres.py`
+are removed. An old `manage_admin.py` is not needed by this release. Keep the old
+local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-This release passes **99 Python application/game/calculation tests** and **39 DOM/CSS
-checks**. Startup is exercised through an actual Waitress child process using
-`python wager_backend.py`, production mode, and a leftover database placeholder.
-Another check blocks importing psycopg and verifies production login with secure
-cookies still works. Recovery tests verify changed passwords, accounts, dates,
-overrides, and saved results on a fresh instance, along with authorization,
-corrupt-file preservation, and existing-state precedence.
+The release passed 124 backend tests and 54 DOM/interface checks. Coverage includes
+source refresh behavior, actual launcher startup, login, authorization, image
+validation, nonregenerating HP, unlimited attacks, recovery-code privacy, household
+cooldowns, migration, atomic-write failures and simultaneous writers. The final
+storage optimization was rechecked against all 14 new behavior tests.
 
-The suite retains date-publication, in-flight failure, automatic update,
-manual refresh, privacy, and original field-envelope regressions. Real HTTP
-transport to a local fixture server tests provider parsing and scheduled
-publication; source data is synthetic. See `docs/VALIDATION.md` for browser
-checks and limits.
+No live Shuffle/Kick request or DigitalOcean deployment was performed during these
+checks. Provider tests use synthetic responses; native browser visual rendering was
+unavailable in the test environment. See `docs/VALIDATION.md` for the scope.
 
-Current successful live Shuffle/Kick connectivity and an actual DigitalOcean
-deployment have not been verified from this workspace. Earlier external provider
-probes timed out; the real deployment's progress/errors must be checked there.
-Four optional PostgreSQL tests are skipped without a dedicated test database.
+Developer checks (not required to run the website):
 
 ```bash
 python -m unittest discover -s tests -v
-```
-
-Optional development interface checks (Node 22+, not required to deploy):
-
-```bash
-npm --prefix tests install --ignore-scripts
 python tests/render_fixtures.py .test-fixtures
+npm --prefix tests install --ignore-scripts
 npm --prefix tests test
 ```
-
-## Optional compatibility for an existing PostgreSQL deployment
-
-This is not needed for the requested local-storage deployment. To deliberately
-continue using an existing remote store, install `requirements-postgres.txt`,
-set `STORAGE_MODE=postgres`, and retain `DATABASE_URL`, `APP_STATE_KEY`, and TLS
-settings. Use the direct connection rather than a transaction-pooled URL;
-provider coordination uses session advisory locks. The launcher remains
-`python wager_backend.py`. An explicit PostgreSQL failure does not silently
-fall back to a new local account store.
-
-The CI workflow installs the optional driver and provisions a disposable database
-for its PostgreSQL compatibility tests. Locally those tests require
-`TEST_DATABASE_URL`; never point that variable at production.
-
-## Files
-
-`FILE_STRUCTURE.md` maps every supplied file. `FULL_CODE_BLOCKS.md` contains each
-text file in its own complete block plus base64 for the original binary logos.
-The ZIP contains the ready-to-use files. Python regenerates bytecode; it is not
-shipped. Runtime state and test preview data are excluded from the ZIP.

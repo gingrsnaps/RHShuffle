@@ -18,7 +18,9 @@
 [data-mode="admin"] #bossName {
   overflow-wrap: anywhere;
 }
-[data-mode="admin"] > .section-title > div { min-width: 0; }
+[data-mode="admin"] > .section-title > div {
+  min-width: 0;
+}
 .boss-damage-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1009,5 +1011,206 @@
   }
   .boss-heading .lead {
     font-size: 0.94rem;
+  }
+}
+
+/* Compact identity controls and achievements keep the arena uncluttered. */
+.player-name-form {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1rem 0;
+}
+.player-name-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.player-name-row input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.boss-admin-leaders {
+  margin: 1.5rem 0;
+}
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.badge-grid li {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+#rearmHint {
+  min-height: 1.4em;
+  margin: 0.5rem 0;
+}
+@media (max-width: 600px) {
+  .badge-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Comfort controls stay quiet so the arena and primary attack keep focus. */
+.player-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0.5rem;
+}
+.player-identity span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.player-identity[hidden],
+.player-name-form[hidden],
+[hidden] {
+  display: none !important;
+}
+.profile-recovery {
+  font-size: 0.82rem;
+  margin: 0.65rem 0 1rem;
+}
+.profile-recovery summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+.profile-recovery .stack,
+#recoveryOwner {
+  margin-top: 0.85rem;
+}
+.profile-recovery textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.attack-button,
+#dockAttack {
+  min-height: 3.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.attack-button {
+  width: 100%;
+}
+#dockAttack {
+  flex: 1;
+  min-width: 0;
+}
+.rally-status {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.025);
+}
+.rally-status > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.rally-status progress {
+  width: 100%;
+  height: 5px;
+  accent-color: #ff3a43;
+  margin: 0.6rem 0 0.2rem;
+}
+.rally-status small {
+  color: var(--muted);
+}
+.rally-status.unlocked {
+  border-color: #ff4b5666;
+  background: #e8243210;
+}
+.rally-lit {
+  background: radial-gradient(ellipse at center, #fa29363d, transparent 70%);
+}
+.rally-lit .rune-ring {
+  border-color: #ff6874;
+  box-shadow: 0 0 32px #ff283844;
+}
+.exact-totals {
+  text-align: left;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.6rem;
+}
+.exact-totals summary {
+  cursor: pointer;
+}
+.boss-balance {
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.boss-balance h3 {
+  margin: 0.25rem 0 0.7rem;
+}
+.edit-preview {
+  display: block;
+  background: #ffffff06;
+  border: 1px solid var(--line);
+  border-left: 3px solid #f44952;
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  grid-column: 1/-1;
+}
+.audit-list {
+  max-height: 26rem;
+  overflow: auto;
+}
+.audit-list li {
+  align-items: flex-start;
+}
+.audit-list small {
+  max-width: 70ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.audit-list .score {
+  font-size: 0.75rem;
+  white-space: normal;
+  min-width: 7rem;
+  text-align: right;
+}
+#bossHealth {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .boss-balance {
+    grid-template-columns: 1fr;
+  }
+  .audit-list li {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .audit-list .score {
+    text-align: left;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rally-lit,
+  .rally-status {
+    transition: none;
   }
 }

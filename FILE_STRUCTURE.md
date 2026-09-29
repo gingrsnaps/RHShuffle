@@ -1,68 +1,71 @@
-# File structure — 2026.09.28-boss-controls
+# Complete file structure
 
-Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
+Release **2026.09.28-community-polish**. The archive extracts one `redhunllef-rebuilt/` folder.
+Run only `python wager_backend.py`; all support modules are imported automatically.
 
-| Path | Purpose |
+| File | Purpose |
 | --- | --- |
-| `.env.example` | Reference environment settings; not automatically loaded. |
-| `.github/workflows/test.yml` | CI application, PostgreSQL, and interface checks. |
-| `.gitignore` | Excludes local runtime state and generated development files. |
-| `CHANGES.md` | What changed and why. |
-| `FILE_STRUCTURE.md` | Complete file map (this file). |
-| `FULL_CODE_BLOCKS.md` | Complete source blocks plus original logo assets encoded as base64. |
-| `MANIFEST.json` | Release identifier and SHA-256 digests of source/document files. |
-| `Procfile` | App Platform process entry: python wager_backend.py. |
-| `README.md` | Setup, deployment, migration, operation, troubleshooting, verification limits. |
-| `START_HERE.md` | Quick launch instructions and original account information. |
-| `app.yaml` | One Python web service, no database component; edit the repository name. |
-| `boss.py` | Shared raid, atomic attacks, explicit host HP edits and no automatic regeneration. |
-| `boss_avatar.py` | Bounded PNG/JPEG/WebP decoding, metadata removal, resizing and recovery validation. |
-| `config.py` | Credential precedence, deployment configuration, fixed update interval. |
-| `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
-| `docs/COMMUNITY_UPDATE.md` | Approved community improvements, performance changes, upgrade notes and storage options. |
-| `docs/VALIDATION.md` | Test record and explicit verification limits. |
-| `integrations.py` | Bounded provider requests, response validation, Kick token renewal. |
-| `presentation.py` | Side-by-side change reviews and validated private recovery checkpoint summaries. |
-| `private/admin_store.seed.json` | Original account/password hash and saved state, unchanged. |
-| `private/settings.json` | Original configured Shuffle/Kick credentials and settings, unchanged. |
-| `race.py` | Source normalization, exact rankings, overrides, Code Red list, freshness. |
-| `race_support.py` | Shared validation, Eastern Time/DST, money formatting, backup helpers. |
-| `requirements-postgres.txt` | Optional compatibility dependencies for explicitly selected PostgreSQL storage. |
-| `requirements.txt` | Default Python dependencies; no PostgreSQL driver required. |
-| `runtime.py` | Shared cached state and independent Shuffle/Kick background jobs. |
-| `runtime.txt` | App Platform Python 3.13.12 pin. |
-| `static/app.js` | Native browser controller, automatic polling, countdown, scoped DOM updates. |
-| `static/boss.css` | Responsive red arena, weakness cards, burst meter, damage animation, reduced-motion support. |
-| `static/boss.js` | Automatic five-second game updates, manual attacks, safe receipts, countdown and hit feedback. |
-| `static/redlogo.ico` | Original favicon. |
-| `static/redlogo.png` | Original PNG brand asset. |
-| `static/style.css` | Responsive public/admin styling, focus states, reduced-motion support. |
-| `storage.py` | SQLite/PostgreSQL transactions, migrations, account state, recovery checkpoints. |
-| `store_schema.py` | Additive validation of original accounts and saved race state. |
-| `templates/admin.html` | Rendered admin template. |
-| `templates/admin_boss.html` | Rendered admin boss template. |
-| `templates/admin_overview.html` | Rendered admin overview template. |
-| `templates/admin_players.html` | Rendered admin players template. |
-| `templates/admin_race.html` | Rendered admin race template. |
-| `templates/admin_settings.html` | Rendered admin settings template. |
-| `templates/base.html` | Rendered base template. |
-| `templates/boss.html` | Rendered boss template. |
-| `templates/change_review.html` | Rendered change review template. |
-| `templates/error.html` | Rendered error template. |
-| `templates/icons.html` | Rendered icons template. |
-| `templates/index.html` | Rendered index template. |
-| `templates/login.html` | Rendered login template. |
-| `templates/macros.html` | Rendered macros template. |
-| `templates/recovery_panel.html` | Rendered recovery panel template. |
-| `tests/package.json` | Optional development test dependency; no Node runtime needed by the site. |
-| `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
-| `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
-| `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
-| `tests/test_boss_admin.py` | All admin-only boss actions, forged roles, CSRF, image formats, HP/name/damage changes and recovery. |
-| `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
-| `tests/test_community.py` | Conditional HTTP, signed review, badges, legacy preservation and recovery metadata regressions. |
-| `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
-| `tests/test_postgres.py` | Integration tests for a dedicated disposable PostgreSQL database. |
-| `wager_backend.py` | Only launch script; Waitress, routes, native login, admin actions, session protection. |
+| `CHANGES.md` | Changes in this release and retained features. |
+| `FILE_STRUCTURE.md` | This file inventory. |
+| `FULL_CODE_BLOCKS.md` | Every text file in its own full code block; original logos as base64. |
+| `MANIFEST.json` | Release, launch command, module list and source-file hashes. |
+| `Procfile` | Runs python wager_backend.py. |
+| `README.md` | Complete update, operation, recovery and DigitalOcean instructions. |
+| `START_HERE.md` | Short installation and launch instructions. |
+| `abuse_guard.py` | Bounded rejected-request throttles and temporary admin flags. |
+| `app.yaml` | Single-service DigitalOcean App Platform template. |
+| `boss.py` | Authoritative multiplayer rules, player recovery and admin controls. |
+| `boss_avatar.py` | Image validation, resizing and safe PNG avatar storage. |
+| `boss_extras.py` | Cosmetic rally, pace estimates and private boss admin history. |
+| `boss_progress.py` | Private names and the unchanged eight achievement calculations. |
+| `config.py` | Configuration, original provider keys, save locations and release. |
+| `docs/COMMUNITY_BOSS.md` | Current mechanics, permissions, identity and storage behavior. |
+| `docs/COMMUNITY_UPDATE.md` | Implementation notes for approved suggestions 2–9. |
+| `docs/VALIDATION.md` | Test scope, results and limits. |
+| `integrations.py` | Shuffle and Kick HTTP clients, timeouts and provider errors. |
+| `presentation.py` | Race change previews and existing recovery-export status. |
+| `private/admin_store.seed.json` | Original supplied Superadmin/account seed; unchanged. |
+| `private/settings.json` | Original supplied private Shuffle/Kick configuration; unchanged. |
+| `race.py` | Leaderboard calculations, qualification, ranking and freshness. |
+| `race_support.py` | Shared timezone, amount, configuration and file helpers. |
+| `requirements.txt` | The existing five Python runtime dependencies; no SQL driver. |
+| `runtime.py` | Independent automatic 60-second Shuffle/Kick workers and published snapshots. |
+| `runtime.txt` | Python runtime declaration. |
+| `static/app.js` | Public/admin race interface and source refresh controls. |
+| `static/boss.css` | Responsive arena, game controls and boss admin styling. |
+| `static/boss.js` | Game/admin interface, recovery UI, previews and automatic polls. |
+| `static/redlogo.ico` | Original favicon; unchanged. |
+| `static/redlogo.png` | Original PNG logo; unchanged. |
+| `static/style.css` | Shared responsive red website/admin styling. |
+| `storage.py` | Atomic UTF-8 JSON saves and read-only import of the previous local save. |
+| `store_schema.py` | Account/settings migrations and private recovery validation. |
+| `templates/admin.html` | Rendered page or shared template. |
+| `templates/admin_boss.html` | Rendered page or shared template. |
+| `templates/admin_overview.html` | Rendered page or shared template. |
+| `templates/admin_players.html` | Rendered page or shared template. |
+| `templates/admin_race.html` | Rendered page or shared template. |
+| `templates/admin_settings.html` | Rendered page or shared template. |
+| `templates/base.html` | Rendered page or shared template. |
+| `templates/boss.html` | Rendered page or shared template. |
+| `templates/change_review.html` | Rendered page or shared template. |
+| `templates/error.html` | Rendered page or shared template. |
+| `templates/icons.html` | Rendered page or shared template. |
+| `templates/index.html` | Rendered page or shared template. |
+| `templates/login.html` | Rendered page or shared template. |
+| `templates/macros.html` | Rendered page or shared template. |
+| `templates/recovery_panel.html` | Rendered page or shared template. |
+| `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
+| `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_app.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_boss.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_boss_admin.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_boss_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
 
-Runtime-created local data lives under `data/` and is excluded from this ZIP. App Platform uses automatic local storage by default; local changes are temporary on that platform. An optional private/recovery.seed.json, downloaded by the Superadmin, can seed a fresh instance and is not supplied as a blank file. Compiled bytecode is regenerated by Python and is not shipped. No original runtime account file is overwritten by extracting the package.
+The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
+
+Removed: the optional PostgreSQL dependency file and PostgreSQL tests. No external database/backup service is required.

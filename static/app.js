@@ -197,10 +197,14 @@
     if (sourceAt)
       text(
         id("sourceTime"),
-        "Source checked " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
+        "Last checked " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
       );
     for (const [name, job] of Object.entries(jobs)) {
       const remaining = Math.max(0, Math.ceil(job.next_check - now));
+      text(
+        id(name + "Freshness"),
+        `Last successful check: ${date(job.last_success)} · Content last changed: ${job.changed_at ? date(job.changed_at) : "No recorded change yet"}`,
+      );
       text(
         id(name + "Timing"),
         job.state === "checking"
@@ -558,7 +562,7 @@
         text(
           id("inviteTitle"),
           b.status === "victory"
-            ? "The crew conquered Crimson."
+            ? `The crew conquered ${b.name || "Crimson Hunllef"}.`
             : b.status === "paused"
               ? "The raid is taking a breather."
               : "Red needs a raid party.",
@@ -578,7 +582,7 @@
         const bar = id("inviteHealth");
         if (bar) {
           bar.max = b.max_hp;
-          bar.value = b.hp;
+          bar.value = b.max_hp - b.hp;
         }
       }
       text(
@@ -691,7 +695,7 @@
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.28-boss-controls")
+      if (result.release && result.release !== "2026.09.28-community-polish")
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",

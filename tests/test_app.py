@@ -233,7 +233,7 @@ class AppTests(unittest.TestCase):
             self.assertEqual(public.get(path).status_code,401)
         self.assertNotIn('AlphaMember',public.get('/data').text)
         self.assertIn('Al******',public.get('/data').text)
-        for path in ('/private/settings.json','/private/admin_store.seed.json','/data/redhunllef.sqlite3'):
+        for path in ('/private/settings.json','/private/admin_store.seed.json','/data/redhunllef.sqlite3','/data/state.json','/data/state.json.lock'):
             self.assertEqual(public.get(path).status_code,404)
 
     def test_mixed_shuffle_response_updates_and_warns(self):
@@ -356,7 +356,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.action('restore',restore_token=identifier).status_code,303)
         self.assertEqual(self.r.shuffle['rows'][0]['wager'],'$100.00');self.assertEqual(self.r.admin['users'],users)
         with self.r.store.connection() as c:
-            self.assertGreaterEqual(c.execute('SELECT count(*) FROM rh_recovery').fetchone()[0],2)
+            self.assertGreaterEqual(len(c['recoveries']),2)
 
     def test_bad_restore_does_not_mutate_state(self):
         self.schedule();saved=self.client.get('/admin/backup').json;saved['site_settings']['prizes']['1']='NaN'
@@ -465,11 +465,14 @@ class AppTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):Store(Config(target))
         self.assertEqual(seed.read_text(encoding='utf-8'),'{broken')
 
-    def test_postgres_is_explicit_and_never_silently_falls_back(self):
-        with patch.dict(os.environ,{'STORAGE_MODE':'postgres','DATABASE_URL':''}):
-            with self.assertRaisesRegex(ValueError,'needs DATABASE_URL'):Config(self.root)
-        with patch.dict(os.environ,{'STORAGE_MODE':'postgres','DATABASE_URL':'postgresql://fixture'}):
-            self.assertEqual(Config(self.root).db_url,'postgresql://fixture')
+    def test_removed_database_configuration_cannot_require_a_service(self):
+        with patch.dict(os.environ, {'STORAGE_MODE':'postgres','DATABASE_URL':'postgresql://unused'}):
+            config = Config(self.root)
+            self.assertEqual(config.db_url, '')
+            self.assertEqual(config.state_path, self.root/'data/state.json')
+            store = Store(config)
+            self.assertEqual(store.admin(), self.r.store.admin())
+            self.assertFalse(store.pg)
 
     def test_shuffle_and_kick_workers_do_not_block_each_other(self):
         self.schedule();entered,release,kick=threading.Event(),threading.Event(),threading.Event()
@@ -662,7 +665,7 @@ class AppTests(unittest.TestCase):
     def test_sole_launch_command_serves_actual_http(self):
         with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
         env={**os.environ,'PORT':str(port),'APP_ENV':'production','STORAGE_MODE':'local',
-             'DATABASE_URL':'${race-db.DATABASE_URL}','LOCAL_DATABASE_PATH':str(self.root/'cli.sqlite3'),
+             'DATABASE_URL':'${race-db.DATABASE_URL}','LOCAL_DATABASE_PATH':str(self.root/'cli.sqlite3'),'STATE_FILE':str(self.root/'cli-state.json'),
              'SETTINGS_PATH':str(self.root/'missing-settings.json'),'ADMIN_SEED_PATH':str(self.root/'missing-seed.json'),
              'PYTHONIOENCODING':'utf-8'}
         log=self.root/'startup.log'

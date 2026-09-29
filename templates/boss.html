@@ -51,11 +51,17 @@
       </div>
       <div class="hp-label">
         <strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong>
-        <span id="bossPercent">{{ '%.2f' | format(boss_data.hp / boss_data.max_hp * 100) }}%</span>
+        <span id="bossPercent">{{ '%.2f' | format((boss_data.max_hp - boss_data.hp) / boss_data.max_hp * 100) }}% defeated</span>
       </div>
       <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}"
-                value="{{ boss_data.hp }}" aria-label="Boss health"></progress>
+                value="{{ boss_data.max_hp - boss_data.hp }}" aria-label="Boss defeat progress"></progress>
+      <details class="exact-totals"><summary>Exact raid totals</summary><p id="exactRaidTotals" class="small"></p></details>
       <ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
+      <div class="rally-status" id="rallyStatus">
+        <div><strong id="rallyTitle">Red rally</strong><span id="rallyCount">0 / 15 raiders</span></div>
+        <progress id="rallyBar" max="15" value="0" aria-label="Community rally progress"></progress>
+        <small id="rallyHint">15 raiders hit within 10 minutes to light the arena.</small>
+      </div>
       <div class="raid-stats">
         <div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>Raiders</span></div>
         <div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>Hits</span></div>
@@ -88,11 +94,41 @@
       <div class="burst-meter" id="burstMeter" aria-hidden="true">
         {% for n in range(boss_data.rules.burst_every) %}<span></span>{% endfor %}
       </div>
+      <div id="playerIdentity" class="player-identity" hidden>
+        <span>Playing as <strong id="playingAs"></strong></span>
+        <button id="editPlayerName" type="button" class="text-button">Edit</button>
+      </div>
+      <form id="playerNameForm" class="player-name-form">
+        <label for="playerUsername">Community / Shuffle username</label>
+        <div class="player-name-row"><input id="playerUsername" name="username" maxlength="64" required
+          autocomplete="username" value="{{ boss_data.you.display_name }}"><button class="button small" type="submit">Save</button></div>
+        <small class="muted">One player per connection. Your submitted name is visible to admins only.</small>
+        <span id="playerNameResult" class="small" role="status"></span>
+      </form>
+      <details id="profileRecovery" class="profile-recovery">
+        <summary>Player recovery</summary>
+        <div id="recoveryOwner" hidden>
+          <button type="button" id="makeRecoveryCode" class="button small">Create recovery code</button>
+          <p id="recoverySaved" class="muted small"></p>
+          <div id="recoveryCodeBox" hidden>
+            <label for="recoveryCode">Keep this code private. It restores your player.</label>
+            <textarea id="recoveryCode" readonly rows="3" spellcheck="false"></textarea>
+            <button id="downloadRecovery" type="button" class="text-button">Save code as a text file</button>
+          </div>
+        </div>
+        <form id="recoverPlayerForm" class="stack">
+          <label for="recoveryInput">Have a saved code?</label>
+          <input id="recoveryInput" type="password" maxlength="512" autocomplete="off" required placeholder="Paste your recovery code">
+          <button class="button small" type="submit">Recover player</button>
+        </form>
+        <p id="recoveryResult" class="small" role="status"></p>
+      </details>
       <button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button>
+      <p id="rearmHint" class="small muted" role="status"></p>
       <p id="hitResult" class="hit-result" role="status"></p>
       <div class="personal-stats">
         <div><strong id="yourDamage">{{ '{:,}'.format(boss_data.you.damage) }}</strong><span>Your damage</span></div>
-        <div><strong id="yourRemaining">{{ boss_data.you.remaining }} / {{ boss_data.rules.daily_attacks }}</strong><span>Attacks left</span></div>
+        <div><strong id="yourAttacks">{{ boss_data.you.attacks }}</strong><span>Your hits</span></div>
         <div><strong id="yourActiveDays">{{ boss_data.you.active_days }}</strong><span>Raid days</span></div>
       </div>
       <p class="raider-name"><strong id="yourName">{{ boss_data.you.name }}</strong></p>
@@ -117,6 +153,10 @@
       <ol id="bossRecent" class="combat-list"></ol>
     </section>
   </div>
+  <details class="panel raid-history" id="badgeDetails">
+    <summary>Your achievements · <span id="badgeCount">0 / 8</span></summary>
+    <ul id="yourBadges" class="combat-list badge-grid"></ul>
+  </details>
   <details class="panel raid-history">
     <summary>Past raids <span aria-hidden="true">+</span></summary>
     <ul class="combat-list" id="bossHistory"></ul>
@@ -128,7 +168,7 @@
       <select id="dockStyle">
         {% for key, label in boss_data.rules.styles.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
       </select>
-      <small id="dockRemaining">{{ boss_data.you.remaining }} / {{ boss_data.rules.daily_attacks }} attacks left</small>
+      <small id="dockRemaining">30s cooldown · Unlimited hits</small>
     </div>
     <button type="button" class="button primary" id="dockAttack" disabled>Connecting…</button>
   </section>

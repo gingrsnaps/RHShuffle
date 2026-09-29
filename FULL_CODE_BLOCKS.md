@@ -1,20 +1,19 @@
-# RedHunllef — complete configured source
+# RedHunllef — complete configured code
 
-Release **2026.09.28-boss-controls**. Every text file is included below in its own complete code block. The two original binary logos are included as complete base64 blocks. The ZIP supplies the actual ready-to-use files. This document includes your original private credentials and account seed; keep it private.
+Release **2026.09.28-community-polish**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
 
-Start with README.md and FILE_STRUCTURE.md. The only launch command is `python wager_backend.py`. FULL_CODE_BLOCKS.md is this generated document and is not recursively repeated inside itself.
+Run only `python wager_backend.py`. Keep all supporting files together and preserve existing `data/` and private configuration when updating. The eight achievements are unchanged; hits remain unlimited per day/week with a 30-second cooldown. No external SQL or backup service is required.
 
 ## .env.example
 
 ```text
 # Reference for App Platform environment settings. The app does not load .env.
 APP_ENV=production
-STORAGE_MODE=local
 PORT=8080
 TRUST_APP_PLATFORM=1
 SESSION_COOKIE_SECURE=always
 APP_STATE_KEY=redhunllef
-# No DATABASE_URL is needed. A leftover value is ignored in local mode.
+# Saves use data/state.json automatically. No database variables are needed.
 # Supplied credentials already load from private/settings.json.
 # Nonempty runtime environment values take precedence if you need to replace them:
 # SHUFFLE_API_KEY=
@@ -36,27 +35,12 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: race_test
-          POSTGRES_USER: race_test
-          POSTGRES_PASSWORD: test_database_only
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U race_test -d race_test"
-          --health-interval 5s --health-timeout 5s --health-retries 10
-    env:
-      TEST_DATABASE_URL: postgresql://race_test:test_database_only@localhost:5432/race_test
-      TEST_DATABASE_SSLMODE: disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: python -m pip install -r requirements-postgres.txt
+      - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
       - uses: actions/setup-node@v4
         with:
@@ -85,248 +69,123 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
-# Changes — 2026.09.28-boss-controls
+# Changes — 2026.09.28-community-polish
 
-All current administrator accounts can manage the community boss. Guest users
-cannot access editing forms or submit management actions. Every boss management action
-requires an authenticated current admin session and a valid CSRF token. Account
-management and private recovery downloads remain Superadmin-only.
+Implemented suggestions 2–9. Excluded the achievement-display change (#1) and
+external checkpoints (#10). No daily/weekly hit limits, new dependency, service,
+management command or second launcher was added.
 
-Add WebP to PNG/JPG/JPEG avatar uploads. Image decoding, resizing, metadata removal,
-size limits and rejection of animation remain. Public viewing of the avatar is
-retained, while upload/reset actions are restricted to admins.
+## Player experience
 
-Add boss name and base/weakness/burst damage settings. Names are escaped text.
-Damage is calculated from saved server settings; public request fields cannot
-supply damage or HP. Edits apply to new hits and preserve existing contributions,
-receipts, cooldowns and HP. Settings survive new raids, restarts and recovery.
-Separate settings revisions reject stale admin forms and old display updates.
+- Saved “Playing as…” summary with Edit; a private, downloadable recovery code.
+- Recovery preserves identity, raid damage, badges and the last attack receipt.
+- Admin-approved household allowances; 30-second server cooldown per approved player.
+- Fifteen-player Red rally: rolling ten-minute participation, cosmetic arena unlock.
+- Remembered style, compact totals with exact detail, stable attack buttons,
+  consistent configured boss names and a live last-checked label.
 
-Harden CSRF validation: missing stored tokens cannot match a predictable fallback;
-malformed Unicode tokens return a controlled error. Tests cover all seven boss
-management actions, guest/unknown/revoked/tampered sessions, forged roles, missing
-and invalid tokens, ordinary admin sign-in, removed accounts and public forgery.
+## Administration
 
-The barebones game, no automatic regeneration, original configured credentials,
-60-second provider checks and sole wager_backend.py launch remain unchanged.
-99 Python checks and 39 DOM/CSS checks passed; four optional PostgreSQL tests
-skipped. See docs/VALIDATION.md for scope and current external testing limits.
+- Recent pace and estimates, plus next-raid HP presets. Never automatic HP scaling.
+- Live health/damage previews and a bounded, persistent history of boss edits.
+- Shared connection controls and private request activity flags.
+- Separate source check and content-change times; automatic 60-second checks retained.
+- All boss mutation endpoints remain authenticated and CSRF-protected.
 
-## Previous boss admin release — 2026.09.28-boss-admin
+## Runtime
 
-The public game page is now barebones: arena, HP, attack controls, cooldowns,
-contributions and history. Long explanations, the tutorial, separate badge panel
-and game footer are removed. Existing combat rules and five-second updates stay.
+- Replaced active SQLite/PostgreSQL storage with atomic UTF-8 JSON.
+- Imports a previous local SQLite save once, read-only, and leaves it untouched.
+- Preserves existing accounts, hashes, secrets, current progress and images.
+- Caches committed files while detecting writes from another local process.
+- Rejected-request throttles never block an otherwise eligible 30-second attack.
+- Removed the optional PostgreSQL dependency file, its tests and CI service.
+- Existing manual recovery remains. No remote checkpoint integration was added.
 
-Superadmin controls now include PNG/JPG avatar upload/reset and confirmed edits
-to the current raid's maximum HP. Health edits preserve cumulative damage,
-player totals, receipts and allowances. A newer health revision distinguishes
-an intentional host edit from accidental regeneration or stale responses.
+## Retained
 
-Images are validated by Pillow, re-encoded without metadata, resized to 512px,
-kept outside the frequently written raid record, and served with a content hash
-and immutable cache header. The homepage, game and admin preview use the same
-image. Recovery checkpoints include the image; new raids retain it.
+Original Shuffle/Kick configuration, Superadmin seed, logos, race date publication,
+automatic provider jobs, public masking, uncensored admin Code Red Top 100,
+uncensored boss Top 5, admin image uploads, HP/damage editing, random weakness,
+mouse/keyboard re-arm, no automatic HP regeneration, unlimited hits and eight badges.
 
-Existing accounts, provider credentials, saved progress, local-storage default,
-60-second Shuffle/Kick jobs and sole wager_backend.py launcher are retained.
-Install the updated requirements before launching. No remote database is added.
-
-Verification: 94 Python tests and 38 DOM/CSS checks passed; four optional
-PostgreSQL checks skipped. Real-browser checks could not run in this workspace
-because Chromium crashed at launch. Current live providers/deployment were not
-verified; details and limits are in docs/VALIDATION.md.
-
-## Previous no-regeneration release — 2026.09.22-no-regen
-
-No-regeneration guard: the server rejects same-raid writes that increase HP,
-change maximum HP, reverse damage/attack totals, or roll back the version. A
-different boss requires the explicit new-raid control. Attack health is derived
-from cumulative committed damage, with no timed or daily regeneration.
-
-Health display: render the correct initial percentage instead of a temporary
-100% label. Ignore inconsistent healing snapshots even when their version/clock
-is newer. Cooldowns and daily allowances still reset normally; boss HP does not.
-
-Regression checks cover a week of inactivity, daily reset, pause/resume, a cold
-app restart retaining its saved file, rejected healing writes, and zero HP after
-victory. All 86 Python and 35 DOM/CSS checks pass; four optional PostgreSQL tests
-skip. Prior features, credentials and sole launcher are retained. Disk loss on
-App Platform still requires a recovery checkpoint or durable hosting.
-
-## Previous community update — 2026.09.22-community
-
-Community polish: add a live homepage boss invitation, mobile attack dock,
-quarter-health milestones, arena transitions, first-hit/ten-burst/three-day
-badges, copy-link fallback, and a victory recap including every contributor.
-All rewards are cosmetic; the multi-day damage rules are unchanged.
-
-Reliability: successful polls no longer erase attack errors. Main and mobile
-controls share receipts, cooldowns and retries. Lists preserve unchanged nodes;
-animation uses the browser animation API without forced layout reads. Public
-snapshots use conditional ETags and a fresh server-time header; private feeds
-remain no-store. Game rules are centralized and JS/CSS are readable source.
-
-Administration: compact expandable connection status, overview shortcuts,
-side-by-side signed change review, and readable recovery-file validation.
-Track generated exports and progress since export without changing the admin
-revision. Recovery metadata is validated separately from accounts/game state.
-Existing local progress and original credentials are preserved.
-
-Verification: 83 Python tests and 33 DOM/CSS checks pass; 4 optional PostgreSQL
-tests skip. Chromium verifies native login, source refresh, reviewed race
-publication, the 100-user Code Red list, recovery downloads/review, and shared
-boss damage across desktop/mobile players. Live external provider connectivity
-and a deployed DigitalOcean instance remain unverified.
-
-The sole launcher is still `python wager_backend.py`. There is no new production
-dependency or required remote database. Recovery exports remain manual; their
-generation does not confirm off-host storage. Full details are in
-`docs/COMMUNITY_UPDATE.md` and `docs/VALIDATION.md`.
-
-## Previous community boss release — 2026.09.22-boss
-
-Community game: add `/play` with a shared boss, signed guest profiles, atomic
-attacks, one-minute cooldowns, 40-hit raid-day allowances, rotating weaknesses,
-and every-tenth-hit Crimson burst. The default 2.4-million-HP encounter targets
-4–8 days for 100 active raiders. Victory is retained until a host starts again.
-
-Game presentation: animated red arena with the original logo, readable health,
-weapon buttons, personal burst meter, Top 10 contributors, recent attacks,
-past raids, and visible instructions. Add the homepage Join the boss fight CTA
-and header link. Remove the public Admin footer link and dashboard site footer.
-
-Host tools: a Community boss tab updates every five seconds and preserves input
-drafts. Superadmin pause/resume/restart actions use CSRF and a current-raid guard.
-Private recovery export/import now includes boss progress and hashed cooldown
-records. Race-only backups remain separate. No extra production dependency.
-
-DigitalOcean: use the documented DO-Connecting-IP visitor header when trusted
-App Platform ingress is enabled; ignore it on direct hosts. This also improves
-existing login rate limiting and IP access controls behind that ingress.
-
-Verification: 75 Python tests pass; 4 optional PostgreSQL tests skip. All 28
-DOM/CSS checks pass. Two real browser contexts see shared damage and host pause
-changes. A 100-player simulation finishes on raid day four at maximum matching
-attacks. Existing race publication, refresh, recovery, and Code Red checks pass.
-
-Previous local-storage release: remove the production PostgreSQL startup requirement. Default to built-in SQLite, ignore stale DATABASE_URL values in local mode, and remove the PostgreSQL driver from normal requirements. App Platform configuration contains only the Python web service. Production cookies and proxy handling remain independent of storage.
-
-Recovery: add a Superadmin-only private account/race export and automatic import from private/recovery.seed.json on a fresh instance. Existing saved state takes priority. The dashboard, logs, and README explicitly explain that App Platform local files do not persist through redeploys or container replacements; checkpoints are manual.
-
-
-Date publication: the bottom button now submits the required confirmation and clearly says **Confirm and publish race**. Drafts no longer look like completed saves.
-
-Refresh reliability: discard old-setting failure responses as well as successes; clear only obsolete ordinary backoff when dates change; retain provider rate limits. Keep one follow-up request when Refresh is pressed during an active check. Restart stopped workers from dashboard status reads.
-
-Progress: every admin tab shows published dates and separate provider outcomes. Manual requests have completion tickets; date publication triggers short follow-up polling automatically. An in-flight browser read no longer drops an immediate refresh request.
-
-Visuals: logo-red branding, burgundy surfaces, red buttons and active tabs, and readable progress panels. Original logo files are unchanged. No production dependency was added.
-
-Earlier verification: 57 Python tests and 20 DOM/CSS checks passed. A local HTTP fixture exercises date changes during a failed request and subsequent automatic publication; external Shuffle/Kick connectivity remains unverified here.
-
-Refresh patch: read the real form action attribute to avoid the hidden action input overriding the request URL. Fetch errors retain JSON and HTTP status; empty leaderboards explain waiting, source failure, and nonqualifying results. Regression tests cover the URL collision and manual-refresh publication to both boards. Accounts, credentials, and saved dates are retained.
-
-UTF-8 patch: startup asset reads now explicitly use UTF-8, fixing the exact Windows CP1252 decoding failure. Account state is untouched. A regression test recreates the original failure and verifies startup with existing accounts; test fixture/log encoding is explicit too.
-
-The underlying rebuild replaces the previous launcher, web handlers, update scheduler,
-provider clients, templates, and browser controller. It retains the original
-configuration, account seed, logo files, race meaning, weighting, and prizes.
-
-| Area | Result |
-| --- | --- |
-| Launch | `python wager_backend.py` starts Waitress and both provider jobs. |
-| Admin rendering | Complete HTML dashboard; scoped status updates cannot erase a form or page. |
-| Update timing | Automatic independent 60-second jobs and page polling; bounded manual polling. |
-| Persistence | Separate transactional admin and live records, local SQLite or hosted PostgreSQL. |
-| Migration | Existing data wins; legacy files/table untouched; private recovery checkpoint. |
-| Account setup | Original Superadmin imported automatically; no management command. |
-| Public UI | Compact podium, Top 15 table, clear race phase/countdown, source freshness. |
-| Admin UI | Overview, Race, Players, Settings; collapsible first 100 confirmed Code Red users. |
-| Provider errors | Retain previous values, identify the failing source, retry automatically. |
-| Code | Small focused Python modules, shared validation, native JS/CSS, comments at key boundaries. |
-| Delivery | Full source, configured ZIP, updated Linux/App Platform instructions, tests and CI. |
-
-The original files contain different schedules: the saved admin race is
-August 4–11, while settings defaults are August 18–25 (2026, 6 PM Eastern).
-Saved state takes precedence. This is documented and remains an explicit admin
-choice rather than an automatic change to historical race data.
-
-Legacy payout workflow and optional live-feed switches remain absent. The app
-is always live, with stale-cache preservation only during provider failures.
+See README for local-file lifetime on DigitalOcean App Platform.
 ```
 
 ## FILE_STRUCTURE.md
 
 ```markdown
-# File structure — 2026.09.28-boss-controls
+# Complete file structure
 
-Extracted project folder: `redhunllef-rebuilt/`. Run only `wager_backend.py`; supporting files are imported or served automatically.
+Release **2026.09.28-community-polish**. The archive extracts one `redhunllef-rebuilt/` folder.
+Run only `python wager_backend.py`; all support modules are imported automatically.
 
-| Path | Purpose |
+| File | Purpose |
 | --- | --- |
-| `.env.example` | Reference environment settings; not automatically loaded. |
-| `.github/workflows/test.yml` | CI application, PostgreSQL, and interface checks. |
-| `.gitignore` | Excludes local runtime state and generated development files. |
-| `CHANGES.md` | What changed and why. |
-| `FILE_STRUCTURE.md` | Complete file map (this file). |
-| `FULL_CODE_BLOCKS.md` | Complete source blocks plus original logo assets encoded as base64. |
-| `MANIFEST.json` | Release identifier and SHA-256 digests of source/document files. |
-| `Procfile` | App Platform process entry: python wager_backend.py. |
-| `README.md` | Setup, deployment, migration, operation, troubleshooting, verification limits. |
-| `START_HERE.md` | Quick launch instructions and original account information. |
-| `app.yaml` | One Python web service, no database component; edit the repository name. |
-| `boss.py` | Shared raid, atomic attacks, explicit host HP edits and no automatic regeneration. |
-| `boss_avatar.py` | Bounded PNG/JPEG/WebP decoding, metadata removal, resizing and recovery validation. |
-| `config.py` | Credential precedence, deployment configuration, fixed update interval. |
-| `docs/COMMUNITY_BOSS.md` | Game rules, multi-day balance, guest fairness, host controls, and persistence limits. |
-| `docs/COMMUNITY_UPDATE.md` | Approved community improvements, performance changes, upgrade notes and storage options. |
-| `docs/VALIDATION.md` | Test record and explicit verification limits. |
-| `integrations.py` | Bounded provider requests, response validation, Kick token renewal. |
-| `presentation.py` | Side-by-side change reviews and validated private recovery checkpoint summaries. |
-| `private/admin_store.seed.json` | Original account/password hash and saved state, unchanged. |
-| `private/settings.json` | Original configured Shuffle/Kick credentials and settings, unchanged. |
-| `race.py` | Source normalization, exact rankings, overrides, Code Red list, freshness. |
-| `race_support.py` | Shared validation, Eastern Time/DST, money formatting, backup helpers. |
-| `requirements-postgres.txt` | Optional compatibility dependencies for explicitly selected PostgreSQL storage. |
-| `requirements.txt` | Default Python dependencies; no PostgreSQL driver required. |
-| `runtime.py` | Shared cached state and independent Shuffle/Kick background jobs. |
-| `runtime.txt` | App Platform Python 3.13.12 pin. |
-| `static/app.js` | Native browser controller, automatic polling, countdown, scoped DOM updates. |
-| `static/boss.css` | Responsive red arena, weakness cards, burst meter, damage animation, reduced-motion support. |
-| `static/boss.js` | Automatic five-second game updates, manual attacks, safe receipts, countdown and hit feedback. |
-| `static/redlogo.ico` | Original favicon. |
-| `static/redlogo.png` | Original PNG brand asset. |
-| `static/style.css` | Responsive public/admin styling, focus states, reduced-motion support. |
-| `storage.py` | SQLite/PostgreSQL transactions, migrations, account state, recovery checkpoints. |
-| `store_schema.py` | Additive validation of original accounts and saved race state. |
-| `templates/admin.html` | Rendered admin template. |
-| `templates/admin_boss.html` | Rendered admin boss template. |
-| `templates/admin_overview.html` | Rendered admin overview template. |
-| `templates/admin_players.html` | Rendered admin players template. |
-| `templates/admin_race.html` | Rendered admin race template. |
-| `templates/admin_settings.html` | Rendered admin settings template. |
-| `templates/base.html` | Rendered base template. |
-| `templates/boss.html` | Rendered boss template. |
-| `templates/change_review.html` | Rendered change review template. |
-| `templates/error.html` | Rendered error template. |
-| `templates/icons.html` | Rendered icons template. |
-| `templates/index.html` | Rendered index template. |
-| `templates/login.html` | Rendered login template. |
-| `templates/macros.html` | Rendered macros template. |
-| `templates/recovery_panel.html` | Rendered recovery panel template. |
-| `tests/package.json` | Optional development test dependency; no Node runtime needed by the site. |
-| `tests/render_fixtures.py` | Generate interface fixtures from actual templates. |
-| `tests/test_app.py` | Application/calculation/startup tests with synthetic provider responses. |
-| `tests/test_boss.py` | Multiplayer, concurrency, fairness, recovery, and 100-player multi-day simulation. |
-| `tests/test_boss_admin.py` | All admin-only boss actions, forged roles, CSRF, image formats, HP/name/damage changes and recovery. |
-| `tests/test_boss_frontend.cjs` | Game polling, attack receipts, stale response handling, safe rendering and admin draft checks. |
-| `tests/test_community.py` | Conditional HTTP, signed review, badges, legacy preservation and recovery metadata regressions. |
-| `tests/test_frontend.cjs` | DOM/CSS regressions including update cadence and draft preservation. |
-| `tests/test_postgres.py` | Integration tests for a dedicated disposable PostgreSQL database. |
-| `wager_backend.py` | Only launch script; Waitress, routes, native login, admin actions, session protection. |
+| `CHANGES.md` | Changes in this release and retained features. |
+| `FILE_STRUCTURE.md` | This file inventory. |
+| `FULL_CODE_BLOCKS.md` | Every text file in its own full code block; original logos as base64. |
+| `MANIFEST.json` | Release, launch command, module list and source-file hashes. |
+| `Procfile` | Runs python wager_backend.py. |
+| `README.md` | Complete update, operation, recovery and DigitalOcean instructions. |
+| `START_HERE.md` | Short installation and launch instructions. |
+| `abuse_guard.py` | Bounded rejected-request throttles and temporary admin flags. |
+| `app.yaml` | Single-service DigitalOcean App Platform template. |
+| `boss.py` | Authoritative multiplayer rules, player recovery and admin controls. |
+| `boss_avatar.py` | Image validation, resizing and safe PNG avatar storage. |
+| `boss_extras.py` | Cosmetic rally, pace estimates and private boss admin history. |
+| `boss_progress.py` | Private names and the unchanged eight achievement calculations. |
+| `config.py` | Configuration, original provider keys, save locations and release. |
+| `docs/COMMUNITY_BOSS.md` | Current mechanics, permissions, identity and storage behavior. |
+| `docs/COMMUNITY_UPDATE.md` | Implementation notes for approved suggestions 2–9. |
+| `docs/VALIDATION.md` | Test scope, results and limits. |
+| `integrations.py` | Shuffle and Kick HTTP clients, timeouts and provider errors. |
+| `presentation.py` | Race change previews and existing recovery-export status. |
+| `private/admin_store.seed.json` | Original supplied Superadmin/account seed; unchanged. |
+| `private/settings.json` | Original supplied private Shuffle/Kick configuration; unchanged. |
+| `race.py` | Leaderboard calculations, qualification, ranking and freshness. |
+| `race_support.py` | Shared timezone, amount, configuration and file helpers. |
+| `requirements.txt` | The existing five Python runtime dependencies; no SQL driver. |
+| `runtime.py` | Independent automatic 60-second Shuffle/Kick workers and published snapshots. |
+| `runtime.txt` | Python runtime declaration. |
+| `static/app.js` | Public/admin race interface and source refresh controls. |
+| `static/boss.css` | Responsive arena, game controls and boss admin styling. |
+| `static/boss.js` | Game/admin interface, recovery UI, previews and automatic polls. |
+| `static/redlogo.ico` | Original favicon; unchanged. |
+| `static/redlogo.png` | Original PNG logo; unchanged. |
+| `static/style.css` | Shared responsive red website/admin styling. |
+| `storage.py` | Atomic UTF-8 JSON saves and read-only import of the previous local save. |
+| `store_schema.py` | Account/settings migrations and private recovery validation. |
+| `templates/admin.html` | Rendered page or shared template. |
+| `templates/admin_boss.html` | Rendered page or shared template. |
+| `templates/admin_overview.html` | Rendered page or shared template. |
+| `templates/admin_players.html` | Rendered page or shared template. |
+| `templates/admin_race.html` | Rendered page or shared template. |
+| `templates/admin_settings.html` | Rendered page or shared template. |
+| `templates/base.html` | Rendered page or shared template. |
+| `templates/boss.html` | Rendered page or shared template. |
+| `templates/change_review.html` | Rendered page or shared template. |
+| `templates/error.html` | Rendered page or shared template. |
+| `templates/icons.html` | Rendered page or shared template. |
+| `templates/index.html` | Rendered page or shared template. |
+| `templates/login.html` | Rendered page or shared template. |
+| `templates/macros.html` | Rendered page or shared template. |
+| `templates/recovery_panel.html` | Rendered page or shared template. |
+| `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
+| `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_app.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_boss.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_boss_admin.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_boss_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
 
-Runtime-created local data lives under `data/` and is excluded from this ZIP. App Platform uses automatic local storage by default; local changes are temporary on that platform. An optional private/recovery.seed.json, downloaded by the Superadmin, can seed a fresh instance and is not supplied as a blank file. Compiled bytecode is regenerated by Python and is not shipped. No original runtime account file is overwritten by extracting the package.
+The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
+
+Removed: the optional PostgreSQL dependency file and PostgreSQL tests. No external database/backup service is required.
 ```
 
 ## Procfile
@@ -338,579 +197,392 @@ web: python wager_backend.py
 ## README.md
 
 ````markdown
-# RedHunllef Wager Race + Community Boss
+# RedHunllef
 
-Release **2026.09.28-boss-controls**. Run the complete app with **`python wager_backend.py`**.
-No PostgreSQL service, database connection string, account-creation script, or
-separate update worker is required. Python's built-in SQLite creates a local
-file automatically. The red theme, original credentials, original Superadmin,
-public Top 15, private Code Red list, and automatic 60-second updates remain.
+Release **2026.09.28-community-polish**. This is the complete configured application.
+Run **`python wager_backend.py`**. All supporting modules load automatically.
+There is no database server, SQL setup, extra worker, scheduler or account-creation
+command. The app saves its state to `data/state.json` automatically.
 
-## This update: admin-only boss controls
+## What this update includes
 
-The game page now focuses on the arena, attacks, HP, cooldowns and contributions.
-Tutorials, story paragraphs, the badge explanation panel and the game footer
-are removed. Gameplay rules and automatic updates stay the same.
+Suggestions **2–9** are implemented. Suggestions **1 and 10** are excluded:
+the eight achievements and their progress display are unchanged, and no external
+backup service or storage account has been added.
 
-Sign in with a current administrator account and open **Admin → Community boss**.
-Both ordinary admins and the Superadmin can manage the boss:
+| Change | Result |
+| --- | --- |
+| Returning players | A saved name collapses to “Playing as…” with an Edit button. |
+| Player recovery | A private recovery code restores the original player after cookie loss, including hits, badges and cooldown. |
+| Shared connections | Admins can approve 2–10 separate players on a household connection. The default remains one. |
+| Boss planning | Recent damage/hour, an estimated time remaining, and presets that fill the **next raid** HP field. Nothing adjusts HP automatically. |
+| Red rally | Fifteen distinct raiders hitting within ten minutes unlock a cosmetic arena effect for that raid. No damage bonus. |
+| Safer host edits | Live HP before/after and damage previews, plus the last 100 boss admin actions with account, time and changed values. |
+| Cleaner interface | Remembered attack style, compact large totals with exact values available, consistent boss names, steady attack controls and restrained red accents. |
+| Clearer refresh status | Boss “Last checked” age, and separate successful provider checks versus content-change times in admin. |
+| Request protection | Bursts of rejected attacks/registration attempts are briefly throttled and flagged to admins. No automatic bans. |
+| Simpler saves | Atomic UTF-8 JSON, with automatic import of the previous local save. No SQL is used for ongoing operation. |
 
-- **Boss avatar:** choose a PNG, JPG, JPEG or WebP and press **Upload avatar**.
-  The server validates the image contents, removes metadata and resizes it to
-  fit 512 × 512 pixels. Uploads may be up to 4 MB and 16 million pixels.
-  **Use original avatar** restores the supplied logo. Site branding is unchanged.
-- **Current raid health:** enter the new **Maximum HP**, check the confirmation
-  and press **Save health**. The range is 100,000–100,000,000. Remaining HP is
-  the new maximum minus all damage already dealt. Contributions, cooldowns,
-  allowances and the raid identity are retained. The maximum cannot be below
-  damage already dealt. Raising it can deliberately reopen a defeated boss.
-- **Start a new raid** remains a separate confirmed action. It archives a
-  summary, resets players and allowances, and retains the avatar, name and damage settings.
-- **Boss name & damage:** set the displayed name (1–60 printable characters),
-  base damage, weakness damage and every-tenth-hit burst bonus. Base/weakness
-  damage must be 1–10,000, the bonus 0–10,000, and weakness damage at least base
-  damage. These values apply only to future hits. Saved contributions, old
-  attack receipts and cooldowns remain unchanged. Concurrent settings edits
-  receive a conflict instead of silently replacing a newer admin change.
+**Hits have no daily or weekly limit.** A player can keep attacking whenever the
+**30-second server cooldown** expires. Achievements are milestones, not attack
+quotas. Approved household players each retain their own 30-second cooldown.
+An eligible hit remains allowed even when rejected-request throttling is active.
 
-| Capability | Public visitor | Admin | Superadmin |
-| --- | --- | --- | --- |
-| View the game, avatar, name and current stats | Yes | Yes | Yes |
-| Attack under the saved game rules | Yes | Yes | Yes |
-| Upload/reset avatar; edit name, maximum HP or attack damage | No | Yes | Yes |
-| Pause/resume or start a new raid | No | Yes | Yes |
-| Manage admin accounts or download private recovery files | No | No | Yes |
+## Keep your current progress when updating
 
-All boss management writes use a POST-only admin endpoint with a verified current account,
-session version and CSRF token. Guest cookies, public CSRF tokens and supplied
-role flags cannot grant access. Removed accounts and revoked sessions lose access.
-Uploads are decoded only after the authorization checks. Public attacks submit
-a style and receipt; the server computes damage from saved settings and ignores
-forged damage/HP/settings fields. Public pages contain no upload or edit forms.
-Uploaded images remain publicly viewable because they are the game's avatar.
-
-Avatar, name, damage and health edits appear on open game/admin pages within the normal
-five-second update cycle. The homepage invitation uses its normal 60-second
-cycle. Unsaved admin fields are not overwritten by polling. A stale health
-form is rejected if another health edit or a new raid was saved meanwhile.
-
-**Automatic health regeneration remains off.** Attacks, cooldowns, daily resets,
-refreshes, inactivity, pause/resume and process restarts with the same saved
-file never restore HP. Only an explicit host health edit or a new raid can
-raise health. The browser accepts such an edit only with its newer health
-revision; ordinary or stale responses cannot undo committed damage.
-
-Avatar bytes are stored separately from raid counters, so each attack does not
-rewrite the image. Images use versioned URLs and browser caching; state feeds
-contain only the URL. Private recovery checkpoints include the avatar, name, damage settings and HP
-edits. Pillow is the one new Python dependency and is included in requirements.
-
-## Upgrade this installation
-
-1. Download a current **private recovery checkpoint** before updating a hosted
-   instance. Retain your existing `data/` folder on a persistent host.
-2. Replace the application code, templates, static files and requirements with
-   the contents of `redhunllef-rebuilt/` in this ZIP. Keep your current private
-   configuration and newer `private/recovery.seed.json`. This ZIP contains no
-   runtime `data/` folder or blank recovery file that overwrites progress.
-3. Run `python -m pip install -r requirements.txt` (or redeploy with the same
-   build command) to install Pillow along with the existing dependencies.
-4. Run only `python wager_backend.py`. The new local image table is created
-   automatically; existing accounts and raid state take precedence over seeds.
-
-On App Platform, commit the downloaded checkpoint as `private/recovery.seed.json`
-in your private repository before redeploying. Local container files, including
-uploaded avatars, can be lost on replacement. A checkpoint restores only what
-was saved in it. The detailed storage section below explains this limitation.
-
-## Included community improvements
-
-- A shorter homepage with live boss health, raider count, and a play button that
-  reflects an active, paused, or completed raid.
-- Fixed mobile attack controls: choose a style, see your remaining allowance,
-  and attack without scrolling back up. They share the main button's cooldown
-  and safe retry receipt.
-- Cosmetic 25%, 50%, and 75% milestones, arena changes, a victory recap with
-  every contributor, and a copy-link button.
-- Attack errors stay visible until dismissed, retried, or resolved by a
-  confirmed receipt. Ordinary successful polls cannot erase them.
-- Compact connection summaries in the dashboard. Expand **Live connections**
-  to see timings and provider controls; new failures open the details automatically.
-- Side-by-side review before publishing changed dates, prizes, text, links,
-  channel, or campaign. Confirmation is signed, expires after 15 minutes, and
-  applies only to the exact changes reviewed.
-- Private recovery export tracking, progress since the last export, and a
-  read-only recovery-file review with account/race/game totals.
-- Conditional public updates, retained unchanged game rows, animation without
-  forced layout reads, shared game-rule constants, and readable JS/CSS source.
-
-See [docs/COMMUNITY_UPDATE.md](docs/COMMUNITY_UPDATE.md) for implementation and
-upgrade details. Cosmetic rewards do not increase damage or shorten the raid.
-
-## Community boss: ready at /play
-
-Use the homepage **Join the boss fight** button or open **`/play`**. Everyone
-attacks one shared Crimson Hunllef. The red arena uses your original logo or uploaded avatar,
-animated hit feedback, three attack styles, rotating weaknesses, Crimson burst
-bonuses, personal progress, milestones, Top 10 raiders, recent hits, and
-past raid summaries. Victory includes the full contributor list.
-The page contains just the game and its controls. There is no signup or separate launch step.
-The homepage Admin footer link is removed; sign in directly at **`/admin`**.
-The admin dashboard also omits the site footer.
-
-Default balance (before any admin damage edits): **2,400,000 HP**, **one manual attack every 60 seconds**, and
-**40 attacks per raid day** per browser and shared network. Matching the current
-weakness deals 150 damage instead of 100; every tenth personal hit adds 100.
-A 100-person community making 20–40 mostly matching attacks daily should take
-roughly **4–8 raid days**. This assumes active daily participation, not merely
-100 community members. The fastest tested 100-person scenario finishes on day
-four. Raid days are 24-hour periods from the first successful community hit.
-No damage regenerates. Victory remains until the host explicitly increases HP or opens a new raid.
-
-The game refreshes every **5 seconds** while visible, with a local countdown
-between updates. Shuffle and Kick continue their original **60-second** checks.
-All attacks and limits are enforced by the server in an atomic transaction.
-A lost-response retry uses the same receipt so that click cannot land twice.
-No WebSocket server, Redis, Node runtime or remote database is needed. Pillow
-handles image decoding. Keep **one instance** in local mode.
-
-**Admin → Community boss** provides avatar uploads, boss name, attack damage,
-current-raid maximum HP, pause/resume and new-raid difficulty for signed-in
-admins. Private recovery downloads remain Superadmin-only. Game writes do not
-change race settings or wagers.
-
-Read [docs/COMMUNITY_BOSS.md](docs/COMMUNITY_BOSS.md) for the rules, balancing,
-privacy limits, and recovery process. Multi-day game progress is part of the
-private recovery checkpoint; save it regularly and before redeploying.
-
-## Storage and existing functionality
-
-The previous release refused to start in production without PostgreSQL. That
-requirement is removed. Storage now defaults to `STORAGE_MODE=local`, including
-on DigitalOcean App Platform. A leftover `DATABASE_URL` is ignored in local
-mode, so an unresolved database placeholder cannot stop startup. Web security
-still uses production cookies and proxy handling; local storage does not turn
-on Flask debug mode or weaken login protection.
-
-The PostgreSQL driver is removed from the normal dependency list. Optional
-compatibility for existing PostgreSQL installations remains separate.
-
-A new **Private recovery file** download in Settings lets the Superadmin save
-accounts, password hashes, the session signing key, race settings, overrides,
-history, audit entries, bans, the last Top 15, the complete community boss state, and its uploaded avatar. A fresh instance imports it
-automatically from `private/recovery.seed.json`. Existing saved local state
-always wins over seed files. Original provider credentials stay in the existing
-configuration; the recovery download does not export the provider configuration.
-
-## What persists on App Platform
-
-**App Platform local files are temporary.** Redeploying, replacing, or scaling
-an instance can discard changes made inside it. This includes edited race
-dates, passwords, new accounts, overrides, history, all community boss progress, and uploaded avatars. A replacement starts
-from the files committed to your repository, including your latest recovery
-seed if you supplied one. Live standings and Kick status are fetched again.
-
-The recovery download is a manual checkpoint, not automatic cloud persistence.
-Save a new copy after important changes and add it to your private repository
-before a planned redeploy. Changes since your last checkpoint can still be lost
-in an unexpected container replacement. The admin panel and startup logs state
-this limitation. Keep the app at **one instance** because each instance has its
-own local file.
-
-On a persistent Linux host, the same local file survives process restarts as
-long as its disk is preserved. The application cannot make App Platform's
-container disk persistent. DigitalOcean documents this behavior here:
-[App Platform data storage](https://docs.digitalocean.com/products/app-platform/how-to/store-data/).
-
-## Install and run
-
-Use Python 3.12 or newer. The package pins Python 3.13.12 for App Platform.
+1. Stop the running app before replacing its code. Keep a copy of the existing folder.
+2. Merge the application files from this complete ZIP into the existing folder.
+   Preserve your current `data/`, `private/`, root settings/account files, and
+   environment settings. Do not replace newer private files with the bundled
+   original seed. Do not create another nested project folder.
+3. Keep **every root `.py` module** beside `wager_backend.py`; they are imports,
+   not separate programs to launch. Missing `race_support.py` means the package
+   was not copied in full; it is not a pip package.
+4. Install the requirements, then start the same launcher:
 
 ```bash
 python -m pip install -r requirements.txt
 python wager_backend.py
 ```
 
-Local URLs: `http://127.0.0.1:8080/` and `http://127.0.0.1:8080/admin`.
-Install dependencies once during setup/build. Supporting Python modules are
-imported automatically. Node is not required to run the website.
+On an existing persistent disk, startup first uses `data/state.json`. If that file
+does not yet exist and the previous `data/redhunllef.sqlite3` exists, the app
+imports its accounts, hashes, settings, live snapshots, boss, avatar and recovery
+metadata into JSON. That import uses Python's built-in SQLite reader only once.
+The old file is left intact. Keep it as a rollback copy; it is no longer updated.
+A malformed existing save stops startup with a clear message instead of resetting
+accounts or raid progress.
 
-The default local file is `data/redhunllef.sqlite3`. The app creates it and its
-tables automatically. Paths resolve from the installed project, so startup also
-works from another working directory. Preserve `data/` when updating files on
-a persistent host. Do not delete it to fix an unrelated deployment problem.
+If your older installation set `LOCAL_DATABASE_PATH`, retain it for the one-time
+import. `STATE_FILE` can select a different JSON path, but no setting is required.
+Existing JSON wins over old files and seeds. Do not delete it to reset an account.
 
-## DigitalOcean App Platform: no database setup
+**App Platform deployment is different:** its replacement container cannot see
+the old container's local files. Before redeploying, use the existing Superadmin
+**Settings → Private recovery file** download and put the latest file in your
+private repository as `private/recovery.seed.json`. Startup imports it on a fresh
+filesystem. Changes made after that download will not be in that recovery file.
 
-1. Replace the application files in your **private** GitHub repository with the
-   contents of `redhunllef-rebuilt/` from this ZIP. Keep your existing provider
-   configuration and any newer recovery file. If the code lives in a subfolder,
-   choose that folder as the service's source directory.
-2. Configure a **Python Web Service** with **one instance**. You do not need to
-   add a database component.
-3. Use these settings:
+## Fresh installation
 
-   | Setting | Value |
-   | --- | --- |
-   | Build command | `python -m pip install -r requirements.txt` |
-   | Run command | `python wager_backend.py` |
-   | HTTP port | `8080` |
-   | Health check | `/healthz` |
-   | Instances | `1` |
+Extract the entire `redhunllef-rebuilt/` folder, open a terminal in it, and use the
+two commands above. Visit `http://localhost:8080`, `/play`, and `/admin`.
 
-4. Set the following runtime environment variables:
+The original supplied Superadmin is **gingrsnaps / enok2121**. The bundled original
+account hashes and Shuffle/Kick configuration are preserved. Existing saved
+accounts and changed passwords take precedence. There is no `manage_admin.py`
+step. The configured ZIP and `FULL_CODE_BLOCKS.md` contain private configuration;
+keep them in your private repository.
 
-   | Name | Value |
-   | --- | --- |
-   | `APP_ENV` | `production` |
-   | `STORAGE_MODE` | `local` (also the default when omitted) |
-   | `PORT` | `8080` |
-   | `TRUST_APP_PLATFORM` | `1` |
-   | `SESSION_COOKIE_SECURE` | `always` |
+Requirements include Waitress, Pillow and timezone data. If an import such as
+`waitress`, `PIL` or `tzdata` is missing, run `python -m pip install -r requirements.txt`
+using the same Python environment that runs the app. `PIL` is supplied by Pillow.
+No Node, frontend build, database package or separate game process is needed.
 
-   `DATABASE_URL` is unnecessary and ignored in local mode. Remove an obsolete
-   `${race-db.DATABASE_URL}` binding from the service if you added one, because
-   DigitalOcean may try to resolve bindings before starting Python. Do not
-   delete an existing database that might contain saved data.
-5. Deploy. Startup should report **2026.09.28-boss-controls** and **Local file ready; no
-   external database is required**. Open the HTTPS app URL and `/admin`.
-6. Reload your browser with Ctrl+F5. Review the published race dates and provider
-   results. Publish the desired schedule if the original seeded race has ended.
-7. After important changes, use **Settings → Private recovery file** and follow
-   the recovery instructions below.
+## DigitalOcean App Platform
 
-The included `app.yaml` has one web service and no database component or database
-binding. Replace its repository placeholder before importing it. If your app
-already has other components, edit its existing configuration instead of
-replacing it wholesale with this standalone template. The `.env.example` file
-is a reference; the app does not automatically read `.env` files.
+Use one **Web Service** from the private GitHub repository containing these files.
+Set the source directory to the folder containing `wager_backend.py`.
 
-`/healthz` checks the process. `/readyz` also checks storage and source freshness;
-it can return 503 before the first successful source update or during an outage.
-Use `/healthz` for deployment health checks so a Shuffle outage does not trigger
-repeated container replacements.
+**Build command**
 
-## Original login, credentials, and dates
-
-The original login is **gingrsnaps / enok2121**. Existing accounts keep their
-current passwords when their local file or newer recovery seed is retained.
-The protected Superadmin can add administrators from Settings. No management
-script is required.
-
-| File | Purpose |
-| --- | --- |
-| `private/settings.json` | Original Shuffle key, Kick client ID/secret, channel, campaign, defaults, and links. |
-| `private/admin_store.seed.json` | Original account/password hash, saved dates, and original records. |
-| `private/recovery.seed.json` | Optional newer checkpoint downloaded by you; not supplied as a blank file. |
-
-The two supplied private configuration files and both logo assets match the
-original uploaded bytes. Keep the configured ZIP, full-code document, recovery
-files, and repository private. Public APIs never expose account hashes or
-provider credentials.
-
-Nonempty provider environment values override packaged credentials:
-`SHUFFLE_API_KEY` (or legacy `API_KEY`), `KICK_CLIENT_ID`, and `KICK_CLIENT_SECRET`.
-The remaining precedence is root `settings.json`, root `integrations.json`, then
-`private/settings.json`. An explicit `SETTINGS_PATH` disables the implicit
-private settings fallback. Restart after changing provider credentials.
-
-The original admin seed saves **August 4–11, 2026, 6 PM Eastern**. The original
-settings defaults instead contain August 18–25. Saved admin dates win. Neither
-window is silently advanced at startup. Newer local state or your recovery seed
-keeps its saved dates.
-
-## Save and restore a private recovery file
-
-1. Sign in as the Superadmin and open **Settings → Private recovery file**.
-2. Choose **Download private recovery file**. The filename is
-   `recovery.seed.json`. It contains password hashes and a session signing key;
-   store it privately. The dashboard records when the export was generated and
-   reports later hits, damage, and changes. It cannot confirm that you saved the
-   download elsewhere. Expand **Check a recovery file before restoring** to
-   validate its contents and review totals without changing the running site.
-3. For a fresh App Platform deployment, add that file to your private GitHub
-   repository as **`private/recovery.seed.json`**, then redeploy.
-4. The app imports it automatically if no saved state exists. Check your login,
-   dates, overrides, history, boss health, and personal raid progress. The saved Top 15 appears until a live check
-   loads the complete current standings. The uncensored Code Red list and Kick
-   status are fetched again.
-
-A recovery seed never overwrites a populated local store. On a persistent host,
-back up the existing project and `data/` before any deliberate replacement.
-A corrupt recovery file stops import with an error rather than resetting your
-accounts to the original defaults.
-
-The ordinary **Download race backup** remains available to administrators and
-excludes passwords/account records and the community boss. Its restore form previews the saved race
-before replacing the current race; current accounts stay intact. Use the private
-recovery download when account recovery is needed. Internal rollback checkpoints
-remain local and do not protect against App Platform discarding the container.
-
-## Upgrade an existing installation
-
-Keep the current `data/` folder, any newer root settings/integrations files,
-and any newer `private/recovery.seed.json`. Replace the application modules,
-templates, and assets together. Back up before replacing files, install the
-requirements, then run the same sole launcher.
-
-For a fresh local store, initialization checks a recovery seed first, then
-root `admin_store.json`, then the original packaged account seed. Existing saved
-state takes priority over all seeds. Legacy files are read without modification;
-password hashes are preserved. The migration records a private local checkpoint.
-
-If you actually have newer accounts/settings in PostgreSQL, this local build
-does not automatically copy them. Keep the database intact and export those
-records before switching to local storage. Optional PostgreSQL compatibility
-is described at the end of this README.
-
-## Race publication and live updates
-
-- Change dates under **Race → Save race settings → Confirm and publish race**.
-  A side-by-side table lists every changed setting. Review it and use the
-  bottom confirmation button. Changing the form after
-  reviewing requires a new review. **Published window** shows saved dates;
-  edited form values remain a draft until confirmed.
-- Independent Shuffle and Kick jobs start automatically and run every **60
-  seconds**. There is no live-mode switch or second worker command. Slow calls
-  do not hold up the website or the other provider.
-- Both public/admin pages use the same published snapshot and poll every 60
-  seconds while visible. Returning to a hidden tab checks immediately. Public
-  `/public-state` requests use ETags; unchanged data returns a body-free 304 and
-  a fresh server-time header. Admin and personal game responses remain no-store.
-- Manual refreshes queue one follow-up even if a check is already running.
-  Repeated clicks coalesce. The admin briefly polls every two seconds after a
-  manual request or date publication, then returns to its normal cadence.
-- Every admin tab has a connection summary and expandable provider results.
-  New failures open the details. A queued retry displays its reason and retry
-  time. Request tickets connect completion to the requested refresh.
-- Successes and failures from old settings cannot publish over a newer race.
-  An old ordinary retry delay is cleared when dates change; provider rate limits
-  and explicit `Retry-After` instructions are still honored.
-- Failed checks retain the last results and mark them delayed. An error never
-  fabricates zero wagers or labels Kick offline. Future races wait for their
-  start; ended races continue checking their saved range for final corrections.
-- Shuffle uses the original affiliate endpoint and `startTime`/`endTime` range.
-  A rejected range never falls back to lifetime totals. Decimal calculations,
-  original sum/max aggregation, $0.01 qualification, and existing weighting and
-  prizes remain. Invalid source rows are disclosed; a wholly invalid response
-  retains the previous board.
-- Kick uses app-token authorization, caches tokens, and retries authentication
-  once after HTTP 401. Unknown status differs from confirmed offline.
-
-The earlier native form-action collision, JSON error handling, UTF-8 startup
-fix, stopped-worker recovery, and draft preservation remain included. Provider
-latency and browser scheduling can delay delivery; a 60-second interval does
-not mean the external provider necessarily publishes new results every minute.
-
-## Visitor IP addresses on DigitalOcean
-
-`TRUST_APP_PLATFORM=1` tells the app to use the validated **DO-Connecting-IP**
-header for visitor identity. DigitalOcean documents that header; do not use
-`X-Forwarded-For` as a substitute for per-player cooldowns. Without the expected
-header, game attacks are unavailable with a clear setup response instead of
-silently sharing an ingress address across all players.
-
-Set `TRUST_APP_PLATFORM=0` on a local/direct Python host. Forwarded headers are
-then ignored. Enable the App Platform setting only behind its trusted ingress;
-placing a directly accessible server behind an untrusted header permits spoofing.
-Official reference: [DigitalOcean client IP header](https://docs.digitalocean.com/support/where-can-i-find-the-client-ip-address-of-a-request-connecting-to-my-app/).
-
-## Dashboard and appearance
-
-**Overview** shows the countdown, prize pool, player count, source freshness,
-and shortcuts to race and boss controls. **Race** edits Eastern Time dates, all 15 prizes,
-site text, links, channel, and campaign. DST edge cases receive field errors.
-
-**Players** shows full usernames, weighted/raw totals, filters, exports, and
-editable weighted overrides. Expand **Community wagerers** for up to 100
-confirmed Code Red users, with search and copy buttons. Public usernames stay
-masked as two characters plus six asterisks. Default loaded-player capacity is
-300, configurable with `FULL_LEADERBOARD_MAX` from 100 to 10,000; filters operate
-on loaded records. Overrides do not change source/raw totals.
-
-**Settings** contains passwords, Superadmin account management, race backups,
-private recovery, race history, redacted diagnostics, IP bans, and activity logs.
-Native forms/navigation remain usable without JavaScript; automatic browser
-updates require JavaScript.
-
-The red theme uses the original logo's #ff2d2d, burgundy panels, red active tabs,
-and darker red buttons. It includes responsive layouts, keyboard focus states,
-and reduced-motion support. No remote fonts or frontend framework are required.
-
-## Console output and troubleshooting
-
-```text
-START RedHunllef 2026.09.28-boss-controls listening on 0.0.0.0:8080; storage=local SQLite.
-STORAGE Local file ready; no external database is required.
-LIVE Automatic Shuffle and Kick checks started; cadence=60s.
+```bash
+python -m pip install -r requirements.txt
 ```
 
-Hosted local storage also logs the App Platform persistence limitation. Provider
-logs show the requested window, outcome, and duration without API credentials.
+**Run command**
 
-| Symptom | Action |
+```bash
+python wager_backend.py
+```
+
+| Setting | Value |
 | --- | --- |
-| Old "Attach PostgreSQL" startup error | The old release is still deployed. Replace the complete code and verify release 2026.09.28-boss-controls; use `python wager_backend.py`. |
-| DigitalOcean rejects a database variable binding | Remove the stale `DATABASE_URL` binding from service settings; local mode does not need it. |
-| Missing Flask, Waitress, tzdata, or PIL | Install `requirements.txt` with the Python used to launch. |
-| Login returns to login | Use the HTTPS app URL and the production cookie/proxy settings above. |
-| Dates do not publish | Use the bottom **Confirm and publish race** button and verify **Published window**. |
-| Refresh appears unchanged | Expand **Live connections**. It distinguishes unchanged/empty results from errors or queued retries. |
-| Credentials fail with HTTP 401/403 | Check the provider permissions and selected credential source in diagnostics. |
-| Edits disappeared after a redeploy | A new container started from repository seeds. Restore your saved checkpoint; unsaved-to-checkpoint changes cannot be recovered from the discarded disk. |
-| Local storage cannot be read/written | Check disk space and directory permissions; preserve the existing file. |
+| HTTP port | `8080` |
+| Health check | `/healthz` |
+| Instance count | `1` |
+| `APP_ENV` | `production` |
+| `PORT` | `8080` |
+| `TRUST_APP_PLATFORM` | `1` |
+| `SESSION_COOKIE_SECURE` | `always` |
 
-## Game troubleshooting
+`app.yaml` contains the same deployment shape; replace its GitHub repository
+placeholder if you import that specification. `Procfile` uses the same launcher.
+Remove an obsolete database binding from the App Platform environment: the
+platform may try to resolve that binding before Python starts. This build ignores
+`DATABASE_URL` and `STORAGE_MODE`; it never connects to PostgreSQL.
 
-| Symptom | Action |
+Keep one instance. Each App Platform instance has its own temporary filesystem,
+so multiple replicas would split the raid. A process restart that keeps the same
+data folder preserves progress; a container replacement or redeployment does not.
+DigitalOcean documents this restriction in
+[Store Data in App Platform](https://docs.digitalocean.com/products/app-platform/how-to/store-data/).
+This release adds no external persistence service. The existing manual recovery
+export is the available checkpoint method on App Platform. On a persistent Linux
+host, preserve the `data/` folder during code updates.
+
+Use `TRUST_APP_PLATFORM=1` only behind App Platform ingress. The app then uses
+`DO-Connecting-IP` for player connections. On a directly exposed/local host, leave
+it unset or `0`. Arbitrary client forwarding headers are not accepted as identity.
+
+## Accounts and automatic updates
+
+`/admin` renders the login or dashboard directly. All management routes require a
+current admin account, an unrevoked session, and CSRF protection for writes.
+The Superadmin manages administrator accounts and downloads full private recovery.
+Other current admins can manage boss controls, avatars, household allowances and
+view full player names in the private Top 5.
+
+Both Shuffle and Kick are checked **automatically every 60 seconds**, by independent
+threads inside the sole launch process. There is no live-data switch or manual-only
+mode. The public leaderboard and admin provider views refresh every 60 seconds;
+a manual source refresh shows progress until the check finishes. Boss public and
+admin views refresh every **5 seconds**. Hidden browser tabs pause their own polling
+and catch up when visible; the server's source jobs continue.
+
+The original seed's race window is historical. To publish the intended window,
+open **Race**, edit the Eastern Time dates, choose **Save race settings**, review the
+changes, then **Confirm and publish race**. Check the published window in
+**Live connections**. A successful source check does not necessarily mean wager
+values changed; both times are shown separately. Failures retain previously
+confirmed data and show the reason. No lifetime-wager fallback or fabricated data
+replaces a failed live response.
+
+The public leaderboard masks names. The admin Players tab retains the collapsible
+first 100 confirmed Code Red wagerers, search, full names, exports and overrides.
+Provider keys are read from the original private configuration, with nonempty
+runtime environment overrides available for `SHUFFLE_API_KEY`, `KICK_CLIENT_ID`
+and `KICK_CLIENT_SECRET`.
+
+## Community boss
+
+Open `/play` or the homepage boss button. Save a self-reported Community/Shuffle
+username once, then choose Blade, Bow or Magic. Your full submitted name is visible
+to you and administrators; other visitors see a raider alias.
+
+| Rule | Behavior |
 | --- | --- |
-| “Connection setup needed” | On App Platform set `TRUST_APP_PLATFORM=1` and check that ingress supplies `DO-Connecting-IP`. For direct/local hosting use `0`. Do not run a directly exposed server with proxy trust enabled. |
-| Shared cooldown on Wi-Fi | Intended: one network shares the 60-second cooldown and 40-hit allowance. A separate signed browser identity also keeps its own allowance when its network changes. |
-| “Retry last strike” | The response was lost. Click it to resend the same receipt safely. A state update may confirm the hit first. It never auto-attacks. |
-| Progress changed after deploy | Local container state was replaced. A new instance starts from your last committed `private/recovery.seed.json`, or a fresh boss if it has none. |
-| Raider name changed | Cookies were cleared/expired, a different browser is in use, or the host started a new raid. No account sign-in is needed. |
-| Old raid form rejected | Another raid started after you opened the tab. Reload to review it before submitting controls again. |
+| Attack cooldown | 30 seconds, checked by the server. |
+| Daily/weekly quota | None. |
+| Default damage | 100 base, 150 weakness, +100 burst every tenth hit. Admin-editable. |
+| Weakness | Random stable draw every 10 minutes, shared by all players. Repeats are valid. |
+| Health | Never regenerates automatically. Confirmed damage stays saved. |
+| Progress bar | 0% to 100% defeated, based on remaining/max HP. |
+| Input re-arm | Mouse pointer must leave the attack button; keyboard must release its activation key; touch taps work on release. |
+| Red rally | 15 distinct raiders in a rolling 10-minute window; cosmetic arena lighting lasts until a new raid. |
+| Achievements | Existing eight badges and progress display retained; achievement history carries across raids. |
+
+The pointer rule discourages a stationary clicker. It cannot prove that a human
+clicked; the server independently enforces identity, cooldowns, damage and
+idempotent receipts. Retrying an unconfirmed hit never deals damage twice.
+
+Expand **Player recovery**, create a code, and save the text file somewhere private.
+Only a digest of the code is saved. The full code is shown in that response, not
+published in game feeds or stored in browser local storage. Creating a replacement
+invalidates the previous code. The code restores the same player identity, so it
+does not erase cooldowns, receipts or contributions. It also works after a new
+raid. It requires the same saved app secret and profile data; it cannot restore a
+profile after all server saves have been lost. Anyone with a valid code can use
+that player profile, so do not post it publicly.
+
+One username per connection remains the default. If several real household members
+share an IP, an admin can approve that connection using an already registered
+player's name and a total allowance of 2–10 players. Each uses a separate browser
+profile and retains a separate 30-second cooldown. The allowance caps registered
+household identities, **not hits**. To reduce it, release other connection claims
+first. A Shuffle spelling match or an IP is never treated as account ownership
+verification; the current feed does not provide a trustworthy player-IP mapping.
+
+## Boss administration
+
+Use **Community boss** in the admin menu:
+
+- Upload PNG, JPG, JPEG or WebP. The server validates real image content, file size,
+  dimensions and animation before resizing to a safe PNG. Public visitors can view
+  the avatar; only current admins can replace or reset it.
+- Rename the boss and set future base/weakness/burst damage. The preview shows both
+  normal and tenth-hit totals together. Existing damage is retained.
+- Change maximum HP or set remaining HP explicitly. The preview uses current
+  confirmed health. Saving requires confirmation; stale admin revisions cannot
+  overwrite another admin's edit. Raising health is an explicit admin heal.
+- Review recent pace and time remaining. Estimates require at least five minutes,
+  ten hits and positive damage. Presets target roughly three, five or seven days
+  **at the observed pace**. Before enough activity exists, 10M/25M/50M are starting
+  suggestions, not promised durations. Presets only fill the new-raid field.
+- Start a new raid only after confirming. Names, recovery digests, achievements,
+  household allowances, avatar and combat settings carry forward. Current raid
+  contributions/cooldowns reset and the previous raid is summarized in history.
+- View the uncensored Top 5, shared connection allowances, the last 100 saved boss
+  admin actions and temporary rejected-request flags. Normal timer-perfect hits
+  are never flagged merely for regular timing. Flags are diagnostic, not bans.
+
+Whole-number maximum HP accepts `1` through `9,007,199,254,740,991` (the browser's
+largest exact integer). Remaining HP accepts `0` through the current maximum;
+zero defeats the boss. Damage components accept `0` through that same exact-integer
+maximum. Every actual hit is capped by remaining HP. There is no smaller arbitrary
+HP/damage cap. The numeric capacity of a single raid is distinct from a daily or
+weekly quota.
+
+## Save files and recovery
+
+| Path | Purpose |
+| --- | --- |
+| `data/state.json` | Current accounts, race settings, live snapshots, raid, profiles, avatar and history. |
+| `data/state.json.lock` | Automatic process lock for file transactions. |
+| `data/recovery/` | Bounded local copies made before important admin changes; no external service. |
+| `private/recovery.seed.json` | Optional existing manual recovery export used only when no current local save exists. |
+| `private/admin_store.seed.json` | Original supplied account seed for a fresh install. |
+| `private/settings.json` | Original supplied provider configuration. |
+
+All state writes use UTF-8, flush to disk, and replace the current file atomically.
+Readers see a complete old or new save. A write failure does not acknowledge a new
+hit; safe receipt retries handle an uncertain response. Local recovery copies live
+on the same disk and do not survive loss of an App Platform container.
+
+The private recovery export includes accounts, secret, race configuration, saved
+Top 15, boss avatar, private profiles, contribution totals and boss admin history.
+It is not exposed publicly. A restored Top 15 remains a snapshot until the next
+successful live source check. The recovery status records when an export was
+created, not proof that someone saved it externally.
+
+## File structure and complete code
+
+See `FILE_STRUCTURE.md` for every shipped file and its purpose.
+`FULL_CODE_BLOCKS.md` contains every application text file in its own full code
+block; the ZIP contains those ready-to-use files plus the original logos.
+
+The previous optional `requirements-postgres.txt` and `tests/test_postgres.py`
+are removed. An old `manage_admin.py` is not needed by this release. Keep the old
+local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-This release passes **99 Python application/game/calculation tests** and **39 DOM/CSS
-checks**. Startup is exercised through an actual Waitress child process using
-`python wager_backend.py`, production mode, and a leftover database placeholder.
-Another check blocks importing psycopg and verifies production login with secure
-cookies still works. Recovery tests verify changed passwords, accounts, dates,
-overrides, and saved results on a fresh instance, along with authorization,
-corrupt-file preservation, and existing-state precedence.
+The release passed 124 backend tests and 54 DOM/interface checks. Coverage includes
+source refresh behavior, actual launcher startup, login, authorization, image
+validation, nonregenerating HP, unlimited attacks, recovery-code privacy, household
+cooldowns, migration, atomic-write failures and simultaneous writers. The final
+storage optimization was rechecked against all 14 new behavior tests.
 
-The suite retains date-publication, in-flight failure, automatic update,
-manual refresh, privacy, and original field-envelope regressions. Real HTTP
-transport to a local fixture server tests provider parsing and scheduled
-publication; source data is synthetic. See `docs/VALIDATION.md` for browser
-checks and limits.
+No live Shuffle/Kick request or DigitalOcean deployment was performed during these
+checks. Provider tests use synthetic responses; native browser visual rendering was
+unavailable in the test environment. See `docs/VALIDATION.md` for the scope.
 
-Current successful live Shuffle/Kick connectivity and an actual DigitalOcean
-deployment have not been verified from this workspace. Earlier external provider
-probes timed out; the real deployment's progress/errors must be checked there.
-Four optional PostgreSQL tests are skipped without a dedicated test database.
+Developer checks (not required to run the website):
 
 ```bash
 python -m unittest discover -s tests -v
-```
-
-Optional development interface checks (Node 22+, not required to deploy):
-
-```bash
-npm --prefix tests install --ignore-scripts
 python tests/render_fixtures.py .test-fixtures
+npm --prefix tests install --ignore-scripts
 npm --prefix tests test
 ```
-
-## Optional compatibility for an existing PostgreSQL deployment
-
-This is not needed for the requested local-storage deployment. To deliberately
-continue using an existing remote store, install `requirements-postgres.txt`,
-set `STORAGE_MODE=postgres`, and retain `DATABASE_URL`, `APP_STATE_KEY`, and TLS
-settings. Use the direct connection rather than a transaction-pooled URL;
-provider coordination uses session advisory locks. The launcher remains
-`python wager_backend.py`. An explicit PostgreSQL failure does not silently
-fall back to a new local account store.
-
-The CI workflow installs the optional driver and provisions a disposable database
-for its PostgreSQL compatibility tests. Locally those tests require
-`TEST_DATABASE_URL`; never point that variable at production.
-
-## Files
-
-`FILE_STRUCTURE.md` maps every supplied file. `FULL_CODE_BLOCKS.md` contains each
-text file in its own complete block plus base64 for the original binary logos.
-The ZIP contains the ready-to-use files. Python regenerates bytecode; it is not
-shipped. Runtime state and test preview data are excluded from the ZIP.
 ````
 
 ## START_HERE.md
 
 ````markdown
-# RedHunllef — start here
+# Start RedHunllef
 
-Release **2026.09.28-boss-controls**. No PostgreSQL service or DATABASE_URL is needed.
-Extract the complete folder. Install dependencies once:
+Release **2026.09.28-community-polish** — complete configured package.
+
+Install dependencies once, then run the sole launcher:
 
 ```bash
 python -m pip install -r requirements.txt
-```
-
-Run only:
-
-```bash
 python wager_backend.py
 ```
 
-On DigitalOcean App Platform use those same build/run commands, port **8080**,
-health check **/healthz**, and **one instance**. Runtime environment:
+Keep all supporting Python files, templates and static files together.
+No database service, SQL setup, account-creation command or extra worker is needed.
+The app creates `data/state.json` and imports an existing previous local save.
 
-```text
-APP_ENV=production
-STORAGE_MODE=local
-TRUST_APP_PLATFORM=1
-SESSION_COOKIE_SECURE=always
-```
+- Website: `/`
+- Community boss: `/play`
+- Admin: `/admin`
+- Original supplied Superadmin: **gingrsnaps / enok2121**. Existing accounts/passwords win.
 
-Remove an obsolete DATABASE_URL binding if you added one. Local mode ignores
-that variable; DigitalOcean may still try to resolve bindings before startup.
-No new database component is required. Keep existing data-bearing resources.
+When updating, preserve current `data/`, `private/`, settings and environment
+configuration. Copy the application code from this ZIP into matching paths.
+Do not replace newer private seeds with the bundled originals.
 
-The original supplied login is **gingrsnaps / enok2121**. Original Shuffle/Kick
-credentials and the account seed are included. Existing local state or a newer
-recovery seed retains its accounts, passwords, and dates.
+DigitalOcean App Platform: use the same build/run commands, port **8080**,
+health check **/healthz**, and **one instance**. Set `APP_ENV=production`,
+`TRUST_APP_PLATFORM=1`, and `SESSION_COOKIE_SECURE=always`.
+Remove stale database environment bindings. No database component is needed.
 
-**App Platform replaces local files during redeploys/container replacements.**
-After important edits, use **Settings → Private recovery file**. Add the
-resulting file to your private repository as `private/recovery.seed.json`
-before redeploying to restore that checkpoint automatically. New edits after
-your latest saved checkpoint can still be lost. This is manual recovery,
-not automatic persistent cloud storage. Read README.md for the full process.
+App Platform loses local files on redeployment/container replacement. Before
+redeploying, download **Settings → Private recovery file** as the Superadmin and
+save it as `private/recovery.seed.json` in your private repository. New changes
+after the export can be lost. No external backup integration has been added.
 
-For a persistent host, preserve the existing `data/` folder when replacing code.
-The application automatically creates its local file and imports the seed;
-there is no account-creation script or separate worker to run.
+Hits are **unlimited per day and week**, with a **30-second cooldown**. The eight
+achievements and their existing display remain unchanged. Boss screens check every
+5 seconds; Shuffle/Kick check automatically every 60 seconds.
 
-The original seed saves August 4–11, 2026, 6 PM Eastern. To publish your desired
-schedule: **Race → Save race settings → Confirm and publish race** in the bottom
-bar. Verify **Published window**. Both providers update automatically every
-60 seconds. Expand **Live connections** for actual provider outcomes.
+This update adds player recovery codes, admin-approved households, cosmetic Red
+rally, next-raid presets, edit previews, boss admin history and clearer live status.
+Original credentials, logos, live feeds, private Code Red list and admin-only boss
+uploads/name/HP/damage controls remain intact.
 
-The red theme, original logos, refresh/publication fixes, UTF-8 startup handling,
-and private 100-user Code Red list remain. Reload with Ctrl+F5 after deploying;
-the release label must show **2026.09.28-boss-controls**.
-
-Open **/play** or click **Join the boss fight** on the homepage. The public page
-is just the game, with no tutorial or long explanation panels.
-The shared boss starts at 2,400,000 HP. One attack per minute, 40 per raid day,
-with a target of roughly 4–8 days for 100 active participants. Game views update
-every 5 seconds. Wager/Kick views still update every 60 seconds.
-
-Host controls live at **/admin?tab=boss**. Use **Boss avatar** to upload a PNG/JPG/JPEG/WebP,
-or **Current raid health** to change maximum HP while keeping saved damage.
-Only signed-in admins can save these changes. Use **Boss name & damage** to
-rename the boss or adjust future hit damage. The Superadmin still controls admin
-accounts and private recovery downloads. Reinstall requirements for Pillow.
- Save a **private recovery checkpoint**
-regularly during the raid and before redeploying. It includes health, profiles,
-attack receipts, cooldowns, health edits and the uploaded avatar. App Platform can lose changes after the last
-checkpoint if it replaces the container. No extra launch command is required.
-
-The Admin footer link is removed. Bookmark **/admin** for your dashboard.
-
-Boss health never regenerates. Every confirmed hit remains in the saved raid
-across refreshes, daily resets and process restarts with the same data. Only
-an explicit maximum-HP edit or a confirmed new raid may raise health. The initial percentage now reflects
-saved HP immediately. Save recovery before App Platform redeploys: losing the
-local data file is separate from in-game health regeneration.
-
-Earlier improvements retained here include mobile attack controls, milestones, the
-full victory contributor list, a live homepage boss invitation, compact admin
-connections, side-by-side change review, and recovery checkpoint tracking.
-See `docs/COMMUNITY_UPDATE.md` for all changes. No new process is needed.
+Read `README.md` for migration/deployment details and `FULL_CODE_BLOCKS.md` for the
+complete source in individual code blocks.
 ````
+
+## abuse_guard.py
+
+```python
+"""Bounded, in-memory throttles for rejected requests, separate from gameplay.
+
+Successful eligible attacks are never counted or blocked by this guard. A regular
+30-second rhythm is not a reason to flag someone. Records expire; no bans exist.
+"""
+from collections import deque
+import hashlib
+import hmac
+import threading
+import time
+
+
+class AbuseGuard:
+    def __init__(self, secret):
+        self.secret = secret.encode()
+        self.lock = threading.Lock()
+        self.records, self.flags = {}, deque(maxlen=50)
+
+    def key(self, identity, address):
+        # Admin diagnostics need a correlation tag, never a raw IP or cookie.
+        return hmac.new(self.secret, (identity + ':' + address).encode(), hashlib.sha256).hexdigest()[:16]
+
+    def _entry(self, category, key, now):
+        for k, v in list(self.records.items()):
+            if now - v['at'] >= 60: del self.records[k]
+        pair = (category, key)
+        if pair not in self.records:
+            if len(self.records) >= 4000:
+                self.records.pop(next(iter(self.records)))
+            self.records[pair] = dict(at=now, count=0)
+        return self.records[pair]
+
+    def retry_after(self, category, key):
+        with self.lock:
+            now = time.monotonic()
+            item = self._entry(category, key, now)
+            threshold = 20 if category == 'registration' else 12
+            return max(1, int(60 - now + item['at']) + 1) if item['count'] >= threshold else 0
+
+    def rejected(self, category, key, alias):
+        with self.lock:
+            item = self._entry(category, key, time.monotonic())
+            item['count'] += 1
+            threshold = 20 if category == 'registration' else 12
+            if item['count'] == threshold:
+                self.flags.appendleft(dict(at=int(time.time()), category=category, tag=key,
+                                           alias=alias[:40], rejected=threshold))
+
+    def status(self):
+        with self.lock:
+            cutoff = time.time() - 86400
+            return [dict(f) for f in self.flags if f['at'] > cutoff]
+```
 
 ## app.yaml
 
@@ -943,9 +615,6 @@ services:
     envs:
       - key: APP_ENV
         value: production
-        scope: RUN_TIME
-      - key: STORAGE_MODE
-        value: local
         scope: RUN_TIME
       - key: APP_STATE_KEY
         value: redhunllef
@@ -986,7 +655,6 @@ import copy
 import hashlib
 import hmac
 import ipaddress
-import json
 import logging
 import math
 import re
@@ -994,20 +662,22 @@ import secrets
 import threading
 import time
 
+from boss_extras import audit, balance_view, host_snapshot, rally_view, record_activity, validate_extras
 from boss_avatar import image_bytes, validate_avatar
+from boss_progress import MAX_NUMBER, badges, new_profile, record_hit, username, validate_profiles
 
 LOG = logging.getLogger("redhunllef")
 DEFAULT_HP = 2_400_000
-MIN_HP, MAX_HP = 100_000, 100_000_000
-COOLDOWN = 60
-DAILY_ATTACKS = 40
+MIN_HP, MAX_HP = 1, MAX_NUMBER
+COOLDOWN = 30
+DAILY_ATTACKS = None  # Legacy contract: null now means unlimited hits.
 DAY = 86400
 WARD_SECONDS = 600
 POLL_SECONDS = 5
 BASE_DAMAGE, WEAK_DAMAGE, BURST_EVERY, BURST_BONUS = 100, 150, 10, 100
-MAX_DAMAGE = 10_000
+MAX_DAMAGE = MAX_NUMBER
 # Historical receipts must remain valid if the host later lowers attack damage.
-MAX_HIT = MAX_DAMAGE * 2
+MAX_HIT = MAX_NUMBER
 DEFAULT_NAME = 'Crimson Hunllef'
 STYLES = {"blade": "Blade", "bow": "Bow", "magic": "Magic"}
 MAX_PLAYERS, MAX_NETWORKS = 2000, 4000
@@ -1025,11 +695,8 @@ def combat_settings(value=None):
     result = dict(name=name.strip(), damage=value.get('damage', BASE_DAMAGE),
                   weak_damage=value.get('weak_damage', WEAK_DAMAGE), burst_bonus=value.get('burst_bonus', BURST_BONUS))
     for field in ('damage', 'weak_damage', 'burst_bonus'):
-        minimum = 0 if field == 'burst_bonus' else 1
-        if type(result[field]) is not int or not minimum <= result[field] <= MAX_DAMAGE:
-            raise ValueError(f'Damage values must be whole numbers up to {MAX_DAMAGE:,}; only the burst bonus may be zero.')
-    if result['weak_damage'] < result['damage']:
-        raise ValueError('Weakness damage must be at least the base damage.')
+        if type(result[field]) is not int or not 0 <= result[field] <= MAX_DAMAGE:
+            raise ValueError(f'Damage must be a whole number from 0 to {MAX_DAMAGE:,}.')
     return result
 
 
@@ -1041,15 +708,6 @@ def rules(state=None):
                 damage=settings['damage'], weak_damage=settings['weak_damage'], burst_every=BURST_EVERY,
                 burst_bonus=settings['burst_bonus'],
                 styles=dict(STYLES), min_hp=MIN_HP, max_hp=MAX_HP, max_damage=MAX_DAMAGE)
-
-
-def badges(player):
-    hits, days = player.get("attacks", 0), player.get("active_days", 0)
-    return [dict(id=key, label=label, description=description, earned=earned) for key, label, description, earned in (
-        ("first", "First strike", "Land your first hit.", hits >= 1),
-        ("burst", "Crimson veteran", f"Land {10 * BURST_EVERY} hits for ten Crimson bursts.", hits >= 10 * BURST_EVERY),
-        ("loyal", "Three-day crew", "Land a hit on three different raid days.", days >= 3),
-    )]
 
 
 class BossError(ValueError):
@@ -1067,7 +725,7 @@ def fresh_raid(now=None, health=DEFAULT_HP, history=None, settings=None):
                 settings=combat_settings(settings), settings_revision=0)
 
 
-def _integer(value, minimum=0, maximum=10**12):
+def _integer(value, minimum=0, maximum=MAX_NUMBER):
     if type(value) is not int or not minimum <= value <= maximum:
         raise ValueError("The community boss recovery has an invalid number.")
     return value
@@ -1089,11 +747,14 @@ def validate_boss(value):
     _integer(value.get("health_revision", 0))
     _integer(value.get('settings_revision', 0))
     combat_settings(value.get('settings'))  # Older raids inherit the original defaults.
-    maximum = _integer(value.get("max_hp"), 1, 100_000_000)
+    maximum = _integer(value.get("max_hp"), 1, MAX_HP)
+    adjustment = _integer(value.get("health_adjustment", 0), -MAX_NUMBER, MAX_NUMBER)
+    validate_extras(value, MAX_NETWORKS)
+    validate_profiles(value.get("profiles", {}), MAX_PLAYERS, value.get("households"))
     hp = _integer(value.get("hp"), 0, maximum)
     for field in ("created_at", "started_at", "finished_at", "total_attacks", "total_damage"):
         _integer(value.get(field))
-    if type(value.get("paused")) is not bool or value["total_damage"] != maximum - hp:
+    if type(value.get("paused")) is not bool or value["total_damage"] != maximum - hp + adjustment:
         raise ValueError("The community boss recovery has inconsistent health.")
     if bool(value["finished_at"]) != (hp == 0) or (value["total_attacks"] and not value["started_at"]):
         raise ValueError("The community boss recovery has inconsistent progress.")
@@ -1106,10 +767,10 @@ def validate_boss(value):
                 raise ValueError("The community boss recovery has an invalid player identifier.")
             _timestamp(record.get("last_attack"))
             _integer(record.get("day"))
-            _integer(record.get("used"), 0, DAILY_ATTACKS)
+            _integer(record.get("used"))
     for player in players.values():
         _integer(player.get("attacks"), 1)
-        _integer(player.get("damage"), 1, maximum)
+        _integer(player.get("damage"), 0, MAX_NUMBER)
         if "active_days" in player:
             _integer(player["active_days"], 1, player["attacks"])
         receipt = player.get("last_hit")
@@ -1117,7 +778,7 @@ def validate_boss(value):
             raise ValueError("The community boss recovery has an invalid attack receipt.")
         if not isinstance(player.get("request_id"), str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", player["request_id"]):
             raise ValueError("The community boss recovery has an invalid request receipt.")
-        _integer(receipt.get("damage"), 1, MAX_HIT)
+        _integer(receipt.get("damage"), 0, MAX_HIT)
         _integer(receipt.get("at"))
         if type(receipt.get("weakness")) is not bool or type(receipt.get("burst")) is not bool:
             raise ValueError("The community boss recovery has an invalid attack bonus.")
@@ -1129,7 +790,7 @@ def validate_boss(value):
     for hit in recent:
         if not isinstance(hit, dict) or not re.fullmatch(r"Raider [A-F0-9]{8}", str(hit.get("name", ""))) or not isinstance(hit.get("style"), str) or hit["style"] not in STYLES:
             raise ValueError("The community boss recovery has an invalid recent hit.")
-        _integer(hit.get("damage"), 1, MAX_HIT)
+        _integer(hit.get("damage"), 0, MAX_HIT)
         _integer(hit.get("at"))
     for entry in history:
         if not isinstance(entry, dict) or entry.get("outcome") not in {"Victory", "Restarted"}:
@@ -1163,21 +824,20 @@ class CommunityBoss:
     def __init__(self, store):
         self.store, self.lock = store, threading.RLock()
         with self.store.connection(transaction=True) as conn:
-            row = self.store.query(conn, "SELECT document FROM rh_boss WHERE name=?", (store.key,)).fetchone()
+            row = self.store.boss_read(conn)
             if not row:
                 value = fresh_raid()
-                self.store.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (store.key, json.dumps(value)))
+                self.store.boss_write(conn, value)
             else:
-                value = validate_boss(json.loads(row[0]))
+                value = validate_boss(row)
             self.avatar_document = validate_avatar(self.store.avatar(conn))
         self.state, self.loaded_at = value, time.monotonic()
 
     def _read(self, conn, locked=False):
-        suffix = " FOR UPDATE" if locked and self.store.pg else ""
-        row = self.store.query(conn, "SELECT document FROM rh_boss WHERE name=?" + suffix, (self.store.key,)).fetchone()
-        if not row:
+        value = self.store.boss_read(conn)
+        if value is None:
             raise ValueError("Community boss state is missing. Restore the private recovery checkpoint.")
-        return validate_boss(json.loads(row[0]))
+        return validate_boss(value)
 
     def _write(self, conn, state, *, previous=None, new_raid=False, health_change=False, settings_change=False):
         """Only an explicit host health edit or new raid may replenish health.
@@ -1193,12 +853,13 @@ class CommunityBoss:
               or state["total_attacks"] < previous["total_attacks"]
               or state["version"] < previous["version"]
               or (not health_change and (state["max_hp"] != previous["max_hp"] or state["hp"] > previous["hp"]
-                  or state.get("health_revision", 0) != previous.get("health_revision", 0)))
+                  or state.get("health_revision", 0) != previous.get("health_revision", 0)
+                  or state.get("health_adjustment", 0) != previous.get("health_adjustment", 0)))
               or (health_change and (state.get("health_revision", 0) != previous.get("health_revision", 0) + 1
                   or state["total_damage"] != previous["total_damage"] or state["total_attacks"] != previous["total_attacks"]))):
             LOG.error("BOSS Blocked a progress reversal. Saved damage and health were not changed.")
             raise BossError("Boss progress cannot move backwards. Existing damage was preserved.", "progress_reversal", 409)
-        if not 0 <= state["hp"] <= state["max_hp"] or state["hp"] != state["max_hp"] - state["total_damage"]:
+        if not 0 <= state["hp"] <= state["max_hp"] or state["hp"] != state["max_hp"] - state["total_damage"] + state.get("health_adjustment", 0):
             raise BossError("Boss health does not match saved damage. Existing progress was preserved.", "invalid_health", 409)
         if state['id'] == previous['id']:
             changed = combat_settings(state.get('settings')) != combat_settings(previous.get('settings'))
@@ -1207,11 +868,10 @@ class CommunityBoss:
                 (settings_change and (revision != old_revision + 1 or state['hp'] != previous['hp'] or
                  state['total_damage'] != previous['total_damage'] or state['total_attacks'] != previous['total_attacks']))):
                 raise BossError('Boss settings require an explicit admin edit. Existing progress was preserved.', 'settings_guard', 409)
-        self.store.query(conn, "UPDATE rh_boss SET document=? WHERE name=?",
-                         (json.dumps(state, separators=(",", ":"), allow_nan=False), self.store.key))
+        self.store.boss_write(conn, state)
 
     def _load(self, force=False):
-        # Most 5-second viewer polls use memory, not another SQLite read. A
+        # Most 5-second viewer polls use memory, not another disk read. A
         # periodic reload also picks up writes from another process during tests
         # or a short deployment overlap. Local mode still requires one instance.
         if force or time.monotonic() - self.loaded_at >= POLL_SECONDS:
@@ -1224,17 +884,20 @@ class CommunityBoss:
 
     def _project(self, state, guest, address, now):
         keys = list(STYLES)
-        weakness = keys[(int(now) // WARD_SECONDS + int(state["id"][:8], 16)) % 3]
+        # A secret-keyed draw is random to visitors, stable for every viewer and
+        # process, and needs no scheduler writes. Repeats are valid random draws.
+        window = int(now) // WARD_SECONDS
+        draw = _key(state, "ward", state["id"] + ":" + str(window))
+        weakness = keys[int(draw, 16) % len(keys)]
         day = max(0, int((now - state["started_at"]) // DAY)) if state["started_at"] else 0
         reset = state["started_at"] + (day + 1) * DAY if state["started_at"] else 0
         player_key = _key(state, "player", guest) if guest else ""
         network_key = _key(state, "network", network_identity(address)) if address else ""
         player, network = state["players"].get(player_key, {}), state["networks"].get(network_key, {})
-        used = lambda record: record.get("used", 0) if record.get("day") == day else 0
-        remaining = max(0, DAILY_ATTACKS - max(used(player), used(network)))
-        ready = max(player.get("last_attack", 0), network.get("last_attack", 0)) + COOLDOWN
-        if remaining == 0:
-            ready = max(ready, reset)
+        profile = state.get("profiles", {}).get(player_key, {})
+        identity_ready = bool(profile and profile.get('network') == network_key)
+        shared = identity_ready and state.get('households', {}).get(network_key, 1) > 1
+        ready = max(player.get("last_attack", 0), 0 if shared else network.get("last_attack", 0)) + COOLDOWN
         phase = "Awakening" if state["hp"] > state["max_hp"] * .75 else "Enraged" if state["hp"] > state["max_hp"] * .25 else "Last stand"
         status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
         leaders = sorted(state["players"].items(), key=lambda item: (-item[1]["damage"], item[0]))[:10]
@@ -1245,17 +908,166 @@ class CommunityBoss:
                     finished_at=state["finished_at"], day=day + 1, resets_at=reset,
                     total_damage=state["total_damage"], total_attacks=state["total_attacks"], raiders=len(state["players"]),
                     weakness=weakness, weakness_label=STYLES[weakness], ward_changes_at=(int(now) // WARD_SECONDS + 1) * WARD_SECONDS,
-                    rules=rules(state),
-                    milestones=[dict(percent=p, label=label, reached=state["total_damage"] * 100 >= state["max_hp"] * p)
+                    rules=rules(state), rally=rally_view(state, now),
+                    milestones=[dict(percent=p, label=label, reached=(state["max_hp"] - state["hp"]) * 100 >= state["max_hp"] * p)
                                 for p, label in ((25, "Armor cracked"), (50, "The crew rallies"), (75, "Final stand"), (100, "Crimson conquered"))],
                     you=dict(name=_name(player_key) if guest else "Spectator", damage=player.get("damage", 0),
-                             attacks=player.get("attacks", 0), remaining=remaining, ready_at=ready,
+                             attacks=player.get("attacks", 0), remaining=None, ready_at=ready,
+                             display_name=profile.get("name", ""), identity_ready=identity_ready,
+                             recovery_saved=bool(profile.get("recovery_hash")), shared_connection=bool(shared),
                              burst_in=BURST_EVERY - player.get("attacks", 0) % BURST_EVERY,
-                             active_days=player.get("active_days", 1 if player else 0), badges=badges(player),
+                             active_days=profile.get("active_days", player.get("active_days", 1 if player else 0)),
+                             badges=badges(profile or player, now),
                              last_request=player.get("request_id", ""), last_hit=copy.deepcopy(player.get("last_hit")),
-                             can_attack=bool(guest and status in {"waiting", "active"} and remaining and now >= ready)),
+                             can_attack=bool(guest and status in {"waiting", "active"} and identity_ready and now >= ready)),
                     leaders=[dict(name=_name(key), damage=p["damage"], attacks=p["attacks"], you=key == player_key) for key, p in leaders],
                     recent=copy.deepcopy(state["recent"]), history=copy.deepcopy(state["history"]))
+
+    def register(self, guest, address, raid_id, name):
+        """One self-reported username per connection, bound to its signed cookie.
+
+        IPs are not account authentication: NAT/VPN users can share a connection.
+        Only the owner browser can rename/rebind; admins can release a stale claim.
+        """
+        name = username(name)
+        now = time.time()
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if raid_id != state['id']:
+                    raise BossError('Another raid started. Refresh before saving your name.', 'new_raid', 409)
+                previous = copy.deepcopy(state)
+                pk, nk = _key(state, 'player', guest), _key(state, 'network', network_identity(address))
+                profiles = state.setdefault('profiles', {})
+                others = sum(key != pk and p['network'] == nk for key, p in profiles.items())
+                if others >= state.get('households', {}).get(nk, 1):
+                    raise BossError('This connection already has a player. Recover your profile below, use the original browser, or ask an admin for a household allowance.', 'connection_claimed', 409)
+                for key, profile in profiles.items():
+                    if key != pk and profile['name'].casefold() == name.casefold():
+                        raise BossError('That username is already registered. Use your recovery code or original browser.', 'name_claimed', 409)
+                own = profiles.get(pk)
+                if own and own['name'] == name and own['network'] == nk:
+                    self.state, self.loaded_at = state, time.monotonic()
+                    return self._project(state, guest, address, now)
+                if own and now - own['named_at'] < COOLDOWN:
+                    raise BossError('Wait 30 seconds before changing your name or connection again.', 'profile_cooldown', 429,
+                                    max(1, math.ceil(COOLDOWN - now + own['named_at'])))
+                if not own and len(profiles) >= MAX_PLAYERS:
+                    raise BossError('The player registry is full. Contact an admin.', 'capacity', 409)
+                if own:
+                    own.update(name=name, network=nk, named_at=now)
+                else:
+                    profiles[pk] = new_profile(name, nk, now, state['players'].get(pk))
+                state['version'] += 1
+                self._write(conn, state, previous=previous)
+            self.state, self.loaded_at = state, time.monotonic()
+            return self._project(state, guest, address, now)
+
+    def release_profile(self, raid_id, name, *, actor="System"):
+        """Admin-only recovery for a lost cookie/shared-IP claim; retains damage."""
+        name = username(name)
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if raid_id != state['id']:
+                    raise BossError('Another raid started. Reload first.', 'new_raid', 409)
+                previous = copy.deepcopy(state)
+                key = next((k for k, p in state.get('profiles', {}).items() if p['name'].casefold() == name.casefold()), None)
+                if key is None:
+                    raise BossError('No registered player has that username.')
+                self.store.backup_in(conn, 'before-player-release', dict(community_boss=state))
+                # Preserve the name and achievements on the original browser.
+                # A random non-address reservation frees the former IP only.
+                state['profiles'][key]['network'] = secrets.token_hex(32)
+                state['profiles'][key]['named_at'] = 0
+                audit(state, 'Release connection', actor, {'player': name, 'connection': 'Reserved'}, {'player': name, 'connection': 'Released'})
+                state['version'] += 1
+                self._write(conn, state, previous=previous)
+            self.state, self.loaded_at = state, time.monotonic()
+
+    def save_recovery(self, guest, code_hash):
+        """Store only a digest. The full bearer code is displayed once to its owner."""
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                previous = copy.deepcopy(state)
+                pk = _key(state, 'player', guest)
+                if pk not in state.get('profiles', {}):
+                    raise BossError('Save your username before creating a recovery code.')
+                profile = state['profiles'][pk]
+                now = time.time()
+                if now - profile.get('recovery_at', 0) < COOLDOWN:
+                    raise BossError('Wait 30 seconds before replacing your recovery code.', 'profile_cooldown', 429)
+                profile['recovery_at'] = now
+                profile['recovery_hash'] = code_hash
+                state['version'] += 1
+                self._write(conn, state, previous=previous)
+            self.state, self.loaded_at = state, time.monotonic()
+
+    def recover_profile(self, guest, address, code_hash, raid_id):
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if raid_id != state['id']:
+                    raise BossError('A new raid started. Reload before recovering.', 'new_raid', 409)
+                previous = copy.deepcopy(state)
+                pk, nk = _key(state, 'player', guest), _key(state, 'network', network_identity(address))
+                profiles = state.get('profiles', {})
+                profile = profiles.get(pk, {})
+                if not hmac.compare_digest(profile.get('recovery_hash', ''), code_hash):
+                    raise BossError('That recovery code is invalid or was replaced.', 'invalid_recovery', 400)
+                others = sum(key != pk and p['network'] == nk for key, p in profiles.items())
+                if others >= state.get('households', {}).get(nk, 1):
+                    raise BossError('This connection belongs to another player. Ask an admin for a household allowance before recovering here.', 'connection_claimed', 409)
+                # Same browser key restores all hits and cooldowns exactly. The
+                # HTTP layer validates the signed code before calling this method.
+                profile.update(network=nk, named_at=time.time())
+                state['version'] += 1
+                self._write(conn, state, previous=previous)
+            self.state, self.loaded_at = state, time.monotonic()
+            return self._project(state, guest, address, time.time())
+
+    def household(self, raid_id, name, slots, *, actor="System"):
+        name = username(name)
+        if type(slots) is not int or not 1 <= slots <= 10:
+            raise BossError('Choose 1–10 players for this shared connection.')
+        with self.lock:
+            with self.store.connection(transaction=True) as conn:
+                state = self._read(conn, locked=True)
+                if raid_id != state['id']:
+                    raise BossError('Another raid started. Reload first.', 'new_raid', 409)
+                previous = copy.deepcopy(state)
+                profiles = state.get('profiles', {})
+                profile = next((p for p in profiles.values() if p['name'].casefold() == name.casefold()), None)
+                if profile is None: raise BossError('Save the first household player name before approving this connection.')
+                nk = profile['network']
+                used = sum(p['network'] == nk for p in profiles.values())
+                if slots < used: raise BossError('Release the other player connections before lowering this allowance.')
+                households = state.setdefault('households', {})
+                old = households.get(nk, 1)
+                if old == slots: return
+                if slots == 1: households.pop(nk, None)
+                else: households[nk] = slots
+                audit(state, 'Household allowance', actor, {'player': name, 'slots': old}, {'player': name, 'slots': slots})
+                state['version'] += 1
+                self._write(conn, state, previous=previous)
+            self.state, self.loaded_at = state, time.monotonic()
+
+    def admin_status(self):
+        """Private top five. Public projections always keep anonymous aliases."""
+        with self.lock:
+            self._load()
+            result = self._project(self.state, None, None, time.time())
+            profiles = self.state.get('profiles', {})
+            leaders = sorted(self.state['players'].items(), key=lambda item: (-item[1]['damage'], item[0]))[:5]
+            result['balance'] = balance_view(self.state, time.time())
+            result['admin_history'] = list(reversed(copy.deepcopy(self.state.get('admin_history', []))))
+            result['households'] = [dict(players=[p['name'] for p in profiles.values() if p['network'] == key], slots=slots)
+                                     for key, slots in self.state.get('households', {}).items()]
+            result['admin_leaders'] = [dict(name=profiles.get(key, {}).get('name', _name(key)),
+                                            alias=_name(key), name_provided=key in profiles,
+                                            damage=p['damage'], attacks=p['attacks']) for key, p in leaders]
+            return result
 
     def summary(self):
         """Small anonymous homepage projection: no guest, receipt, or network data."""
@@ -1277,7 +1089,7 @@ class CommunityBoss:
             self._load()
             return image_bytes(self.avatar_document) if self.avatar_document and self.avatar_document['sha256'] == digest else None
 
-    def set_avatar(self, raid_id, avatar):
+    def set_avatar(self, raid_id, avatar, *, actor="System"):
         avatar = validate_avatar(avatar)
         with self.lock:
             with self.store.connection(transaction=True) as conn:
@@ -1289,6 +1101,7 @@ class CommunityBoss:
                 self.store.avatar_in(conn, avatar)
                 state['version'] += 1
                 state['avatar_hash'] = avatar['sha256'] if avatar else None
+                audit(state, 'Change avatar', actor, {'avatar': previous.get('avatar_hash') or 'Original logo'}, {'avatar': state['avatar_hash'] or 'Original logo'})
                 self._write(conn, state, previous=previous)
             self.state, self.avatar_document, self.loaded_at = state, avatar, time.monotonic()
         LOG.info('BOSS Avatar %s; raid progress retained.', 'updated' if avatar else 'reset to original logo')
@@ -1317,7 +1130,7 @@ class CommunityBoss:
             self._load(force=True)
             return dict(community_boss=copy.deepcopy(self.state), community_boss_avatar=copy.deepcopy(self.avatar_document))
 
-    def attack(self, guest, address, style, raid_id, request_id):
+    def attack(self, guest, address, style, raid_id, request_id, *, require_profile=False):
         if not isinstance(style, str) or style not in STYLES or not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", request_id):
             raise BossError("Choose Blade, Bow, or Magic, then try again.")
         with self.lock:
@@ -1336,10 +1149,11 @@ class CommunityBoss:
                     return dict(ok=True, duplicate=True, hit=copy.deepcopy(existing["last_hit"]), state=view)
                 if view["status"] in {"paused", "victory"}:
                     raise BossError("The host paused the raid." if state["paused"] and state["hp"] else "The community has already defeated this boss.", view["status"], 409)
-                if not view["you"]["can_attack"]:
+                if now < view["you"]["ready_at"]:
                     retry = max(1, math.ceil(view["you"]["ready_at"] - now))
-                    message = f"Your browser or shared connection has used today's {DAILY_ATTACKS} attacks. Return next raid day." if not view["you"]["remaining"] else "Your browser or shared connection is cooling down. Wait for the timer."
-                    raise BossError(message, "daily_limit" if not view["you"]["remaining"] else "cooldown", 429, retry)
+                    raise BossError("Your browser or shared connection is cooling down. Wait for the timer.", "cooldown", 429, retry)
+                if require_profile and not view['you']['identity_ready']:
+                    raise BossError('Save your username for this connection before attacking.', 'username_required', 409)
                 day = view["day"] - 1
                 state["networks"] = {key: p for key, p in state["networks"].items() if p["day"] >= day - 1}
                 if (pk not in state["players"] and len(state["players"]) >= MAX_PLAYERS) or (nk not in state["networks"] and len(state["networks"]) >= MAX_NETWORKS):
@@ -1367,10 +1181,15 @@ class CommunityBoss:
                 # Cumulative committed damage is never reset by cooldowns,
                 # weakness rotations, midnight, idle time, or source refreshes.
                 total_damage = state["total_damage"] + damage
-                state.update(hp=state["max_hp"] - total_damage, total_damage=total_damage,
+                if total_damage > MAX_NUMBER:
+                    raise BossError("This raid reached its numeric capacity. Ask an admin to start a new raid.", "capacity", 409)
+                if pk in state.get("profiles", {}):
+                    record_hit(state["profiles"][pk], hit, now)
+                state.update(hp=state["hp"] - damage, total_damage=total_damage,
                              total_attacks=state["total_attacks"] + 1, version=state["version"] + 1,
                              started_at=state["started_at"] or int(now))
                 state["recent"] = [dict(name=_name(pk), **hit)] + state["recent"][:11]
+                record_activity(state, pk, damage, now)
                 if not state["hp"]:
                     state["finished_at"] = int(now)
                 self._write(conn, state, previous=self.state)
@@ -1378,11 +1197,11 @@ class CommunityBoss:
             if state["finished_at"]:
                 LOG.info("BOSS Victory; %s attacks from %s raider profiles.", state["total_attacks"], len(state["players"]))
             elif state["total_attacks"] == 1:
-                LOG.info("BOSS Shared raid started; HP=%s, cooldown=%ss, daily attacks=%s; health regeneration=off.",
-                         state["max_hp"], COOLDOWN, DAILY_ATTACKS)
+                LOG.info("BOSS Shared raid started; HP=%s, cooldown=%ss, daily cap=none; health regeneration=off.",
+                         state["max_hp"], COOLDOWN)
             return dict(ok=True, duplicate=False, hit=hit, state=self._project(state, guest, address, now))
 
-    def configure(self, raid_id, values, settings_revision):
+    def configure(self, raid_id, values, settings_revision, *, actor="System"):
         """Called only after the HTTP admin-session and CSRF guards succeed."""
         values = combat_settings(values)
         with self.lock:
@@ -1398,32 +1217,38 @@ class CommunityBoss:
                 self.store.backup_in(conn, 'before-boss-settings', dict(community_boss=state))
                 state.update(settings=values, settings_revision=state.get('settings_revision', 0) + 1,
                              version=state['version'] + 1)
+                audit(state, "Boss settings", actor, combat_settings(previous.get("settings")), values)
                 self._write(conn, state, previous=previous, settings_change=True)
             self.state, self.loaded_at = state, time.monotonic()
         LOG.info('BOSS Name/damage settings saved; base=%s, weakness=%s, burst=%s. Existing hits and HP retained.',
                  values['damage'], values['weak_damage'], values['burst_bonus'])
 
-    def control(self, action, raid_id, health=DEFAULT_HP, *, health_revision=None):
-        if action not in {"pause", "resume", "restart", "health"}:
+    def control(self, action, raid_id, health=DEFAULT_HP, *, health_revision=None, actor="System"):
+        if action not in {"pause", "resume", "restart", "health", "remaining_health"}:
             raise BossError("Choose a valid boss action.")
-        if action in {"restart", "health"}:
-            if type(health) is not int or not MIN_HP <= health <= MAX_HP:
-                raise BossError(f'Enter a whole-number health value from {MIN_HP:,} to {MAX_HP:,}.')
+        if action in {"restart", "health", "remaining_health"}:
+            if type(health) is not int or not (0 if action == "remaining_health" else MIN_HP) <= health <= MAX_HP:
+                raise BossError(f'Enter whole-number HP up to {MAX_HP:,}; only remaining HP may be zero.')
         with self.lock:
             with self.store.connection(transaction=True) as conn:
                 state = self._read(conn, locked=True)
                 if state["id"] != raid_id:
                     raise BossError("Another raid has started. Reload before changing it.", "new_raid", 409)
                 previous = copy.deepcopy(state)
-                if action == "health":
+                if action in {"health", "remaining_health"}:
                     if health_revision != state.get('health_revision', 0):
                         raise BossError('Another health edit was saved. Reload and review before changing it again.', 'health_conflict', 409)
-                    if health < state['total_damage']:
-                        raise BossError(f'Health cannot be below the {state["total_damage"]:,} damage already dealt. Player contributions are retained.')
-                    if health == state['max_hp']:
+                    maximum = health if action == 'health' else state['max_hp']
+                    if action == 'remaining_health' and health > maximum:
+                        raise BossError('Remaining HP cannot exceed maximum HP. Raise maximum HP first.')
+                    remaining = max(0, min(maximum, state['hp'] + maximum - state['max_hp'])) if action == 'health' else health
+                    if maximum == state['max_hp'] and remaining == state['hp']:
                         return
                     self.store.backup_in(conn, 'before-boss-health', dict(community_boss=state))
-                    state.update(max_hp=health, hp=health - state['total_damage'], version=state['version'] + 1,
+                    # Explicit admin edits never erase player damage. The offset
+                    # separates health adjustments from permanent contributions.
+                    state.update(max_hp=maximum, hp=remaining, version=state['version'] + 1,
+                                 health_adjustment=remaining - maximum + state['total_damage'],
                                  health_revision=state.get('health_revision', 0) + 1)
                     state['finished_at'] = (state['finished_at'] or int(time.time())) if state['hp'] == 0 else 0
                 elif action == "restart":
@@ -1437,11 +1262,17 @@ class CommunityBoss:
                     # Preserve the image version so polls need no image-record
                     # read unless an administrator actually changes the avatar.
                     state['avatar_hash'] = previous.get('avatar_hash')
+                    # Names and week-long achievements survive a boss defeat.
+                    state['salt'] = previous['salt']
+                    state['profiles'] = copy.deepcopy(previous.get('profiles', {}))
+                    state['households'] = copy.deepcopy(previous.get('households', {}))
+                    state['admin_history'] = copy.deepcopy(previous.get('admin_history', []))
                 else:
                     state["paused"], state["version"] = action == "pause", state["version"] + 1
-                self._write(conn, state, previous=previous, new_raid=action == "restart", health_change=action == 'health')
+                audit(state, action.replace("_", " ").title(), actor, host_snapshot(previous), host_snapshot(state))
+                self._write(conn, state, previous=previous, new_raid=action == "restart", health_change=action in {'health', 'remaining_health'})
             self.state, self.loaded_at = state, time.monotonic()
-        if action == 'health':
+        if action in {'health', 'remaining_health'}:
             LOG.info('BOSS Maximum HP %s -> %s; %s HP remains; %s saved damage retained. Automatic regeneration stays off.',
                      previous['max_hp'], state['max_hp'], state['hp'], state['total_damage'])
         else:
@@ -1526,6 +1357,219 @@ def image_bytes(value):
     return base64.b64decode(value['data'])
 ```
 
+## boss_extras.py
+
+```python
+"""Small, bounded raid additions: cosmetic rally, pace estimates and host history.
+
+These features never change damage, replenish health or limit successful hits.
+All timestamps and counts come from committed server attacks.
+"""
+import copy
+import math
+import re
+import time
+
+MAX_NUMBER = 2**53 - 1
+RALLY_GOAL, RALLY_WINDOW = 15, 600
+
+
+def record_activity(state, player_key, damage, now):
+    rally = state.setdefault('rally', {'players': {}, 'unlocked_at': 0})
+    if not rally['unlocked_at']:
+        rally['players'] = {k: t for k, t in rally['players'].items() if t > now - RALLY_WINDOW}
+        rally['players'][player_key] = now
+        if len(rally['players']) >= RALLY_GOAL:
+            rally['unlocked_at'] = now
+            rally['players'] = {}  # No ongoing writes needed after the cosmetic unlock.
+    minute = int(now // 60)
+    pace = [b for b in state.get('pace', []) if b['minute'] > minute - 60]
+    if not pace or pace[-1]['minute'] != minute:
+        pace.append(dict(minute=minute, damage=0, attacks=0))
+    pace[-1]['damage'] += damage
+    pace[-1]['attacks'] += 1
+    state['pace'] = pace
+
+
+def rally_view(state, now):
+    rally = state.get('rally', {})
+    reached = bool(rally.get('unlocked_at'))
+    times = [t for t in rally.get('players', {}).values() if t > now - RALLY_WINDOW]
+    return dict(goal=RALLY_GOAL, count=RALLY_GOAL if reached else len(times),
+                window_seconds=RALLY_WINDOW, unlocked=reached,
+                unlocked_at=rally.get('unlocked_at', 0),
+                next_expiry=min(times) + RALLY_WINDOW if times else 0)
+
+
+def balance_view(state, now):
+    # Whole minute buckets bound the work to sixty records per view. Label the
+    # estimate as approximate: attendance and selected styles can change it.
+    recent = [b for b in state.get('pace', []) if b['minute'] > int(now // 60) - 60]
+    elapsed = max(60, min(3600, now - state['started_at'])) if state['started_at'] else 60
+    damage, hits = sum(b['damage'] for b in recent), sum(b['attacks'] for b in recent)
+    enough = elapsed >= 300 and hits >= 10 and damage > 0
+    rate = damage * 3600 / elapsed if enough else 0
+    return dict(damage_per_hour=round(rate), sample_hits=hits, sample_seconds=round(elapsed),
+                remaining_seconds=math.ceil(state['hp'] / rate * 3600) if rate else None,
+                observed=bool(rate), presets=[dict(label=label, days=days,
+                    hp=min(MAX_NUMBER, max(1, round(rate * 24 * days))) if rate else fallback)
+                    for label, days, fallback in [('Short raid', 3, 10_000_000), ('Long raid', 5, 25_000_000), ('Epic raid', 7, 50_000_000)]])
+
+
+def host_snapshot(state):
+    return dict(name=state.get('settings', {}).get('name', 'Crimson Hunllef'),
+                hp=state['hp'], max_hp=state['max_hp'], paused=state['paused'],
+                damage=state.get('settings', {}).get('damage', 100),
+                weak_damage=state.get('settings', {}).get('weak_damage', 150),
+                burst_bonus=state.get('settings', {}).get('burst_bonus', 100),
+                avatar=state.get('avatar_hash') or 'Original logo')
+
+
+def audit(state, action, actor, before, after, now=None):
+    entry = dict(action=action, actor=str(actor)[:64], at=int(time.time() if now is None else now),
+                 before=copy.deepcopy(before), after=copy.deepcopy(after))
+    state['admin_history'] = (state.get('admin_history', []) + [entry])[-100:]
+
+
+def validate_extras(state, limit):
+    households = state.get('households', {})
+    if not isinstance(households, dict) or len(households) > limit:
+        raise ValueError('Invalid shared connection settings.')
+    for key, slots in households.items():
+        if not isinstance(key, str) or not re.fullmatch(r'[a-f0-9]{64}', key) or type(slots) is not int or not 2 <= slots <= 10:
+            raise ValueError('Invalid shared connection allowance.')
+    rally = state.get('rally', {'players': {}, 'unlocked_at': 0})
+    if not isinstance(rally, dict) or not isinstance(rally.get('players'), dict) or len(rally['players']) > RALLY_GOAL:
+        raise ValueError('Invalid community rally.')
+    timestamps = [rally.get('unlocked_at')]
+    for key, t in rally['players'].items():
+        if not isinstance(key, str) or not re.fullmatch(r'[a-f0-9]{64}', key): raise ValueError('Invalid rally player.')
+        timestamps.append(t)
+    if any(type(n) not in (int, float) or not 0 <= n <= 10**12 for n in timestamps):
+        raise ValueError('Invalid rally time.')
+    pace = state.get('pace', [])
+    if not isinstance(pace, list) or len(pace) > 60:
+        raise ValueError('Invalid raid pace.')
+    previous = -1
+    for b in pace:
+        if (not isinstance(b, dict) or any(type(b.get(k)) is not int or not 0 <= b[k] <= MAX_NUMBER for k in ('minute', 'damage', 'attacks'))
+                or b['minute'] <= previous): raise ValueError('Invalid raid pace bucket.')
+        previous = b['minute']
+    history = state.get('admin_history', [])
+    if not isinstance(history, list) or len(history) > 100: raise ValueError('Invalid boss admin history.')
+    for entry in history:
+        if (not isinstance(entry, dict) or type(entry.get('at')) is not int or not 0 <= entry['at'] <= 10**12
+                or any(not isinstance(entry.get(k), str) or len(entry[k]) > 64 for k in ('actor', 'action'))):
+            raise ValueError('Invalid boss admin history entry.')
+        for k in ('before', 'after'):
+            if not isinstance(entry.get(k), dict) or len(entry[k]) > 12: raise ValueError('Invalid boss change summary.')
+            for name, v in entry[k].items():
+                if (not isinstance(name, str) or len(name) > 64 or
+                    not (v is None or type(v) is bool or type(v) is int and abs(v) <= MAX_NUMBER
+                         or isinstance(v, str) and len(v) <= 256)):
+                    raise ValueError('Invalid boss change value.')
+```
+
+## boss_progress.py
+
+```python
+"""Private community names and eight persistent, server-earned raid badges.
+
+Names are self-reported, not verified Shuffle identities. Records are keyed by
+salted browser/network hashes; raw addresses never enter the gameplay save.
+"""
+import copy
+import re
+
+DAY = 86400
+MAX_NUMBER = 2**53 - 1  # Exact integer range shared by Python and browser JSON.
+STYLES = ('blade', 'bow', 'magic')
+
+
+def username(value):
+    if not isinstance(value, str) or not 1 <= len(value.strip()) <= 64 or not value.isprintable():
+        raise ValueError('Enter a username of 1–64 printable characters.')
+    return value.strip()
+
+
+def new_profile(name, network, now, player=None):
+    old = player or {}
+    return dict(name=username(name), network=network, named_at=now,
+                attacks=old.get('attacks', 0), active_days=old.get('active_days', 1 if old else 0),
+                first_hit_at=old.get('last_attack', 0), last_day=0 if old else -1, weak_hits=0, bursts=old.get('attacks', 0) // 10,
+                styles={style: 0 for style in STYLES})
+
+
+def record_hit(profile, hit, now):
+    if not profile['first_hit_at']:
+        profile['first_hit_at'] = now
+    # Personal 24-hour periods prevent a midnight click from earning two days.
+    day = int(max(0, now - profile['first_hit_at']) // DAY)
+    if day > profile['last_day']:
+        profile['active_days'] += 1
+        profile['last_day'] = day
+    profile['attacks'] += 1
+    profile['weak_hits'] += int(hit['weakness'])
+    profile['bursts'] += int(hit['burst'])
+    profile['styles'][hit['style']] += 1
+
+
+def badges(player, now=0):
+    hits, days = player.get('attacks', 0), player.get('active_days', 0)
+    week = bool(player.get('first_hit_at')) and now - player['first_hit_at'] >= 6 * DAY and days >= 7
+    goals = (
+        ('first', 'First strike', 'Land your first hit.', hits, 1),
+        ('burst', 'Crimson veteran', 'Trigger 10 Crimson bursts.', player.get('bursts', hits // 10), 10),
+        ('weak', 'Weakness hunter', 'Match 100 random weaknesses.', player.get('weak_hits', 0), 100),
+        ('arsenal', 'Full arsenal', 'Land 25 hits with each of the three styles.', min(player.get('styles', {}).get(s, 0) for s in STYLES), 25),
+        ('loyal', 'Three-day crew', 'Attack in 3 different personal raid days.', days, 3),
+        ('regular', 'Crimson regular', 'Attack in 5 different personal raid days.', days, 5),
+        ('week', 'Weeklong guardian', 'Attack in 7 personal raid days over at least 6 full days.', min(days, 7) if week else min(days, 6), 7),
+        ('legend', 'Crimson legend', 'Land 500 hits and earn Weeklong guardian.', min(hits, 500) if week else min(hits, 499), 500),
+    )
+    return [dict(id=key, label=label, description=description, earned=value >= target,
+                 progress=min(value, target), target=target) for key, label, description, value, target in goals]
+
+
+def validate_profiles(profiles, limit, households=None):
+    if not isinstance(profiles, dict) or len(profiles) > limit:
+        raise ValueError('Invalid community player profiles.')
+    names, networks = set(), {}
+    households = households or {}
+    for key, p in profiles.items():
+        if not isinstance(key, str) or not re.fullmatch(r'[a-f0-9]{64}', key) or not isinstance(p, dict):
+            raise ValueError('Invalid community player profile.')
+        name = username(p.get('name'))
+        network = p.get('network')
+        if not isinstance(network, str) or not re.fullmatch(r'[a-f0-9]{64}', network):
+            raise ValueError('Invalid private connection identifier.')
+        if name.casefold() in names or networks.get(network, 0) >= households.get(network, 1):
+            raise ValueError('Duplicate community username or connection.')
+        names.add(name.casefold())
+        networks[network] = networks.get(network, 0) + 1
+        if 'recovery_hash' in p and (not isinstance(p['recovery_hash'], str) or not re.fullmatch(r'[a-f0-9]{64}', p['recovery_hash'])):
+            raise ValueError('Invalid private recovery digest.')
+        if 'recovery_at' in p and (type(p['recovery_at']) not in (int, float) or not 0 <= p['recovery_at'] <= 10**12):
+            raise ValueError('Invalid recovery timestamp.')
+        for field in ('named_at', 'first_hit_at'):
+            n = p.get(field)
+            if type(n) not in (float, int) or not 0 <= n <= 10**12:
+                raise ValueError('Invalid player timestamp.')
+        for field in ('attacks', 'active_days', 'weak_hits', 'bursts', 'last_day'):
+            n = p.get(field)
+            if type(n) is not int or not (-1 if field == 'last_day' else 0) <= n <= MAX_NUMBER:
+                raise ValueError('Invalid achievement progress.')
+        if not isinstance(p.get('styles'), dict) or set(p['styles']) != set(STYLES):
+            raise ValueError('Invalid style progress.')
+        for n in p['styles'].values():
+            if type(n) is not int or not 0 <= n <= p['attacks']:
+                raise ValueError('Invalid style count.')
+        if (p['weak_hits'] > p['attacks'] or p['bursts'] > p['attacks'] // 10
+                or p['active_days'] > p['attacks'] or sum(p['styles'].values()) > p['attacks']):
+            raise ValueError('Inconsistent achievement totals.')
+    return copy.deepcopy(profiles)
+```
+
 ## config.py
 
 ```python
@@ -1536,7 +1580,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.28-boss-controls"
+RELEASE = "2026.09.28-community-polish"
 INTERVAL = 60
 
 
@@ -1548,6 +1592,7 @@ class Config:
         self.seed = path("ADMIN_SEED_PATH", "private/admin_store.seed.json")
         self.recovery = path("RECOVERY_SEED_PATH", "private/recovery.seed.json")
         self.db_path = path("LOCAL_DATABASE_PATH", "data/redhunllef.sqlite3")
+        self.state_path = path("STATE_FILE", "data/state.json")
         explicit = os.getenv("SETTINGS_PATH")
         bundled = self.root / "private/settings.json"
         private = read_json(bundled) if bundled.is_file() and not explicit else {}
@@ -1565,22 +1610,16 @@ class Config:
                        (private.get(key), "private/settings.json")]
             value, source = next(((str(v).strip(), source) for v, source in layers if v and str(v).strip()), ("", "missing"))
             self.credentials[key], self.sources[key] = value, source
-        # Local storage needs no account, service, or connection string. A stale
-        # DATABASE_URL from an earlier deployment cannot break this default.
-        self.storage_mode = os.getenv("STORAGE_MODE", "local").strip().lower()
-        if self.storage_mode not in {"local", "postgres"}:
-            raise ValueError("STORAGE_MODE must be local or postgres.")
-        supplied_url = os.getenv("DATABASE_URL", "").strip()
-        self.db_url = supplied_url if self.storage_mode == "postgres" else ""
-        self.ignored_database_url = bool(supplied_url and not self.db_url)
-        if self.storage_mode == "postgres" and not self.db_url:
-            raise ValueError("STORAGE_MODE=postgres needs DATABASE_URL. Use STORAGE_MODE=local for automatic local storage.")
+        # This build deliberately uses only local JSON. Old database variables
+        # cannot make startup depend on a removed service.
+        self.storage_mode, self.db_url = "local", ""
+        self.ignored_database_url = bool(os.getenv("DATABASE_URL"))
         self.state_key = os.getenv("APP_STATE_KEY", "redhunllef")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", self.state_key):
             raise ValueError("APP_STATE_KEY must contain 1–64 letters, numbers, underscores or hyphens.")
         # Storage and web security are independent: local storage on App Platform
         # still uses production cookies, proxy handling, and the normal server.
-        mode = os.getenv("APP_ENV", "production" if self.db_url or "PORT" in os.environ else "local")
+        mode = os.getenv("APP_ENV", "production" if "PORT" in os.environ else "local")
         self.production = mode == "production"
         self.port = int(os.getenv("PORT", "8080"))
         if not 1 <= self.port <= 65535:
@@ -1592,10 +1631,6 @@ class Config:
             raise ValueError("SECRET_KEY must have at least 32 characters when set.")
         self.superadmin = os.getenv("SUPERADMIN_USER", defaults.get("superadmin_user", "gingrsnaps"))
         self.bootstrap_password = os.getenv("ADMIN_BOOTSTRAP_PASS", "enok2121")
-        self.sslmode = os.getenv("DATABASE_SSLMODE", "require")
-        if self.db_url and self.sslmode not in {"require", "verify-full", "verify-ca", "disable"}:
-            raise ValueError("Unsupported DATABASE_SSLMODE.")
-        self.sslrootcert = os.getenv("DATABASE_SSLROOTCERT", "")
         self.endpoint = os.getenv("SHUFFLE_ENDPOINT_KIND", defaults.get("shuffle_endpoint_kind", "wager"))
         if not re.fullmatch(r"[A-Za-z0-9_-]+", self.endpoint):
             raise ValueError("SHUFFLE_ENDPOINT_KIND must be one endpoint name.")
@@ -1622,368 +1657,130 @@ class Config:
 ## docs/COMMUNITY_BOSS.md
 
 ```markdown
-# Community boss — play and host guide
+# Community boss reference
 
-One page, one boss, one community. Open `/play`, choose a style, and press Attack.
-No account, wager, purchase or separate process is needed. The standard
-requirements include Pillow for PNG/JPEG/WebP uploads.
-The original `wager_backend.py` launcher serves the game and existing wager site.
+Run `python wager_backend.py`; the game is served at `/play`. No separate process,
+SQL server or external account is required. State uses `data/state.json`.
 
-## Default gameplay rules (admins can change damage values)
+The shared boss defaults to 2,400,000 HP. Registered players attack every 30 seconds,
+without daily or weekly quotas. A random shared weakness lasts ten minutes;
+consecutive identical draws are valid. Defaults are 100 normal damage, 150 weakness
+damage, and a 100 bonus every tenth hit. Admins can change those whole-number values.
 
-- **2,400,000 health** by default. Everyone chips away at the same pool.
-- **One manual attack per 60 seconds**, with up to **40 attacks per raid day**.
-- **Blade, Bow, or Magic** deal 100 damage. Matching the current weakness deals
-  150. The weakness changes every 10 minutes according to the server clock.
-- Every **tenth personal hit adds 100 damage** as a Crimson burst. A matching
-  burst normally deals 250. The final hit is capped at the remaining HP.
-- The first successful community attack starts the raid-day clock. Allowances
-  renew every 24 hours from that point, not at each player's local midnight.
-- The game never regenerates health or spends unused attacks. A missed day
-  does not subtract your contribution. Pausing blocks hits but not the calendar.
-- Awakening, Enraged (75%), and Last stand (25%) are visual/story phases. They
-  do not secretly change the damage rules or punish players who joined late.
-- Victory remains visible. The host chooses when to start another raid.
+Health never regenerates automatically. Only an explicit admin health edit or a new
+raid can increase it. The percentage measures defeated HP from 0% through 100%.
+Requests never supply trusted damage. Repeated request receipts return the original
+hit without dealing damage twice. A lost response can therefore be retried safely.
 
-The server rejects ordinary writes that heal the same raid or reverse its
-committed damage. Only an explicit admin health edit may raise maximum HP. Health is always maximum HP minus saved cumulative damage. Cooldowns,
-weakness changes and daily resets affect attacks only. The browser also rejects
-healing snapshots without a newer host health revision, and the initial page percentage reflects saved health.
-Process restarts retain progress when the same data file is preserved. Losing
-that file through a container replacement is a separate recovery concern below.
+Names are self-reported. Public leaderboards show aliases; the owner and signed-in
+admins can see submitted names. The admin Top 5 contains full names. A Shuffle
+spelling match does not verify an account or connection. The game does not claim
+access to a Shuffle IP mapping.
 
-The mobile attack dock offers the same controls and cooldown while you scroll.
-Cosmetic milestones at 25%, 50%, and 75% damage change the arena and celebrate
-progress. Participation counters remain recorded; the separate badge explanation
-panel has been removed from the game. Victory's expandable recap
-lists every contributor by raid alias; the ordinary live board shows the Top 10.
-Use **Copy link** to invite the community. Errors remain until dismissed,
-retried, or resolved; a routine poll cannot erase an unsuccessful attack message.
+One registered player per connection is the default. Admins can approve a household
+of 2–10 players, each with a separate browser identity and 30-second cooldown. This
+is a player-registration allowance, not an attack quota. IPv6 privacy addresses
+are grouped by /64. Admins can release stale connection claims without deleting
+names or contributions.
 
-## Why it should last several days
+A private recovery code restores the original identity after cookie loss. The
+server stores a digest; the code is shown once when created. A replacement revokes
+the old code. Codes need the saved secret and profile data and cannot recover a
+lost server disk by themselves. They remain valid across new raids.
 
-With the default damage values and matching hits, every full ten-attack sequence
-deals 1,600 damage. Admin damage changes affect these estimates.
-The following estimates assume 100 distinct, active players/networks making
-that many attacks **each day**, all matching the current weakness:
+The eight existing badges, progress labels and week-long prerequisites are unchanged.
+Badges do not cap hits. The added Red rally is a separate cosmetic community goal:
+15 distinct raiders hit within a rolling ten-minute window to light the arena for
+the rest of the raid. It does not change health or damage.
 
-| Daily attacks per person | Community damage per day | Allowance-days required |
-| --- | ---: | ---: |
-| 20 | 320,000 | 7.5 — victory during raid day 8 |
-| 30 | 480,000 | 5 — victory during raid day 5 |
-| 40 | 640,000 | 3.75 — victory during raid day 4 |
+Admin controls require current authenticated sessions and CSRF tokens. Avatar
+uploads accept validated PNG/JPG/JPEG/WebP and reject malformed/animated/oversized
+images. Health and damage previews show expected effects; revision checks prevent
+stale admin edits. The last 100 host actions retain actor/time/before/after details.
+All private fields are excluded from public projections.
 
-Only the first strike starts the schedule. A full 40-hit session needs at least
-39 minutes because hits are manual and one minute apart. Smaller participation,
-missed weaknesses, and shared connections extend the encounter. Community size
-alone does not guarantee a finish date. A 100-player maximum-activity simulation
-is part of the test suite; the default boss survives the first three allowances.
+Recent activity estimates use up to sixty minute buckets. After five minutes and
+ten hits with damage, admin shows approximate damage/hour and remaining duration.
+Presets fill the next raid's HP input only. They do not guarantee a duration or
+change the current boss automatically. Before sufficient data exists, the preset
+health amounts are only starting suggestions.
 
-Signed-in admins can set **100,000–100,000,000 maximum HP** for the current boss
-or a new raid. Current-raid edits require confirmation and preserve all saved
-damage. Setting the maximum below damage already dealt is rejected.
+Rejected requests are counted in bounded, in-memory windows. Bursts are briefly
+throttled and visible as private diagnostic flags, without automatic bans. Valid
+eligible attacks bypass that guard and keep their regular 30-second cadence.
 
-## Together, without accounts
+Screens poll every five seconds. Hidden browser tabs resume on visibility. The
+server's Shuffle/Kick minute workers run independently of game polling. The only
+launch script remains `wager_backend.py`.
 
-Each browser gets an HttpOnly, signed guest cookie, separate from admin login.
-Its anonymous `Raider XXXXXXXX` name lasts for the raid. The public top ten and
-recent twelve hits use these aliases. They are cosmetic guest profiles, not
-verified individual identities. Clearing cookies, changing browser, or starting
-a new raid can change the name.
-
-The server checks both the browser allowance and the connection allowance.
-Changing cookies does not reset a network's limit; moving the same browser to
-another network does not reset its personal limit. IPv4-mapped IPv6 normalizes
-to IPv4, and IPv6 addresses in the same /64 share a connection allowance.
-Shared Wi-Fi/NAT users therefore share an allowance. VPNs plus new browser
-profiles can evade these lightweight limits; this is not cheat-proof identity.
-
-Game records store salted HMAC keys rather than raw IPs or browser tokens.
-Public game APIs omit the salt and those keys. The existing private web-access
-log can still contain visitor IPs for page visits; game polling/attacks do not
-flood that log. Browser cookies expire after one year; privacy tools may clear
-them sooner. No user-generated chat or custom names need moderation.
-
-## Host controls and recovery
-
-Sign in at `/admin` and choose **Community boss**. Admins can view the shared
-stats and change the avatar, name, maximum HP and future attack damage. Admins
-can pause/resume and start new raids. Private recovery downloads and account
-management remain Superadmin-only. A restart requires a checked confirmation and guards against an
-outdated raid ID. It archives the previous result and resets players/allowances.
-The latest ten summaries remain. A complete pre-restart checkpoint is also
-recorded locally; it is not a remote backup.
-
-**Boss avatar** accepts PNG/JPG/JPEG/WebP files up to 4 MB and 16 million pixels.
-Images are decoded, oriented, resized to fit 512 × 512 and saved as metadata-free
-PNG. Animated or malformed files are rejected before changing live data. The
-original upload filename is never used as a filesystem path. The selected
-avatar also appears on the homepage invitation and survives a new raid along
-with the boss name and damage settings. Use
-**Use original avatar** to restore the original boss logo.
-
-**Boss name & damage** accepts a 1–60-character printable name, base and weakness
-damage from 1–10,000, and a burst bonus from 0–10,000. Weakness damage cannot be
-less than base damage. Changes apply to future hits; old receipts and totals are
-retained, even if new damage is lower than a previous hit. Names render as escaped
-text in HTML and through textContent in browser updates. They are never HTML.
-
-Every management request checks a current admin account, session version and
-CSRF token before editing or decoding uploads. Public users cannot manage the
-boss, even with forged role flags or custom HTTP requests. They can view and
-attack normally. Public damage values are calculated on the server, never taken
-from client-supplied damage or HP fields. Stale admin settings forms are rejected.
-
-**Current raid health** changes maximum HP, not accumulated damage. For example,
-with 300 damage already dealt, a new maximum of 3,000,000 leaves 2,999,700 HP.
-Player totals, attack receipts, cooldowns and daily limits stay intact. Raising
-HP can reopen a defeated boss; setting it equal to already-dealt damage ends
-the encounter. This is an explicit host action, never automatic regeneration.
-
-Game and admin views pick up edits every five seconds. The homepage updates
-on its existing 60-second cycle. Polls preserve form drafts; if another health
-edit or a new raid makes your form stale, reload and review before resubmitting.
-
-**Save a private recovery file regularly during a multi-day raid and before a
-planned deployment.** It includes the boss ID, HP, players, network hashes,
-receipts, allowances, timestamps, history, avatar, name, damage settings and account/session state. The
-ordinary race-only backup does not contain the game.
-
-The recovery panel tracks when an export was generated and the progress since
-then. Generation does not prove you saved the file off-host. Its review form
-checks a recovery JSON file and shows account/race/boss totals without importing
-anything. See `COMMUNITY_UPDATE.md` for the full recovery and storage explanation.
-
-On a fresh App Platform instance, `private/recovery.seed.json` is imported
-before the original seed. Existing local state always wins; a recovery file
-never silently resets a running raid. Corrupt game recovery stops the first
-import transaction rather than partially replacing accounts. Keep the current
-`data/` folder when upgrading on a persistent host.
-
-App Platform local disk is ephemeral. An unexpected replacement may lose
-progress since the last downloaded-and-committed checkpoint. In-app hits are
-saved immediately to the local SQLite file, but that does not make the disk
-persistent. A no-remote-storage deployment cannot promise lossless multi-day
-progress on an ephemeral host. Keep one instance; do not scale local storage
-across independent containers. If that limitation becomes unacceptable, use
-a host with a persistent disk or deliberately opt into the existing remote
-storage compatibility; neither is required for this package to launch.
-
-## How updates stay lightweight
-
-The server does no provider requests while handling a game click. A transaction
-locks the boss record, reads current state, validates the hit and receipts, and
-commits its damage. Race settings and provider snapshots are separate records.
-Most viewer requests use a small in-memory snapshot; it reloads at most every
-five seconds per process and immediately reflects local writes. A separate
-GET returns only public summaries plus the requesting player's limits.
-
-The page polls every five seconds while visible and immediately on return or
-network recovery. Countdown animation uses server time plus a monotonic browser
-clock. Old responses cannot undo newer damage. If the response to a click is
-lost, the browser keeps that request ID and can retry it; the server returns
-its saved receipt. There are no automatic attacks. Snapshot responses use
-no-store and same-origin cookies/CSRF. Stale connections disable fresh attacks
-until a successful update arrives.
-
-Game data is bounded to 2,000 browser profiles per raid, 4,000 retained network
-records, 12 recent hits, 10 leaders, and 10 past raid summaries. Old network
-records are pruned as raid days advance. This is intended for the approximately
-100-person community, not a public internet-scale MMO.
-
-## DigitalOcean setup
-
-Build: `python -m pip install -r requirements.txt`
-
-Run: `python wager_backend.py`
-
-Keep port `8080`, health check `/healthz`, and one web instance. No game worker
-or new component is needed. Set `TRUST_APP_PLATFORM=1` only behind App Platform;
-the game uses its documented `DO-Connecting-IP` header. For local/direct hosting,
-use `TRUST_APP_PLATFORM=0` so arbitrary proxy headers are ignored. A missing or
-invalid trusted header disables new attacks rather than merging all players
-under an ingress IP. See README.md for full deployment and recovery steps.
+App Platform replaces local files on redeploy/container replacement. Use the
+existing manual private recovery export before a planned redeployment; progress
+after the latest export can still be lost. No external backup service was added.
 ```
 
 ## docs/COMMUNITY_UPDATE.md
 
 ```markdown
-# Earlier community update — 2026.09.22-community
+# Community comfort update
 
-This describes the earlier community release. The current boss-admin release
-removes the public tutorial/badge panel and adds avatar uploads and current-raid
-HP edits. It adds Pillow to the normal requirements. See README.md for current
-setup and docs/COMMUNITY_BOSS.md for current host controls.
+Approved scope: suggestions 2–9. Excluded: achievement-progress redesign and
+external checkpoint storage. Unlimited daily/weekly hits and the 30-second cooldown
+are unchanged. `boss_progress.badges()` is unchanged from the preceding release.
 
-Run **`python wager_backend.py`**. The imports, web server, source jobs, and game
-remain in one process. No additional service or production dependency was added.
-Original Shuffle/Kick configuration, Superadmin seed, and logo files are retained
-byte for byte. Existing saved accounts, dates, and raid progress take precedence.
+| Area | Implementation |
+| --- | --- |
+| Identity | Existing cookie key retained during recovery; signed random recovery bearer code, saved digest, CSRF-protected POSTs, no code in URLs/logs/public feeds. |
+| Households | Explicit admin allowance on a salted connection identifier; default one claim, per-player cooldown for approved households. |
+| Activity | Bounded minute buckets for approximate pace; bounded rolling distinct-player set for a cosmetic rally. |
+| Admin history | At most 100 actor/time/before/after entries, committed with the successful game edit. |
+| UI | Stable keyed lists, preserved form drafts, remembered style, safe text rendering, compact totals, exact details, reduced-motion styling. |
+| Source freshness | Success time is separate from rows/content-change time; existing automatic 60-second jobs remain. |
+| Abuse | At most 4,000 short-lived request buckets and 50 temporary flags. Eligible hits and receipt retries are not throttled. No automatic bans. |
+| Saves | Atomic UTF-8 JSON, OS file lock, flushed replacement, cached reads; prior local save imported without overwriting it. |
 
-## What changed for visitors
+The public page remains focused on the game. Recovery controls and exact totals
+are collapsed; detailed host controls stay in the authenticated admin panel.
 
-The homepage is shorter and brings the standings into view sooner. Its boss
-invitation shows remaining HP and community participation, with appropriate
-labels for a paused raid or victory. It shares the public page's automatic
-60-second update cycle. The arena still updates every five seconds while visible.
-
-On narrow screens a fixed attack bar exposes style selection, remaining attacks,
-and cooldown. It uses the same action and receipt as the main attack button.
-There are no automatic attacks. Errors survive normal successful polls; players
-can dismiss them, retry, or wait for the server to confirm the pending hit.
-
-Quarter-health milestones change the arena's appearance and show a brief
-celebration when crossed during a visit. Cosmetic badges reward the first hit,
-100 hits (ten Crimson bursts), and participation on three distinct raid days.
-Different visits on the same raid day do not count twice. A legacy profile starts
-with one known participation day because its previous distinct days were not
-recorded. Existing hit totals still qualify for first-hit/ten-burst badges.
-
-Victory thanks everyone, with the complete list of raid aliases available in an
-expandable recap. It is loaded once per completed raid and cannot return a live
-raid's private records. A copy-link button has a selectable-text fallback when
-the browser denies clipboard access. There is no chat, account signup, paid
-reward, extra damage, or new wager requirement.
-
-## What changed for administrators
-
-Connections are summarized in two compact status chips. Expand the connection
-details for timing, last success, retry reasons and individual source refreshes.
-New failures expand the details automatically; repeated identical polls respect
-a manually collapsed panel. Overview offers shortcuts to race and boss controls.
-Draft fields, confirmations, filters, and Code Red expansion survive live updates.
-
-Race publication shows current and proposed values side by side, including all
-changed prizes, links, labels, dates, channel and campaign. A signed confirmation
-is bound to the user, settings revision and full proposed settings. It expires
-after 15 minutes. Editing reviewed values requires another review; another
-administrator's save still triggers the existing revision-conflict protection.
-Race-backup restore also shows changed values and saved-data counts.
-
-The Superadmin recovery panel reports the last export generated and changes
-since then: hits/damage, a new raid, raid controls, settings/accounts and standings.
-Export metadata is separate from the admin record, so a download does not
-invalidate open edit forms. A private recovery file can be uploaded for validation
-and a readable account/race/boss summary. This preview imports nothing. Actual
-fresh-instance recovery continues to use `private/recovery.seed.json`.
-
-**An export-generation timestamp is not proof of an off-host backup.** Save the
-download privately. Provider credentials remain in the supplied configuration
-and are not copied into the recovery export. Malformed optional export metadata
-is ignored during import while valid account/game progress remains recoverable.
-
-## Performance and maintenance
-
-- `boss.py` supplies one rules contract to validation, HTML instructions and JS.
-- `/public-state` contains anonymous published data, excludes the moving clock,
-  and uses a strong ETag. A matching request receives 304 with `X-Server-Time`.
-  The browser reuses its in-memory body and updates its clock. Existing `/data`
-  compatibility is retained. Cached data is always revalidated before reuse.
-- Admin responses, personal cooldowns, CSRF values, recovery files and game
-  actions remain `no-store`. No account or visitor identifiers enter the public
-  conditional snapshot. This cache does not slow provider polling.
-- Game lists retain unchanged DOM nodes instead of rebuilding every five seconds.
-  Hit effects use `Element.animate()` without synchronous layout reads and honor
-  reduced-motion preferences. Semantic controls retain keyboard support.
-- `presentation.py` isolates change-review and recovery view models. JS and CSS
-  are expanded into readable source, with comments around the state, retry,
-  privacy, cache and transaction boundaries. No frontend build step is required.
-
-## Upgrade and storage choice
-
-1. Save a private recovery checkpoint before replacing the installation.
-2. Keep the current `data/`, newer private recovery seed, and custom configuration.
-3. Replace application modules, templates and static assets together. Install
-   requirements and run the same sole launcher. Hard-refresh the browser.
-4. Verify release `2026.09.22-community`, published dates, source results and boss
-   progress. The original historical race is not silently advanced.
-
-Local SQLite remains automatic. Use one process/instance with local storage.
-On DigitalOcean App Platform, filesystem changes can disappear with container
-replacement; this update cannot make that disk durable. The export tracker helps
-identify unprotected progress but does not upload backups automatically.
-
-For automatic durability **without a database service**, run this same package
-on a persistent Linux host, preserve `data/`, and back it up off-host. Run under
-a normal process supervisor with `wager_backend.py` as its command, set
-`TRUST_APP_PLATFORM=0` for direct hosting, and provide HTTPS for production.
-Alternatively, staying on App Platform requires a separately configured durable
-storage or off-host backup destination. None is provisioned by this package;
-downloaded checkpoints protect only the state they contain.
-
-## Verification and references
-
-See [VALIDATION.md](VALIDATION.md) for executed tests and external-service limits.
-The default multi-day balance, existing account import, native admin login,
-date publication and 60-second source cadence are regression-tested.
-
-- [Conditional HTTP requests — MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Conditional_requests)
-- [Element.animate — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate)
-- [App Platform storage — DigitalOcean](https://docs.digitalocean.com/products/app-platform/how-to/store-data/)
+There is no new runtime dependency. Optional browser-development checks use Node,
+but deploying and running the app requires only the existing Python requirements.
 ```
 
 ## docs/VALIDATION.md
 
-````markdown
-# Verification record — 2026.09.28-boss-controls
+```markdown
+# Validation — 2026.09.28-community-polish
 
-Verified in the supplied Linux workspace on 2026-09-28 using synthetic accounts,
-images and provider responses. No production raid or account was modified.
+The complete Python suite passed **124 tests**. The final file-cache optimization
+was then checked against all **14 new behavior tests**. **54 DOM/interface checks**
+passed, including ten new checks for the added controls and status labels.
 
-| Check | Result |
+| Area | Verified behavior |
 | --- | --- |
-| Python suite | 103 discovered: **99 passed**, 4 optional PostgreSQL tests skipped. |
-| DOM/CSS suite | **39 passed** against the real rendered templates using jsdom. |
-| PNG/JPG/JPEG/WebP upload | Actual decoding, 512 × 256 resize of a 900 × 450 source, metadata removal, served PNG bytes, cache headers and conditional 304 response passed. |
-| Invalid uploads | Empty, fake, corrupt, renamed GIF, wrong extension, oversized, excessive-pixel, animated PNG and animated WebP images rejected without changing the existing avatar or raid. |
-| Avatar visibility | Public game, homepage invitation and admin preview render the uploaded URL. Game/admin polling updates the image and preserves health form drafts. Original-logo reset and avatar retention after a new raid passed. |
-| Current raid health | Explicit confirmation and valid bounds required. Edits use the latest committed damage, even if attacks arrive after the form opens. Player totals, network limits and receipts are retained. Stale health revisions and old raid forms cannot overwrite newer edits. |
-| No automatic regeneration | Idle time, daily rollover, pause/resume and cold app restart retain damage. Ordinary writes and browser snapshots cannot refill HP. Only an explicit health edit can reopen the same defeated raid. |
-| Recovery | Fresh-instance import and cold initialization retain avatar bytes, boss name, damage settings, health revision and progress. Existing state wins over a malformed newer seed. Recovery preview rejects a mismatched image checksum without mutation. |
-| Authorization | All seven boss management actions reject guests, unknown accounts, revoked session versions and tampered cookies before image decoding or writes. Forged role flags cannot grant access. Missing, invalid and Unicode CSRF tokens return controlled errors. Ordinary admin sign-in and boss editing pass; private recovery remains Superadmin-only. Removed accounts lose access immediately. |
-| Boss name and damage | Validated settings affect future hits only. A 450-point historical receipt remains valid after lowering damage. Publicly supplied damage, HP, role and settings fields cannot alter server calculations. Invalid names/ranges and stale forms are rejected; storage guards reject unapproved settings changes. Names render as text and admin drafts survive polling. |
-| Public edit isolation | Public pages contain no management forms; management GET requests and writes to read-only game state return 405 without changing saved data. The public can view the chosen avatar and play normally. |
-| Barebones game | Tutorial/story/help elements and footer are absent. Controls, cooldowns, safe retries, milestones, recent hits and victory contributors remain functional in DOM checks. |
-| Multiplayer rules | Concurrent hits retain damage; shared-network requests enforce one hit; cooldowns, IPv6 grouping, daily caps, burst damage and final-hit clamping passed. The 100-player maximum-activity simulation finishes on raid day four. |
-| Existing app functionality | Native login, date publication, original Superadmin import, source normalization, provider worker refreshes, unchanged-data handling, public masking, private Code Red rows, recovery and account roles passed. |
-| Launch | Existing subprocess test exercises Waitress startup via `python wager_backend.py`, local storage and a stale database binding. No management script or separate game worker is needed. |
-| Preserved files | Original provider settings, account seed and both logo assets match the supplied bytes exactly. |
+| JSON saves | Fresh startup, retained accounts, cold restart, corrupt-file refusal, failed atomic replacement rollback, two simultaneous store instances retaining every hit. |
+| Migration | Previous SQLite accounts/revision/live snapshot/raid imported exactly; old file unchanged; no SQLite created on a fresh install. |
+| Recovery codes | Authenticated owner issuance, CSRF rejection, forgery and replaced-code rejection, digest-only storage, original alias/hits/badges/receipt/cooldown retained. |
+| Households | Guests cannot approve; admin allowance admits only its slot count; separate 30-second cooldowns; default per-connection fairness retained. |
+| Unlimited hits | Repeated eligible hits accepted beyond previous daily counts; rejected-request throttle does not block an eligible hit. Existing week-long gameplay/achievement tests pass. |
+| Rally/estimates | Distinct rolling-window players, repeat-player deduplication, window expiry, next-raid reset, cosmetic unlock, no automatic HP/damage changes. |
+| Admin edits | Private persistent actor/before/after history, existing avatar/name/HP/damage permissions and stale revision checks. |
+| Interface | Identity collapse/edit, safe code recovery, remembered style, rally display, exact large-integer previews, presets without submission, private history clearing on session expiry. |
+| Status | Five-second boss polling, 60-second provider polling, distinct source success/change timestamps, dynamic boss victory name, ETag reuse and reconnect behavior. |
+| Existing features | Native login, race date publication, provider envelopes, safe failure responses, Code Red Top 100, public masking, uploads and recovery export. |
 
-## Verification limits
+The original provider configuration, account seed, PNG and ICO are preserved byte
+for byte. The badge calculation function is preserved unchanged; #1 was excluded.
+No remote checkpoint feature or external SQL service was added; #10 was excluded.
 
-- The previous turn's native-browser visual attempt could not run: the workspace Chromium
-  executable crashed at launch with SIGSEGV, before loading the app. The earlier
-  release's browser screenshots are not evidence for this release's new layout.
-  No new native-browser claim is made here. Current template/DOM checks and HTTP
-  image/form integration tests passed.
-- No dedicated disposable PostgreSQL database was provided; four optional
-  compatibility tests skipped. Default local SQLite was tested. CI provisions
-  PostgreSQL separately for that optional mode.
-- No DigitalOcean deployment or successful live Shuffle/Kick connection was
-  verified for this release. Provider checks use synthetic responses and local
-  HTTP fixtures. Earlier live provider probes timed out.
-- App Platform container storage is temporary. Recovery tests prove that a saved
-  checkpoint restores its contents; they do not provide automatic remote backups
-  or protect changes made after that checkpoint.
+Validation uses synthetic provider responses and disposable local saves. It did
+not contact the live Shuffle/Kick accounts or deploy to DigitalOcean. This Linux
+workspace ran Python 3.12; Windows/Python 3.14 was not executed natively. An encoding
+regression test simulates the earlier Windows text-decoding failure. Browser checks
+use rendered templates in jsdom; native Chromium was unavailable, so no new native
+visual-rendering claim is made.
 
-## Reproduce
-
-```bash
-python -m pip install -r requirements.txt
-python -m unittest discover -s tests -v
+The extracted ZIP startup checks and package integrity results are recorded during
+packaging. The code is shipped with its tests for repeatable verification.
 ```
-
-Optional interface checks require Node only for development:
-
-```bash
-npm --prefix tests install --ignore-scripts
-python tests/render_fixtures.py .test-fixtures
-npm --prefix tests test
-```
-
-All published test counts are from actual executed checks. Generated fixture
-accounts, preview data and runtime databases are excluded from the release ZIP.
-````
 
 ## integrations.py
 
@@ -2120,6 +1917,7 @@ class Providers:
 """Small view models for change review and private recovery status."""
 import re
 
+from boss_progress import MAX_NUMBER
 from race import token
 from race_support import fmt_et, money
 
@@ -2166,7 +1964,7 @@ def valid_marker(value):
     if not isinstance(value, dict):
         return None
     for key in ('generated_at', 'boss_version', 'attacks', 'damage'):
-        if type(value.get(key)) is not int or not 0 <= value[key] <= 10**12:
+        if type(value.get(key)) is not int or not 0 <= value[key] <= (10**12 if key == 'generated_at' else MAX_NUMBER):
             return None
     for key, length in (('admin_token', 20), ('standings_token', 20), ('raid_id', 32)):
         if not isinstance(value.get(key), str) or not re.fullmatch(r'[a-f0-9]{%d}' % length, value[key]):
@@ -2926,16 +2724,6 @@ def read_json(path: Path) -> dict:
         return value
     except (OSError, ValueError) as exc:
         raise RuntimeError("Cannot read " + str(path) + ". The original file was left untouched. Restore a verified recovery copy.") from exc
-
-```
-
-## requirements-postgres.txt
-
-```text
-# Optional compatibility for an existing PostgreSQL deployment; not needed by
-# the default local-storage build. Select STORAGE_MODE=postgres explicitly.
--r requirements.txt
-psycopg[binary]==3.3.5
 ```
 
 ## requirements.txt
@@ -3065,7 +2853,7 @@ class Runtime:
                         count=self.shuffle.get("count", len(self.shuffle["rows"])), snapshot_only=self.shuffle.get("snapshot_only", False),
                         freshness=freshness(self.shuffle), jobs=self.job_status(),
                         diagnostics=dict(release=RELEASE, credentials=self.config.diagnostics(),
-                            storage="PostgreSQL" if self.store.pg else "Local file (automatic)", settings_revision=self.revision,
+                            storage="Local JSON file (automatic)", settings_revision=self.revision,
                             start_et=fmt_et(self.admin["site_settings"]["start_time"]), end_et=fmt_et(self.admin["site_settings"]["end_time"]),
                             received=self.shuffle.get("received", 0), accepted=self.shuffle.get("accepted", 0),
                             rejected=self.shuffle.get("rejected", {}), missing_campaign=self.shuffle.get("missing_campaign", 0)))
@@ -3079,6 +2867,7 @@ class Runtime:
             return {name: {**{k: v for k, v in job.items() if k != "not_before"},
                            "pending": self.events[name].is_set(),
                            "worker_alive": bool(self.threads.get(name) and self.threads[name].is_alive()),
+                           "changed_at": (self.shuffle if name == "shuffle" else self.kick).get("changed_at", 0),
                            "last_success": (self.shuffle if name == "shuffle" else self.kick).get("updated_at", 0)}
                     for name, job in self.jobs.items()}
 
@@ -3117,6 +2906,7 @@ class Runtime:
                         incoming = normalize(self.providers.shuffle(site), site, self.config.raw_fallback)
                         status = self.providers.last_http_status()
                         value = calculate({**empty(site), **incoming, "updated_at":int(time.time()), "attempt_at":now, "ok":True}, admin, self.config)
+                        value["changed_at"] = value["updated_at"] if previous["rows"] != value["rows"] else previous.get("changed_at", 0)
                         value["previous_top"] = previous["rows"][:15] if previous["rows"][:15] != value["rows"][:15] else previous.get("previous_top", [])
                         warning = value["warning"]
                         result = "empty" if not value["rows"] else "updated" if previous["rows"] != value["rows"] else "unchanged"
@@ -3130,6 +2920,9 @@ class Runtime:
                         LOG.info("SHUFFLE %s", self.empty_message(site, value))
                 else:
                     value = {**self.providers.kick(site), "updated_at":int(time.time()), "attempt_at":now, "error":""}
+                    fields = ("live", "title", "viewers", "channel")
+                    with self.lock:
+                        value["changed_at"] = value["updated_at"] if any(value.get(k) != self.kick.get(k) for k in fields) else self.kick.get("changed_at", 0)
                     status, result = self.providers.last_http_status(), "live" if value["live"] else "offline"
                     with self.lock:
                         self.store.publish(name, value, revision)
@@ -3467,10 +3260,14 @@ python-3.13.12
     if (sourceAt)
       text(
         id("sourceTime"),
-        "Source checked " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
+        "Last checked " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
       );
     for (const [name, job] of Object.entries(jobs)) {
       const remaining = Math.max(0, Math.ceil(job.next_check - now));
+      text(
+        id(name + "Freshness"),
+        `Last successful check: ${date(job.last_success)} · Content last changed: ${job.changed_at ? date(job.changed_at) : "No recorded change yet"}`,
+      );
       text(
         id(name + "Timing"),
         job.state === "checking"
@@ -3828,7 +3625,7 @@ python-3.13.12
         text(
           id("inviteTitle"),
           b.status === "victory"
-            ? "The crew conquered Crimson."
+            ? `The crew conquered ${b.name || "Crimson Hunllef"}.`
             : b.status === "paused"
               ? "The raid is taking a breather."
               : "Red needs a raid party.",
@@ -3848,7 +3645,7 @@ python-3.13.12
         const bar = id("inviteHealth");
         if (bar) {
           bar.max = b.max_hp;
-          bar.value = b.hp;
+          bar.value = b.max_hp - b.hp;
         }
       }
       text(
@@ -3961,7 +3758,7 @@ python-3.13.12
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.28-boss-controls")
+      if (result.release && result.release !== "2026.09.28-community-polish")
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",
@@ -4072,7 +3869,9 @@ python-3.13.12
 [data-mode="admin"] #bossName {
   overflow-wrap: anywhere;
 }
-[data-mode="admin"] > .section-title > div { min-width: 0; }
+[data-mode="admin"] > .section-title > div {
+  min-width: 0;
+}
 .boss-damage-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5065,12 +4864,213 @@ python-3.13.12
     font-size: 0.94rem;
   }
 }
+
+/* Compact identity controls and achievements keep the arena uncluttered. */
+.player-name-form {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1rem 0;
+}
+.player-name-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.player-name-row input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.boss-admin-leaders {
+  margin: 1.5rem 0;
+}
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.badge-grid li {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+#rearmHint {
+  min-height: 1.4em;
+  margin: 0.5rem 0;
+}
+@media (max-width: 600px) {
+  .badge-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Comfort controls stay quiet so the arena and primary attack keep focus. */
+.player-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0.5rem;
+}
+.player-identity span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.player-identity[hidden],
+.player-name-form[hidden],
+[hidden] {
+  display: none !important;
+}
+.profile-recovery {
+  font-size: 0.82rem;
+  margin: 0.65rem 0 1rem;
+}
+.profile-recovery summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+.profile-recovery .stack,
+#recoveryOwner {
+  margin-top: 0.85rem;
+}
+.profile-recovery textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.attack-button,
+#dockAttack {
+  min-height: 3.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.attack-button {
+  width: 100%;
+}
+#dockAttack {
+  flex: 1;
+  min-width: 0;
+}
+.rally-status {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.025);
+}
+.rally-status > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.rally-status progress {
+  width: 100%;
+  height: 5px;
+  accent-color: #ff3a43;
+  margin: 0.6rem 0 0.2rem;
+}
+.rally-status small {
+  color: var(--muted);
+}
+.rally-status.unlocked {
+  border-color: #ff4b5666;
+  background: #e8243210;
+}
+.rally-lit {
+  background: radial-gradient(ellipse at center, #fa29363d, transparent 70%);
+}
+.rally-lit .rune-ring {
+  border-color: #ff6874;
+  box-shadow: 0 0 32px #ff283844;
+}
+.exact-totals {
+  text-align: left;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.6rem;
+}
+.exact-totals summary {
+  cursor: pointer;
+}
+.boss-balance {
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.boss-balance h3 {
+  margin: 0.25rem 0 0.7rem;
+}
+.edit-preview {
+  display: block;
+  background: #ffffff06;
+  border: 1px solid var(--line);
+  border-left: 3px solid #f44952;
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  grid-column: 1/-1;
+}
+.audit-list {
+  max-height: 26rem;
+  overflow: auto;
+}
+.audit-list li {
+  align-items: flex-start;
+}
+.audit-list small {
+  max-width: 70ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.audit-list .score {
+  font-size: 0.75rem;
+  white-space: normal;
+  min-width: 7rem;
+  text-align: right;
+}
+#bossHealth {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .boss-balance {
+    grid-template-columns: 1fr;
+  }
+  .audit-list li {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .audit-list .score {
+    text-align: left;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rally-lit,
+  .rally-status {
+    transition: none;
+  }
+}
 ```
 
 ## static/boss.js
 
 ```javascript
-/* Shared raid UI. The server owns damage, identity, cooldowns and daily limits.
+/* Shared raid UI. The server owns damage, identity, cooldowns and private names.
    Polling never attacks. A failed POST keeps its receipt ID for a safe retry. */
 (() => {
   "use strict";
@@ -5082,8 +5082,31 @@ python-3.13.12
     const el = $(id);
     if (el) el.textContent = String(value);
   };
-  const number = (value) => Number(value).toLocaleString("en-US");
+  const number = (value) =>
+    (typeof value === "bigint" ? value : Number(value)).toLocaleString("en-US");
+  const compact = new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+  function metric(id, value) {
+    text(id, Math.abs(value) >= 10000 ? compact.format(value) : number(value));
+    const el = $(id);
+    if (el) {
+      el.title = number(value);
+      el.setAttribute("aria-label", number(value));
+    }
+  }
+  let editingName = false;
   let labels = {};
+  let armed = true,
+    lockedButton = null,
+    inputMode = "mouse",
+    keyHeld = false,
+    nameDirty = false;
+  const nameInput = $("playerUsername");
+  nameInput?.addEventListener("input", () => {
+    nameDirty = true;
+  });
   const listCache = new Map();
   const effects = new Map();
   const button = $("attackButton"),
@@ -5094,7 +5117,8 @@ python-3.13.12
     selected = "blade",
     busy = false,
     timer,
-    polling = false;
+    polling = false,
+    authExpired = false;
   let receivedAt = performance.now(),
     lastGood = -Infinity,
     pending = null,
@@ -5107,6 +5131,7 @@ python-3.13.12
   // Gameplay still works in browsers that disable storage; cookies are required.
   try {
     pending = JSON.parse(sessionStorage.getItem(pendingKey));
+    selected = localStorage.getItem("rh.boss.style") || "blade";
   } catch (_) {
     /* optional */
   }
@@ -5292,12 +5317,26 @@ python-3.13.12
       error();
     }
     text("bossConnection", "Live · Shared raid connected");
-    text("bossHealth", `${number(state.hp)} / ${number(state.max_hp)} HP`);
-    text("bossPercent", ((state.hp / state.max_hp) * 100).toFixed(2) + "%");
+    text(
+      "bossHealth",
+      `${compact.format(state.hp)} / ${compact.format(state.max_hp)} HP`,
+    );
+    if ($("bossHealth"))
+      $("bossHealth").title =
+        `${number(state.hp)} / ${number(state.max_hp)} HP`;
+    text(
+      "exactRaidTotals",
+      `${number(state.hp)} / ${number(state.max_hp)} HP · ${number(state.total_damage)} damage · ${number(state.total_attacks)} hits`,
+    );
+    text(
+      "bossPercent",
+      (((state.max_hp - state.hp) / state.max_hp) * 100).toFixed(2) +
+        "% defeated",
+    );
     const bar = $("bossHealthBar");
     if (bar) {
       bar.max = state.max_hp;
-      bar.value = state.hp;
+      bar.value = state.max_hp - state.hp;
     }
     text(
       "bossPhase",
@@ -5310,7 +5349,7 @@ python-3.13.12
     text("bossDay", "Raid day " + state.day);
     text("bossRaiders", number(state.raiders));
     text("bossAttacks", number(state.total_attacks));
-    text("bossDamage", number(state.total_damage));
+    metric("bossDamage", state.total_damage);
     const story =
       state.status === "victory"
         ? "VICTORY. The Red crew brought the beast down. Every hit made this happen."
@@ -5335,11 +5374,26 @@ python-3.13.12
         el.classList.toggle("is-weak", el.dataset.style === state.weakness),
       );
     text("yourName", state.you.name);
-    text("yourDamage", number(state.you.damage));
-    text(
-      "yourRemaining",
-      `${state.you.remaining} / ${state.rules.daily_attacks}`,
-    );
+    metric("yourDamage", state.you.damage);
+    text("yourAttacks", number(state.you.attacks));
+    if (nameInput && !nameDirty && document.activeElement !== nameInput)
+      nameInput.value = state.you.display_name || "";
+    identityView();
+    rally();
+    if (admin) adminTools();
+    if (admin)
+      rows(
+        "adminBossLeaders",
+        state.admin_leaders || [],
+        "No hits yet.",
+        (r, i) =>
+          item(
+            `${i + 1}. ${r.name}`,
+            `${r.alias} · ${number(r.attacks)} hits · ${r.name_provided ? (r.shuffle_name_in_feed ? "Shuffle name match · unverified" : "Self-reported") : "Username not supplied yet"}`,
+            number(r.damage),
+          ),
+      );
+
     text(
       "burstLabel",
       state.you.burst_in === 1
@@ -5392,6 +5446,267 @@ python-3.13.12
     if (!admin && state.status === "victory") void recap();
     tick();
   }
+  function identityView() {
+    if (admin) return;
+    const own = Boolean(state.you.display_name);
+    text("playingAs", state.you.display_name || "");
+    if ($("playerIdentity"))
+      $("playerIdentity").hidden =
+        !own || !state.you.identity_ready || editingName;
+    if ($("playerNameForm"))
+      $("playerNameForm").hidden =
+        own && state.you.identity_ready && !editingName;
+    if ($("recoveryOwner")) $("recoveryOwner").hidden = !own;
+    text(
+      "recoverySaved",
+      state.you.recovery_saved
+        ? "Recovery code created. Creating another replaces the previous code."
+        : "Save a code to keep your player if cookies are cleared.",
+    );
+  }
+  function rally() {
+    const r = state.rally;
+    if (!r) return;
+    stage?.classList.toggle("rally-lit", Boolean(r.unlocked));
+    $("rallyStatus")?.classList.toggle("unlocked", Boolean(r.unlocked));
+    text("rallyTitle", r.unlocked ? "Red rally · Arena lit" : "Red rally");
+    text("rallyCount", `${r.count} / ${r.goal} raiders`);
+    text(
+      "rallyHint",
+      r.unlocked
+        ? "Unlocked together for this raid."
+        : "15 raiders hit within 10 minutes to light the arena.",
+    );
+    if ($("rallyBar")) {
+      $("rallyBar").max = r.goal;
+      $("rallyBar").value = r.count;
+    }
+  }
+  const changeLabels = {
+    hp: "Remaining HP",
+    max_hp: "Maximum HP",
+    damage: "Base",
+    weak_damage: "Weakness",
+    burst_bonus: "Burst bonus",
+    paused: "Paused",
+    name: "Name",
+    player: "Player",
+    slots: "Players",
+    avatar: "Avatar",
+    connection: "Connection",
+  };
+  function displayChange(key, value) {
+    if (key === "avatar" && typeof value === "string" && value.length === 64)
+      return "Image " + value.slice(0, 8);
+    return typeof value === "number" ? number(value) : String(value);
+  }
+  function adminTools() {
+    const b = state.balance;
+    if (b) {
+      text(
+        "bossPace",
+        b.observed
+          ? `${number(b.damage_per_hour)} damage / hour`
+          : "Collecting recent hits…",
+      );
+      text(
+        "bossEstimate",
+        state.status === "victory"
+          ? "Boss defeated."
+          : b.observed
+            ? `About ${b.remaining_seconds >= 86400 ? (b.remaining_seconds / 86400).toFixed(1) + " days" : duration(b.remaining_seconds)} remaining at this pace · ${number(b.sample_hits)} recent hits`
+            : `${number(b.sample_hits)} recent hits. Estimates appear after 5 minutes and 10 hits with damage.`,
+      );
+      const presets = $("raidPresets");
+      if (presets) {
+        for (const p of b.presets) {
+          let el = [...presets.children].find(
+            (e) => e.dataset.days === String(p.days),
+          );
+          if (!el) {
+            el = document.createElement("button");
+            el.type = "button";
+            el.className = "button small";
+            el.dataset.days = String(p.days);
+            el.addEventListener("click", () => {
+              $("bossHealthInput").value = el.dataset.hp;
+              $("bossHealthInput").focus();
+            });
+            presets.append(el);
+          }
+          el.dataset.hp = String(p.hp);
+          el.textContent = `${p.label} · ${compact.format(p.hp)} HP`;
+          el.title = `${number(p.hp)} HP${b.observed ? ` · about ${p.days} days at recent pace` : " · starting suggestion"}`;
+        }
+      }
+      text(
+        "presetBasis",
+        b.observed
+          ? "Presets target roughly 3, 5 or 7 days at the observed pace. They fill the next-raid field only; review and confirm to start."
+          : "Starting suggestions: 10M / 25M / 50M HP. Duration is unknown until activity is measured. These only fill the next-raid field.",
+      );
+    }
+    rows(
+      "householdList",
+      (state.households || []).map((h, i) => ({ ...h, id: String(i) })),
+      "No household exceptions. One player per connection is the default.",
+      (h) =>
+        item(
+          h.players.join(", ") || "Released connection",
+          `${h.players.length} registered · ${h.slots} allowed`,
+          "30s each",
+        ),
+    );
+    rows(
+      "bossAdminHistory",
+      (state.admin_history || []).map((h, i) => ({
+        ...h,
+        id: String(h.at) + ":" + i,
+      })),
+      "No host edits recorded in this release yet.",
+      (h) => {
+        const keys = [
+          ...new Set([...Object.keys(h.before), ...Object.keys(h.after)]),
+        ];
+        const changes = keys
+          .filter((k) => h.before[k] !== h.after[k])
+          .map(
+            (k) =>
+              `${changeLabels[k] || k}: ${displayChange(k, h.before[k])} → ${displayChange(k, h.after[k])}`,
+          );
+        return item(
+          `${h.action} · ${h.actor}`,
+          changes.join(" · ") || "Action confirmed; values unchanged.",
+          new Date(h.at * 1000).toLocaleString(),
+        );
+      },
+    );
+    rows(
+      "bossAbuseFlags",
+      (state.abuse_flags || []).map((f, i) => ({ ...f, id: String(i) + f.at })),
+      "No bursts of rejected requests detected.",
+      (f) =>
+        item(
+          `${f.alias} · ${f.category}`,
+          `${f.rejected} rejected requests · Connection ${f.tag}`,
+          new Date(f.at * 1000).toLocaleTimeString(),
+        ),
+    );
+    previews();
+  }
+  function whole(id) {
+    const value = $(id)?.value || "";
+    if (!/^\d+$/.test(value)) return null;
+    const n = BigInt(value);
+    return n <= BigInt(Number.MAX_SAFE_INTEGER) ? n : null;
+  }
+  function previews() {
+    if (!admin || !state) return;
+    const hp = BigInt(state.hp),
+      max = BigInt(state.max_hp),
+      nextMax = whole("bossMaxHealth"),
+      remaining = whole("bossRemainingHealth");
+    if (nextMax !== null && nextMax > 0n) {
+      const next = hp + nextMax - max;
+      text(
+        "maxHealthPreview",
+        `Remaining HP: ${number(hp)} → ${number(next < 0n ? 0n : next > nextMax ? nextMax : next)} · Maximum: ${number(max)} → ${number(nextMax)}`,
+      );
+    } else text("maxHealthPreview", "Enter a valid whole-number maximum HP.");
+    text(
+      "remainingHealthPreview",
+      remaining !== null && remaining <= max
+        ? `Remaining HP: ${number(hp)} → ${number(remaining)}${remaining > hp ? " · Explicit heal" : remaining === 0n ? " · Defeats the boss" : ""}`
+        : "Remaining HP must be between 0 and the current maximum.",
+    );
+    const base = whole("bossBaseDamage"),
+      weak = whole("bossWeakDamage"),
+      burst = whole("bossBurstBonus");
+    text(
+      "damagePreview",
+      [base, weak, burst].every((n) => n !== null)
+        ? `Next hit: base ${number(base)} · weakness ${number(weak)}. Every tenth hit: base ${number(base + burst)} · weakness ${number(weak + burst)}. Actual damage stops at remaining HP.`
+        : "Enter valid whole-number damage values.",
+    );
+  }
+  root
+    .querySelectorAll(
+      "#bossMaxHealth, #bossRemainingHealth, #bossBaseDamage, #bossWeakDamage, #bossBurstBonus",
+    )
+    .forEach((el) => el.addEventListener("input", previews));
+  $("editPlayerName")?.addEventListener("click", () => {
+    editingName = true;
+    identityView();
+    nameInput?.focus();
+  });
+  $("makeRecoveryCode")?.addEventListener("click", async (event) => {
+    const el = event.currentTarget;
+    el.disabled = true;
+    try {
+      const { response, value } = await request("/play/api/recovery-code", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrf },
+      });
+      if (!response.ok)
+        throw new Error(value.error || "Could not create a recovery code.");
+      apply(value);
+      $("recoveryCode").value = value.code;
+      $("recoveryCodeBox").hidden = false;
+      text(
+        "recoveryResult",
+        "Save this code somewhere private. It is only shown here.",
+      );
+    } catch (e) {
+      text("recoveryResult", e.message);
+    } finally {
+      el.disabled = false;
+    }
+  });
+  $("downloadRecovery")?.addEventListener("click", () => {
+    const blob = new Blob(
+      [
+        "RedHunllef player recovery code\nKeep private. Paste into Player recovery at /play.\n\n" +
+          $("recoveryCode").value +
+          "\n",
+      ],
+      { type: "text/plain;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob),
+      link = document.createElement("a");
+    link.href = url;
+    link.download = "redhunllef-player-recovery.txt";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  $("recoverPlayerForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const el = event.currentTarget.querySelector("button");
+    el.disabled = true;
+    try {
+      const { response, value } = await request("/play/api/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+        body: JSON.stringify({
+          raid_id: state.raid_id,
+          code: $("recoveryInput").value.trim(),
+        }),
+      });
+      if (!response.ok) throw new Error(value.error || "Recovery failed.");
+      remember(null);
+      editingName = false;
+      nameDirty = false;
+      apply(value);
+      $("recoveryInput").value = "";
+      text(
+        "recoveryResult",
+        "Player restored. Your hits, badges and cooldown were kept.",
+      );
+    } catch (e) {
+      text("recoveryResult", e.message);
+    } finally {
+      el.disabled = false;
+    }
+  });
   function achievements() {
     const milestones = state.milestones || [],
       achieved = milestones.filter((m) => m.reached);
@@ -5409,12 +5724,20 @@ python-3.13.12
       state.you.badges || [],
       "Land a hit to earn your first badge.",
       (b) => {
-        const li = item(b.label, b.description, b.earned ? "Earned" : "Locked");
+        const li = item(
+          b.label,
+          b.description,
+          b.earned ? "Earned" : `${b.progress || 0} / ${b.target || 1}`,
+        );
         li.classList.toggle("earned", b.earned);
         return li;
       },
     );
     text("yourActiveDays", state.you.active_days || 0);
+    text(
+      "badgeCount",
+      `${(state.you.badges || []).filter((b) => b.earned).length} / 8`,
+    );
     if (admin) return;
     const key = "rh.boss.achievements";
     try {
@@ -5505,7 +5828,7 @@ python-3.13.12
     }
   }
   function tick() {
-    if (!state) return;
+    if (!state || authExpired) return;
     const seconds = now(),
       stale = performance.now() - lastGood > 15000;
     text(
@@ -5517,9 +5840,16 @@ python-3.13.12
     text(
       "raidReset",
       state.resets_at
-        ? `Next raid day in ${duration(state.resets_at - seconds)}. Allowance refreshes then.`
+        ? `Next raid day in ${duration(state.resets_at - seconds)}.`
         : "The first community hit starts the 24-hour raid-day schedule.",
     );
+    if (!stale)
+      text(
+        "bossConnection",
+        `Live · Last checked ${Math.max(0, Math.floor((performance.now() - lastGood) / 1000))}s ago`,
+      );
+    else
+      text("bossConnection", "Reconnecting · Showing the last confirmed state");
     if (!button) return;
     const active = ["waiting", "active"].includes(state.status);
     // An unacknowledged click can be retried even if its first delivery caused
@@ -5528,11 +5858,11 @@ python-3.13.12
     const ready =
       active &&
       state.connection_ready &&
-      state.you.remaining > 0 &&
+      state.you.identity_ready &&
       seconds >= state.you.ready_at &&
       !stale &&
       !busy;
-    button.disabled = !(retry || ready);
+    button.disabled = !(armed && (retry || ready));
     button.textContent = busy
       ? "Landing your hit…"
       : stale
@@ -5545,28 +5875,37 @@ python-3.13.12
               ? "Raid paused"
               : !state.connection_ready
                 ? "Connection setup needed"
-                : !state.you.remaining
-                  ? "Rest up · Return next raid day"
+                : !state.you.identity_ready
+                  ? "Save your username to play"
                   : seconds < state.you.ready_at
                     ? `Next strike in ${duration(state.you.ready_at - seconds)}`
-                    : `Attack with ${labels[selected]} →`;
+                    : !armed
+                      ? inputMode === "keyboard"
+                        ? "Release the key to re-arm"
+                        : "Move off the button to re-arm"
+                      : `Attack with ${labels[selected]} →`;
     text(
       "attackHint",
       pending
         ? "Last strike unconfirmed. Retry safely; it won’t count twice."
         : state.status === "victory"
           ? "You helped write this chapter. The host can open the next raid."
-          : !state.you.remaining
-            ? "Daily allowance used by this browser or shared connection."
+          : !state.you.identity_ready
+            ? "Save your username for this connection."
             : `One strike every ${state.rules.cooldown}s · ${selected === state.weakness ? state.rules.weak_damage : state.rules.damage} damage${state.you.burst_in === 1 ? " + " + state.rules.burst_bonus + " burst" : ""}`,
     );
     if (dockButton) {
       dockButton.disabled = button.disabled;
       dockButton.textContent = button.textContent;
     }
+    text("dockRemaining", `${state.rules.cooldown}s cooldown · Unlimited hits`);
     text(
-      "dockRemaining",
-      `${state.you.remaining} / ${state.rules.daily_attacks} attacks left`,
+      "rearmHint",
+      !armed
+        ? inputMode === "keyboard"
+          ? "Release Enter or Space before your next hit."
+          : "Move your pointer off the attack button before your next hit."
+        : "",
     );
     if (stale)
       text("bossConnection", "Reconnecting · Showing the last confirmed state");
@@ -5593,25 +5932,55 @@ python-3.13.12
   }
   async function poll() {
     clearTimeout(timer);
-    if (document.hidden || polling) return;
+    if (document.hidden || polling || authExpired) return;
     polling = true;
     try {
-      const { response, value } = await request("/play/api/state");
-      if (!response.ok)
+      const { response, value } = await request(
+        admin ? "/admin/boss/status" : "/play/api/state",
+      );
+      if (!response.ok) {
+        if (admin && response.status === 401) {
+          authExpired = true;
+          rows(
+            "adminBossLeaders",
+            [],
+            "Sign in again to see private names.",
+            () => null,
+          );
+          for (const id of [
+            "bossAdminHistory",
+            "householdList",
+            "bossAbuseFlags",
+          ])
+            rows(id, [], "Sign in again to view this information.", () => null);
+          root.querySelectorAll("form button, form input").forEach((el) => {
+            el.disabled = true;
+          });
+          text("bossConnection", "Session expired · Sign in again");
+          clearTimeout(timer);
+          polling = false;
+          return;
+        }
         throw new Error(value.error || "The raid is temporarily unavailable.");
+      }
       apply(value);
     } catch (_) {
       text("bossConnection", "Reconnecting · Your saved damage is safe");
       tick();
     } finally {
       polling = false;
-      if (!document.hidden)
+      if (!document.hidden && !authExpired)
         timer = setTimeout(poll, (state?.rules.poll_seconds || 5) * 1000);
     }
   }
   function choose(style) {
     if (!labels[style]) return;
     selected = style;
+    try {
+      localStorage.setItem("rh.boss.style", style);
+    } catch (_) {
+      /* storage is optional */
+    }
     root
       .querySelectorAll("[data-style]")
       .forEach((b) =>
@@ -5628,7 +5997,83 @@ python-3.13.12
   $("dockStyle")?.addEventListener("change", (event) =>
     choose(event.target.value),
   );
-  dockButton?.addEventListener("click", () => button?.click());
+  function rearm() {
+    armed = true;
+    lockedButton = null;
+    tick();
+  }
+  for (const control of [button, dockButton].filter(Boolean)) {
+    control.addEventListener("pointerdown", (event) => {
+      inputMode = event.pointerType || "mouse";
+    });
+    control.addEventListener("pointerleave", () => {
+      if (lockedButton === control && inputMode !== "keyboard") rearm();
+    });
+    control.addEventListener("keydown", (event) => {
+      if (!["Enter", " "].includes(event.key)) return;
+      if (event.repeat) {
+        event.preventDefault();
+        return;
+      }
+      inputMode = "keyboard";
+      keyHeld = true;
+    });
+    // Mouse click latches until the pointer leaves. Touch taps naturally leave
+    // the surface on release. Keyboard users must release their activation key.
+    control.addEventListener("click", (event) => {
+      void attack(event, control);
+    });
+  }
+  document.addEventListener("keyup", (event) => {
+    if (["Enter", " "].includes(event.key)) {
+      keyHeld = false;
+      if (inputMode === "keyboard") rearm();
+    }
+  });
+  document.addEventListener("pointermove", (event) => {
+    if (
+      armed ||
+      !lockedButton ||
+      inputMode === "keyboard" ||
+      event.pointerType === "touch"
+    )
+      return;
+    const r = lockedButton.getBoundingClientRect();
+    if (
+      event.clientX < r.left ||
+      event.clientX > r.right ||
+      event.clientY < r.top ||
+      event.clientY > r.bottom
+    )
+      rearm();
+  });
+  // A name is saved by the server, never trusted from attack JSON or a URL.
+  $("playerNameForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitted = nameInput.value;
+    const save = event.currentTarget.querySelector("button");
+    save.disabled = true;
+    try {
+      const { response, value } = await request("/play/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+        body: JSON.stringify({ raid_id: state.raid_id, username: submitted }),
+      });
+      if (!response.ok)
+        throw new Error(value.error || "Your username could not be saved.");
+      if (nameInput.value === submitted) nameDirty = false;
+      editingName = false;
+      apply(value);
+      text(
+        "playerNameResult",
+        "Saved · Admins can see your full submitted name.",
+      );
+    } catch (e) {
+      text("playerNameResult", e.message);
+    } finally {
+      save.disabled = false;
+    }
+  });
   $("dismissBossError")?.addEventListener("click", () => error());
   $("dismissMilestone")?.addEventListener("click", () => {
     $("milestoneBanner").hidden = true;
@@ -5649,56 +6094,60 @@ python-3.13.12
       text("shareResult", "Select and copy your raid link.");
     }
   });
-  if (button)
-    button.addEventListener("click", async () => {
-      if (busy || button.disabled) return;
-      if (!pending) {
-        const bytes = new Uint8Array(16);
-        crypto.getRandomValues(bytes);
-        remember({
-          request_id: Array.from(bytes, (b) =>
-            b.toString(16).padStart(2, "0"),
-          ).join(""),
-          raid_id: state.raid_id,
-          style: selected,
-          name: state.you.name,
-        });
+  async function attack(event, control) {
+    if (busy || control.disabled || !armed) return;
+    armed = false;
+    lockedButton = control;
+    // Touch click follows pointer-up; no held pointer remains on the button.
+    if (inputMode === "touch" || (inputMode === "keyboard" && !keyHeld))
+      rearm();
+    if (!pending) {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      remember({
+        request_id: Array.from(bytes, (b) =>
+          b.toString(16).padStart(2, "0"),
+        ).join(""),
+        raid_id: state.raid_id,
+        style: selected,
+        name: state.you.name,
+      });
+    }
+    const receipt = pending.request_id;
+    busy = true;
+    error();
+    tick();
+    try {
+      const { response, value } = await request("/play/api/attack", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+        body: JSON.stringify({
+          request_id: pending.request_id,
+          raid_id: pending.raid_id,
+          style: pending.style,
+        }),
+      });
+      if (value.state) apply(value);
+      if (!response.ok) {
+        // A definitive rejection did not land. A 5xx may have happened after
+        // commit, so retain its receipt until a state check resolves it.
+        if (response.status < 500) remember(null);
+        throw new Error(value.error || "The strike could not be confirmed.");
       }
-      const receipt = pending.request_id;
-      busy = true;
-      error();
+      strikeFeedback(value.hit, receipt);
+      remember(null);
+    } catch (e) {
+      error(
+        e.name === "AbortError"
+          ? "The connection timed out. Your hit may have landed. Retry the same strike safely."
+          : e.message,
+      );
+    } finally {
+      busy = false;
       tick();
-      try {
-        const { response, value } = await request("/play/api/attack", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-          body: JSON.stringify({
-            request_id: pending.request_id,
-            raid_id: pending.raid_id,
-            style: pending.style,
-          }),
-        });
-        if (value.state) apply(value);
-        if (!response.ok) {
-          // A definitive rejection did not land. A 5xx may have happened after
-          // commit, so retain its receipt until a state check resolves it.
-          if (response.status < 500) remember(null);
-          throw new Error(value.error || "The strike could not be confirmed.");
-        }
-        strikeFeedback(value.hit, receipt);
-        remember(null);
-      } catch (e) {
-        error(
-          e.name === "AbortError"
-            ? "The connection timed out. Your hit may have landed. Retry the same strike safely."
-            : e.message,
-        );
-      } finally {
-        busy = false;
-        tick();
-        void poll();
-      }
-    });
+      void poll();
+    }
+  }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) clearTimeout(timer);
     else void poll();
@@ -5706,25 +6155,22 @@ python-3.13.12
   window.addEventListener("online", () => void poll());
   try {
     apply(JSON.parse(root.dataset.bossBootstrap));
+    choose(labels[selected] ? selected : "blade");
   } catch (_) {
     error("Reload to reconnect to the raid.");
   }
-  if (!admin) setInterval(tick, 1000);
+  setInterval(tick, 1000);
   void poll();
 })();
 ```
 
 ## static/redlogo.ico
 
-Complete binary file encoded as base64.
-
 ```base64
 AAABAAEAICAAAAEAIACoEAAAFgAAACgAAAAgAAAAQAAAAAEAIAAAAAAAABAAABMLAAATCwAAAAAAAAAAAAD5QyP/+UMj//lDI//6QyP/8EAh/9w6Hf/5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI5H5QyMA+UMjAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPlDI//5QyP/+UMj//pDI//wQCH/3Dod//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMj//lDI//5QyP/+UMjkflDIwD5QyMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+UMj//lDI//5QyP/+kMj//BAIf/dOhv/+0Mh//pDIf/6QyH/+kMh//pDIf/6QyH/+kMh//pDIf/6QyH/+kMh//pDIf/6QyH/+kMh//pDIf/6QyH/+kMh//pDIf/6QyGR+kMhAPpDIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD5QyP/+UMj//lDI//6QyL/6kEu/4k0jP+CNqP/gzai/4M2ov+DNqL/gzai/4M2ov+DNqL/gzai/4M2ov+DNqL/gzai/4M2ov+DNqL/gzai/4M2ov+DNqL/gzai/4M2opGDNqIAgzaiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPlDI//5QyP/+UMj//pDIv/mQTj/STDe/ygt//8qLf//Ki3//yot//8qLf//Ki3//yot//8qLf//Ki3//yot//8qLf//Ki3//yot//8qLf//Ki3//yot//8qLf//Ki3/kSot/wAqLf8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+UMj//lDI//5QyP/+kMi/+ZBOP9MMN7/Ky3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf+RLS3/AC0t/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD5QyP/+UMj//lDI//6QyL/5kE4/0ww3v8rLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LjHz/y816P8vNej/LzXo/y816P8vNej/LzXo/y816P8vNej/LzXo/zA53Ks1T5Y5NU6ZPDVOmTI1TpkGNU6ZAAAAAAAAAAAAAAAAAPxDIP/8QyD//EMg//1DH//pQTX/TTHd/ywt//8tLf//LS3//y0t//8tLf//LS3//y0t//8xPsz/NU2d/zVNnv81TZ7/NU2e/zVNnv81TZ7/NU2e/zVNnv81TZ7/NU2c+jVOmfQ1Tpn2NU6ZzzVOmRc1TpkAAAAAAAAAAAAAAAAAmTmK/5k5iv+ZOYr/mjmK/402iv8rHYX/HR6r/y0t/f8tLf//LS3//y0t//8tLf//LS3//zE+yv81T5f/NU6Z/zVOmf81Tpn/NU6Z/zVOmf81Tpn/NU6Z/zVOmf81Tpn/NU6Z/zVOmv8xSI3rCQ4bhwAAAEkAAAAAAAAAAAAAAAArLf//Ky3//yst//8rLf//Jynn/wYGIv8NDUj/Kyv0/y0t/f8tLf//LS3//y0t//8tLf//MT7L/zVNmv81TZz/NU2c/zVNnP81TZz/NU2c/zVNnP81TZz/NU2c/zVNnP81TZz/Nk6e/y1Bhf8FBw7/AAAAnwAAAAYAAAACAAAAAC0t//8tLf//LS3//y0t//8pKef/Bwcl/wMDE/8NDUT/Hx+w/y4u//8tLf//LS3//y0t//8uMvD/Lzbj/y824/8vNuP/Lzbj/y824/8vNuP/Lzbj/y824/8vNuP/Lzbj/y824/8vN+X/KC7B/wQFFf8AAADkAAAAtwAAAD4AAAAALS3//y0t//8tLf//LS3//ykp5/8HByb/AAAA/wAAAP8aGpH/Li7//y0t//8tLf//LS3//y0s//8tLP//LSz//y0s//8tLP//LSz//y0s//8tLP//LSz//y0s//8tLP//LSz//y0s//8mJdn/BAQY/wAAAP8AAAD9AAAAVgAAAAAuLv//Li7//y4u//8uLv//Kirn/wcHJv8AAAD/AAAA/xoakf8tLf//Kir//yoq//8uLv//Li7//y4u//8qKv//KSn//ykp//8pKf//KSn//ykp//8qKv//Li7//y4u//8uLv//Kyv//yMj2f8EBBj/AAAA/wAAAP0AAABWAAAAAB0dov8dHaL/HR2i/x0do/8aGpP/BAQY/wAAAP8AAAD/GRmR/zMz//9tbf//Y2Pn/yAgpf8dHaL/IiKn/2Zm6/97e///enr//3p6//96ev//e3v//2lp7v8kJKn/HByh/x8fpP9fX+X/bGzo/xoabP8PD1z/EBBd/RAQXVYQEF0AAAAB/wAAAf8AAAH/AAAB/wAAAf8AAAD/AAAA/wAAAP8ZGZH/PT3//9zc///AwL7/CAgJ/wAAAP8NDQ7/x8fH////////////////////////////0NDR/xISE/8AAAD/BQUG/7W1s//k5P//QUH+/yws/v8tLf79LS3+Vi0t/gAAAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/xkZkf89Pf//3Nz//8DAvv8ICAj/AAAA/w0NDf/Hx8f////////////////////////////Q0ND/EhIS/wAAAP8FBQX/tbWz/+Tk//9BQf//LCz//y0t//0tLf9WLS3/AAAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wEBB/8EBBT/Gxub/zs7///Nzf//s7PD/wwMHv8DAxX/EBAi/7q6zP/w8P//7e3//+3t///t7f//8PD//8LC1P8UFCb/AwMV/wgIGv+qqrr/1NT//z8///8sLP//LS3//S0t/1YtLf8AAAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/CwtA/yUl0/8qKu7/Ly///0lJ//9ERPX/JyfY/yYm1/8oKNn/RUX2/09P//9OTv//Tk7//05O//9OTv//R0f4/ykp2v8mJtf/JyfY/0JC8/9KSv//MDD//y0t//8tLf/9LS3/Vi0t/wAAAAC5AAAA0QAAAP4AAAD/AQEG/woKOP8WFn3/LCz7/y0t//8tLf//Kyv//ysr//8tLf//LS3//y0t//8rK///Kyv//ysr//8rK///Kyv//ysr//8rK///LS3//y0t//8tLf//LCz//ysr//8tLf//LS3//y0t//0tLf9WLS3/AAAAAAIAAABbAAAA/QAAAP8EBBf/JSXT/y0t/P8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y0t//8tLf//LS3//y4u//8uLv//LS3//S0t/1YtLf8AAAAAAAAAAFYAAAD9AAAA/wICDPMhIbuPLi7/ei0t/3stLf96LS3/hC0t/+ctLf//LS3//y0t//8tLf//LS3//y0t/+ItLf+CLS3/ei0t/38tLf/dLS3//y0t//8tLf//LS3//y0t//8qKuv/GBiG/xsbmcwtLf96LS3/KS0t/wAAAAAAAAAAVgAAAP0AAAD/AAAA5wAAACYAAAAAAAAAAC0t/wAtLf8SLS3/0C0t//8tLf//LS3//y0t//8tLf//LS3/xy0t/w0tLf8ALS3/CC0t/74tLf//LS3//y0t//8tLf//LS3//yYm2f8EBBj/AAAAnQAAAAAAAAAAAAAAAAAAAAAAAABWAAAA/QAAAP8AAADnAAAAJgAAAAAAAAAALS3/AC0t/xItLf/QLS3//y0t//8tLf//LS3//y0t//8tLf/HLS3/DS0t/wAtLf8ILS3/vi0t//8tLf//LS3//y4u//8uLv//JyfZ/wQEGP8AAACdAAAAAAAAAAAAAAAAAAAAAAAAAEYAAADOAAAA0QAAAMEAAABHAAAALQAAAC8AAAATMDD/Di0t/6otLf/SLS3/0C0t/9AtLf/QLS3/0y0t/6MtLf8KLS3/AC0t/wctLf+bLS3/0y0t/88pKejkJSXQ/yUl0v8gILb4BAQX2AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAABgAAABIAAAARAAAAJwAAAMwAAADvAAAA7wAAAGYAAAAALS3/Dy0t/xItLf8SLS3/Ei0t/xItLf8SLS3/Di0t/wEtLf8ALS3/AS0t/w0tLf8SOjr/DgcHJngDAxL/AwMS/wMDEtsCAgspAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAA2QAAAP8AAAD/AAAAbgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbgAAAP8AAAD/AAAA2QAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAADXAAAA/wAAAP8AAABuAAAAAAAAAAIAAAACAAAAAgAAAAIAAAACAAAAAgAAAAIAAAACAAAAAgAAAAIAAAACAAAAAgAAAAAAAABuAAAA/wAAAP8AAADXAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAEgAAABWAAAAVAAAAIUAAACrAAAAqgAAAKoAAACqAAAAqgAAAKoAAACqAAAAqgAAAKoAAACqAAAAqgAAAKoAAACqAAAAqwAAAIUAAABUAAAAVgAAAEgAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkQAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAAkQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACRAAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAACRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGMAAACxAAAArgAAAK4AAACuAAAArgAAAK4AAACuAAAArgAAAK4AAACuAAAArgAAAK4AAACuAAAAsQAAAGMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAADwAAAA8AAAAHAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAGAAAABg4AgB4OAIAeAACAHgEAgB/B//g/wQAIP8AAAD/8AAP//AAD//wAA//8AAP8=
 ```
 
 ## static/redlogo.png
-
-Complete binary file encoded as base64.
 
 ```base64
 iVBORw0KGgoAAAANSUhEUgAAAvgAAALuCAYAAADbrWJlAAARinpUWHRSYXcgcHJvZmlsZSB0eXBlIGV4aWYAAHja7ZpZkhw9coTfcQodAXsAx8FqNjfQ8fUFkNUbuzn8h3qRmbrIrmQuASAWD3ckzfrvf23zX/ykINnEJCXXnC0/scbqGwfF3p9+fjsbz+/zs4v1z9lP581azwXPqcB3uBeqf4wtznPsnn/XZxD3uv9l6HXgGkfp/UJrz/n++Xx/DPry1dAzg+DuyHY+DzyGgn9mFO+/xzOjXIt8Wtocz8jxOVXe/8YgPqfsJPI7eiuSK8fF2yj4c+pEg1zXmNdIrxOvf79u9czJr+CC5XcI/s4y6N8QGuf9+Z2Mf52K57cP8TjeEkqmgOH6ROtZqjrzo2/effTDz58syzLIXnrzh6i9fX/Jm7ejL3mzH9++0uYtaiU/t4TPYbX57fvb8y69DL0uhLfx/ceRy3iO/Ofzebrw0RXmY7j3nmWfRbOKFjO+yM+iXks8R9zX1YvnqcxHbDZkbeFAP5VPsc0OUmDaQaV1jqvzjL1ddNM1t90638MNphj98sK398P4cE4WglT9ID8cicDHbS+hhhkKKTFODsXg3+bizrD1DDdcsdPY6bjVO4xpcv3HH/OnN+4Tb+eOL28AmJfXTGcW1hF+/eI2IuL249R0HPz6fP3RuAYimI6bCwtstptroif3nlzhBDpwY+L71p6T+RjARQydmIwLRMBmCs1lZiTei3M4shCgxtQpN9+JgEvJTybpqcJMcKgOxuYZcedWn/w9DaqGaEIKOQixqaERrBgT+SOxkEMthRRTSjlJKqmmlkPWystZssJzkyBRkmQRKUaqtBJKLKnkIqWUWlr1NQDfqVKntdRaW2PQhuXG040bWuu+hx576rlLL72a3gbpM+JIIw8ZZdTRpp9hUuAzT5ll1tmWW6TSiiutvGSVVVfbpNoOO+608xazy667vUXtCesvn38QNfdEzZ9I6Y3yFjXOirxMOIWTpDEjYj46Ai5EjYiR2BozW1yMXiOnMaMfURXJM8mkwZlOI0YE43I+bfcWuydyBi/+r8TNSDlx838bOaOh+8PI/Rq376I2tUuME7FbhupUG6g+rq/SfGnaXn/8Nv/uhj/9/n9D//cN7Zx73ORO2aT6Xr02/ZfXNHY/XenDCXi02xxhAb4x8cdTf4/RMbazevMoneTWozTKlBqStLFLkb1iWn3plbZMzH1gdXrsDssNdXn6NhUnTVa79qE0O1hpa5W6N611Bn189bk4mJbCZkYNLJANN9S5q3Ws6PemWyRZffgKZo0907Zz01aleW6/M68hW/32BtpcVg86DkWqq58tnlFYhZ3Sdv7d1VDcBmA2wDZS2ANkWEwjXOu9U8nPSDTW7743mLNtXNWmSIsTfMSqdrwrBsASYcs1KbTUBfkCGtssa+UNnm3JswMGewTHGXzXzpPQBmda2O36RgAXYqiWufDL+VT2hLHsygCyW09lLhpJV0KFWTM/2f1js1Gu1Teb5ho9kqN3ogyTStw9JaS9UjqATvhYr2tLaDwQ5o1Lk1SWGtb2vk0Xi3nyL9+EgRtm+Zhrbb0SrZJFM4c+e6x5tjR2hTZwaihTSwZO8INPZi2ZdtrE5RZlzCX0kSQj466xaCmDoKSdwpj0ArMjyykRCiLnkEXuJacgWvnxSm+Bcotb66iTqm2YrHl8Kok/tA1H1tFIG09M6eM82GxpfSeXerQ103w4GlInPJXqGBXfWZM9nWoHH/FADyRMoSn5OrLfzb9KGYHyZONTBtrdP6a6yqxXtndsM6CETEvDvwzoqVkaXYJ0lZAoBqWGBUGyV9ViJZVvIktaxoEnubbjz7VEHn/SsRu+jGnGHTJVMynsBT+Aw+khBk6Oz0yU9Lz59cKiYS4KMNB7j2vxycGLcxc99ESJacsa2c1Ay6Zdm9hlzpWidMlrQSQGBA57PeTe0G/Jx9rCCCRzS7HR/OvoEmfb/UESKAV+NCcLXVqTCIsDA3wfKReymAoPVCwDUmZp+zambDxd9xz0f4gD7IFTXubY2QzWPwa4ezIFoqShUNzzGGJcJgZJysmv1Hmg59EDXk+LTCJKfDDHqvGR1Qi7VN0q9xCO9s+/zbcXKNwJi9E5KimjZpZ1NzX9zD7luUvvZG4u/aRAsYaggtapVNw0PZEcMp2jIHHhXpsq34O1jVnuxFFYbwX+Vuh9F0Ndtrnj0oQAF6loEr91+D4ElGojHU4BLcjnqR9ZlbnsGQSwhsxNBytMw6DFWuxQu9UB1lAHorFV6b6BuDSUmY+ZLN0uaBvnVqs2xI2cd1ImroacgkdacDidFCOcZEg5TZG6PUUgnNmaEmS4xgiC21wQB0CubIl3p3oyM6qGWnUzE3OtmVWbK2SnJggjc09Oizrfkd6qjbekw5gHnFVCo/loMsJIZZq+MrpuLQ9DJmhIugU1BQd7vFGzWTFlMovbUyHmYJBiaGXsA9OZO41uVkD76XWoU0391QRm20sN8HEaPbU+j7ttZNYKdUMiRqlI3NfJWkIdYbXD53B69gnEPJdp24H8KRvnMtuhxZdHphyGABEb3zeRT4+at2e16ceIMYRzGws0TRN0UQyZlNxajAvB8NNnW6H/dgRV6KKrHbMbZdu7HIAFMgu5tQbq46y9+ZrvrJhgWJ5JhVXpX6cuyRhRZGnENjqDA/pZ63n0wSkSqAAmNLp5+4qcvrJGJZfpGzAFoFixqoqC/9zdMANbV5C7uGP8sa1Q198w8JNtuSD30bZR4xRV92qMaKoPXRg3n396HJAm8UAY15RyiLRq0iwHoTo8ZWWUFbDvnXIVQY4MRDY51Xqd9PYDtYix7XRvo3gNIJyk65RM+DilHonugQVPK7hdo5bD91TgxOsxrdrhD6t7JRXtqD7BfzKLWYWzaN/A8gqRALwD+JoBf6ovBNB+fwMFRrEADkGrsp1STmOSKpJi9yit1OaM6M9SYA78Sbp7M8SlHeC3k9Kx4xRLFUP1MSor3/WZCJEldpMHpr/TYFlwRSKhbGhBJeoA8YJX+kZi0lHDMp7eTaXWMGm+vSrOWeyk0wo8GX4Z9kK9KpbmznLgOozkywxEJ25AswYD/0RponJpsV3z+OkFY0jPIJB8BOdi35G5yydUN19gnT4ZdQmOupOlHInsmlDsDe7Qmy5MA0eufG4Y5kPnKLJsuBjkT0i1LbKyphkPov0WP80Edwsx8wPcCeHIB9cSVkH1gxUlqGJYvbTzlO/cXvDzJpqSGKhr7TIjvAbpAS01QaKruV4Bk87sVEeMqATlzJVG3I5npoLjwtdQmuFnAdhmAxPzhr/UR29lKJtMLWdFQi91uSOquk0Un4r3U4O+n06lyEbUqCaIAIWDH84Mkp+UQfzaBJnX2lfskIA4pIoil9w8Q9SQPM3DPUTpouZOJD0J0M62XwCbDt5FaFnjK06fk/rktHmSGm1DYeGeoVyjetqQm1d0EUE6FHw+AbRcc5n2Rix3qAcMI6WkeYR5G353C3dUdA2S0CG5cCyAheKB5/pHTBWy25QwOtRqXnYE38d1N5uUJI8I09ruZMF0cpZqTy5N68C1A1aJZRC1RmX6NbTlrEVMCMmuHa4WBkUPUhA2Og1ql78676XsXYbuDBXFOC0+N0zrXVmMUyWh7tgdGeJWvGUb1IOLy8mrpwcVKVlH/mxyO1r2WDA7YJWxGxUOkGaVIPUUqSb0VdEF12iHtqFTAzUuX2ONnuLl5IQe53KVJQRhhan7uaIKVsdCHqXrdKdkJgMy+2zrFncJdQM4r79SNkhOxtflkQAO3M3gG2w09mm7MuRFmjVaJifL3dCvlWnOXMEw/ArgkMLTEDB8A05tvArB6L4uFeMZiQZDlRBCR6zFAKgoshznvbkuysu75nEv602+1zS+dT5gQA8EpxqSZIWuEiuSo2dD8LwWmEalZWuIDgZ2oZBIq1AaMGwIoBIihcFT70oaVXB8f8VMOjnaKUPf0arpABoxnoitDSOflB0gpClJn9WGpg3nm/MG+lYRt/gC3rJGq4fz99/NKuQ4oXNIO7K2em0sC34ExkBVYZm2bHRnSKpEQlVlsuG2uKp1ZYZfk/BL4hvIMTQIJ6PNFXO/1EVbA207dcPFj2TnmsClawVS7eEJeHjRzFqb5pOXM8y2dRWB0SsGTRZFHvdwxbGfOKPTy4Es4SjmrYPujAgyrLXrwoXU+16tvm/NIEhpWXCQIULhS6R9BqaJDu8mVwJA5VNn83KOjnOIRHpFyOlGAq6/VddVcSw8CcVf8/hj49Cs4dcDpGaLmtrow1GWytuGMCODYcynHyCaqU86+20QCt5T3rfrqP6cVUYFoqjr+QME6B8QYBdfGXKT2UgJVgrcQkA6SiyhkpjYRGxVeryvhUYDLWKMQ9ftkQSVJGxbxSkygcJORoq+iabug3L6JgSQuKzpK/oOIBU3f9/IYWrKmY2ltPApSIOLAn5BsSVWNRY9foC4PSKCdDc9eeQcTOhElqcDUUSqgRa6QWaunqVNnJ5FXCEgOJ6QNgowqZ0Cwi70GvDemHlR8bKUrzTdjVfPzojw0w5hK8Es8E8mCcQoVytwIi31WvKlp/quKdl9Lz7msEO6pGDnNKfBAGNfBwvVQY0QZEr5IAETzArPpWdAH+yZzJmL+beTKVBPPArDQMkdxX+2ScBQcoBwZOVvsaL7kdCoJd3xuswNDPewjSg2M4gSAI/SDaU2GEwbDi7cXz0Wx9V5jo0v9mbroDuvrEDRT+Xr7s45QeDfTnUlgfDZfkRa2gpjSBXywLTDIFkXVQJQMYqToZBHjYwzR6gbbvlw6pyAT432VKcCqhnH3ldzP5UH5PCryWnzDB5nwwQQdJNiEBqeQjE6QvchQLvtJTmYMyQbXsIDKhIFOeh9GDHSMatfkUY9t0md+S2HPyiprKxjVOiGTgSM5dGm20AwcxsL7LPNbMtEyeRYlLXUmRQJWgdGdE9hcZ7EHZxD1iOyqLV4NjveSJAL+mbstYEMsDB8QylQOLvkps525CBSjZ48/a4cknuHlgOF/U93fqg1nK7pRkXL2XqsWtmaTPxVWHkoen/2/dd+y0d4RQ9QTSLQDQxrvfYbReujvCkBQPicXfDn8r7Xk9A1MI8BjGx9cyanrxgZdEdKBvVmN2TJViBMX6IfQtPF1mttwAik/UqaHRCTuivmcjFYf+jgBwRP0zfQILgKOSSFIxSmKJYhJIAVDCB9YlZCCfBHuhkckpZN9JRPgYooWoiTbkNqTMGKfFBC1Q71DRbUH027RdEqWoDZRxVfudf3y6B7jUFLp0vTtECOwRKnCmDd9ZbHoEkNojBbgdxVqB7Ogayj8sagO68IAhV9uaB7ocgZj9pjNCJEBUzVJQPiANkRs0gplPkgY0Lctutb1FxoYrRuCMekZ+tGydAN0vPGQucMcZOr2Euk8/FdUZCRsjhgCsNHICdmrZtGElYKBDBo948gZGe6vqlpyAlKgHY1l5OU6ORDX/jScKinpW8+oRDCI7q7OdSN2j3i+8Zh+U2Omd8l2T/JMfNNkv3pN8py6+aOYmgxZMjsp55mBYPzD5EhSxLCtyk7QGAoAkHDoIb77CNNb/BGnMcHcF66Vvmhun8uPdW0qxnSahCnAADj/Jz0ZYpLULa7OYAmXsBDSLnhkgm4kQVALEoYTGuV4oJVhrRMGYDQW7do+xe4v1tmdJAGj4aXEkeA0WGrKPKR2rrVJqZDMZ42dJT0/mrlZQMEBei1Krbgw3cT14L5exPXgvl7E9eC+XsT14L5exPXgvl7E9eC+Q9MAHZDefve2aPMx6SdFzMqECNoTpAth3GKBfl+d0rDLZ18cE4sJEv/s8hoQfd/EVVCxwWgHdBgSFpHfnalPis/ZLwA6eOnV+kb5XB6704pjOfVbjH6Px/D2XC6+7NoEm5wZzMpdd0XS0V5CQS6QjF07/6ayT5+HML8o9f6dKyN2GXQet9sHUdkxXuzfry49f+p4D97sGKouHGqj8ubBwaf9MzLfOODPau15n8AEUZ/YtLA6/oAAAGGaUNDUElDQyBwcm9maWxlAAB4nH2RPUjDQBzFX1NLRSoKdhBxyFDFwYKoiOAiVSyChdJWaNXB5NIPoUlDkuLiKLgWHPxYrDq4OOvq4CoIgh8gri5Oii5S4v+SQosYD4778e7e4+4dINTLTDU7xgBVs4xUPCZmcyti8BUh9CKAEcxIzNQT6YUMPMfXPXx8vYvyLO9zf45uJW8ywCcSzzLdsIjXiac2LZ3zPnGYlSSF+Jx41KALEj9yXXb5jXPRYYFnho1Mao44TCwW21huY1YyVOJJ4oiiapQvZF1WOG9xVstV1rwnf2Eory2nuU5zEHEsIoEkRMioYgNlWIjSqpFiIkX7MQ//gONPkksm1wYYOeZRgQrJ8YP/we9uzcLEuJsUigGBF9v+GAKCu0CjZtvfx7bdOAH8z8CV1vJX6sD0J+m1lhY5Anq2gYvrlibvAZc7QP+TLhmSI/lpCoUC8H5G35QD+m6BrlW3t+Y+Th+ADHW1dAMcHALDRcpe83h3Z3tv/55p9vcD211y0dXjY+0AAA12aVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/Pgo8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJYTVAgQ29yZSA0LjQuMC1FeGl2MiI+CiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIKICAgIHhtbG5zOnN0RXZ0PSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VFdmVudCMiCiAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgICB4bWxuczpHSU1QPSJodHRwOi8vd3d3LmdpbXAub3JnL3htcC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgeG1wTU06RG9jdW1lbnRJRD0iZ2ltcDpkb2NpZDpnaW1wOmIwOTJhNDlmLTAxZWEtNGIzYy05OWNhLTY4ZjMyOWQ0MDFmMyIKICAgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo5OGYyODgxYi0zYjMyLTQwMTgtYjQxZi03NTE2NGZlOTgzMzMiCiAgIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDoyNGY0ZWNiYi02YmFkLTQ5ZmItYmFjYy1jNzIxNzZiOWNiOGIiCiAgIGRjOkZvcm1hdD0iaW1hZ2UvcG5nIgogICBHSU1QOkFQST0iMi4wIgogICBHSU1QOlBsYXRmb3JtPSJXaW5kb3dzIgogICBHSU1QOlRpbWVTdGFtcD0iMTcwMjcwNTQwNTAwMjQ2NSIKICAgR0lNUDpWZXJzaW9uPSIyLjEwLjMyIgogICB0aWZmOk9yaWVudGF0aW9uPSIxIgogICB4bXA6Q3JlYXRvclRvb2w9IkdJTVAgMi4xMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMzoxMjoxNVQyMzo0MzoyNC0wNjowMCIKICAgeG1wOk1vZGlmeURhdGU9IjIwMjM6MTI6MTVUMjM6NDM6MjQtMDY6MDAiPgogICA8eG1wTU06SGlzdG9yeT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGkKICAgICAgc3RFdnQ6YWN0aW9uPSJzYXZlZCIKICAgICAgc3RFdnQ6Y2hhbmdlZD0iLyIKICAgICAgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDo1OGE1ZWQ4Yy01YTA0LTRmOWUtOGRiNC02MmM1YTJlMzg0YzciCiAgICAgIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkdpbXAgMi4xMCAoV2luZG93cykiCiAgICAgIHN0RXZ0OndoZW49IjIwMjMtMTItMTVUMjM6NDM6MjUiLz4KICAgIDwvcmRmOlNlcT4KICAgPC94bXBNTTpIaXN0b3J5PgogIDwvcmRmOkRlc2NyaXB0aW9uPgogPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgIAo8P3hwYWNrZXQgZW5kPSJ3Ij8+jQ3cfAAAAAZiS0dEAOoA8ADvHlboOAAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB+cMEAUrGDGrnNAAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAANh0lEQVR42u3Yu00DQRSG0R20EsQERCRIpNcRzdCAG6AbaiLyFEAbiOSS89LKD+3M7Dmxg9U/XvvTTBMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA7SomgH+lCQA0DPTkygQAACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAAIEPAAACHwAAEPgAAIDABwAABD4AAAh8AABA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AABD4AAAg8AEAAIEPAAAIfAAAQOADAIDABwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAACBDwAAAh8AABD4AACAwAcAAAQ+AAAIfAAAQOADAAACHwAAEPgAAIDABwAAgQ8AAAh8AABA4AMAAAIfAAAQ+AAAIPABAACBDwAACHwAAEDgAwCAwAcAAAQ+AAAg8AEAAIEPAAAIfAAAEPgAAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAAIPABAEDgAwAAAh8AABD4AADAUsUEw0sTeEcA/L/h/2073OADAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAAIPABAEDgAwAAAh8AABD4AACAwAcAAAQ+AAAIfAAAQOADAAACHwAAEPgAACDwAQAAgQ8AAAh8AABA4AMAAAIfAAAEPgAAIPABAACBDwAACHwAAEDgAwCAwAcAAAQ+AAAg8AEAAIEPAAACHwAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAAAEPgAACHwAAEDgAwAAAh8AABD4AAAg8AEAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAAAt8EAAAg8AEAAIEPAAAIfAAAQOADAIDABwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAACBDwAAAh8AABD4AACAwAcAABYrHTxjOqbhz5hjX44I7wfr/bjU6vfF+0u/769+GZgbfAAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAAAEPgAACHwAAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAABD4AAAh8AABA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AAAQ+AAAg8AEAAIEPAAAIfAAAQOADAIDABwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAEDgmwAAAAQ+AAAg8AEAAIEPAAAIfAAAEPgAAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAAIPABAEDgAwAAAh8AABD4AADAYqWDZ0zHdMJ4EUYAADhnQNfadEO7wQcAgIEIfAAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAAAEPgAACHwAAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAABD4AAGzFPE1TmmFcpdamny8jHBIAwBm5wQcAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAABD4AAAh8AABA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AAAQ+AAAg8AEAAIEPAAAIfAAAQOADAIDABwAAujObgDWVWpt+voxoe8DDoe3zLcWX/JTvX6YR8P56fy9jt3NIA3ODDwAAAh8AABD4AACAwAcAAAQ+AAAIfAAAQOADAAACHwAAEPgAAIDABwAAgQ8AAAh8AABA4AMAAAIfAAAQ+AAAIPABAACBDwAACHwAAEDgAwCAwAcAAAQ+AAAg8AEAAIEPAAAIfAAAEPgAAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAACHwAAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAAQOADAAACHwAAEPgAACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAAIEPAAACHwAAEPgAAIDABwAABD4AAAh8EwAAgMAHAAAEPgAAIPABAACBDwAAAh8AABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAABD4AAAh8AABA4AMAAAIfAABYrGREmmHgA67VCCfICCMAoA/4MWHLD+cGHwAABiLwAQBA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AABD4AAAg8AEAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAACBDwAAAh8AABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAAgQ8AAAh8AABA4AMAAAIfAAAQ+AAAIPABAACBDwAACHwAAEDgAwAAAh8AAAQ+AAAg8AEAAIEPAAAIfAAAEPgAAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAAIPABAEDgAwAAAh8AABD4AACAwAcAAIFvAgAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAAAEPgAACHwAAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAA4NJmE7CmjDACq3l9uDECsE21+ScsDul4bvABAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAAQOADAAACHwAAEPgAACDwAQAAgQ8AAAh8AABA4AMAAAIfAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAAIEPAAACHwAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AABD4AAAg8AEAgO7Mj3dvVhhYxpMRAIDvignG5QYfAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AAAg8AEAAIEPAAACHwAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AABD4AAAg8AEAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAACBDwAAAh8AAOjObAJgq/bvH0aATpVaixXgd27wAQBA4AMAAAIfAAAQ+AAAgMAHAACBDwAACHwAAEDgAwAAAh8AABD4AAAg8AEAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAACBDwAAAh8AABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAAgQ8AAAh8AABA4AMAAAIfAAAQ+AAAIPABAACBDwAACHwAAEDgAwAAAh8AAAQ+AAAg8AEAAIEPAAAIfAAAEPgAAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAAIPABAEDgAwAAAh8AABD4AACAwAcAAIFvAgAAEPgAAIDABwAABD4AACDwAQBA4AMAAAIfAAAQ+AAAgMAHAAAEPgAACHwAAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAAQOADAACLzSYY2+3ny7LP3T8bC4COXJsA/uAGHwAABD4AACDwAQAAgQ8AAAh8AAAQ+AAAgMAHAAAEPgAAIPABAACBDwAAAh8AABD4AACAwAcAAAQ+AAAg8AEAQOADAAACHwAAEPgAAIDABwAAgQ8AAAh8AABA4AMAAAIfAAAQ+AAAIPABAACBDwAACHwAAEDgAwAAAh8AAAQ+AAAg8AEAAIEPAAAIfAAAEPgAAIDABwAABD4AACDwAQAAgQ8AAAIfAAAQ+AAAgMAHAAAEPgAAIPABAEDgAwAAAh8AABD4AACAwAcAAIEPAAAIfAAAQOADAAACHwAAEPgAACDwAQAAgQ8AAAh8AABA4AMAAAIfAAAEPgAAIPABAACBDwAACHwAABD4JgAAAIEPAAAIfAAAQOADAAACHwAABD4AACDwAQAAgQ8AAAh8AABA4AMAgMAHAAAEPgAAIPABAACBDwAACHwAABD4AACAwAcAAAQ+AACw2BcP6zbwFUGMVAAAAA5lWElmTU0AKgAAAAgAAAAAAAAA0lOTAAAAAElFTkSuQmCC
@@ -7508,24 +7954,25 @@ details[open] > summary .expand-icon {
 ## storage.py
 
 ```python
-"""Small transactional store: admin state and live snapshots are separate rows.
+"""Atomic UTF-8 file storage. No database service, SQL runtime, or setup command.
 
-SQLite is automatic and needs no database service. PostgreSQL remains an
-explicit opt-in for existing deployments. App Platform local files are
-temporary; private recovery exports can seed a replacement instance.
+One small JSON document holds current state. A process lock serializes writers,
+including a brief local deployment overlap. Writes use fsync + atomic replace;
+a failed write never publishes half a raid. Keep one App Platform instance.
 """
 from contextlib import contextmanager
 import copy
-import hashlib
 import json
 import logging
+import os
+from pathlib import Path
 import secrets
-import sqlite3
+import tempfile
 import threading
 import time
 
 from werkzeug.security import generate_password_hash
-from race_support import read_json, clean_snapshots, race_key, empty_snapshots
+from race_support import read_json, clean_snapshots, race_key
 from store_schema import upgrade_store
 from race import empty
 from boss import validate_boss
@@ -7547,223 +7994,250 @@ def encode(value):
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
 
 
+def atomic_json(path, value):
+    """Create the replacement beside its target so rename stays atomic."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as output:
+            output.write(encode(value))
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+        if os.name != "nt":
+            directory = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
 class Store:
     def __init__(self, config):
-        self.config, self.key = config, config.state_key
-        self.pg = bool(config.db_url)
-        self.lock, self.conn, self.job_local = threading.RLock(), None, threading.local()
-        if not self.pg:
-            config.db_path.parent.mkdir(parents=True, exist_ok=True)
-            if config.ignored_database_url:
-                LOG.info("STORAGE Using local storage; DATABASE_URL is ignored because STORAGE_MODE=local.")
+        self.config, self.key, self.pg = config, config.state_key, False
+        self.path = config.state_path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock = threading.RLock()
+        self.cached, self.stamp = None, None
         self.initialize()
 
-    def connect(self):
-        if self.pg:
+    @contextmanager
+    def _file_lock(self):
+        # The lock file is separate from the atomically replaced state file.
+        with open(str(self.path) + ".lock", "a+b") as handle:
+            if os.name == "nt":
+                import msvcrt
+                handle.seek(0, os.SEEK_END)
+                if not handle.tell():
+                    handle.write(b"0"); handle.flush()
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(handle, fcntl.LOCK_EX)
             try:
-                import psycopg
-            except ImportError:
-                raise StoreError("Optional PostgreSQL support is not installed. Install requirements-postgres.txt or use STORAGE_MODE=local.") from None
-            options = dict(autocommit=True, connect_timeout=8, sslmode=self.config.sslmode,
-                           options="-c statement_timeout=8000 -c lock_timeout=5000")
-            if self.config.sslrootcert:
-                options["sslrootcert"] = self.config.sslrootcert
-            return psycopg.connect(self.config.db_url, **options)
-        conn = sqlite3.connect(self.config.db_path, check_same_thread=False, isolation_level=None, timeout=8)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        return conn
+                yield
+            finally:
+                if os.name == "nt":
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(handle, fcntl.LOCK_UN)
+
+    def _remember(self, value):
+        # We just committed these exact bytes. Avoid re-parsing them on the next
+        # poll while still noticing another process's atomic replacement.
+        stat = self.path.stat()
+        self.cached = value
+        self.stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+
+    def _disk(self):
+        if not self.path.exists():
+            if self.cached is not None:
+                raise StoreError("The saved state file is missing. Restore it; accounts were not reset.")
+            return None
+        stat = self.path.stat()
+        stamp = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
+        if stamp != self.stamp:
+            value = read_json(self.path)
+            if (not isinstance(value, dict) or value.get("format") != 1 or value.get("key") != self.key
+                    or type(value.get("revision")) is not int or value["revision"] < 1
+                    or not isinstance(value.get("admin"), dict) or not isinstance(value.get("live"), dict)):
+                raise StoreError("The saved state file is invalid. It was not overwritten.")
+            self.cached, self.stamp = value, stamp
+        return self.cached
 
     @contextmanager
     def connection(self, transaction=False):
-        # No network provider call or template rendering occurs inside this lock.
+        """Existing call sites use this as a transaction, not a SQL connection."""
         with self.lock:
             try:
-                if self.conn is None or (self.pg and self.conn.closed):
-                    self.conn = self.connect()
-                if transaction:
-                    self.conn.execute("BEGIN" if self.pg else "BEGIN IMMEDIATE")
-                yield self.conn
-                if transaction:
-                    self.conn.execute("COMMIT")
-            except BaseException as exc:
-                if transaction and self.conn:
-                    try:
-                        self.conn.execute("ROLLBACK")
-                    except Exception:
-                        pass
-                if isinstance(exc, (Conflict, ValueError, RuntimeError)):
-                    raise
-                if not isinstance(exc, Exception):
-                    raise
-                self.close()
-                message = "Database operation failed. Check connectivity, TLS, permissions, and runtime settings." if self.pg else "Local storage could not be read or written. Check disk space and the data folder permissions; do not delete your saved file."
-                raise StoreError(message) from None
-
-    def query(self, conn, sql, params=()):
-        return conn.execute(sql.replace("?", "%s") if self.pg else sql, params)
+                with self._file_lock():
+                    current = self._disk()
+                    value = copy.deepcopy(current) if transaction else current
+                    yield value
+                    if transaction and value != current:
+                        atomic_json(self.path, value)
+                        self._remember(value)
+            except (Conflict, ValueError, RuntimeError):
+                raise
+            except OSError as exc:
+                LOG.error("STORAGE Local file operation failed (%s).", type(exc).__name__)
+                raise StoreError("Local storage could not be read or written. Check free space and the data folder permissions; keep your saved file.") from None
 
     def initialize(self):
-        with self.connection(transaction=True) as conn:
-            if self.pg:
-                conn.execute("SELECT pg_advisory_xact_lock(728364092)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_admin (name TEXT PRIMARY KEY, revision BIGINT NOT NULL, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_live (name TEXT NOT NULL, service TEXT NOT NULL, document TEXT NOT NULL, PRIMARY KEY(name, service))")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_boss_avatar (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_checkpoint (name TEXT PRIMARY KEY, document TEXT NOT NULL)")
-            conn.execute("CREATE TABLE IF NOT EXISTS rh_recovery (id TEXT PRIMARY KEY, name TEXT NOT NULL, reason TEXT NOT NULL, created BIGINT NOT NULL, document TEXT NOT NULL)")
-            existing = self.query(conn, "SELECT document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
-            if existing:
-                # Validate saved state rather than overwriting an unreadable account store.
-                upgrade_store(json.loads(existing[0]), self.config.site, {})
-                LOG.info("ACCOUNTS Existing accounts and settings retained.")
+        with self.lock, self._file_lock():
+            existing = self._disk()
+            if existing is not None:
+                upgrade_store(existing["admin"], self.config.site, {})
+                if not existing['admin'].get('users'):
+                    raise StoreError('Saved account store contains no accounts. It was not replaced.')
+                if existing.get('boss') is not None:
+                    validate_boss(existing['boss'])
+                validate_avatar(existing.get('avatar'))
+                LOG.info("ACCOUNTS Existing accounts, settings and raid retained from JSON.")
                 return
-            legacy = None
-            source = "first-run defaults"
-            if self.pg and conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
-                old = self.query(conn, "SELECT payload FROM wager_state WHERE name=?", (self.key,)).fetchone()
-                if old:
-                    legacy, source = old[0], "previous PostgreSQL state"
-            if legacy is None:
+            value = self._import_sqlite()
+            if value is None:
+                legacy, source = None, "first-run defaults"
                 for path in (self.config.recovery, self.config.legacy, self.config.seed):
                     if path.is_file():
                         legacy, source = read_json(path), path.name
                         break
-            if legacy is None:
-                legacy = dict(version=7, users={self.config.superadmin: dict(
-                    pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
-                    secret_key=secrets.token_hex(32), site_settings=self.config.site)
-            value, _ = upgrade_store(legacy, self.config.site, {})
-            community_boss = value.pop("community_boss", None)
-            avatar = validate_avatar(value.pop("community_boss_avatar", None))
-            marker = valid_marker(value.pop("recovery_export", None))
-            if community_boss is not None:
-                community_boss = validate_boss(community_boss)
-            if not value["users"]:
-                raise StoreError("Saved account store contains no accounts. The original was not replaced.")
-            self.backup_in(conn, "before-rebuild-import", {"admin": legacy, "source": source})
-            snapshots = clean_snapshots(value.pop("leaderboard_snapshots"), race_key(value["site_settings"]))
-            value.pop("health", None)
-            value["superadmin"] = self.config.superadmin
-            self.query(conn, "INSERT INTO rh_admin VALUES (?, ?, ?)", (self.key, 1, encode(value)))
-            if community_boss is not None:
-                self.query(conn, "INSERT INTO rh_boss VALUES (?, ?)", (self.key, encode(community_boss)))
-            if avatar is not None:
-                self.avatar_in(conn, avatar)
-            if marker is not None:
-                self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?)", (self.key, encode(marker)))
-            saved = empty(value["site_settings"])
-            saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
-                         updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),
-                         count=len(snapshots["last_top15"]), warning="Only the saved Top 15 is available until Shuffle responds." if snapshots["last_top15"] else "")
-            saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
-                                    raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
-            self.live_in(conn, "shuffle", saved)
-            LOG.info("MIGRATION Imported %s; original accounts, hashes, and dates preserved. Recovery copy recorded.", source)
-        if not self.pg:
-            self.config.db_path.chmod(0o600)
+                if legacy is None:
+                    legacy = dict(version=7, users={self.config.superadmin: dict(
+                        pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
+                        secret_key=secrets.token_hex(32), site_settings=self.config.site)
+                admin, _ = upgrade_store(legacy, self.config.site, {})
+                game = admin.pop("community_boss", None)
+                game = validate_boss(game) if game is not None else None
+                avatar = validate_avatar(admin.pop("community_boss_avatar", None))
+                marker = valid_marker(admin.pop("recovery_export", None))
+                if not admin["users"]:
+                    raise StoreError("Saved account store contains no accounts. The original was not replaced.")
+                snapshots = clean_snapshots(admin.pop("leaderboard_snapshots"), race_key(admin["site_settings"]))
+                admin.pop("health", None)
+                admin["superadmin"] = self.config.superadmin
+                saved = empty(admin["site_settings"])
+                saved.update(rows=snapshots["last_top15"], previous_top=snapshots["prev_top15"],
+                             updated_at=snapshots["updated_at"] or 0, snapshot_only=bool(snapshots["last_top15"]),
+                             count=len(snapshots["last_top15"]), warning="Only the saved Top 15 is available until Shuffle responds." if snapshots["last_top15"] else "")
+                saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
+                                        raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
+                value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved},
+                             boss=game, avatar=avatar, checkpoint=marker, recoveries=[])
+                self.backup_in(value, "before-rebuild-import", {"admin": legacy, "source": source})
+                LOG.info("MIGRATION Imported %s; original accounts, hashes and dates retained.", source)
+            atomic_json(self.path, value)
+            self._remember(value)
+            LOG.info("STORAGE JSON save ready. No SQL or extra service is used.")
+
+    def _import_sqlite(self):
+        """One-time, read-only bridge from the previous release. Never delete it."""
+        path = self.config.db_path
+        if not path.is_file():
+            return None
+        import sqlite3  # Standard library, used only for the old-save import.
+        try:
+            with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as old:
+                old.execute("BEGIN")
+                row = old.execute("SELECT revision,document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
+                if not row:
+                    raise StoreError("The previous local save has no matching account record. It was not replaced.")
+                admin = json.loads(row[1])
+                upgrade_store(admin, self.config.site, {})
+                if not admin.get('users'):
+                    raise StoreError('The previous local save has no accounts. It was not replaced.')
+                tables = {r[0] for r in old.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                value = dict(format=1, key=self.key, revision=row[0], admin=admin,
+                             live={r[0]: json.loads(r[1]) for r in old.execute("SELECT service,document FROM rh_live WHERE name=?", (self.key,))},
+                             recoveries=[])
+                for field, table in (("boss", "rh_boss"), ("avatar", "rh_boss_avatar"), ("checkpoint", "rh_checkpoint")):
+                    row = old.execute(f"SELECT document FROM {table} WHERE name=?", (self.key,)).fetchone() if table in tables else None
+                    value[field] = json.loads(row[0]) if row else None
+                if value['boss'] is not None: validate_boss(value['boss'])
+                validate_avatar(value['avatar'])
+                if 'rh_recovery' in tables:
+                    for reason, created, document in old.execute("SELECT reason,created,document FROM rh_recovery WHERE name=? ORDER BY created DESC LIMIT 10", (self.key,)):
+                        self.backup_in(value, reason, json.loads(document), created=created)
+        except (sqlite3.Error, ValueError) as exc:
+            raise StoreError("The old local save could not be imported. Keep it intact; no default accounts or raid replaced it.") from exc
+        LOG.info("MIGRATION Previous SQLite save imported into JSON; old file left intact. New writes use JSON only.")
+        return value
 
     def admin(self):
-        with self.connection() as conn:
-            row = self.query(conn, "SELECT revision, document FROM rh_admin WHERE name=?", (self.key,)).fetchone()
-        if not row:
-            raise StoreError("Saved admin state is missing. Restore a verified database backup.")
-        return row[0], json.loads(row[1])
+        with self.connection() as value:
+            return value['revision'], copy.deepcopy(value['admin'])
+
+    def boss_read(self, conn):
+        return copy.deepcopy(conn.get('boss'))
+
+    def boss_write(self, conn, value):
+        conn['boss'] = copy.deepcopy(value)
 
     def avatar(self, conn):
-        row = self.query(conn, "SELECT document FROM rh_boss_avatar WHERE name=?", (self.key,)).fetchone()
-        return json.loads(row[0]) if row else None
+        return copy.deepcopy(conn.get('avatar'))
 
     def avatar_in(self, conn, value):
-        if value is None:
-            self.query(conn, "DELETE FROM rh_boss_avatar WHERE name=?", (self.key,))
-        else:
-            self.query(conn, "INSERT INTO rh_boss_avatar VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
-                       (self.key, encode(value)))
+        conn['avatar'] = copy.deepcopy(value)
 
     def checkpoint(self, marker=None):
         if marker is not None:
             marker = valid_marker(marker)
-            if marker is None:
-                raise ValueError("Invalid recovery export metadata.")
-        with self.connection(transaction=marker is not None) as conn:
-            if marker is not None:
-                self.query(conn, "INSERT INTO rh_checkpoint VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET document=excluded.document",
-                           (self.key, encode(marker)))
-            row = self.query(conn, "SELECT document FROM rh_checkpoint WHERE name=?", (self.key,)).fetchone()
-        return valid_marker(json.loads(row[0])) if row else None
+            if marker is None: raise ValueError("Invalid recovery export metadata.")
+        with self.connection(transaction=marker is not None) as value:
+            if marker is not None: value['checkpoint'] = marker
+            return copy.deepcopy(value.get('checkpoint'))
 
     def live(self, service):
-        with self.connection() as conn:
-            row = self.query(conn, "SELECT document FROM rh_live WHERE name=? AND service=?", (self.key, service)).fetchone()
-        return json.loads(row[0]) if row else None
+        with self.connection() as value:
+            return copy.deepcopy(value['live'].get(service))
 
     def live_in(self, conn, service, value):
-        self.query(conn, "INSERT INTO rh_live VALUES (?, ?, ?) ON CONFLICT(name,service) DO UPDATE SET document=excluded.document",
-                   (self.key, service, encode(value)))
+        conn['live'][service] = copy.deepcopy(value)
 
     def publish(self, service, value, expected_revision=None):
         with self.connection(transaction=True) as conn:
-            if expected_revision is not None:
-                sql = "SELECT revision FROM rh_admin WHERE name=?" + (" FOR UPDATE" if self.pg else "")
-                if self.query(conn, sql, (self.key,)).fetchone()[0] != expected_revision:
-                    raise Conflict("Race settings changed during the provider check; a new check is queued.")
+            if expected_revision is not None and conn['revision'] != expected_revision:
+                raise Conflict("Race settings changed during the provider check; a new check is queued.")
             self.live_in(conn, service, value)
 
     def save(self, value, revision, *, snapshot=None, backup_reason=None):
         with self.connection(transaction=True) as conn:
-            old = self.query(conn, "SELECT revision, document FROM rh_admin WHERE name=?" + (" FOR UPDATE" if self.pg else ""), (self.key,)).fetchone()
-            if not old or old[0] != revision:
+            if conn['revision'] != revision:
                 raise Conflict("Another administrator saved changes. Reload and review before saving again.")
             if backup_reason:
-                rows = self.query(conn, "SELECT service,document FROM rh_live WHERE name=?", (self.key,)).fetchall()
-                self.backup_in(conn, backup_reason, {"admin": json.loads(old[1]), "live": {r[0]: json.loads(r[1]) for r in rows}})
-            self.query(conn, "UPDATE rh_admin SET document=?,revision=revision+1 WHERE name=?", (encode(value), self.key))
-            if snapshot is not None:
-                self.live_in(conn, "shuffle", snapshot)
+                self.backup_in(conn, backup_reason, {'admin': conn['admin'], 'live': conn['live']})
+            conn['admin'], conn['revision'] = copy.deepcopy(value), revision + 1
+            if snapshot is not None: self.live_in(conn, 'shuffle', snapshot)
         return revision + 1
 
-    def backup_in(self, conn, reason, document):
-        self.query(conn, "INSERT INTO rh_recovery VALUES (?, ?, ?, ?, ?)",
-                   (secrets.token_hex(16), self.key, reason, int(time.time()), encode(document)))
+    def backup_in(self, conn, reason, document, *, created=None):
+        # Local recovery copies are bounded and are NOT a remote backup service.
+        created = int(time.time()) if created is None else created
+        folder = self.path.parent / 'recovery'
+        name = f"{created}-{secrets.token_hex(8)}.json"
+        atomic_json(folder / name, dict(reason=reason, created=created, document=document))
+        records = conn.setdefault('recoveries', [])
+        records.append(dict(file=name, reason=reason, created=created))
+        conn['recoveries'] = records[-10:]
+        # Retain a few additional files so a failed parent commit never deletes
+        # a recovery file still referenced by the committed state.
+        for path in sorted(folder.glob('*.json'), key=lambda p: p.stat().st_mtime_ns, reverse=True)[20:]:
+            path.unlink(missing_ok=True)
 
     @contextmanager
     def job(self, service):
-        # Reuse one dedicated connection per provider thread. Session locks
-        # prevent duplicate provider calls during an overlapping deployment.
-        if not self.pg:
-            yield True
-            return
-        conn = getattr(self.job_local, "conn", None)
-        try:
-            if conn is None or conn.closed:
-                conn = self.job_local.conn = self.connect()
-            key = int.from_bytes(hashlib.blake2b((self.key + service).encode(), digest_size=8).digest(), "big", signed=True)
-            acquired = conn.execute("SELECT pg_try_advisory_lock(%s)", (key,)).fetchone()[0]
-        except Exception:
-            self.close_job()
-            raise StoreError("Provider coordination could not reach PostgreSQL. The next scheduled check will retry.") from None
-        try:
-            yield acquired
-        finally:
-            if acquired:
-                try:
-                    conn.execute("SELECT pg_advisory_unlock(%s)", (key,))
-                except Exception:
-                    self.close_job()
+        yield True
 
     def close_job(self):
-        conn = getattr(self.job_local, "conn", None)
-        if conn:
-            conn.close()
-        self.job_local.conn = None
+        pass
 
     def close(self):
-        with self.lock:
-            if self.conn:
-                self.conn.close()
-            self.conn = None
+        pass
 ```
 
 ## store_schema.py
@@ -7873,7 +8347,7 @@ def upgrade_store(value, defaults, health_defaults):
 <details class="panel refresh-progress" id="connectionDetails" {% if data.jobs.shuffle.error or data.jobs.kick.error %}open{% endif %}>
 <summary class="connection-summary"><span><strong>Live connections</strong><span class="connection-chips"><span id="shuffleSummary">Shuffle · {{ 'Needs attention' if data.jobs.shuffle.error else 'Checking automatically' }}</span><span id="kickSummary">Kick · {{ 'Needs attention' if data.jobs.kick.error else 'Checking automatically' }}</span></span></span><span class="small muted">Details <span aria-hidden="true">⌄</span></span></summary>
 <div class="connection-details"><div class="progress-heading"><p id="publishedWindow" class="muted small">Published window: {{ data.site.start_et }} → {{ data.site.end_et }}</p><a class="text-link" href="/admin/diagnostics">Download diagnostics</a></div>
-<div class="progress-services">{% for name,label in [('shuffle','Shuffle · Leaderboard'),('kick','Kick · Stream status')] %}<div><strong>{{ label }}</strong><p id="{{ name }}Progress" role="status">{{ data.jobs[name].error or 'Automatic check queued.' }}</p><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<input type="hidden" name="service" value="{{ name }}"><button class="text-button small" type="submit">Check {{ name|capitalize }} now</button></form></div>{% endfor %}</div></div>
+<div class="progress-services">{% for name,label in [('shuffle','Shuffle · Leaderboard'),('kick','Kick · Stream status')] %}<div><strong>{{ label }}</strong><p id="{{ name }}Freshness" class="small muted"></p><p id="{{ name }}Progress" role="status">{{ data.jobs[name].error or 'Automatic check queued.' }}</p><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<input type="hidden" name="service" value="{{ name }}"><button class="text-button small" type="submit">Check {{ name|capitalize }} now</button></form></div>{% endfor %}</div></div>
 </details>
 {% include 'admin_' ~ tab ~ '.html' %}
 <div class="admin-foot"><span id="browserCheck">Connecting to automatic updates…</span><span>Release {{ release }}</span></div>
@@ -7887,9 +8361,21 @@ def upgrade_store(value, defaults, health_defaults):
 <section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
 <div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2 id="bossName">{{ boss_data.name }}</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
 <p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
-<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss health"></progress><p id="bossStory" class="muted"></p>
+<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.max_hp - boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss defeat progress"></progress><p id="bossStory" class="muted"></p>
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
 <p class="muted small">Live · Updates every 5 seconds</p>
+<section class="boss-balance" aria-labelledby="paceHeading">
+  <div><p class="eyebrow">RECENT RAID PACE</p><h3 id="paceHeading">Plan the next boss</h3><strong id="bossPace">Collecting recent hits…</strong><p id="bossEstimate" class="muted small"></p></div>
+  <p class="small muted">An estimate from the last hour, after at least 5 minutes and 10 hits. Attendance and damage settings can change it. HP is never adjusted automatically.</p>
+</section>
+<section class="boss-admin-leaders" aria-labelledby="adminLeadersHeading">
+  <h3 id="adminLeadersHeading">Top 5 damage <span class="tag">Admin only</span></h3>
+  <p class="small muted">Full player-submitted names. A Shuffle name match confirms spelling in the feed, not account ownership or an IP match.</p>
+  <ol id="adminBossLeaders" class="combat-list">
+    {% for row in boss_data.admin_leaders %}<li><div><strong>{{ loop.index }}. {{ row.name }}</strong><small>{{ row.alias }} · {{ row.attacks }} hits · {{ 'Self-reported' if row.name_provided else 'Username not supplied yet' }}</small></div><b>{{ '{:,}'.format(row.damage) }}</b></li>
+    {% else %}<li class="muted">No hits yet.</li>{% endfor %}
+  </ol>
+</section>
 {% if user %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
 <div class="boss-settings-grid">
   <section class="boss-setting" aria-labelledby="avatarHeading">
@@ -7924,11 +8410,22 @@ def upgrade_store(value, defaults, health_defaults):
         <label for="bossMaxHealth">Maximum HP</label>
         <input id="bossMaxHealth" name="health" type="number" min="{{ boss_data.rules.min_hp }}"
                max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.max_hp }}" required>
-        <small class="muted">Damage already dealt stays. Remaining HP = maximum HP − damage.</small>
+        <small class="muted">Damage already dealt stays. Raising maximum HP adds the difference to remaining HP. Lowering it may defeat the boss. Recorded damage is retained.</small>
       </div>
-      <p class="muted small">This changes the current boss without clearing players or allowances. Raising HP can reopen a defeated boss. Automatic regeneration stays off.</p>
+      <output id="maxHealthPreview" class="edit-preview" aria-live="polite"></output>
+      <p class="muted small">This changes the current boss without clearing players or cooldowns. Raising HP can reopen a defeated boss. Automatic regeneration stays off.</p>
       <label class="boss-confirm"><input type="checkbox" name="confirm_health" value="yes" required> Change this raid's health.</label>
       <button class="button primary" type="submit">Save health</button>
+    </form>
+    <form method="post" action="/admin/boss/action" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="remaining_health"><input type="hidden" name="health_revision" value="{{ boss_data.health_revision }}">
+      <div class="field"><label for="bossRemainingHealth">Set remaining HP directly</label>
+        <input id="bossRemainingHealth" name="health" type="number" min="0" max="{{ boss_data.max_hp }}" step="1" value="{{ boss_data.hp }}" required>
+        <small class="muted">0 defeats the boss. Raising this value is an explicit admin heal; automatic regeneration stays off.</small></div>
+      <output id="remainingHealthPreview" class="edit-preview" aria-live="polite"></output>
+      <label class="boss-confirm"><input type="checkbox" name="confirm_health" value="yes" required> Set the remaining health.</label>
+      <button class="button" type="submit">Set remaining HP</button>
     </form>
   </section>
   <section class="boss-setting boss-identity-setting" aria-labelledby="bossSettingsHeading">
@@ -7943,16 +8440,35 @@ def upgrade_store(value, defaults, health_defaults):
         <input id="bossNameInput" name="boss_name" maxlength="60" value="{{ boss_data.name }}" required>
       </div>
       <div class="boss-damage-fields">
-        <div class="field"><label for="bossBaseDamage">Base damage</label><input id="bossBaseDamage" name="base_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.damage }}" required></div>
-        <div class="field"><label for="bossWeakDamage">Weakness damage</label><input id="bossWeakDamage" name="weak_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.weak_damage }}" required></div>
+        <div class="field"><label for="bossBaseDamage">Base damage</label><input id="bossBaseDamage" name="base_damage" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.damage }}" required></div>
+        <div class="field"><label for="bossWeakDamage">Weakness damage</label><input id="bossWeakDamage" name="weak_damage" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.weak_damage }}" required></div>
         <div class="field"><label for="bossBurstBonus">Burst bonus</label><input id="bossBurstBonus" name="burst_bonus" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.burst_bonus }}" required></div>
       </div>
+      <output id="damagePreview" class="edit-preview" aria-live="polite"></output>
       <p class="muted small">Damage changes apply to future hits. Existing damage and cooldowns stay. The burst bonus applies every tenth hit.</p>
       <button class="button primary" type="submit">Save boss settings</button>
     </form>
   </section>
 </div>
-<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, player totals and allowances. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
+<details class="nested"><summary>Shared connections <span aria-hidden="true">+</span></summary>
+<p class="muted small">Allow a household to use separate browsers on one connection. Each player keeps a 30-second cooldown. This is an admin exception, not Shuffle account verification.</p>
+<ul id="householdList" class="combat-list"></ul>
+<form method="post" action="/admin/boss/action" class="stack">
+<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="household">
+<div class="field"><label for="householdName">An existing player on that connection</label><input id="householdName" name="player_name" maxlength="64" required></div>
+<div class="field"><label for="householdSlots">Allowed players</label><input id="householdSlots" name="slots" type="number" min="1" max="10" value="2" required><small class="muted">1 restores the default after other claims are released. This does not limit anyone's hits.</small></div>
+<button class="button" type="submit">Save allowance</button></form></details>
+<details class="nested"><summary>Release a player connection <span aria-hidden="true">+</span></summary>
+<p class="muted small">Use when a shared or changed IP blocks someone. This releases the connection only; the original browser keeps its username and badges. A player with a saved recovery code can restore their original profile. Saved damage stays.</p>
+<form method="post" action="/admin/boss/action" class="stack">
+<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="release_player">
+<div class="field"><label for="releasePlayerName">Full registered username</label><input id="releasePlayerName" name="player_name" maxlength="64" required></div>
+<label class="boss-confirm"><input type="checkbox" name="confirm_release" value="yes" required> Release this connection.</label><button class="button" type="submit">Release connection</button></form></details>
+<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, current raid totals and cooldowns. Names and achievement progress carry forward. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div id="raidPresets" class="preset-row" aria-label="Health presets for the next raid"></div><p id="presetBasis" class="muted small"></p><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
+<details class="nested"><summary>Boss admin history <span aria-hidden="true">+</span></summary>
+<p class="muted small">Last 100 saved actions. Player hits are tracked separately.</p><ol id="bossAdminHistory" class="combat-list audit-list"></ol></details>
+<details class="nested"><summary>Request activity <span aria-hidden="true">+</span></summary>
+<p class="muted small">Temporary flags for bursts of rejected requests. These are not bans or proof of cheating. Normal 30-second attacks are allowed. Flags clear on restart.</p><ol id="bossAbuseFlags" class="combat-list"></ol></details>
 </section>
 
 {% if superadmin %}{% include "recovery_panel.html" %}{% endif %}
@@ -8083,11 +8599,17 @@ def upgrade_store(value, defaults, health_defaults):
       </div>
       <div class="hp-label">
         <strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong>
-        <span id="bossPercent">{{ '%.2f' | format(boss_data.hp / boss_data.max_hp * 100) }}%</span>
+        <span id="bossPercent">{{ '%.2f' | format((boss_data.max_hp - boss_data.hp) / boss_data.max_hp * 100) }}% defeated</span>
       </div>
       <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}"
-                value="{{ boss_data.hp }}" aria-label="Boss health"></progress>
+                value="{{ boss_data.max_hp - boss_data.hp }}" aria-label="Boss defeat progress"></progress>
+      <details class="exact-totals"><summary>Exact raid totals</summary><p id="exactRaidTotals" class="small"></p></details>
       <ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
+      <div class="rally-status" id="rallyStatus">
+        <div><strong id="rallyTitle">Red rally</strong><span id="rallyCount">0 / 15 raiders</span></div>
+        <progress id="rallyBar" max="15" value="0" aria-label="Community rally progress"></progress>
+        <small id="rallyHint">15 raiders hit within 10 minutes to light the arena.</small>
+      </div>
       <div class="raid-stats">
         <div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>Raiders</span></div>
         <div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>Hits</span></div>
@@ -8120,11 +8642,41 @@ def upgrade_store(value, defaults, health_defaults):
       <div class="burst-meter" id="burstMeter" aria-hidden="true">
         {% for n in range(boss_data.rules.burst_every) %}<span></span>{% endfor %}
       </div>
+      <div id="playerIdentity" class="player-identity" hidden>
+        <span>Playing as <strong id="playingAs"></strong></span>
+        <button id="editPlayerName" type="button" class="text-button">Edit</button>
+      </div>
+      <form id="playerNameForm" class="player-name-form">
+        <label for="playerUsername">Community / Shuffle username</label>
+        <div class="player-name-row"><input id="playerUsername" name="username" maxlength="64" required
+          autocomplete="username" value="{{ boss_data.you.display_name }}"><button class="button small" type="submit">Save</button></div>
+        <small class="muted">One player per connection. Your submitted name is visible to admins only.</small>
+        <span id="playerNameResult" class="small" role="status"></span>
+      </form>
+      <details id="profileRecovery" class="profile-recovery">
+        <summary>Player recovery</summary>
+        <div id="recoveryOwner" hidden>
+          <button type="button" id="makeRecoveryCode" class="button small">Create recovery code</button>
+          <p id="recoverySaved" class="muted small"></p>
+          <div id="recoveryCodeBox" hidden>
+            <label for="recoveryCode">Keep this code private. It restores your player.</label>
+            <textarea id="recoveryCode" readonly rows="3" spellcheck="false"></textarea>
+            <button id="downloadRecovery" type="button" class="text-button">Save code as a text file</button>
+          </div>
+        </div>
+        <form id="recoverPlayerForm" class="stack">
+          <label for="recoveryInput">Have a saved code?</label>
+          <input id="recoveryInput" type="password" maxlength="512" autocomplete="off" required placeholder="Paste your recovery code">
+          <button class="button small" type="submit">Recover player</button>
+        </form>
+        <p id="recoveryResult" class="small" role="status"></p>
+      </details>
       <button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button>
+      <p id="rearmHint" class="small muted" role="status"></p>
       <p id="hitResult" class="hit-result" role="status"></p>
       <div class="personal-stats">
         <div><strong id="yourDamage">{{ '{:,}'.format(boss_data.you.damage) }}</strong><span>Your damage</span></div>
-        <div><strong id="yourRemaining">{{ boss_data.you.remaining }} / {{ boss_data.rules.daily_attacks }}</strong><span>Attacks left</span></div>
+        <div><strong id="yourAttacks">{{ boss_data.you.attacks }}</strong><span>Your hits</span></div>
         <div><strong id="yourActiveDays">{{ boss_data.you.active_days }}</strong><span>Raid days</span></div>
       </div>
       <p class="raider-name"><strong id="yourName">{{ boss_data.you.name }}</strong></p>
@@ -8149,6 +8701,10 @@ def upgrade_store(value, defaults, health_defaults):
       <ol id="bossRecent" class="combat-list"></ol>
     </section>
   </div>
+  <details class="panel raid-history" id="badgeDetails">
+    <summary>Your achievements · <span id="badgeCount">0 / 8</span></summary>
+    <ul id="yourBadges" class="combat-list badge-grid"></ul>
+  </details>
   <details class="panel raid-history">
     <summary>Past raids <span aria-hidden="true">+</span></summary>
     <ul class="combat-list" id="bossHistory"></ul>
@@ -8160,7 +8716,7 @@ def upgrade_store(value, defaults, health_defaults):
       <select id="dockStyle">
         {% for key, label in boss_data.rules.styles.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
       </select>
-      <small id="dockRemaining">{{ boss_data.you.remaining }} / {{ boss_data.rules.daily_attacks }} attacks left</small>
+      <small id="dockRemaining">30s cooldown · Unlimited hits</small>
     </div>
     <button type="button" class="button primary" id="dockAttack" disabled>Connecting…</button>
   </section>
@@ -8214,9 +8770,9 @@ def upgrade_store(value, defaults, health_defaults):
 <aside class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside></section>
 <section class="play-invite panel" aria-labelledby="inviteTitle">
 <img id="inviteAvatar" src="{{ data.boss.avatar_url }}" class="{% if data.boss.avatar_custom %}custom-avatar{% endif %}" alt="" width="52" height="52">
-<div class="invite-copy"><p class="eyebrow"><span id="inviteBossName">{{ data.boss.name }}</span> · COMMUNITY BOSS</p><h2 id="inviteTitle">{{ 'The crew conquered Crimson.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
+<div class="invite-copy"><p class="eyebrow"><span id="inviteBossName">{{ data.boss.name }}</span> · COMMUNITY BOSS</p><h2 id="inviteTitle">{{ 'The crew conquered ' ~ data.boss.name ~ '.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
 <p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p>
-<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Community boss health"></progress></div>
+<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.max_hp - data.boss.hp }}" aria-label="Community boss defeat progress"></progress></div>
 <a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Join the boss fight' }}</span> <span aria-hidden="true">→</span></a>
 </section>
 <section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
@@ -8321,6 +8877,8 @@ def render(destination):
                                   "updated_at": now, "ok": True}, admin, runtime.config)
             runtime.commit(admin, runtime.revision, snapshot=snapshot)
             client = app.test_client()
+            opening = client.get('/play/api/state').json
+            client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'FixtureRaider'}, headers={'X-CSRF-Token':opening['csrf']})
             for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play"}.items():
                 (destination/(name+".html")).write_text(client.get(url).text, encoding="utf-8")
             with client.session_transaction() as session:
@@ -8328,6 +8886,7 @@ def render(destination):
             for tab in ("overview", "race", "players", "boss", "settings"):
                 (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
             (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
+            (destination/"boss-admin.json").write_text(json.dumps(client.get("/admin/boss/status").json), encoding="utf-8")
             public = client.get("/public-state")
             (destination/"public.json").write_text(json.dumps({**public.json, "server_time":float(public.headers["X-Server-Time"])}), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
@@ -8577,7 +9136,7 @@ class AppTests(unittest.TestCase):
             self.assertEqual(public.get(path).status_code,401)
         self.assertNotIn('AlphaMember',public.get('/data').text)
         self.assertIn('Al******',public.get('/data').text)
-        for path in ('/private/settings.json','/private/admin_store.seed.json','/data/redhunllef.sqlite3'):
+        for path in ('/private/settings.json','/private/admin_store.seed.json','/data/redhunllef.sqlite3','/data/state.json','/data/state.json.lock'):
             self.assertEqual(public.get(path).status_code,404)
 
     def test_mixed_shuffle_response_updates_and_warns(self):
@@ -8700,7 +9259,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.action('restore',restore_token=identifier).status_code,303)
         self.assertEqual(self.r.shuffle['rows'][0]['wager'],'$100.00');self.assertEqual(self.r.admin['users'],users)
         with self.r.store.connection() as c:
-            self.assertGreaterEqual(c.execute('SELECT count(*) FROM rh_recovery').fetchone()[0],2)
+            self.assertGreaterEqual(len(c['recoveries']),2)
 
     def test_bad_restore_does_not_mutate_state(self):
         self.schedule();saved=self.client.get('/admin/backup').json;saved['site_settings']['prizes']['1']='NaN'
@@ -8809,11 +9368,14 @@ class AppTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):Store(Config(target))
         self.assertEqual(seed.read_text(encoding='utf-8'),'{broken')
 
-    def test_postgres_is_explicit_and_never_silently_falls_back(self):
-        with patch.dict(os.environ,{'STORAGE_MODE':'postgres','DATABASE_URL':''}):
-            with self.assertRaisesRegex(ValueError,'needs DATABASE_URL'):Config(self.root)
-        with patch.dict(os.environ,{'STORAGE_MODE':'postgres','DATABASE_URL':'postgresql://fixture'}):
-            self.assertEqual(Config(self.root).db_url,'postgresql://fixture')
+    def test_removed_database_configuration_cannot_require_a_service(self):
+        with patch.dict(os.environ, {'STORAGE_MODE':'postgres','DATABASE_URL':'postgresql://unused'}):
+            config = Config(self.root)
+            self.assertEqual(config.db_url, '')
+            self.assertEqual(config.state_path, self.root/'data/state.json')
+            store = Store(config)
+            self.assertEqual(store.admin(), self.r.store.admin())
+            self.assertFalse(store.pg)
 
     def test_shuffle_and_kick_workers_do_not_block_each_other(self):
         self.schedule();entered,release,kick=threading.Event(),threading.Event(),threading.Event()
@@ -9006,7 +9568,7 @@ class AppTests(unittest.TestCase):
     def test_sole_launch_command_serves_actual_http(self):
         with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
         env={**os.environ,'PORT':str(port),'APP_ENV':'production','STORAGE_MODE':'local',
-             'DATABASE_URL':'${race-db.DATABASE_URL}','LOCAL_DATABASE_PATH':str(self.root/'cli.sqlite3'),
+             'DATABASE_URL':'${race-db.DATABASE_URL}','LOCAL_DATABASE_PATH':str(self.root/'cli.sqlite3'),'STATE_FILE':str(self.root/'cli-state.json'),
              'SETTINGS_PATH':str(self.root/'missing-settings.json'),'ADMIN_SEED_PATH':str(self.root/'missing-seed.json'),
              'PYTHONIOENCODING':'utf-8'}
         log=self.root/'startup.log'
@@ -9096,6 +9658,7 @@ class BossTests(unittest.TestCase):
 
     def post(self,c,value,**extra):
         state=value['state']
+        c.post('/play/api/profile', json={'raid_id':state['raid_id'], 'username':state['you']['name']}, headers={'X-CSRF-Token':value['csrf']})
         return c.post('/play/api/attack',json={'raid_id':state['raid_id'],'request_id':secrets.token_hex(16),'style':state['weakness'],**extra},headers={'X-CSRF-Token':value['csrf']})
 
     def test_two_players_share_health_and_separate_identity(self):
@@ -9136,25 +9699,25 @@ class BossTests(unittest.TestCase):
 
     def test_cooldown_fractional_seconds_and_browser_limit_across_ips(self):
         self.hit()
-        self.time.return_value=self.start+59.99
+        self.time.return_value=self.start+29.99
         with self.assertRaises(BossError) as blocked:self.hit(ip='192.0.2.2')
         self.assertEqual(blocked.exception.status,429)
-        self.time.return_value=self.start+60
+        self.time.return_value=self.start+30
         self.assertEqual(self.hit(ip='192.0.2.2')['hit']['damage'],150)
         validate_boss(self.b.export())
 
-    def test_daily_allowance_rollover_and_shared_network(self):
-        for i in range(40):
-            self.time.return_value=self.start+i*60
+    def test_unlimited_hits_and_shared_network_cooldown(self):
+        for i in range(100):
+            self.time.return_value=self.start+i*30
             self.hit()
-        self.time.return_value=self.start+40*60
-        with self.assertRaises(BossError) as blocked:self.hit()
-        self.assertEqual(blocked.exception.code,'daily_limit')
-        with self.assertRaises(BossError):self.hit(guest='cookie-cleared')
-        with self.assertRaises(BossError):self.hit(ip='192.0.2.2')
-        self.assertEqual(self.b.status('a','192.0.2.1')['you']['remaining'],0)
+        self.assertEqual(self.b.status('a','192.0.2.1')['you']['attacks'],100)
+        self.assertIsNone(self.b.status('a','192.0.2.1')['you']['remaining'])
+        with self.assertRaises(BossError) as blocked:self.hit(guest='cookie-cleared')
+        self.assertEqual(blocked.exception.code,'cooldown')
+        self.time.return_value += 30
+        self.assertEqual(self.hit()['state']['you']['attacks'],101)
         self.time.return_value=int(self.start)+DAY
-        self.assertEqual(self.hit()['state']['you']['remaining'],39)
+        self.assertEqual(self.hit()['state']['you']['attacks'],102)
 
     def test_ipv6_normalization_and_mapped_ipv4(self):
         self.hit(ip='2001:db8::abcd')
@@ -9206,14 +9769,14 @@ class BossTests(unittest.TestCase):
             self.assertEqual(view['hp'], hit['state']['hp'])
             self.assertEqual(view['total_damage'], 150)
             self.assertEqual(self.b.export(), saved)
-        self.assertEqual(view['you']['remaining'], 40)
+        self.assertIsNone(view['you']['remaining'])
         self.b.control('pause', saved['id'])
         self.time.return_value += DAY
         self.b.control('resume', saved['id'])
         self.assertEqual(self.b.status()['hp'], saved['hp'])
         # Reloaded HTML must not briefly label a damaged boss as 100% health.
         page = self.app.test_client().get('/play')
-        self.assertIn(f'id="bossPercent">{saved["hp"] / saved["max_hp"] * 100:.2f}%</span>', page.text)
+        self.assertIn(f'id="bossPercent">{(saved["max_hp"] - saved["hp"]) / saved["max_hp"] * 100:.2f}% defeated</span>', page.text)
 
     def test_cold_app_restart_retains_all_committed_damage(self):
         self.hit()
@@ -9345,22 +9908,20 @@ class BossTests(unittest.TestCase):
         try:self.assertEqual(CommunityBoss(store).export(),before)
         finally:store.close()
 
-    def test_one_hundred_active_raiders_need_multiple_days(self):
-        # Simulate 100 real profiles/IPs, 40 matching manual attacks per day.
-        # Server time moves; no real sleeps or network calls are needed.
-        ended_day=None
-        for day in range(4):
-            for turn in range(40):
-                self.time.return_value=self.start+day*DAY+turn*60
-                for player in range(100):
-                    hit=self.hit(f'raider-{player}',f'203.0.113.{player+1}')
-                    if hit['state']['hp']==0:
-                        ended_day=day+1; break
-                if ended_day:break
-            if ended_day:break
-            self.assertGreater(self.b.status()['hp'],0)
-        self.assertEqual(ended_day,4)
-        self.assertGreaterEqual(self.time.return_value-self.start,3*DAY)
+    def test_one_hundred_raiders_can_keep_attacking_without_a_daily_cap(self):
+        # 100 profiles all using weaknesses: 150 rounds defeat default HP.
+        # This deliberately verifies the faster requested uncapped balance.
+        finished = False
+        for turn in range(150):
+            self.time.return_value=self.start+turn*30
+            for player in range(100):
+                hit=self.hit(f'raider-{player}',f'203.0.113.{player+1}')
+                if hit['state']['hp']==0:
+                    finished=True; break
+            if finished: break
+        self.assertTrue(finished)
+        self.assertEqual(turn,149)
+        self.assertEqual(self.time.return_value-self.start,4470)
 
 
 if __name__=='__main__':unittest.main()
@@ -9410,7 +9971,9 @@ class BossAdminTests(unittest.TestCase):
         self.addCleanup(self.runtime.store.close)
         self.client = self.app.test_client()
         self.client.environ_base['REMOTE_ADDR'] = '192.0.2.1'
-        self.csrf = self.client.get('/play/api/state').json['csrf']
+        opening = self.client.get('/play/api/state').json
+        self.csrf = opening['csrf']
+        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
         with self.client.session_transaction() as session:
             session.update(user='gingrsnaps', auth_version=1)
 
@@ -9515,7 +10078,7 @@ class BossAdminTests(unittest.TestCase):
     def test_health_edit_requires_confirmation_valid_range_and_current_revision(self):
         before = self.boss.export()
         for fields in ({'health': '3000000'}, {'health': 'oops', 'confirm_health': 'yes'},
-                       {'health': '0', 'confirm_health': 'yes'}, {'health': '100000001', 'confirm_health': 'yes'}):
+                       {'health': '0', 'confirm_health': 'yes'}, {'health': str(2**53), 'confirm_health': 'yes'}):
             self.assertEqual(self.post('health', **fields).status_code, 422)
             self.assertEqual(self.boss.export(), before)
         old = self.form('health', health='3000000', confirm_health='yes')
@@ -9637,10 +10200,14 @@ class BossAdminTests(unittest.TestCase):
         self.runtime.admin['users']['helper'] = copy.deepcopy(self.runtime.admin['users']['gingrsnaps'])
         self.runtime.commit(self.runtime.admin, self.runtime.revision)
         self.client.post('/admin/logout', data={'csrf': self.csrf})
-        self.csrf = self.client.get('/play/api/state').json['csrf']
+        opening = self.client.get('/play/api/state').json
+        self.csrf = opening['csrf']
+        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
         login = self.client.post('/admin', data={'csrf': self.csrf, 'username': 'helper', 'password': 'test-only-password'})
         self.assertEqual(login.status_code, 303)
-        self.csrf = self.client.get('/play/api/state').json['csrf']
+        opening = self.client.get('/play/api/state').json
+        self.csrf = opening['csrf']
+        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
         page = self.client.get('/admin?tab=boss').text
         self.assertIn('id="bossSettingsForm"', page)
         self.assertIn('image/webp', page)
@@ -9681,6 +10248,7 @@ class BossAdminTests(unittest.TestCase):
             self.assertEqual(retry['hit']['damage'], 450)
             guest = self.app.test_client()
             snapshot = guest.get('/play/api/state').json
+            guest.post('/play/api/profile', json={'raid_id':snapshot['state']['raid_id'], 'username':'PublicTest'}, headers={'X-CSRF-Token':snapshot['csrf']})
             forged = guest.post('/play/api/attack', json={
                 'raid_id': snapshot['state']['raid_id'], 'style': snapshot['state']['weakness'], 'request_id': 'forged-damage-attempt',
                 'damage': 99_999_999, 'hp': 0, 'name': 'Changed', 'settings_revision': 999,
@@ -9696,7 +10264,7 @@ class BossAdminTests(unittest.TestCase):
         values = dict(boss_name='Ruby Colossus', base_damage='100', weak_damage='150', burst_bonus='100')
         before = self.boss.export()
         for invalid in ({'boss_name': ''}, {'boss_name': 'x' * 61}, {'boss_name': 'bad\nname'},
-                        {'base_damage': '0'}, {'weak_damage': '99'}, {'weak_damage': '10001'},
+                        {'base_damage': '-1'}, {'weak_damage': '-1'}, {'weak_damage': str(2**53)},
                         {'burst_bonus': '-1'}, {'burst_bonus': '0.5'}, {'base_damage': 'true'}):
             self.assertEqual(self.post('settings', **{**values, **invalid}).status_code, 422)
             self.assertEqual(self.boss.export(), before)
@@ -9760,7 +10328,7 @@ const response = (value, status = 200) => ({
   headers: new Map([["content-type", "application/json"]]),
   json: async () => structuredClone(value),
 });
-function page(name = "play") {
+function page(name = "play", initialStyle) {
   const dom = new JSDOM(
     fs.readFileSync(path.join(fixtures, name + ".html"), "utf8"),
     { url: "https://example.test/play", runScripts: "outside-only" },
@@ -9772,7 +10340,10 @@ function page(name = "play") {
   let clock = 0,
     serial = 0;
   let value = JSON.parse(
-    fs.readFileSync(path.join(fixtures, "boss.json"), "utf8"),
+    fs.readFileSync(
+      path.join(fixtures, name === "boss" ? "boss-admin.json" : "boss.json"),
+      "utf8",
+    ),
   );
   Object.defineProperty(w.performance, "now", { value: () => clock });
   Object.defineProperty(w.document, "hidden", {
@@ -9795,6 +10366,7 @@ function page(name = "play") {
     calls.push({ url, options });
     return responder(url, options);
   };
+  if (initialStyle) w.localStorage.setItem("rh.boss.style", initialStyle);
   w.eval(code);
   return {
     w,
@@ -9868,7 +10440,7 @@ test("attack sends only server-validated inputs and renders countdown", async ()
       s.hp -= 150;
       s.total_damage = 150;
       s.total_attacks = 1;
-      s.you.ready_at = s.server_time + 60;
+      s.you.ready_at = s.server_time + 30;
       s.you.last_request = sent.request_id;
       s.you.last_hit = {
         damage: 150,
@@ -9892,7 +10464,7 @@ test("attack sends only server-validated inputs and renders countdown", async ()
   const post = p.calls.find((c) => c.options.method === "POST");
   assert.equal(post.options.headers["X-CSRF-Token"], p.value.csrf);
   assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
-  assert.match(p.w.document.querySelector("#attackButton").textContent, /1:00/);
+  assert.match(p.w.document.querySelector("#attackButton").textContent, /0:30/);
   assert.match(p.w.document.querySelector("#hitResult").textContent, /150/);
   p.close();
 });
@@ -9913,6 +10485,9 @@ test("uncertain delivery keeps receipt and retry uses same ID", async () => {
     p.w.document.querySelector("#attackButton").textContent,
     /Retry last strike/,
   );
+  p.w.document
+    .querySelector("#attackButton")
+    .dispatchEvent(new p.w.Event("pointerleave"));
   p.w.document.querySelector("#attackButton").click();
   await flush();
   assert.equal(ids.length, 2);
@@ -9929,13 +10504,13 @@ test("older polls cannot reverse boss damage", async () => {
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.hp,
+    p.value.state.max_hp - p.value.state.hp,
   );
   p.respond(async () => response(old));
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.hp,
+    p.value.state.max_hp - p.value.state.hp,
   );
   p.close();
 });
@@ -10059,13 +10634,16 @@ test("same-raid updates cannot refill health even with a newer version or clock"
     p.value.state.version += versionBump;
     p.value.state.server_time += 5;
     await p.advance(5000);
-    assert.equal(p.w.document.querySelector("#bossHealthBar").value, hp);
+    assert.equal(
+      p.w.document.querySelector("#bossHealthBar").value,
+      p.value.state.max_hp - hp,
+    );
     assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   }
   p.close();
 });
 
-test("victory stays at zero until a different raid starts", async () => {
+test("defeat progress stays at 100 percent until a different raid starts", async () => {
   const p = page();
   await flush();
   p.value.state.hp = 0;
@@ -10073,20 +10651,23 @@ test("victory stays at zero until a different raid starts", async () => {
   p.value.state.status = "victory";
   p.value.state.version++;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
+  assert.equal(
+    p.w.document.querySelector("#bossHealthBar").value,
+    p.value.state.max_hp,
+  );
   p.value.state.hp = p.value.state.max_hp;
   p.value.state.total_damage = 0;
   p.value.state.status = "waiting";
   p.value.state.version++;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
-  p.value.state.raid_id = "new-host-started-raid";
-  p.value.state.server_time += 10;
-  await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
     p.value.state.max_hp,
   );
+  p.value.state.raid_id = "new-host-started-raid";
+  p.value.state.server_time += 10;
+  await p.advance(5000);
+  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
   p.close();
 });
 
@@ -10105,7 +10686,7 @@ test("explicit host health revisions update the current raid without losing dama
   p.value.state.health_revision = 1;
   await p.advance(5000);
   const bar = p.w.document.querySelector("#bossHealthBar");
-  assert.equal(bar.value, p.value.state.hp);
+  assert.equal(bar.value, p.value.state.max_hp - p.value.state.hp);
   assert.equal(bar.max, p.value.state.max_hp);
   assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   const saved = bar.value;
@@ -10240,6 +10821,597 @@ test("boss name and damage updates use text and preserve admin settings drafts",
     p.close();
   }
 });
+
+test("stationary clicks and the other attack button cannot bypass the pointer latch", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    attack = doc.querySelector("#attackButton"),
+    dock = doc.querySelector("#dockAttack");
+  let hits = 0;
+  p.respond(async (url, options) => {
+    if (options.method === "POST") {
+      const body = JSON.parse(options.body),
+        s = p.value.state;
+      hits++;
+      s.version++;
+      s.total_attacks++;
+      s.you.attacks++;
+      s.total_damage += 100;
+      s.hp -= 100;
+      s.you.ready_at = s.server_time + 30;
+      s.you.last_request = body.request_id;
+      s.you.last_hit = {
+        damage: 100,
+        style: body.style,
+        weakness: false,
+        burst: false,
+      };
+      return response({ ok: true, state: s, hit: s.you.last_hit });
+    }
+    return response(p.value);
+  });
+  attack.click();
+  await flush();
+  p.value.state.server_time += 30;
+  await p.advance(5000);
+  assert.equal(attack.disabled, true);
+  attack.click();
+  dock.click();
+  await flush();
+  assert.equal(hits, 1);
+  assert.match(doc.querySelector("#rearmHint").textContent, /off/);
+  // Moving outside is detected even when a native disabled button suppresses leave events.
+  attack.getBoundingClientRect = () => ({
+    left: 10,
+    right: 110,
+    top: 10,
+    bottom: 60,
+  });
+  doc.dispatchEvent(
+    new p.w.MouseEvent("pointermove", { clientX: 120, clientY: 20 }),
+  );
+  assert.equal(attack.disabled, false);
+  attack.click();
+  await flush();
+  assert.equal(hits, 2);
+  assert.equal(doc.querySelector("#yourAttacks").textContent, "2");
+  p.close();
+});
+
+test("keyboard release re-arms attacks and a held activation key cannot repeat", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    attack = doc.querySelector("#attackButton");
+  attack.dispatchEvent(
+    new p.w.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+  );
+  attack.click();
+  await flush();
+  assert.equal(attack.disabled, true);
+  const repeat = new p.w.KeyboardEvent("keydown", {
+    key: "Enter",
+    repeat: true,
+    cancelable: true,
+  });
+  attack.dispatchEvent(repeat);
+  assert.equal(repeat.defaultPrevented, true);
+  doc.dispatchEvent(
+    new p.w.KeyboardEvent("keyup", { key: "Enter", bubbles: true }),
+  );
+  assert.equal(attack.disabled, false);
+  // Space normally dispatches click after keyup: it must not remain locked.
+  attack.dispatchEvent(
+    new p.w.KeyboardEvent("keydown", { key: " ", bubbles: true }),
+  );
+  doc.dispatchEvent(
+    new p.w.KeyboardEvent("keyup", { key: " ", bubbles: true }),
+  );
+  attack.click();
+  await flush();
+  assert.equal(attack.disabled, false);
+  p.close();
+});
+
+test("touch taps remain usable after their release", async () => {
+  const p = page();
+  await flush();
+  const attack = p.w.document.querySelector("#attackButton");
+  const touch = new p.w.Event("pointerdown");
+  Object.defineProperty(touch, "pointerType", { value: "touch" });
+  attack.dispatchEvent(touch);
+  attack.click();
+  await flush();
+  assert.equal(attack.disabled, false); // fake server returns no cooldown in this gesture-only test
+  p.close();
+});
+
+test("private admin feed uses admin authentication and removes names on expiry", async () => {
+  const p = page("boss");
+  await flush();
+  assert.equal(p.calls[0].url, "/admin/boss/status");
+  p.value.state.admin_leaders = [
+    {
+      name: "<img src=x onerror=alert(1)>",
+      alias: "Raider ABCD1234",
+      damage: 500,
+      attacks: 5,
+      name_provided: true,
+    },
+  ];
+  p.value.state.version++;
+  await p.advance(5000);
+  const list = p.w.document.querySelector("#adminBossLeaders");
+  assert.match(list.textContent, /<img/);
+  assert.equal(list.querySelector("img"), null);
+  p.respond(async () => response({ error: "Session expired" }, 401));
+  await p.advance(5000);
+  assert.doesNotMatch(list.textContent, /<img/);
+  assert.match(list.textContent, /Sign in/);
+  const count = p.calls.length;
+  await p.advance(60000);
+  assert.equal(p.calls.length, count);
+  assert.equal(p.w.document.querySelector("#bossNameInput").disabled, true);
+  p.close();
+});
+
+test("name save preserves typed drafts, unlocks play, and never sends an automatic attack", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    input = doc.querySelector("#playerUsername");
+  p.value.state.you.identity_ready = false;
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.equal(doc.querySelector("#attackButton").disabled, true);
+  input.value = "My full name";
+  input.dispatchEvent(new p.w.Event("input"));
+  await p.advance(5000);
+  assert.equal(input.value, "My full name");
+  p.respond(async (url, options) => {
+    if (url === "/play/api/profile") {
+      assert.equal(JSON.parse(options.body).username, "My full name");
+      p.value.state.you.display_name = "My full name";
+      p.value.state.you.identity_ready = true;
+      p.value.state.version++;
+    }
+    return response(p.value);
+  });
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  assert.match(doc.querySelector("#playerNameResult").textContent, /Saved/);
+  assert.equal(p.calls.filter((c) => c.url === "/play/api/attack").length, 0);
+  assert.equal(doc.querySelectorAll("#yourBadges li").length, 8);
+  assert.match(
+    doc.querySelector("#bossPercent").textContent,
+    /^0.00% defeated$/,
+  );
+  p.close();
+});
+
+test("saved name collapses into an editable identity without disturbing play", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
+  assert.match(doc.querySelector("#playingAs").textContent, /FixtureRaider/);
+  doc.querySelector("#editPlayerName").click();
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.equal(doc.activeElement.id, "playerUsername");
+  await p.advance(5000);
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
+
+test("style choice persists while weakness changes independently", async () => {
+  const p = page("play", "magic");
+  await flush();
+  const doc = p.w.document;
+  assert.equal(
+    doc.querySelector('[data-style="magic"]').getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(doc.querySelector("#dockStyle").value, "magic");
+  doc.querySelector('[data-style="bow"]').click();
+  assert.equal(p.w.localStorage.getItem("rh.boss.style"), "bow");
+  p.value.state.weakness = "blade";
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.equal(
+    doc.querySelector('[data-style="bow"]').getAttribute("aria-pressed"),
+    "true",
+  );
+  p.close();
+});
+
+test("recovery code is created only by an explicit owner action", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  assert.equal(
+    p.calls.filter((c) => c.url.includes("recovery-code")).length,
+    0,
+  );
+  p.respond(async (url, options) => {
+    if (url.endsWith("recovery-code")) {
+      assert.equal(options.method, "POST");
+      assert.ok(options.headers["X-CSRF-Token"]);
+      p.value.state.you.recovery_saved = true;
+      p.value.state.version++;
+      return response({ ...p.value, code: "private-fixture-code" });
+    }
+    return response(p.value);
+  });
+  doc.querySelector("#makeRecoveryCode").click();
+  await flush();
+  assert.equal(doc.querySelector("#recoveryCodeBox").hidden, false);
+  assert.equal(
+    doc.querySelector("#recoveryCode").value,
+    "private-fixture-code",
+  );
+  assert.equal(p.w.localStorage.getItem("private-fixture-code"), null);
+  assert.equal(p.calls.filter((c) => c.url.endsWith("/attack")).length, 0);
+  p.close();
+});
+
+test("recovery posts a private code and restores the owner view", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  p.respond(async (url, options) => {
+    if (url.endsWith("/recover")) {
+      assert.equal(JSON.parse(options.body).code, "fixture-secret");
+      p.value.state.you.display_name = "Restored raider";
+      p.value.state.version++;
+    }
+    return response(p.value);
+  });
+  doc.querySelector("#recoveryInput").value = "fixture-secret";
+  doc
+    .querySelector("#recoverPlayerForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(doc.querySelector("#playingAs").textContent, "Restored raider");
+  assert.equal(doc.querySelector("#recoveryInput").value, "");
+  assert.match(
+    doc.querySelector("#recoveryResult").textContent,
+    /Player restored/,
+  );
+  p.close();
+});
+
+test("rally lights the arena without sending an attack or changing damage", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  p.value.state.rally = { goal: 15, count: 15, unlocked: true };
+  p.value.state.version++;
+  const damage = p.value.state.rules.damage;
+  await p.advance(5000);
+  assert.ok(doc.querySelector("#bossStage").classList.contains("rally-lit"));
+  assert.match(doc.querySelector("#rallyTitle").textContent, /Arena lit/);
+  assert.equal(p.value.state.rules.damage, damage);
+  assert.equal(p.calls.filter((c) => c.options.method === "POST").length, 0);
+  p.close();
+});
+
+test("host previews are exact and presets never submit a new raid", async () => {
+  const p = page("boss");
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#bossMaxHealth").value = "1";
+  doc.querySelector("#bossMaxHealth").dispatchEvent(new p.w.Event("input"));
+  assert.match(doc.querySelector("#maxHealthPreview").textContent, /→ 1/);
+  doc.querySelector("#bossBaseDamage").value = "9007199254740991";
+  doc.querySelector("#bossBurstBonus").value = "9007199254740991";
+  doc.querySelector("#bossBaseDamage").dispatchEvent(new p.w.Event("input"));
+  assert.match(
+    doc.querySelector("#damagePreview").textContent,
+    /18,014,398,509,481,982/,
+  );
+  doc.querySelector("#raidPresets button").click();
+  assert.equal(doc.querySelector("#bossHealthInput").value, "10000000");
+  assert.equal(p.calls.filter((c) => c.options.method === "POST").length, 0);
+  p.close();
+});
+
+test("private history uses text and is cleared when the admin session expires", async () => {
+  const p = page("boss");
+  await flush();
+  const doc = p.w.document;
+  p.value.state.admin_history = [
+    {
+      action: "Boss settings",
+      actor: "Host",
+      at: 1800000000,
+      before: { name: "Old" },
+      after: { name: "<img src=x>" },
+    },
+  ];
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.match(
+    doc.querySelector("#bossAdminHistory").textContent,
+    /<img src=x>/,
+  );
+  assert.equal(doc.querySelector("#bossAdminHistory img"), null);
+  p.respond(async () => response({ error: "Expired" }, 401));
+  await p.advance(5000);
+  assert.doesNotMatch(
+    doc.querySelector("#bossAdminHistory").textContent,
+    /<img src=x>/,
+  );
+  assert.match(doc.querySelector("#bossAdminHistory").textContent, /Sign in/);
+  p.close();
+});
+
+test("last checked ages between polls and exact totals remain available", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  await p.advance(2000);
+  assert.match(
+    doc.querySelector("#bossConnection").textContent,
+    /Last checked 2s ago/,
+  );
+  assert.match(doc.querySelector("#bossHealth").textContent, /2.4M/);
+  assert.match(doc.querySelector("#exactRaidTotals").textContent, /2,400,000/);
+  p.close();
+});
+```
+
+## tests/test_comfort_update.py
+
+```python
+"""Behavioral checks for player recovery, file durability and uncapped fairness."""
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+import secrets
+import sqlite3
+import tempfile
+import threading
+import unittest
+from unittest.mock import patch
+
+from boss import CommunityBoss, BossError, validate_boss
+from config import Config
+from storage import Store, StoreError
+from wager_backend import create_app
+
+
+class ComfortTests(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        env = patch.dict(os.environ, {'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'test-password'}, clear=True)
+        env.start(); self.addCleanup(env.stop)
+        self.app = create_app(self.root, testing=True)
+        self.r, self.b = self.app.extensions['runtime'], self.app.extensions['boss']
+        clock = patch('boss.time.time', return_value=self.b.export()['created_at'] + 1.25)
+        self.clock = clock.start(); self.addCleanup(clock.stop)
+
+    def player(self, name=None, ip='192.0.2.1'):
+        c = self.app.test_client(); c.environ_base['REMOTE_ADDR'] = ip
+        v = c.get('/play/api/state').json
+        if name: self.assertEqual(self.post(c, '/play/api/profile', username=name).status_code, 200)
+        return c
+
+    def post(self, c, path, **body):
+        v = c.get('/play/api/state').json
+        return c.post(path, json={'raid_id': v['state']['raid_id'], **body}, headers={'X-CSRF-Token': v['csrf']})
+
+    def hit(self, c):
+        v = c.get('/play/api/state').json
+        return self.post(c, '/play/api/attack', style=v['state']['weakness'], request_id=secrets.token_hex(16))
+
+    def admin(self):
+        c = self.player(ip='198.51.100.1')
+        with c.session_transaction() as s: s.update(user='gingrsnaps', auth_version=1)
+        return c
+
+    def action(self, c, action, **fields):
+        v = c.get('/play/api/state').json
+        return c.post('/admin/boss/action', data={'csrf':v['csrf'], 'raid_id':v['state']['raid_id'], 'action':action, **fields})
+
+    def test_json_is_the_only_active_store_and_survives_restart(self):
+        c = self.player('Alice'); self.hit(c)
+        value = self.b.export(); before = self.r.store.admin()
+        self.assertTrue((self.root/'data/state.json').is_file())
+        self.assertFalse(list(self.root.rglob('*.sqlite3')))
+        again = Store(Config(self.root))
+        self.assertEqual(again.admin(), before)
+        self.assertEqual(CommunityBoss(again).export(), value)
+        self.assertEqual(json.loads((self.root/'data/state.json').read_text())['boss']['hp'], value['hp'])
+
+    def test_failed_file_replace_rolls_back_in_memory_and_on_disk(self):
+        c = self.player('Alice'); before = self.b.export(); disk = (self.root/'data/state.json').read_bytes()
+        with patch('storage.os.replace', side_effect=OSError('fixture disk error')):
+            response = self.hit(c)
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual((self.root/'data/state.json').read_bytes(), disk)
+        self.assertEqual(self.b.export(), before)
+        self.assertFalse(list((self.root/'data').glob('*.tmp')))
+        self.assertEqual(self.hit(c).status_code, 200)
+
+    def test_corrupt_saved_json_never_resets_accounts(self):
+        path = self.root/'data/state.json'; path.write_text('{broken', encoding='utf-8')
+        with self.assertRaises(RuntimeError): Store(Config(self.root))
+        self.assertEqual(path.read_text(), '{broken')
+
+    def test_sqlite_migration_preserves_entire_saved_state_and_original_file(self):
+        c = self.player('Alice'); self.hit(c)
+        old = self.b.export(); admin = self.r.store.admin()
+        target = self.root/'old-install'; (target/'data').mkdir(parents=True)
+        path = target/'data/redhunllef.sqlite3'
+        with sqlite3.connect(path) as db:
+            db.execute('CREATE TABLE rh_admin (name TEXT, revision INTEGER, document TEXT)')
+            db.execute('CREATE TABLE rh_live (name TEXT, service TEXT, document TEXT)')
+            db.execute('CREATE TABLE rh_boss (name TEXT, document TEXT)')
+            db.execute('INSERT INTO rh_admin VALUES (?, ?, ?)', ('redhunllef', admin[0], json.dumps(admin[1])))
+            db.execute('INSERT INTO rh_live VALUES (?, ?, ?)', ('redhunllef', 'shuffle', json.dumps(self.r.shuffle)))
+            db.execute('INSERT INTO rh_boss VALUES (?, ?)', ('redhunllef', json.dumps(old)))
+        original = path.read_bytes()
+        migrated = Store(Config(target))
+        self.assertEqual(migrated.admin(), admin)
+        self.assertEqual(CommunityBoss(migrated).export(), old)
+        self.assertEqual(migrated.live('shuffle'), self.r.shuffle)
+        self.assertEqual(path.read_bytes(), original)
+        self.assertTrue((target/'data/state.json').exists())
+
+    def test_two_store_instances_do_not_lose_concurrent_damage(self):
+        other = CommunityBoss(Store(Config(self.root)))
+        raid = self.b.status()['raid_id']; errors = []
+        def attack(i):
+            try: (self.b if i % 2 else other).attack(str(i), f'192.0.2.{i+1}', 'blade', raid, secrets.token_hex(16))
+            except Exception as exc: errors.append(exc)
+        workers = [threading.Thread(target=attack, args=(i,)) for i in range(12)]
+        for t in workers: t.start()
+        for t in workers: t.join(10)
+        self.assertFalse(errors)
+        state = self.b.export()
+        self.assertEqual(state['total_attacks'], 12)
+        validate_boss(state)
+
+    def test_owner_recovery_retains_cookie_identity_receipts_and_badges(self):
+        a = self.player('Alice'); hit = self.hit(a).json
+        code_response = self.post(a, '/play/api/recovery-code')
+        self.assertEqual(code_response.status_code, 200)
+        code = code_response.json['code']
+        disk = (self.root/'data/state.json').read_text()
+        self.assertNotIn(code, disk)
+        b = self.player(); recovered = self.post(b, '/play/api/recover', code=code)
+        self.assertEqual(recovered.status_code, 200)
+        you = recovered.json['state']['you']
+        self.assertEqual(you['name'], hit['state']['you']['name'])
+        self.assertEqual(you['damage'], hit['hit']['damage'])
+        self.assertEqual(you['badges'], hit['state']['you']['badges'])
+        self.assertEqual(self.hit(b).status_code, 429)
+        self.clock.return_value += 30
+        self.assertEqual(self.hit(b).status_code, 200)
+        self.assertEqual(len(self.b.export()['players']), 1)
+        public = self.player(ip='192.0.2.8').get('/play/api/state').text
+        self.assertNotIn('Alice', public); self.assertNotIn('recovery_hash', public)
+        with self.assertRaises(BossError): self.b.save_recovery('other', hashlib.sha256(b'bad').hexdigest())
+
+    def test_recovery_rotation_forgery_csrf_and_other_connections(self):
+        a = self.player('Alice'); code = self.post(a, '/play/api/recovery-code').json['code']
+        self.assertEqual(a.post('/play/api/recovery-code').status_code, 400)
+        b = self.player(ip='192.0.2.2')
+        self.assertEqual(self.post(b, '/play/api/recover', code=code+'x').status_code, 400)
+        self.clock.return_value += 30
+        new = self.post(a, '/play/api/recovery-code').json['code']
+        self.assertEqual(self.post(b, '/play/api/recover', code=code).status_code, 400)
+        self.assertEqual(self.post(b, '/play/api/recover', code=new).status_code, 200)
+        self.assertEqual(b.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
+
+    def test_household_approval_is_private_and_retains_per_player_cooldowns(self):
+        a = self.player('Alice'); b = self.player(); host = self.admin()
+        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 409)
+        self.assertEqual(self.action(b, 'household', player_name='Alice', slots='2').status_code, 302)
+        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='2').status_code, 303)
+        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
+        self.assertEqual(self.hit(a).status_code, 200); self.assertEqual(self.hit(b).status_code, 200)
+        self.assertEqual(self.hit(a).status_code, 429); self.assertEqual(self.hit(b).status_code, 429)
+        c = self.player(); self.assertEqual(self.post(c, '/play/api/profile', username='Charlie').status_code, 409)
+        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='1').status_code, 422)
+        validate_boss(self.b.export())
+        public = c.get('/play/api/state').text
+        for secret in ('Alice', 'Bob', 'households', 'admin_history'): self.assertNotIn(secret, public)
+        self.clock.return_value += 30
+        self.assertEqual(self.hit(a).status_code, 200); self.assertEqual(self.hit(b).status_code, 200)
+
+    def test_rejected_flood_is_throttled_but_eligible_hits_are_never_capped(self):
+        c = self.player('Alice'); self.hit(c)
+        for _ in range(13): last = self.hit(c)
+        self.assertEqual(last.status_code, 429)
+        self.assertEqual(last.json['code'], 'request_throttle')
+        host = self.admin(); flags = host.get('/admin/boss/status').json['state']['abuse_flags']
+        self.assertEqual(len(flags), 1)
+        self.assertEqual(flags[0]['category'], 'attack')
+        self.assertNotIn('192.0.2.1', json.dumps(flags))
+        self.clock.return_value += 30
+        self.assertEqual(self.hit(c).status_code, 200)  # Still inside the abuse window.
+        for _ in range(120):
+            self.clock.return_value += 30
+            self.assertEqual(self.hit(c).status_code, 200)
+        self.assertIsNone(c.get('/play/api/state').json['state']['rules']['daily_attacks'])
+        self.assertNotIn('abuse_flags', c.get('/play/api/state').text)
+
+    def test_rapid_registration_rejections_throttle_without_banning(self):
+        c = self.player()
+        for _ in range(21): response = self.post(c, '/play/api/profile', username='')
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json['code'], 'request_throttle')
+        self.assertEqual(self.r.admin['banned_ips'], [])
+
+    def test_rally_counts_distinct_recent_players_and_changes_no_combat_rules(self):
+        raid = self.b.status()['raid_id']; start = self.clock.return_value
+        for i in range(14): self.b.attack(str(i), f'192.0.2.{i+1}', 'blade', raid, secrets.token_hex(16))
+        self.assertEqual(self.b.status()['rally']['count'], 14)
+        self.clock.return_value += 30
+        self.b.attack('0', '192.0.2.1', 'blade', raid, secrets.token_hex(16))
+        self.assertFalse(self.b.status()['rally']['unlocked'])
+        self.b.attack('last', '192.0.2.99', 'blade', raid, secrets.token_hex(16))
+        v = self.b.status(); self.assertTrue(v['rally']['unlocked']); hp = v['hp']
+        self.clock.return_value = start + 86400
+        self.assertTrue(self.b.status()['rally']['unlocked']); self.assertEqual(self.b.status()['hp'], hp)
+        self.assertEqual(v['rules']['damage'], 100)
+        self.b.control('restart', raid)
+        self.assertFalse(self.b.status()['rally']['unlocked'])
+
+    def test_rally_expiry_and_admin_pace_do_not_adjust_health(self):
+        raid = self.b.status()['raid_id']
+        for i in range(11):
+            self.b.attack(str(i), f'192.0.2.{i+1}', 'blade', raid, secrets.token_hex(16))
+            self.clock.return_value += 30
+        old = self.b.export(); view = self.b.admin_status()
+        self.assertTrue(view['balance']['observed'])
+        self.assertEqual([p['days'] for p in view['balance']['presets']], [3,5,7])
+        self.assertEqual(self.b.export(), old)
+        self.clock.return_value += 601
+        self.assertEqual(self.b.status()['rally']['count'], 0)
+        self.assertEqual(self.b.status()['hp'], old['hp'])
+
+    def test_admin_history_is_atomic_persistent_and_not_public(self):
+        host = self.admin(); player = self.player('Alice')
+        self.assertEqual(self.action(host, 'settings', settings_revision=0, boss_name='Ruby', base_damage=12, weak_damage=23, burst_bonus=34).status_code, 303)
+        self.assertEqual(self.action(host, 'remaining_health', health=12345, health_revision=0, confirm_health='yes').status_code, 303)
+        records = self.b.admin_status()['admin_history']
+        self.assertEqual(records[0]['actor'], 'gingrsnaps'); self.assertEqual(records[0]['after']['hp'], 12345)
+        self.assertEqual(records[1]['after']['name'], 'Ruby')
+        self.assertEqual(CommunityBoss(Store(Config(self.root))).admin_status()['admin_history'], records)
+        self.assertNotIn('admin_history', player.get('/play/api/state').text)
+        self.assertEqual(self.action(player, 'pause').status_code, 302)
+        self.assertEqual(self.b.admin_status()['admin_history'], records)
+        validate_boss(self.b.export())
+
+    def test_source_checks_and_content_changes_have_separate_times(self):
+        from race import empty
+        now = int(self.clock.return_value)
+        admin = copy.deepcopy(self.r.admin); admin['site_settings'].update(start_time=now-100, end_time=now+10000)
+        self.r.commit(admin, self.r.revision, snapshot=empty(admin['site_settings']))
+        rows = [dict(username='Test', weightedWagerAmount='100', wagerAmount='150', campaignCode='Red')]
+        with patch.object(self.r.providers, 'shuffle', return_value=rows): self.r.check('shuffle')
+        first = self.r.job_status()['shuffle']
+        self.clock.return_value += 60
+        with patch.object(self.r.providers, 'shuffle', return_value=rows): self.r.check('shuffle')
+        second = self.r.job_status()['shuffle']
+        self.assertGreater(second['last_success'], first['last_success'])
+        self.assertEqual(second['changed_at'], first['changed_at'])
+        rows[0]['weightedWagerAmount'] = '200'; self.clock.return_value += 60
+        with patch.object(self.r.providers, 'shuffle', return_value=rows): self.r.check('shuffle')
+        self.assertGreater(self.r.job_status()['shuffle']['changed_at'], first['changed_at'])
+
+
+if __name__ == '__main__': unittest.main()
 ```
 
 ## tests/test_community.py
@@ -10321,9 +11493,11 @@ class CommunityTests(unittest.TestCase):
             state = result['state']
             self.assertEqual(state['you']['active_days'], 3)
             self.assertEqual(state['you']['attacks'], 100)
-            self.assertTrue(all(badge['earned'] for badge in state['you']['badges']))
+            self.assertTrue(all(badge['earned'] for badge in state['you']['badges'] if badge['id'] in {'first', 'burst', 'loyal'}))
+            self.assertEqual(len(state['you']['badges']), 8)
             self.assertEqual(state['total_damage'], 16_000)
-            self.assertEqual(state['rules']['daily_attacks'], 40)
+            self.assertIsNone(state['rules']['daily_attacks'])
+            self.assertEqual(state['rules']['cooldown'], 30)
         validate_boss(boss.export())
 
     def test_legacy_raid_migration_keeps_progress_and_counts_only_known_days(self):
@@ -10671,120 +11845,262 @@ test('homepage invitation follows boss health and paused or completed status',as
   p.feed.boss.hp=0;p.feed.boss.status='victory';await p.advance(60000);
   assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);p.close();
 });
+
+test('homepage victory uses the configured boss name safely',async()=>{
+  const p=page('public');await flush();
+  p.feed.boss.name='<img src=x>';p.feed.boss.status='victory';p.feed.boss.hp=0;
+  await p.advance(60000);
+  const title=p.window.document.getElementById('inviteTitle');
+  assert.equal(title.textContent,'The crew conquered <img src=x>.');
+  assert.equal(title.querySelector('img'),null);p.close();
+});
+
+test('source success and last content change have separate labels',async()=>{
+  const p=page('overview');await flush();
+  p.feed.jobs.shuffle.last_success=p.feed.server_time;
+  p.feed.jobs.shuffle.changed_at=p.feed.server_time-600;
+  await p.advance(60000);await p.tick();
+  const value=p.window.document.getElementById('shuffleFreshness').textContent;
+  assert.match(value,/Last successful check:/);assert.match(value,/Content last changed:/);
+  assert.ok(p.window.document.getElementById('shuffleProgress'));p.close();
+});
 ```
 
-## tests/test_postgres.py
+## tests/test_raid_update.py
 
 ```python
-"""Run against a disposable database supplied as TEST_DATABASE_URL.
-
-These checks never use DATABASE_URL implicitly. CI provisions its own database;
-local development skips them unless a dedicated test database is provided.
-"""
+"""Requested gameplay changes, identity boundaries and additive save upgrades."""
 import copy
+import json
 import os
 from pathlib import Path
 import secrets
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from config import Config
-from race import empty
-from storage import Conflict, Store
-
-TEST_URL = os.getenv("TEST_DATABASE_URL", "")
-TEST_SSLMODE = os.getenv("TEST_DATABASE_SSLMODE", "require")
+from boss import CommunityBoss, DAY, MAX_HP, MAX_DAMAGE, validate_boss
+from wager_backend import create_app
 
 
-@unittest.skipUnless(TEST_URL, "No dedicated TEST_DATABASE_URL provided")
-class PostgreSQLTests(unittest.TestCase):
+class RaidUpdateTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.key = "test_" + secrets.token_hex(12)
-        self.environment = patch.dict(os.environ, {
-            "APP_ENV": "production", "STORAGE_MODE": "postgres", "DATABASE_URL": TEST_URL, "DATABASE_SSLMODE": TEST_SSLMODE,
-            "APP_STATE_KEY": self.key, "ADMIN_BOOTSTRAP_PASS": "synthetic-test-password",
-        }, clear=True)
-        self.environment.start()
-        self.addCleanup(self.environment.stop)
-        self.config = Config(Path(self.temp.name))
-        self.store = Store(self.config)
-        self.addCleanup(self.cleanup_database)
+        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        env = patch.dict(os.environ, {'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'test-password'}, clear=True)
+        env.start(); self.addCleanup(env.stop)
+        self.app = create_app(self.root, testing=True)
+        self.r, self.b = self.app.extensions['runtime'], self.app.extensions['boss']
+        self.addCleanup(self.r.store.close)
+        clock = patch('boss.time.time', return_value=self.b.export()['created_at'] + 1.25)
+        self.clock = clock.start(); self.addCleanup(clock.stop)
 
-    def cleanup_database(self):
-        self.store.close_job()
-        with self.store.connection(transaction=True) as conn:
-            for table in ("rh_live", "rh_boss", "rh_boss_avatar", "rh_checkpoint", "rh_recovery", "rh_admin"):
-                conn.execute("DELETE FROM " + table + " WHERE name=%s", (self.key,))
-            if conn.execute("SELECT to_regclass('wager_state')").fetchone()[0]:
-                conn.execute("DELETE FROM wager_state WHERE name=%s", (self.key,))
-        self.store.close()
+    def client(self, ip='192.0.2.1', name=None):
+        c = self.app.test_client(); c.environ_base['REMOTE_ADDR'] = ip
+        value = c.get('/play/api/state').json
+        if name:
+            self.assertEqual(self.name(c, name).status_code, 200)
+        return c, value
 
-    def test_admin_conflicts_are_transactional_and_live_updates_keep_revision(self):
-        revision, admin = self.store.admin()
-        snapshot = empty(admin["site_settings"])
-        self.store.publish("shuffle", snapshot, revision)
-        self.assertEqual(self.store.admin()[0], revision)
-        admin["site_settings"]["race_title"] = "Saved change"
-        self.store.save(admin, revision)
-        with self.assertRaises(Conflict):
-            self.store.save(admin, revision, snapshot={"wrong": True}, backup_reason="must-rollback")
-        self.assertEqual(self.store.live("shuffle"), snapshot)
-        with self.assertRaises(Conflict):
-            self.store.publish("shuffle", {"wrong": True}, revision)
-        self.assertEqual(self.store.live("shuffle"), snapshot)
+    def name(self, c, name, **extra):
+        v = c.get('/play/api/state').json
+        return c.post('/play/api/profile', json={'raid_id':v['state']['raid_id'], 'username':name, **extra}, headers={'X-CSRF-Token':v['csrf']})
 
-    def test_provider_lock_is_shared_between_connections_and_services_are_independent(self):
-        other = Store(self.config)
-        try:
-            with self.store.job("shuffle") as first, other.job("shuffle") as duplicate:
-                self.assertTrue(first)
-                self.assertFalse(duplicate)
-                with other.job("kick") as kick:
-                    self.assertTrue(kick)
-            with other.job("shuffle") as released:
-                self.assertTrue(released)
-        finally:
-            other.close_job()
-            other.close()
+    def attack(self, c, **extra):
+        v = c.get('/play/api/state').json
+        return c.post('/play/api/attack', json={'raid_id':v['state']['raid_id'], 'style':v['state']['weakness'],
+                      'request_id':secrets.token_hex(16), **extra}, headers={'X-CSRF-Token':v['csrf']})
 
-    def test_previous_jsonb_state_imports_once_and_original_table_is_unchanged(self):
-        from psycopg.types.json import Jsonb
-        _, legacy = self.store.admin()
-        legacy["site_settings"]["race_title"] = "Original saved title"
-        legacy["custom_preserved_field"] = {"source": "existing deployment"}
-        with self.store.connection(transaction=True) as conn:
-            conn.execute("CREATE TABLE IF NOT EXISTS wager_state (name TEXT PRIMARY KEY, payload JSONB NOT NULL)")
-            conn.execute("INSERT INTO wager_state(name,payload) VALUES (%s,%s)", (self.key, Jsonb(legacy)))
-            conn.execute("DELETE FROM rh_admin WHERE name=%s", (self.key,))
-        self.store.close()
-        self.store = Store(self.config)
-        revision, imported = self.store.admin()
-        self.assertEqual(imported["users"], legacy["users"])
-        self.assertEqual(imported["custom_preserved_field"], legacy["custom_preserved_field"])
-        with self.store.connection() as conn:
-            self.assertEqual(conn.execute("SELECT payload FROM wager_state WHERE name=%s", (self.key,)).fetchone()[0], legacy)
-        imported["site_settings"]["race_title"] = "Newer title wins"
-        self.store.save(imported, revision)
-        self.store.close()
-        self.store = Store(self.config)
-        self.assertEqual(self.store.admin()[1]["site_settings"]["race_title"], "Newer title wins")
+    def core_hit(self, guest='a', ip='192.0.2.1', style=None):
+        v = self.b.status(guest, ip)
+        return self.b.attack(guest, ip, style or v['weakness'], v['raid_id'], secrets.token_hex(16))
 
-    def test_invalid_document_rolls_back_private_backup_and_admin_write(self):
-        revision, admin = self.store.admin()
-        candidate = copy.deepcopy(admin)
-        candidate["invalid"] = float("nan")
-        with self.store.connection() as conn:
-            count = conn.execute("SELECT count(*) FROM rh_recovery WHERE name=%s", (self.key,)).fetchone()[0]
-        with self.assertRaises(ValueError):
-            self.store.save(candidate, revision, backup_reason="invalid-candidate")
-        self.assertEqual(self.store.admin(), (revision, admin))
-        with self.store.connection() as conn:
-            self.assertEqual(conn.execute("SELECT count(*) FROM rh_recovery WHERE name=%s", (self.key,)).fetchone()[0], count)
+    def admin(self):
+        c, v = self.client('198.51.100.50')
+        with c.session_transaction() as session: session.update(user='gingrsnaps', auth_version=1)
+        return c, v['csrf']
+
+    def test_username_is_required_on_http_and_cannot_be_forged_in_attack(self):
+        c, v = self.client()
+        self.assertEqual(self.attack(c, username='Fake', role='admin').status_code, 409)
+        self.assertEqual(c.post('/play/api/profile', json={'username':'Fake'}).status_code, 400)
+        for invalid in ('', ' ', 'x'*65, 'a\nb', 5, []):
+            self.assertEqual(self.name(c, invalid).status_code, 422)
+        self.assertEqual(self.name(c, 'Real submitted name').status_code, 200)
+        self.assertEqual(self.attack(c).status_code, 200)
+        self.assertEqual(self.b.export()['total_attacks'], 1)
+
+    def test_one_username_per_ip_and_own_cookie_across_ip_changes(self):
+        a, _ = self.client(name='Alice'); b, _ = self.client()
+        self.assertEqual(self.name(b, 'Bob').status_code, 409)
+        self.assertNotIn('Alice', b.get('/play/api/state').text)
+        self.attack(a)
+        a.environ_base['REMOTE_ADDR'] = '192.0.2.2'
+        self.assertEqual(self.attack(a).status_code, 429)
+        self.clock.return_value += 30
+        self.assertEqual(self.attack(a).status_code, 409)
+        self.assertEqual(self.name(a, 'Alice').status_code, 200)
+        self.assertEqual(self.attack(a).status_code, 200)
+        self.assertEqual(self.name(b, 'Alice').status_code, 409)
+        self.assertEqual(self.name(b, 'Bob').status_code, 200)
+
+    def test_profile_forgery_cannot_change_another_player_or_game_settings(self):
+        a, _ = self.client(name='Alice'); b, _ = self.client('192.0.2.2')
+        self.attack(a); before = self.b.export()
+        response = self.name(b, 'Bob', guest='forged', player_id=next(iter(before['profiles'])), hp=0, damage=9999, role='admin')
+        self.assertEqual(response.status_code, 200)
+        after = self.b.export()
+        for field in ('hp', 'players', 'total_damage', 'settings', 'networks'):
+            self.assertEqual(after[field], before[field])
+        self.assertEqual(next(iter(after['profiles'].values()))['name'], 'Alice')
+        self.assertEqual(self.name(b, 'Other name').status_code, 429)
+
+    def test_thirty_seconds_exact_and_no_daily_cap(self):
+        c, _ = self.client(name='Unlimited')
+        beginning = self.clock.return_value
+        for i in range(101):
+            self.clock.return_value = beginning + i*30
+            self.assertEqual(self.attack(c).status_code, 200)
+        saved = self.b.export()
+        self.clock.return_value += 29.99
+        blocked = self.attack(c)
+        self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(blocked.headers['Retry-After'], '1')
+        self.clock.return_value += .01
+        self.assertEqual(self.attack(c).status_code, 200)
+        self.assertEqual(saved['total_attacks'], 101)
+        self.assertIsNone(c.get('/play/api/state').json['state']['rules']['daily_attacks'])
+
+    def test_private_top_five_full_names_and_public_aliases(self):
+        names = [f'FullName{i}' for i in range(7)]
+        for i, name in enumerate(names):
+            guest, ip = str(i), f'192.0.2.{i+1}'
+            self.b.register(guest, ip, self.b.status()['raid_id'], name)
+            for _ in range(i+1):
+                self.core_hit(guest, ip); self.clock.return_value += 30
+        anonymous, _ = self.client('198.51.100.1')
+        self.assertEqual(anonymous.get('/admin/boss/status').status_code, 401)
+        admin, _ = self.admin()
+        response = admin.get('/admin/boss/status')
+        self.assertEqual(response.headers['Cache-Control'], 'no-store')
+        self.assertEqual([r['name'] for r in response.json['state']['admin_leaders']], names[-1:1:-1])
+        for url in ('/play/api/state', '/play', '/public-state'):
+            for name in names: self.assertNotIn(name, anonymous.get(url).text)
+        self.r.admin['users']['helper'] = copy.deepcopy(self.r.admin['users']['gingrsnaps'])
+        self.r.commit(self.r.admin, self.r.revision)
+        with admin.session_transaction() as session: session['user'] = 'helper'
+        self.assertEqual(admin.get('/admin/boss/status').status_code, 200)
+        self.r.admin['users'].pop('helper'); self.r.commit(self.r.admin, self.r.revision)
+        self.assertEqual(admin.get('/admin/boss/status').status_code, 401)
+
+    def test_extreme_damage_zero_damage_and_explicit_hp_preserve_contributions(self):
+        self.core_hit(); saved = self.b.export()
+        self.b.control('health', saved['id'], 1, health_revision=0)
+        s = self.b.export()
+        self.assertEqual((s['hp'], s['max_hp'], s['total_damage']), (0, 1, 150))
+        self.assertEqual(s['players'], saved['players'])
+        self.b.control('health', s['id'], MAX_HP, health_revision=1)
+        self.b.control('remaining_health', s['id'], MAX_HP, health_revision=2)
+        self.b.configure(s['id'], dict(name='Flexible', damage=MAX_DAMAGE, weak_damage=0, burst_bonus=0), 0)
+        self.clock.return_value += 30
+        zero = self.core_hit()
+        self.assertEqual(zero['hit']['damage'], 0)
+        self.assertEqual(zero['state']['hp'], MAX_HP)
+        validate_boss(self.b.export())
+        self.b.control('remaining_health', s['id'], 5, health_revision=3)
+        self.clock.return_value += 30
+        v = self.b.status('a', '192.0.2.1')
+        wrong = next(x for x in ('blade','bow','magic') if x != v['weakness'])
+        self.assertEqual(self.core_hit(style=wrong)['hit']['damage'], 5)
+        validate_boss(self.b.export())
+        # Recovery metadata must handle the same numeric range as combat saves.
+        self.b.control('restart', s['id'], MAX_HP)
+        view = self.b.status('a', '192.0.2.1')
+        wrong = next(x for x in ('blade','bow','magic') if x != view['weakness'])
+        self.assertEqual(self.core_hit(style=wrong)['hit']['damage'], MAX_HP)
+        admin, _ = self.admin()
+        exported = admin.get('/admin/recovery-backup')
+        self.assertEqual(exported.status_code, 200)
+        self.assertEqual(exported.json['recovery_export']['damage'], MAX_HP)
+        self.assertFalse(admin.get('/admin/status').json['checkpoint']['changes'])
+
+
+    def test_random_weakness_is_shared_and_stable_without_writes(self):
+        saved = self.b.export(); samples = []
+        for i in range(60):
+            self.clock.return_value += 600
+            first = self.b.status('a', '192.0.2.1')['weakness']
+            other = CommunityBoss(self.r.store).status('b', '192.0.2.2')['weakness']
+            self.assertEqual(first, other); samples.append(first)
+        self.assertEqual(set(samples), {'blade','bow','magic'})
+        self.assertTrue(any(a == b for a,b in zip(samples, samples[1:])))
+        self.assertEqual(saved, self.b.export())
+
+    def test_eight_achievements_take_a_week_and_survive_new_raids(self):
+        start = self.clock.return_value
+        self.b.register('a', '192.0.2.1', self.b.status()['raid_id'], 'WeekPlayer')
+        for day in range(7):
+            if day == 3:
+                self.b.control('restart', self.b.status()['raid_id'])
+            for hit in range(75):
+                self.clock.return_value = start + day*DAY + hit*30
+                self.core_hit(style=('blade','bow','magic')[hit%3] if day == 0 else None)
+            view = self.b.status('a', '192.0.2.1')
+            if day < 6:
+                self.assertFalse(next(b for b in view['you']['badges'] if b['id'] == 'week')['earned'])
+        self.assertEqual(len(view['you']['badges']), 8)
+        self.assertTrue(all(b['earned'] for b in view['you']['badges']))
+        before = self.b.export()
+        self.assertEqual(CommunityBoss(self.r.store).export(), before)
+        self.b.control('restart', view['raid_id'])
+        self.assertEqual(self.b.status('a', '192.0.2.1')['you']['badges'], view['you']['badges'])
+        self.assertEqual(self.b.status()['total_damage'], 0)
+
+    def test_legacy_save_migrates_additively_without_changing_hp(self):
+        self.core_hit(); old = self.b.export()
+        old.pop('profiles', None); old.pop('health_adjustment', None)
+        for p in old['players'].values(): p['used'] = 40
+        for p in old['networks'].values(): p['used'] = 40
+        with self.r.store.connection(transaction=True) as conn: self.b._write(conn, old)
+        self.b = CommunityBoss(self.r.store)
+        self.assertEqual(self.b.export(), old)
+        self.b.register('a', '192.0.2.1', old['id'], 'Returning player')
+        self.assertEqual(self.b.export()['players'], old['players'])
+        self.clock.return_value += 30
+        self.assertEqual(self.core_hit()['state']['total_attacks'], 2)
+        validate_boss(self.b.export())
+
+    def test_profile_and_health_recovery_are_portable_and_reject_tampering(self):
+        c, _ = self.client(name='RecoveryPlayer'); self.attack(c)
+        saved = self.b.export()
+        self.b.control('remaining_health', saved['id'], 17, health_revision=0)
+        admin, _ = self.admin(); recovery = admin.get('/admin/recovery-backup').json
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); (root/'private').mkdir()
+            (root/'private/recovery.seed.json').write_text(json.dumps(recovery), encoding='utf-8')
+            restored = create_app(root, testing=True)
+            try: self.assertEqual(restored.extensions['boss'].export(), self.b.export())
+            finally: restored.extensions['runtime'].store.close()
+        bad = self.b.export(); next(iter(bad['profiles'].values()))['weak_hits'] = 99999
+        with self.assertRaises(ValueError): validate_boss(bad)
+
+    def test_connection_release_and_remaining_hp_are_admin_only(self):
+        player, _ = self.client(name='Claimed')
+        current = self.b.status(); admin, csrf = self.admin()
+        form = dict(csrf=csrf, raid_id=current['raid_id'], action='release_player', player_name='Claimed', confirm_release='yes')
+        self.assertEqual(player.post('/admin/boss/action', data=form).status_code, 302)
+        self.assertEqual(admin.post('/admin/boss/action', data={**form,'csrf':'wrong'}).status_code, 400)
+        self.assertEqual(admin.post('/admin/boss/action', data=form).status_code, 303)
+        replacement, _ = self.client()
+        self.assertEqual(self.name(replacement, 'Replacement').status_code, 200)
+        self.assertEqual(self.attack(player).status_code, 409)
+        hpform = dict(csrf=csrf, raid_id=current['raid_id'], action='remaining_health', health='0', health_revision='0', confirm_health='yes')
+        self.assertEqual(admin.post('/admin/boss/action', data=hpform).status_code, 303)
+        self.assertEqual(self.b.status()['hp'], 0)
+        self.assertEqual(self.b.status()['status'], 'victory')
+
+
+if __name__ == '__main__': unittest.main()
 ```
 
 ## wager_backend.py
@@ -10802,6 +12118,7 @@ from datetime import timedelta
 from decimal import Decimal
 from functools import wraps
 import io
+import hashlib
 import ipaddress
 import json
 import logging
@@ -10813,11 +12130,12 @@ import time
 
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
-from itsdangerous import BadSignature, URLSafeTimedSerializer
+from itsdangerous import BadSignature, URLSafeSerializer, URLSafeTimedSerializer
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
+from abuse_guard import AbuseGuard
 from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
 from boss_avatar import from_upload, validate_avatar
 from presentation import changes, checkpoint_status, export_marker
@@ -10860,6 +12178,8 @@ def create_app(root=None, testing=False):
     app.extensions["settings"] = config
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
+    recovery_signer = URLSafeSerializer(app.secret_key, salt="community-boss-recovery-v1")
+    abuse = app.extensions["boss_abuse"] = AbuseGuard(app.secret_key)
     review_signer = URLSafeTimedSerializer(app.secret_key, salt="race-review-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
@@ -10887,7 +12207,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status):
@@ -10949,7 +12269,7 @@ def create_app(root=None, testing=False):
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -11022,6 +12342,99 @@ def create_app(root=None, testing=False):
     def boss_state():
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
 
+    def guard_key(identity, category):
+        # Registration/recovery share an IP bucket; rejected attacks also use
+        # this bucket so clearing a cookie cannot reset a flood. Eligible hits
+        # explicitly bypass it, including approved household players.
+        return abuse.key('', g.client_ip or request.remote_addr or 'unknown')
+
+    def throttled(category, identity, alias):
+        wait = abuse.retry_after(category, guard_key(identity, category))
+        if not wait: return None
+        response = jsonify(ok=False, code='request_throttle',
+                           error=f'Too many rejected requests. Wait {wait} seconds, then try again.')
+        response.headers['Retry-After'] = str(wait)
+        return response, 429
+
+    @app.post('/play/api/recovery-code')
+    def boss_recovery_code():
+        require_csrf()
+        identity = guest()
+        if getattr(g, 'new_guest', None):
+            return json_error('Save your username before creating a recovery code.', 400)
+        limited = throttled('registration', identity, '')
+        if limited: return limited
+        try:
+            code = recovery_signer.dumps({'guest': identity, 'nonce': secrets.token_hex(16)})
+            boss.save_recovery(identity, hashlib.sha256(code.encode()).hexdigest())
+            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf())
+        except BossError as exc:
+            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
+            return json_error(str(exc), exc.status)
+
+    @app.post('/play/api/recover')
+    def boss_recover():
+        require_csrf()
+        identity = guest()
+        if getattr(g, 'new_guest', None) or not g.client_ip:
+            return json_error('Enable cookies and reload before recovering.', 400)
+        limited = throttled('recovery', identity, '')
+        if limited: return limited
+        body = request.get_json(silent=True) or {}
+        try:
+            code = body.get('code', '') if isinstance(body, dict) else ''
+            if not isinstance(code, str) or not 20 <= len(code) <= 512:
+                raise BadSignature('Invalid recovery code')
+            decoded = recovery_signer.loads(code)
+            original = decoded.get('guest') if isinstance(decoded, dict) else None
+            if not isinstance(original, str) or not re.fullmatch(r'[a-f0-9]{32}', original):
+                raise BadSignature('Invalid recovery code')
+            value = boss.recover_profile(original, g.client_ip, hashlib.sha256(code.encode()).hexdigest(), body.get('raid_id'))
+            g.guest = g.new_guest = original
+            return jsonify(ok=True, state=value, csrf=csrf())
+        except (BadSignature, BossError) as exc:
+            abuse.rejected('recovery', guard_key(identity, 'recovery'), 'Profile recovery')
+            return json_error('That recovery code is invalid or was replaced.' if isinstance(exc, BadSignature) else str(exc),
+                              getattr(exc, 'status', 400))
+
+    @app.post('/play/api/profile')
+    def boss_profile():
+        require_csrf()
+        identity = guest()
+        if getattr(g, 'new_guest', None) or not g.client_ip:
+            return json_error('Enable cookies and reload before saving your username.', 400)
+        limited = throttled('registration', identity, '')
+        if limited: return limited
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
+            return json_error('Send a valid username request.', 400)
+        try:
+            view = boss.register(identity, g.client_ip, body.get('raid_id'), body.get('username'))
+            return jsonify(ok=True, state=view, csrf=csrf())
+        except (ValueError, BossError) as exc:
+            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
+            response = jsonify(ok=False, error=str(exc), state=boss.status(identity, g.client_ip))
+            if getattr(exc, 'retry_after', 0):
+                response.headers['Retry-After'] = str(exc.retry_after)
+            return response, getattr(exc, 'status', 422)
+
+    def boss_admin_view():
+        value = boss.admin_status()
+        value["abuse_flags"] = abuse.status()
+        with runtime.lock:
+            # This is a spelling match only. No provider IP mapping or account
+            # ownership proof exists in the current Shuffle leaderboard contract.
+            names = {r['username'].casefold() for r in runtime.shuffle['rows']}
+        for row in value['admin_leaders']:
+            row['shuffle_name_in_feed'] = row['name_provided'] and row['name'].casefold() in names
+        return value
+
+    @app.get('/admin/boss/status')
+    @protected
+    def boss_admin_state():
+        return jsonify(ok=True, state=boss_admin_view(), csrf=csrf())
+
     @app.get('/play/avatar/<digest>.png')
     def boss_avatar_image(digest):
         if not re.fullmatch(r'[a-f0-9]{64}', digest):
@@ -11052,11 +12465,22 @@ def create_app(root=None, testing=False):
         if not g.client_ip:
             return json_error("The server could not identify your connection. The host should check TRUST_APP_PLATFORM and the DO-Connecting-IP header.", 503)
         body = request.get_json(silent=True)
+        view = boss.status(identity, g.client_ip)
+        valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)
+                      and body['style'] in boss_rules()['styles'])
+        receipt = body.get('request_id') if isinstance(body, dict) else None
+        valid_body = valid_body and isinstance(receipt, str) and bool(re.fullmatch(r'[A-Za-z0-9_-]{8,64}', receipt)) and body.get('raid_id') == view['raid_id']
+        retry = valid_body and receipt == view['you']['last_request']
+        if not (valid_body and view['you']['can_attack']) and not retry:
+            limited = throttled('attack', identity, view['you']['name'])
+            if limited: return limited
         if not isinstance(body, dict):
+            abuse.rejected('attack', guard_key(identity, 'attack'), view['you']['name'])
             return json_error("Send a valid attack request.", 400)
         try:
-            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id")))
+            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id"), require_profile=True))
         except BossError as exc:
+            abuse.rejected('attack', guard_key(identity, 'attack'), view['you']['name'])
             response = jsonify(ok=False, error=str(exc), code=exc.code, state=boss.status(identity, g.client_ip))
             if exc.retry_after:
                 response.headers["Retry-After"] = str(exc.retry_after)
@@ -11106,7 +12530,7 @@ def create_app(root=None, testing=False):
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
-                               boss_data=boss.status() if tab == "boss" else None,
+                               boss_data=boss_admin_view() if tab == "boss" else None,
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review), status
 
@@ -11121,10 +12545,16 @@ def create_app(root=None, testing=False):
             action = request.form.get("action", "")
             if action == "restart" and request.form.get("confirm_restart") != "yes":
                 raise ValueError("Confirm that you want to archive the current raid and start a new one.")
-            if action == 'health' and request.form.get('confirm_health') != 'yes':
+            if action in {'health', 'remaining_health'} and request.form.get('confirm_health') != 'yes':
                 raise ValueError('Confirm that you want to change this raid\'s health.')
             if action in {'avatar', 'avatar_reset'}:
-                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None)
+                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None, actor=g.user)
+            elif action == 'release_player':
+                if request.form.get('confirm_release') != 'yes':
+                    raise ValueError('Confirm the connection release.')
+                boss.release_profile(request.form.get('raid_id'), request.form.get('player_name'), actor=g.user)
+            elif action == 'household':
+                boss.household(request.form.get('raid_id'), request.form.get('player_name'), int(request.form.get('slots', '')), actor=g.user)
             elif action == 'settings':
                 try:
                     values = dict(name=request.form.get('boss_name', ''),
@@ -11134,12 +12564,15 @@ def create_app(root=None, testing=False):
                     settings_revision = int(request.form.get('settings_revision', '-1'))
                 except ValueError:
                     raise ValueError('Enter whole numbers for damage and reload if this form is out of date.') from None
-                boss.configure(request.form.get('raid_id'), values, settings_revision)
+                boss.configure(request.form.get('raid_id'), values, settings_revision, actor=g.user)
             else:
                 boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
-                             health_revision=int(request.form.get('health_revision', '-1')) if action == 'health' else None)
+                             health_revision=int(request.form.get('health_revision', '-1')) if action in {'health', 'remaining_health'} else None, actor=g.user)
             flash({'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
-                   'health':'Boss health updated. Player contributions and attack allowances were kept.',
+                   'health':'Maximum HP updated. Saved damage and cooldowns were kept.',
+                   'remaining_health':'Remaining HP updated. Saved damage and cooldowns were kept.',
+                   'household':'Shared connection allowance saved. Each approved player keeps a 30-second cooldown.',
+                   'release_player':'Connection released. The original browser retains its name and achievements.',
                    'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
                    'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action])
             LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
@@ -11470,8 +12903,8 @@ def main():
             options.update(trusted_proxy="*", trusted_proxy_count=1,
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
-        LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "PostgreSQL" if runtime.store.pg else "local SQLite")
-        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 60s, 40 per raid day. Host controls: /admin?tab=boss.")
+        LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
+        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
             if config.production:
@@ -11506,76 +12939,106 @@ if __name__ == "__main__":
 
 ```json
 {
-  "release": "2026.09.28-boss-controls",
+  "release": "2026.09.28-community-polish",
+  "packaging": "complete",
   "entry_point": "python wager_backend.py",
+  "storage": "local JSON (automatic)",
+  "root_modules": [
+    "abuse_guard",
+    "boss",
+    "boss_avatar",
+    "boss_extras",
+    "boss_progress",
+    "config",
+    "integrations",
+    "presentation",
+    "race",
+    "race_support",
+    "runtime",
+    "storage",
+    "store_schema",
+    "wager_backend"
+  ],
   "source_files": {
     ".env.example": {
-      "bytes": 673,
-      "sha256": "36aa17cd82b15d44227ad341800246aaca78a207033ce8f6fd5f7f8c92b879c7"
+      "bytes": 659,
+      "sha256": "2a90ed921cdeaaf654e141a38177ce390647b2892a8dbe670415ce79f65987e2"
     },
     ".github/workflows/test.yml": {
-      "bytes": 1135,
-      "sha256": "2a680f8f042171b63c2c7c73cebe0e087be46137f2004d1d15ebb3031787e48f"
+      "bytes": 612,
+      "sha256": "81e76099af6f74334e32c677e075f8b70fb3babc184ed1d6b6af2aa2af483bdb"
     },
     ".gitignore": {
       "bytes": 126,
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 11623,
-      "sha256": "b9f6fe823983b4ed81197634c7f6cceaca2132ce3939bfc67f99d061b8f9b621"
+      "bytes": 2121,
+      "sha256": "4c91fe6fa82c04fc6e82e0de0aa239c9492a364617f1d54f91cf88cca21c2f74"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 5781,
-      "sha256": "6878359f150748e89808658edbd6d613dbffba23659d3c93136366a29547e829"
+      "bytes": 5337,
+      "sha256": "53300ad98c9eb0e19799d243a171bded17fbb27c25f9597be877aee9137175d7"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 28656,
-      "sha256": "d3f9c4c65470cf4c5308af5dd1054ac1285f77b9e6f8013da6834a313a3862e7"
+      "bytes": 15695,
+      "sha256": "471dc2f6cbd16d34ab40f6b28b8eaf1deb7f3f9a587f2ccf16f99941718a6d65"
     },
     "START_HERE.md": {
-      "bytes": 4062,
-      "sha256": "5afe040ae229913537335472600d8b42f5f17050fb03d1ce2d1234c350b70957"
+      "bytes": 2091,
+      "sha256": "aa17f8afc18cd8a79f6d2e158cb3daaa83769009d3bfd374f9626adaf79c9ab0"
+    },
+    "abuse_guard.py": {
+      "bytes": 2063,
+      "sha256": "c86e98c9c0a44c2c80f631f3f39c8c42c284c7bd7577c12fbe38de229c9ba9fa"
     },
     "app.yaml": {
-      "bytes": 1440,
-      "sha256": "8593c6d4ed1906bbcd675257f2e71af0e5fda94451704ef7a3d4d7e169bd231e"
+      "bytes": 1369,
+      "sha256": "1a57629c19f2f3a294691d2fd6b74d5355f4311c10201858598058093bfc878b"
     },
     "boss.py": {
-      "bytes": 30275,
-      "sha256": "339eb072bdea4d3c404fbba1d96d2543b9cb486b9797432c7b536dff3a3e453c"
+      "bytes": 41531,
+      "sha256": "8097be53614b0d0fee335d1e7a4e7703da08d79f241682cc59ff889a666c30d4"
     },
     "boss_avatar.py": {
       "bytes": 3708,
       "sha256": "d4cc504b1a090ca026fdf4ede179aad701680da3679acfa1194967abe49f88c0"
     },
+    "boss_extras.py": {
+      "bytes": 5898,
+      "sha256": "dd7e5464f9e63c5afd9ffd6e1897318bcbdcf368028adf547c3ac4c150020a8d"
+    },
+    "boss_progress.py": {
+      "bytes": 5258,
+      "sha256": "c1f31ed9a5b5f4a3e109b91b85a47ad7b38025123dad7a43aff6bdc8b2c3a481"
+    },
     "config.py": {
-      "bytes": 6081,
-      "sha256": "4f80277d81c32c7b127eb0573275dc928de3c3e102362a954a9a0dd300c6ec39"
+      "bytes": 5330,
+      "sha256": "6e841639039d5d9c0787cc506b1fed7bb7c5b0adabe6d7bb3089398643a9c5ba"
     },
     "docs/COMMUNITY_BOSS.md": {
-      "bytes": 10918,
-      "sha256": "ca70dcb5536a5c3fdb4f1f5cb2ccf2a851addb70fbacd05d54ed9f90433f39c5"
+      "bytes": 3540,
+      "sha256": "2baa6e80b7748d0b4641aa0f591c454469e0cd2118a8e0788edb5972c959d8a5"
     },
     "docs/COMMUNITY_UPDATE.md": {
-      "bytes": 6898,
-      "sha256": "557767296ac3a359143f287e9ccc1867fc593c3075206e7cba3c7815eb19080a"
+      "bytes": 1716,
+      "sha256": "1a0d876cff180e628474639d80ee537f5343403f326b417e2a0695edb8d84832"
     },
     "docs/VALIDATION.md": {
-      "bytes": 5279,
-      "sha256": "fabe2e84f24279c3b7547e8679754c546613b7dcd5f8b6bfb1b82512875c3be2"
+      "bytes": 2869,
+      "sha256": "7f54d8c91759b923ea2cc42ea73cf85f5d5db9dec1148449ec468c8ec56f865f"
     },
     "integrations.py": {
       "bytes": 7041,
       "sha256": "1468838afdf081e4ce09e3598f6b5861c2feca090ef6f5ae4d3f24db94e214ea"
     },
     "presentation.py": {
-      "bytes": 4164,
-      "sha256": "d63720e8fad70aa8a1a0a833f4a48ab322f66b06f89410f1ba0bd6e6b8fad0d4"
+      "bytes": 4244,
+      "sha256": "2360378fc3a78d495fb150873c0d2c3b56bae75b5dd2f93eae9a97771cf47f66"
     },
     "private/admin_store.seed.json": {
       "bytes": 6514,
@@ -11593,33 +13056,29 @@ if __name__ == "__main__":
       "bytes": 12150,
       "sha256": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96"
     },
-    "requirements-postgres.txt": {
-      "bytes": 197,
-      "sha256": "c77064a44093905f671aec742f1e9638eec34b1f295e89420053f17d3a7245a4"
-    },
     "requirements.txt": {
       "bytes": 76,
       "sha256": "4c1a45a322ba363062403c67632144a14742dfa8d2d4df090620a13da7d9d13d"
     },
     "runtime.py": {
-      "bytes": 17577,
-      "sha256": "426fcd9ec4ff3724e8be18208e7471f863379981f504b84466de62c95548d949"
+      "bytes": 18063,
+      "sha256": "903164f37004ce0d886e316f09dda4f338ff142d415abf85826218d6d4175532"
     },
     "runtime.txt": {
       "bytes": 15,
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 26639,
-      "sha256": "03856583cff01f657e1c40a0d6b4ca52d246f2c704aae52bf8c9025404496808"
+      "bytes": 26880,
+      "sha256": "74751986f52849f39d5a9ca7ab05902a1e7e032da7607f8788e9836b2ecb1794"
     },
     "static/boss.css": {
-      "bytes": 18490,
-      "sha256": "4e048a1cfa2159d8e42cb098c2a54e7afef42b5776e8bf1d11b36fdea618dbcc"
+      "bytes": 22172,
+      "sha256": "48902dc3cbada39b92b6b4cff8bfb319437302c094aff9cfc2253a82760486fc"
     },
     "static/boss.js": {
-      "bytes": 22191,
-      "sha256": "e1c770199bd4ed6cc3155bccdf9174de979f16a8b71b4645ed932640d01e0d05"
+      "bytes": 37551,
+      "sha256": "38ae0971f33d1eab98ead5151bc50629c9a11258614b987c794c0c948e7b1bef"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -11634,20 +13093,20 @@ if __name__ == "__main__":
       "sha256": "e4819b9fed73309a9012580f1c24fa310ea87f7d8f96d96fd09c03ffdb349845"
     },
     "storage.py": {
-      "bytes": 13356,
-      "sha256": "4ffad9851e7cd8faf38bf49145ef3064220103f9474ac418692cc326c4bdc21b"
+      "bytes": 13758,
+      "sha256": "025b24cba32af09d0891ae68bb93f6267f71166cf82fb32fe6f0afdc43ecb813"
     },
     "store_schema.py": {
       "bytes": 4551,
       "sha256": "b178eaa121bdf4dca84fc1daf5845bebaa04049c9e4302653f577bbb7a4bea98"
     },
     "templates/admin.html": {
-      "bytes": 5009,
-      "sha256": "e6b28d2823e3ff5adf0d29da480113294fd377b5a8b81a761e79596c99a8ebd9"
+      "bytes": 5061,
+      "sha256": "fe0a2bae07c842ca2d084c96e91616c1e5aae80d32c0c34c796335a8a2c97f9e"
     },
     "templates/admin_boss.html": {
-      "bytes": 7527,
-      "sha256": "c264ffdd6ca06032d4def68de756175c190d5cfe91ad95ad930ca309ee1f7432"
+      "bytes": 12876,
+      "sha256": "1871c8ae58c9b9cdda50f0fd4f6776a5b8782388dab629c0d3891815cd053f5d"
     },
     "templates/admin_overview.html": {
       "bytes": 1785,
@@ -11670,8 +13129,8 @@ if __name__ == "__main__":
       "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
     },
     "templates/boss.html": {
-      "bytes": 6742,
-      "sha256": "6200b49104772c3c71f07acc9761f55f9010a9a6dbe4a4e28193181db4b1ab34"
+      "bytes": 9361,
+      "sha256": "76002e1ddaa47fb938017f3b447219bddb4d736d996585f4f5ac31ac8c3179b7"
     },
     "templates/change_review.html": {
       "bytes": 690,
@@ -11686,8 +13145,8 @@ if __name__ == "__main__":
       "sha256": "7d99dc9ee58e6f0827b2a3583cb028477ae304b078f3b1311e766594f189ce3c"
     },
     "templates/index.html": {
-      "bytes": 5309,
-      "sha256": "dc863bca1713c88507d834218a3f982f90a5536c3598ebe7c19c32805f89d39c"
+      "bytes": 5352,
+      "sha256": "35e7678d07f0db18b36c26ec6c9240a204cf9012b42852bdbd03c9bbda53c263"
     },
     "templates/login.html": {
       "bytes": 1292,
@@ -11706,40 +13165,44 @@ if __name__ == "__main__":
       "sha256": "c18c562cf375863cdc2b73e7221e18cdf6c3afd432783690389efc1d0bf4b9cd"
     },
     "tests/render_fixtures.py": {
-      "bytes": 2922,
-      "sha256": "bfdbdc677723aac6903c5743ceb6f4dad68f63690f1a939f5356726a6c3b0988"
+      "bytes": 3264,
+      "sha256": "aa767480ff5952bd49ddcd5ca84b734ea89d33b8def2957c407c6ba2cad5179e"
     },
     "tests/test_app.py": {
-      "bytes": 41034,
-      "sha256": "f348e4f060a45c441a41522cbdcb83b984e575d3a864ef778c7d9be38beb4e22"
+      "bytes": 41139,
+      "sha256": "da032a0e70ec5bc238adde670312e45439fe03839b33384e50d61f22fd72aa62"
     },
     "tests/test_boss.py": {
-      "bytes": 16000,
-      "sha256": "27643e7e8e5baeadfc3975474b5546285493853333fb8808998da0583380d1a0"
+      "bytes": 16066,
+      "sha256": "57bd25b8aeed8d1750bf6363d36b7a1bdf1ccb6935d6982bbb2589e07453e641"
     },
     "tests/test_boss_admin.py": {
-      "bytes": 22297,
-      "sha256": "6a0794e510263fb1fabd821fc16967dc964821290c45082dd6aafb2e45395748"
+      "bytes": 23011,
+      "sha256": "8b829125f51c00d8cb206857d26ac45ff97b57d5ce5ca1a38a4a7ed34e4bbf70"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 15808,
-      "sha256": "7f66fa0947d6857c348ee6f064e6424a7262f421dc5bf74190b1217b1aa7ecb3"
+      "bytes": 27756,
+      "sha256": "db0b391e04511e338cb1021ba32da671ec36dba5df1cc2190d947213fa1472e6"
+    },
+    "tests/test_comfort_update.py": {
+      "bytes": 14097,
+      "sha256": "2057a478ff36dde8a89f99f282e1f90922ad0a8027fc18f01baa4b17a8f832eb"
     },
     "tests/test_community.py": {
-      "bytes": 9063,
-      "sha256": "b87d3ee1c29c80cffa3e773bca2e06e01bb53cb524fdba3a7c6561f1d7ccede0"
+      "bytes": 9228,
+      "sha256": "b25c22cc7af7056b6a218c1d1d8b91ab58084067767e8138f3b4dd3c5c18a31c"
     },
     "tests/test_frontend.cjs": {
-      "bytes": 15957,
-      "sha256": "fdb795df14a376ca6dd4cad95c970dae7e2dd1f2c329b0f3009c259d42626295"
+      "bytes": 16897,
+      "sha256": "9c586be46edbac59571842f55b16adb604173c0d5537f079924adaf369d051da"
     },
-    "tests/test_postgres.py": {
-      "bytes": 5406,
-      "sha256": "f2162763c7736fb5b83a8fe9edd921d7f159ec0420c4d0aad985c4d3fcfd80fa"
+    "tests/test_raid_update.py": {
+      "bytes": 12826,
+      "sha256": "fd0a583e525540a04f00ad521afde222a66f51f86fcc472b0925909d3fcc6234"
     },
     "wager_backend.py": {
-      "bytes": 40685,
-      "sha256": "9c47a80bd792948ce11a81505759956329a335d5db676c91ea2821b5f448eb73"
+      "bytes": 47661,
+      "sha256": "39ab3316b81dc60905faa61363cc6a737423b67d9cd9d1c806c7bde3131819fb"
     }
   }
 }

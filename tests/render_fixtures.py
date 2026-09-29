@@ -34,6 +34,8 @@ def render(destination):
                                   "updated_at": now, "ok": True}, admin, runtime.config)
             runtime.commit(admin, runtime.revision, snapshot=snapshot)
             client = app.test_client()
+            opening = client.get('/play/api/state').json
+            client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'FixtureRaider'}, headers={'X-CSRF-Token':opening['csrf']})
             for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play"}.items():
                 (destination/(name+".html")).write_text(client.get(url).text, encoding="utf-8")
             with client.session_transaction() as session:
@@ -41,6 +43,7 @@ def render(destination):
             for tab in ("overview", "race", "players", "boss", "settings"):
                 (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
             (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
+            (destination/"boss-admin.json").write_text(json.dumps(client.get("/admin/boss/status").json), encoding="utf-8")
             public = client.get("/public-state")
             (destination/"public.json").write_text(json.dumps({**public.json, "server_time":float(public.headers["X-Server-Time"])}), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")

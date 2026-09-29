@@ -250,3 +250,22 @@ test('homepage invitation follows boss health and paused or completed status',as
   p.feed.boss.hp=0;p.feed.boss.status='victory';await p.advance(60000);
   assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);p.close();
 });
+
+test('homepage victory uses the configured boss name safely',async()=>{
+  const p=page('public');await flush();
+  p.feed.boss.name='<img src=x>';p.feed.boss.status='victory';p.feed.boss.hp=0;
+  await p.advance(60000);
+  const title=p.window.document.getElementById('inviteTitle');
+  assert.equal(title.textContent,'The crew conquered <img src=x>.');
+  assert.equal(title.querySelector('img'),null);p.close();
+});
+
+test('source success and last content change have separate labels',async()=>{
+  const p=page('overview');await flush();
+  p.feed.jobs.shuffle.last_success=p.feed.server_time;
+  p.feed.jobs.shuffle.changed_at=p.feed.server_time-600;
+  await p.advance(60000);await p.tick();
+  const value=p.window.document.getElementById('shuffleFreshness').textContent;
+  assert.match(value,/Last successful check:/);assert.match(value,/Content last changed:/);
+  assert.ok(p.window.document.getElementById('shuffleProgress'));p.close();
+});

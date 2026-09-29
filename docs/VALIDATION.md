@@ -1,58 +1,32 @@
-# Verification record — 2026.09.28-boss-controls
+# Validation — 2026.09.28-community-polish
 
-Verified in the supplied Linux workspace on 2026-09-28 using synthetic accounts,
-images and provider responses. No production raid or account was modified.
+The complete Python suite passed **124 tests**. The final file-cache optimization
+was then checked against all **14 new behavior tests**. **54 DOM/interface checks**
+passed, including ten new checks for the added controls and status labels.
 
-| Check | Result |
+| Area | Verified behavior |
 | --- | --- |
-| Python suite | 103 discovered: **99 passed**, 4 optional PostgreSQL tests skipped. |
-| DOM/CSS suite | **39 passed** against the real rendered templates using jsdom. |
-| PNG/JPG/JPEG/WebP upload | Actual decoding, 512 × 256 resize of a 900 × 450 source, metadata removal, served PNG bytes, cache headers and conditional 304 response passed. |
-| Invalid uploads | Empty, fake, corrupt, renamed GIF, wrong extension, oversized, excessive-pixel, animated PNG and animated WebP images rejected without changing the existing avatar or raid. |
-| Avatar visibility | Public game, homepage invitation and admin preview render the uploaded URL. Game/admin polling updates the image and preserves health form drafts. Original-logo reset and avatar retention after a new raid passed. |
-| Current raid health | Explicit confirmation and valid bounds required. Edits use the latest committed damage, even if attacks arrive after the form opens. Player totals, network limits and receipts are retained. Stale health revisions and old raid forms cannot overwrite newer edits. |
-| No automatic regeneration | Idle time, daily rollover, pause/resume and cold app restart retain damage. Ordinary writes and browser snapshots cannot refill HP. Only an explicit health edit can reopen the same defeated raid. |
-| Recovery | Fresh-instance import and cold initialization retain avatar bytes, boss name, damage settings, health revision and progress. Existing state wins over a malformed newer seed. Recovery preview rejects a mismatched image checksum without mutation. |
-| Authorization | All seven boss management actions reject guests, unknown accounts, revoked session versions and tampered cookies before image decoding or writes. Forged role flags cannot grant access. Missing, invalid and Unicode CSRF tokens return controlled errors. Ordinary admin sign-in and boss editing pass; private recovery remains Superadmin-only. Removed accounts lose access immediately. |
-| Boss name and damage | Validated settings affect future hits only. A 450-point historical receipt remains valid after lowering damage. Publicly supplied damage, HP, role and settings fields cannot alter server calculations. Invalid names/ranges and stale forms are rejected; storage guards reject unapproved settings changes. Names render as text and admin drafts survive polling. |
-| Public edit isolation | Public pages contain no management forms; management GET requests and writes to read-only game state return 405 without changing saved data. The public can view the chosen avatar and play normally. |
-| Barebones game | Tutorial/story/help elements and footer are absent. Controls, cooldowns, safe retries, milestones, recent hits and victory contributors remain functional in DOM checks. |
-| Multiplayer rules | Concurrent hits retain damage; shared-network requests enforce one hit; cooldowns, IPv6 grouping, daily caps, burst damage and final-hit clamping passed. The 100-player maximum-activity simulation finishes on raid day four. |
-| Existing app functionality | Native login, date publication, original Superadmin import, source normalization, provider worker refreshes, unchanged-data handling, public masking, private Code Red rows, recovery and account roles passed. |
-| Launch | Existing subprocess test exercises Waitress startup via `python wager_backend.py`, local storage and a stale database binding. No management script or separate game worker is needed. |
-| Preserved files | Original provider settings, account seed and both logo assets match the supplied bytes exactly. |
+| JSON saves | Fresh startup, retained accounts, cold restart, corrupt-file refusal, failed atomic replacement rollback, two simultaneous store instances retaining every hit. |
+| Migration | Previous SQLite accounts/revision/live snapshot/raid imported exactly; old file unchanged; no SQLite created on a fresh install. |
+| Recovery codes | Authenticated owner issuance, CSRF rejection, forgery and replaced-code rejection, digest-only storage, original alias/hits/badges/receipt/cooldown retained. |
+| Households | Guests cannot approve; admin allowance admits only its slot count; separate 30-second cooldowns; default per-connection fairness retained. |
+| Unlimited hits | Repeated eligible hits accepted beyond previous daily counts; rejected-request throttle does not block an eligible hit. Existing week-long gameplay/achievement tests pass. |
+| Rally/estimates | Distinct rolling-window players, repeat-player deduplication, window expiry, next-raid reset, cosmetic unlock, no automatic HP/damage changes. |
+| Admin edits | Private persistent actor/before/after history, existing avatar/name/HP/damage permissions and stale revision checks. |
+| Interface | Identity collapse/edit, safe code recovery, remembered style, rally display, exact large-integer previews, presets without submission, private history clearing on session expiry. |
+| Status | Five-second boss polling, 60-second provider polling, distinct source success/change timestamps, dynamic boss victory name, ETag reuse and reconnect behavior. |
+| Existing features | Native login, race date publication, provider envelopes, safe failure responses, Code Red Top 100, public masking, uploads and recovery export. |
 
-## Verification limits
+The original provider configuration, account seed, PNG and ICO are preserved byte
+for byte. The badge calculation function is preserved unchanged; #1 was excluded.
+No remote checkpoint feature or external SQL service was added; #10 was excluded.
 
-- The previous turn's native-browser visual attempt could not run: the workspace Chromium
-  executable crashed at launch with SIGSEGV, before loading the app. The earlier
-  release's browser screenshots are not evidence for this release's new layout.
-  No new native-browser claim is made here. Current template/DOM checks and HTTP
-  image/form integration tests passed.
-- No dedicated disposable PostgreSQL database was provided; four optional
-  compatibility tests skipped. Default local SQLite was tested. CI provisions
-  PostgreSQL separately for that optional mode.
-- No DigitalOcean deployment or successful live Shuffle/Kick connection was
-  verified for this release. Provider checks use synthetic responses and local
-  HTTP fixtures. Earlier live provider probes timed out.
-- App Platform container storage is temporary. Recovery tests prove that a saved
-  checkpoint restores its contents; they do not provide automatic remote backups
-  or protect changes made after that checkpoint.
+Validation uses synthetic provider responses and disposable local saves. It did
+not contact the live Shuffle/Kick accounts or deploy to DigitalOcean. This Linux
+workspace ran Python 3.12; Windows/Python 3.14 was not executed natively. An encoding
+regression test simulates the earlier Windows text-decoding failure. Browser checks
+use rendered templates in jsdom; native Chromium was unavailable, so no new native
+visual-rendering claim is made.
 
-## Reproduce
-
-```bash
-python -m pip install -r requirements.txt
-python -m unittest discover -s tests -v
-```
-
-Optional interface checks require Node only for development:
-
-```bash
-npm --prefix tests install --ignore-scripts
-python tests/render_fixtures.py .test-fixtures
-npm --prefix tests test
-```
-
-All published test counts are from actual executed checks. Generated fixture
-accounts, preview data and runtime databases are excluded from the release ZIP.
+The extracted ZIP startup checks and package integrity results are recorded during
+packaging. The code is shipped with its tests for repeatable verification.

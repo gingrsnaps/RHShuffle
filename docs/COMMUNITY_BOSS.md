@@ -1,181 +1,59 @@
-# Community boss — play and host guide
+# Community boss reference
 
-One page, one boss, one community. Open `/play`, choose a style, and press Attack.
-No account, wager, purchase or separate process is needed. The standard
-requirements include Pillow for PNG/JPEG/WebP uploads.
-The original `wager_backend.py` launcher serves the game and existing wager site.
+Run `python wager_backend.py`; the game is served at `/play`. No separate process,
+SQL server or external account is required. State uses `data/state.json`.
 
-## Default gameplay rules (admins can change damage values)
+The shared boss defaults to 2,400,000 HP. Registered players attack every 30 seconds,
+without daily or weekly quotas. A random shared weakness lasts ten minutes;
+consecutive identical draws are valid. Defaults are 100 normal damage, 150 weakness
+damage, and a 100 bonus every tenth hit. Admins can change those whole-number values.
 
-- **2,400,000 health** by default. Everyone chips away at the same pool.
-- **One manual attack per 60 seconds**, with up to **40 attacks per raid day**.
-- **Blade, Bow, or Magic** deal 100 damage. Matching the current weakness deals
-  150. The weakness changes every 10 minutes according to the server clock.
-- Every **tenth personal hit adds 100 damage** as a Crimson burst. A matching
-  burst normally deals 250. The final hit is capped at the remaining HP.
-- The first successful community attack starts the raid-day clock. Allowances
-  renew every 24 hours from that point, not at each player's local midnight.
-- The game never regenerates health or spends unused attacks. A missed day
-  does not subtract your contribution. Pausing blocks hits but not the calendar.
-- Awakening, Enraged (75%), and Last stand (25%) are visual/story phases. They
-  do not secretly change the damage rules or punish players who joined late.
-- Victory remains visible. The host chooses when to start another raid.
+Health never regenerates automatically. Only an explicit admin health edit or a new
+raid can increase it. The percentage measures defeated HP from 0% through 100%.
+Requests never supply trusted damage. Repeated request receipts return the original
+hit without dealing damage twice. A lost response can therefore be retried safely.
 
-The server rejects ordinary writes that heal the same raid or reverse its
-committed damage. Only an explicit admin health edit may raise maximum HP. Health is always maximum HP minus saved cumulative damage. Cooldowns,
-weakness changes and daily resets affect attacks only. The browser also rejects
-healing snapshots without a newer host health revision, and the initial page percentage reflects saved health.
-Process restarts retain progress when the same data file is preserved. Losing
-that file through a container replacement is a separate recovery concern below.
+Names are self-reported. Public leaderboards show aliases; the owner and signed-in
+admins can see submitted names. The admin Top 5 contains full names. A Shuffle
+spelling match does not verify an account or connection. The game does not claim
+access to a Shuffle IP mapping.
 
-The mobile attack dock offers the same controls and cooldown while you scroll.
-Cosmetic milestones at 25%, 50%, and 75% damage change the arena and celebrate
-progress. Participation counters remain recorded; the separate badge explanation
-panel has been removed from the game. Victory's expandable recap
-lists every contributor by raid alias; the ordinary live board shows the Top 10.
-Use **Copy link** to invite the community. Errors remain until dismissed,
-retried, or resolved; a routine poll cannot erase an unsuccessful attack message.
+One registered player per connection is the default. Admins can approve a household
+of 2–10 players, each with a separate browser identity and 30-second cooldown. This
+is a player-registration allowance, not an attack quota. IPv6 privacy addresses
+are grouped by /64. Admins can release stale connection claims without deleting
+names or contributions.
 
-## Why it should last several days
+A private recovery code restores the original identity after cookie loss. The
+server stores a digest; the code is shown once when created. A replacement revokes
+the old code. Codes need the saved secret and profile data and cannot recover a
+lost server disk by themselves. They remain valid across new raids.
 
-With the default damage values and matching hits, every full ten-attack sequence
-deals 1,600 damage. Admin damage changes affect these estimates.
-The following estimates assume 100 distinct, active players/networks making
-that many attacks **each day**, all matching the current weakness:
+The eight existing badges, progress labels and week-long prerequisites are unchanged.
+Badges do not cap hits. The added Red rally is a separate cosmetic community goal:
+15 distinct raiders hit within a rolling ten-minute window to light the arena for
+the rest of the raid. It does not change health or damage.
 
-| Daily attacks per person | Community damage per day | Allowance-days required |
-| --- | ---: | ---: |
-| 20 | 320,000 | 7.5 — victory during raid day 8 |
-| 30 | 480,000 | 5 — victory during raid day 5 |
-| 40 | 640,000 | 3.75 — victory during raid day 4 |
+Admin controls require current authenticated sessions and CSRF tokens. Avatar
+uploads accept validated PNG/JPG/JPEG/WebP and reject malformed/animated/oversized
+images. Health and damage previews show expected effects; revision checks prevent
+stale admin edits. The last 100 host actions retain actor/time/before/after details.
+All private fields are excluded from public projections.
 
-Only the first strike starts the schedule. A full 40-hit session needs at least
-39 minutes because hits are manual and one minute apart. Smaller participation,
-missed weaknesses, and shared connections extend the encounter. Community size
-alone does not guarantee a finish date. A 100-player maximum-activity simulation
-is part of the test suite; the default boss survives the first three allowances.
+Recent activity estimates use up to sixty minute buckets. After five minutes and
+ten hits with damage, admin shows approximate damage/hour and remaining duration.
+Presets fill the next raid's HP input only. They do not guarantee a duration or
+change the current boss automatically. Before sufficient data exists, the preset
+health amounts are only starting suggestions.
 
-Signed-in admins can set **100,000–100,000,000 maximum HP** for the current boss
-or a new raid. Current-raid edits require confirmation and preserve all saved
-damage. Setting the maximum below damage already dealt is rejected.
+Rejected requests are counted in bounded, in-memory windows. Bursts are briefly
+throttled and visible as private diagnostic flags, without automatic bans. Valid
+eligible attacks bypass that guard and keep their regular 30-second cadence.
 
-## Together, without accounts
+Screens poll every five seconds. Hidden browser tabs resume on visibility. The
+server's Shuffle/Kick minute workers run independently of game polling. The only
+launch script remains `wager_backend.py`.
 
-Each browser gets an HttpOnly, signed guest cookie, separate from admin login.
-Its anonymous `Raider XXXXXXXX` name lasts for the raid. The public top ten and
-recent twelve hits use these aliases. They are cosmetic guest profiles, not
-verified individual identities. Clearing cookies, changing browser, or starting
-a new raid can change the name.
-
-The server checks both the browser allowance and the connection allowance.
-Changing cookies does not reset a network's limit; moving the same browser to
-another network does not reset its personal limit. IPv4-mapped IPv6 normalizes
-to IPv4, and IPv6 addresses in the same /64 share a connection allowance.
-Shared Wi-Fi/NAT users therefore share an allowance. VPNs plus new browser
-profiles can evade these lightweight limits; this is not cheat-proof identity.
-
-Game records store salted HMAC keys rather than raw IPs or browser tokens.
-Public game APIs omit the salt and those keys. The existing private web-access
-log can still contain visitor IPs for page visits; game polling/attacks do not
-flood that log. Browser cookies expire after one year; privacy tools may clear
-them sooner. No user-generated chat or custom names need moderation.
-
-## Host controls and recovery
-
-Sign in at `/admin` and choose **Community boss**. Admins can view the shared
-stats and change the avatar, name, maximum HP and future attack damage. Admins
-can pause/resume and start new raids. Private recovery downloads and account
-management remain Superadmin-only. A restart requires a checked confirmation and guards against an
-outdated raid ID. It archives the previous result and resets players/allowances.
-The latest ten summaries remain. A complete pre-restart checkpoint is also
-recorded locally; it is not a remote backup.
-
-**Boss avatar** accepts PNG/JPG/JPEG/WebP files up to 4 MB and 16 million pixels.
-Images are decoded, oriented, resized to fit 512 × 512 and saved as metadata-free
-PNG. Animated or malformed files are rejected before changing live data. The
-original upload filename is never used as a filesystem path. The selected
-avatar also appears on the homepage invitation and survives a new raid along
-with the boss name and damage settings. Use
-**Use original avatar** to restore the original boss logo.
-
-**Boss name & damage** accepts a 1–60-character printable name, base and weakness
-damage from 1–10,000, and a burst bonus from 0–10,000. Weakness damage cannot be
-less than base damage. Changes apply to future hits; old receipts and totals are
-retained, even if new damage is lower than a previous hit. Names render as escaped
-text in HTML and through textContent in browser updates. They are never HTML.
-
-Every management request checks a current admin account, session version and
-CSRF token before editing or decoding uploads. Public users cannot manage the
-boss, even with forged role flags or custom HTTP requests. They can view and
-attack normally. Public damage values are calculated on the server, never taken
-from client-supplied damage or HP fields. Stale admin settings forms are rejected.
-
-**Current raid health** changes maximum HP, not accumulated damage. For example,
-with 300 damage already dealt, a new maximum of 3,000,000 leaves 2,999,700 HP.
-Player totals, attack receipts, cooldowns and daily limits stay intact. Raising
-HP can reopen a defeated boss; setting it equal to already-dealt damage ends
-the encounter. This is an explicit host action, never automatic regeneration.
-
-Game and admin views pick up edits every five seconds. The homepage updates
-on its existing 60-second cycle. Polls preserve form drafts; if another health
-edit or a new raid makes your form stale, reload and review before resubmitting.
-
-**Save a private recovery file regularly during a multi-day raid and before a
-planned deployment.** It includes the boss ID, HP, players, network hashes,
-receipts, allowances, timestamps, history, avatar, name, damage settings and account/session state. The
-ordinary race-only backup does not contain the game.
-
-The recovery panel tracks when an export was generated and the progress since
-then. Generation does not prove you saved the file off-host. Its review form
-checks a recovery JSON file and shows account/race/boss totals without importing
-anything. See `COMMUNITY_UPDATE.md` for the full recovery and storage explanation.
-
-On a fresh App Platform instance, `private/recovery.seed.json` is imported
-before the original seed. Existing local state always wins; a recovery file
-never silently resets a running raid. Corrupt game recovery stops the first
-import transaction rather than partially replacing accounts. Keep the current
-`data/` folder when upgrading on a persistent host.
-
-App Platform local disk is ephemeral. An unexpected replacement may lose
-progress since the last downloaded-and-committed checkpoint. In-app hits are
-saved immediately to the local SQLite file, but that does not make the disk
-persistent. A no-remote-storage deployment cannot promise lossless multi-day
-progress on an ephemeral host. Keep one instance; do not scale local storage
-across independent containers. If that limitation becomes unacceptable, use
-a host with a persistent disk or deliberately opt into the existing remote
-storage compatibility; neither is required for this package to launch.
-
-## How updates stay lightweight
-
-The server does no provider requests while handling a game click. A transaction
-locks the boss record, reads current state, validates the hit and receipts, and
-commits its damage. Race settings and provider snapshots are separate records.
-Most viewer requests use a small in-memory snapshot; it reloads at most every
-five seconds per process and immediately reflects local writes. A separate
-GET returns only public summaries plus the requesting player's limits.
-
-The page polls every five seconds while visible and immediately on return or
-network recovery. Countdown animation uses server time plus a monotonic browser
-clock. Old responses cannot undo newer damage. If the response to a click is
-lost, the browser keeps that request ID and can retry it; the server returns
-its saved receipt. There are no automatic attacks. Snapshot responses use
-no-store and same-origin cookies/CSRF. Stale connections disable fresh attacks
-until a successful update arrives.
-
-Game data is bounded to 2,000 browser profiles per raid, 4,000 retained network
-records, 12 recent hits, 10 leaders, and 10 past raid summaries. Old network
-records are pruned as raid days advance. This is intended for the approximately
-100-person community, not a public internet-scale MMO.
-
-## DigitalOcean setup
-
-Build: `python -m pip install -r requirements.txt`
-
-Run: `python wager_backend.py`
-
-Keep port `8080`, health check `/healthz`, and one web instance. No game worker
-or new component is needed. Set `TRUST_APP_PLATFORM=1` only behind App Platform;
-the game uses its documented `DO-Connecting-IP` header. For local/direct hosting,
-use `TRUST_APP_PLATFORM=0` so arbitrary proxy headers are ignored. A missing or
-invalid trusted header disables new attacks rather than merging all players
-under an ingress IP. See README.md for full deployment and recovery steps.
+App Platform replaces local files on redeploy/container replacement. Use the
+existing manual private recovery export before a planned redeployment; progress
+after the latest export can still be lost. No external backup service was added.

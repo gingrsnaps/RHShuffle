@@ -39,7 +39,9 @@ class BossAdminTests(unittest.TestCase):
         self.addCleanup(self.runtime.store.close)
         self.client = self.app.test_client()
         self.client.environ_base['REMOTE_ADDR'] = '192.0.2.1'
-        self.csrf = self.client.get('/play/api/state').json['csrf']
+        opening = self.client.get('/play/api/state').json
+        self.csrf = opening['csrf']
+        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
         with self.client.session_transaction() as session:
             session.update(user='gingrsnaps', auth_version=1)
 
@@ -144,7 +146,7 @@ class BossAdminTests(unittest.TestCase):
     def test_health_edit_requires_confirmation_valid_range_and_current_revision(self):
         before = self.boss.export()
         for fields in ({'health': '3000000'}, {'health': 'oops', 'confirm_health': 'yes'},
-                       {'health': '0', 'confirm_health': 'yes'}, {'health': '100000001', 'confirm_health': 'yes'}):
+                       {'health': '0', 'confirm_health': 'yes'}, {'health': str(2**53), 'confirm_health': 'yes'}):
             self.assertEqual(self.post('health', **fields).status_code, 422)
             self.assertEqual(self.boss.export(), before)
         old = self.form('health', health='3000000', confirm_health='yes')
@@ -266,10 +268,14 @@ class BossAdminTests(unittest.TestCase):
         self.runtime.admin['users']['helper'] = copy.deepcopy(self.runtime.admin['users']['gingrsnaps'])
         self.runtime.commit(self.runtime.admin, self.runtime.revision)
         self.client.post('/admin/logout', data={'csrf': self.csrf})
-        self.csrf = self.client.get('/play/api/state').json['csrf']
+        opening = self.client.get('/play/api/state').json
+        self.csrf = opening['csrf']
+        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
         login = self.client.post('/admin', data={'csrf': self.csrf, 'username': 'helper', 'password': 'test-only-password'})
         self.assertEqual(login.status_code, 303)
-        self.csrf = self.client.get('/play/api/state').json['csrf']
+        opening = self.client.get('/play/api/state').json
+        self.csrf = opening['csrf']
+        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
         page = self.client.get('/admin?tab=boss').text
         self.assertIn('id="bossSettingsForm"', page)
         self.assertIn('image/webp', page)
@@ -310,6 +316,7 @@ class BossAdminTests(unittest.TestCase):
             self.assertEqual(retry['hit']['damage'], 450)
             guest = self.app.test_client()
             snapshot = guest.get('/play/api/state').json
+            guest.post('/play/api/profile', json={'raid_id':snapshot['state']['raid_id'], 'username':'PublicTest'}, headers={'X-CSRF-Token':snapshot['csrf']})
             forged = guest.post('/play/api/attack', json={
                 'raid_id': snapshot['state']['raid_id'], 'style': snapshot['state']['weakness'], 'request_id': 'forged-damage-attempt',
                 'damage': 99_999_999, 'hp': 0, 'name': 'Changed', 'settings_revision': 999,
@@ -325,7 +332,7 @@ class BossAdminTests(unittest.TestCase):
         values = dict(boss_name='Ruby Colossus', base_damage='100', weak_damage='150', burst_bonus='100')
         before = self.boss.export()
         for invalid in ({'boss_name': ''}, {'boss_name': 'x' * 61}, {'boss_name': 'bad\nname'},
-                        {'base_damage': '0'}, {'weak_damage': '99'}, {'weak_damage': '10001'},
+                        {'base_damage': '-1'}, {'weak_damage': '-1'}, {'weak_damage': str(2**53)},
                         {'burst_bonus': '-1'}, {'burst_bonus': '0.5'}, {'base_damage': 'true'}):
             self.assertEqual(self.post('settings', **{**values, **invalid}).status_code, 422)
             self.assertEqual(self.boss.export(), before)

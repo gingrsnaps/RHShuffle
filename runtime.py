@@ -112,7 +112,7 @@ class Runtime:
                         count=self.shuffle.get("count", len(self.shuffle["rows"])), snapshot_only=self.shuffle.get("snapshot_only", False),
                         freshness=freshness(self.shuffle), jobs=self.job_status(),
                         diagnostics=dict(release=RELEASE, credentials=self.config.diagnostics(),
-                            storage="PostgreSQL" if self.store.pg else "Local file (automatic)", settings_revision=self.revision,
+                            storage="Local JSON file (automatic)", settings_revision=self.revision,
                             start_et=fmt_et(self.admin["site_settings"]["start_time"]), end_et=fmt_et(self.admin["site_settings"]["end_time"]),
                             received=self.shuffle.get("received", 0), accepted=self.shuffle.get("accepted", 0),
                             rejected=self.shuffle.get("rejected", {}), missing_campaign=self.shuffle.get("missing_campaign", 0)))
@@ -126,6 +126,7 @@ class Runtime:
             return {name: {**{k: v for k, v in job.items() if k != "not_before"},
                            "pending": self.events[name].is_set(),
                            "worker_alive": bool(self.threads.get(name) and self.threads[name].is_alive()),
+                           "changed_at": (self.shuffle if name == "shuffle" else self.kick).get("changed_at", 0),
                            "last_success": (self.shuffle if name == "shuffle" else self.kick).get("updated_at", 0)}
                     for name, job in self.jobs.items()}
 
@@ -164,6 +165,7 @@ class Runtime:
                         incoming = normalize(self.providers.shuffle(site), site, self.config.raw_fallback)
                         status = self.providers.last_http_status()
                         value = calculate({**empty(site), **incoming, "updated_at":int(time.time()), "attempt_at":now, "ok":True}, admin, self.config)
+                        value["changed_at"] = value["updated_at"] if previous["rows"] != value["rows"] else previous.get("changed_at", 0)
                         value["previous_top"] = previous["rows"][:15] if previous["rows"][:15] != value["rows"][:15] else previous.get("previous_top", [])
                         warning = value["warning"]
                         result = "empty" if not value["rows"] else "updated" if previous["rows"] != value["rows"] else "unchanged"
@@ -177,6 +179,9 @@ class Runtime:
                         LOG.info("SHUFFLE %s", self.empty_message(site, value))
                 else:
                     value = {**self.providers.kick(site), "updated_at":int(time.time()), "attempt_at":now, "error":""}
+                    fields = ("live", "title", "viewers", "channel")
+                    with self.lock:
+                        value["changed_at"] = value["updated_at"] if any(value.get(k) != self.kick.get(k) for k in fields) else self.kick.get("changed_at", 0)
                     status, result = self.providers.last_http_status(), "live" if value["live"] else "offline"
                     with self.lock:
                         self.store.publish(name, value, revision)

@@ -10,6 +10,7 @@ from datetime import timedelta
 from decimal import Decimal
 from functools import wraps
 import io
+import hashlib
 import ipaddress
 import json
 import logging
@@ -21,11 +22,12 @@ import time
 
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
-from itsdangerous import BadSignature, URLSafeTimedSerializer
+from itsdangerous import BadSignature, URLSafeSerializer, URLSafeTimedSerializer
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
+from abuse_guard import AbuseGuard
 from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
 from boss_avatar import from_upload, validate_avatar
 from presentation import changes, checkpoint_status, export_marker
@@ -68,6 +70,8 @@ def create_app(root=None, testing=False):
     app.extensions["settings"] = config
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
+    recovery_signer = URLSafeSerializer(app.secret_key, salt="community-boss-recovery-v1")
+    abuse = app.extensions["boss_abuse"] = AbuseGuard(app.secret_key)
     review_signer = URLSafeTimedSerializer(app.secret_key, salt="race-review-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
@@ -95,7 +99,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status):
@@ -157,7 +161,7 @@ def create_app(root=None, testing=False):
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -230,6 +234,99 @@ def create_app(root=None, testing=False):
     def boss_state():
         return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
 
+    def guard_key(identity, category):
+        # Registration/recovery share an IP bucket; rejected attacks also use
+        # this bucket so clearing a cookie cannot reset a flood. Eligible hits
+        # explicitly bypass it, including approved household players.
+        return abuse.key('', g.client_ip or request.remote_addr or 'unknown')
+
+    def throttled(category, identity, alias):
+        wait = abuse.retry_after(category, guard_key(identity, category))
+        if not wait: return None
+        response = jsonify(ok=False, code='request_throttle',
+                           error=f'Too many rejected requests. Wait {wait} seconds, then try again.')
+        response.headers['Retry-After'] = str(wait)
+        return response, 429
+
+    @app.post('/play/api/recovery-code')
+    def boss_recovery_code():
+        require_csrf()
+        identity = guest()
+        if getattr(g, 'new_guest', None):
+            return json_error('Save your username before creating a recovery code.', 400)
+        limited = throttled('registration', identity, '')
+        if limited: return limited
+        try:
+            code = recovery_signer.dumps({'guest': identity, 'nonce': secrets.token_hex(16)})
+            boss.save_recovery(identity, hashlib.sha256(code.encode()).hexdigest())
+            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf())
+        except BossError as exc:
+            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
+            return json_error(str(exc), exc.status)
+
+    @app.post('/play/api/recover')
+    def boss_recover():
+        require_csrf()
+        identity = guest()
+        if getattr(g, 'new_guest', None) or not g.client_ip:
+            return json_error('Enable cookies and reload before recovering.', 400)
+        limited = throttled('recovery', identity, '')
+        if limited: return limited
+        body = request.get_json(silent=True) or {}
+        try:
+            code = body.get('code', '') if isinstance(body, dict) else ''
+            if not isinstance(code, str) or not 20 <= len(code) <= 512:
+                raise BadSignature('Invalid recovery code')
+            decoded = recovery_signer.loads(code)
+            original = decoded.get('guest') if isinstance(decoded, dict) else None
+            if not isinstance(original, str) or not re.fullmatch(r'[a-f0-9]{32}', original):
+                raise BadSignature('Invalid recovery code')
+            value = boss.recover_profile(original, g.client_ip, hashlib.sha256(code.encode()).hexdigest(), body.get('raid_id'))
+            g.guest = g.new_guest = original
+            return jsonify(ok=True, state=value, csrf=csrf())
+        except (BadSignature, BossError) as exc:
+            abuse.rejected('recovery', guard_key(identity, 'recovery'), 'Profile recovery')
+            return json_error('That recovery code is invalid or was replaced.' if isinstance(exc, BadSignature) else str(exc),
+                              getattr(exc, 'status', 400))
+
+    @app.post('/play/api/profile')
+    def boss_profile():
+        require_csrf()
+        identity = guest()
+        if getattr(g, 'new_guest', None) or not g.client_ip:
+            return json_error('Enable cookies and reload before saving your username.', 400)
+        limited = throttled('registration', identity, '')
+        if limited: return limited
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
+            return json_error('Send a valid username request.', 400)
+        try:
+            view = boss.register(identity, g.client_ip, body.get('raid_id'), body.get('username'))
+            return jsonify(ok=True, state=view, csrf=csrf())
+        except (ValueError, BossError) as exc:
+            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
+            response = jsonify(ok=False, error=str(exc), state=boss.status(identity, g.client_ip))
+            if getattr(exc, 'retry_after', 0):
+                response.headers['Retry-After'] = str(exc.retry_after)
+            return response, getattr(exc, 'status', 422)
+
+    def boss_admin_view():
+        value = boss.admin_status()
+        value["abuse_flags"] = abuse.status()
+        with runtime.lock:
+            # This is a spelling match only. No provider IP mapping or account
+            # ownership proof exists in the current Shuffle leaderboard contract.
+            names = {r['username'].casefold() for r in runtime.shuffle['rows']}
+        for row in value['admin_leaders']:
+            row['shuffle_name_in_feed'] = row['name_provided'] and row['name'].casefold() in names
+        return value
+
+    @app.get('/admin/boss/status')
+    @protected
+    def boss_admin_state():
+        return jsonify(ok=True, state=boss_admin_view(), csrf=csrf())
+
     @app.get('/play/avatar/<digest>.png')
     def boss_avatar_image(digest):
         if not re.fullmatch(r'[a-f0-9]{64}', digest):
@@ -260,11 +357,22 @@ def create_app(root=None, testing=False):
         if not g.client_ip:
             return json_error("The server could not identify your connection. The host should check TRUST_APP_PLATFORM and the DO-Connecting-IP header.", 503)
         body = request.get_json(silent=True)
+        view = boss.status(identity, g.client_ip)
+        valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)
+                      and body['style'] in boss_rules()['styles'])
+        receipt = body.get('request_id') if isinstance(body, dict) else None
+        valid_body = valid_body and isinstance(receipt, str) and bool(re.fullmatch(r'[A-Za-z0-9_-]{8,64}', receipt)) and body.get('raid_id') == view['raid_id']
+        retry = valid_body and receipt == view['you']['last_request']
+        if not (valid_body and view['you']['can_attack']) and not retry:
+            limited = throttled('attack', identity, view['you']['name'])
+            if limited: return limited
         if not isinstance(body, dict):
+            abuse.rejected('attack', guard_key(identity, 'attack'), view['you']['name'])
             return json_error("Send a valid attack request.", 400)
         try:
-            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id")))
+            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id"), require_profile=True))
         except BossError as exc:
+            abuse.rejected('attack', guard_key(identity, 'attack'), view['you']['name'])
             response = jsonify(ok=False, error=str(exc), code=exc.code, state=boss.status(identity, g.client_ip))
             if exc.retry_after:
                 response.headers["Retry-After"] = str(exc.retry_after)
@@ -314,7 +422,7 @@ def create_app(root=None, testing=False):
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
-                               boss_data=boss.status() if tab == "boss" else None,
+                               boss_data=boss_admin_view() if tab == "boss" else None,
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review), status
 
@@ -329,10 +437,16 @@ def create_app(root=None, testing=False):
             action = request.form.get("action", "")
             if action == "restart" and request.form.get("confirm_restart") != "yes":
                 raise ValueError("Confirm that you want to archive the current raid and start a new one.")
-            if action == 'health' and request.form.get('confirm_health') != 'yes':
+            if action in {'health', 'remaining_health'} and request.form.get('confirm_health') != 'yes':
                 raise ValueError('Confirm that you want to change this raid\'s health.')
             if action in {'avatar', 'avatar_reset'}:
-                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None)
+                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None, actor=g.user)
+            elif action == 'release_player':
+                if request.form.get('confirm_release') != 'yes':
+                    raise ValueError('Confirm the connection release.')
+                boss.release_profile(request.form.get('raid_id'), request.form.get('player_name'), actor=g.user)
+            elif action == 'household':
+                boss.household(request.form.get('raid_id'), request.form.get('player_name'), int(request.form.get('slots', '')), actor=g.user)
             elif action == 'settings':
                 try:
                     values = dict(name=request.form.get('boss_name', ''),
@@ -342,12 +456,15 @@ def create_app(root=None, testing=False):
                     settings_revision = int(request.form.get('settings_revision', '-1'))
                 except ValueError:
                     raise ValueError('Enter whole numbers for damage and reload if this form is out of date.') from None
-                boss.configure(request.form.get('raid_id'), values, settings_revision)
+                boss.configure(request.form.get('raid_id'), values, settings_revision, actor=g.user)
             else:
                 boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
-                             health_revision=int(request.form.get('health_revision', '-1')) if action == 'health' else None)
+                             health_revision=int(request.form.get('health_revision', '-1')) if action in {'health', 'remaining_health'} else None, actor=g.user)
             flash({'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
-                   'health':'Boss health updated. Player contributions and attack allowances were kept.',
+                   'health':'Maximum HP updated. Saved damage and cooldowns were kept.',
+                   'remaining_health':'Remaining HP updated. Saved damage and cooldowns were kept.',
+                   'household':'Shared connection allowance saved. Each approved player keeps a 30-second cooldown.',
+                   'release_player':'Connection released. The original browser retains its name and achievements.',
                    'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
                    'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action])
             LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
@@ -678,8 +795,8 @@ def main():
             options.update(trusted_proxy="*", trusted_proxy_count=1,
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
-        LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "PostgreSQL" if runtime.store.pg else "local SQLite")
-        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 60s, 40 per raid day. Host controls: /admin?tab=boss.")
+        LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
+        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
             if config.production:

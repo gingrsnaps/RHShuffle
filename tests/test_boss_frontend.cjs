@@ -16,7 +16,7 @@ const response = (value, status = 200) => ({
   headers: new Map([["content-type", "application/json"]]),
   json: async () => structuredClone(value),
 });
-function page(name = "play") {
+function page(name = "play", initialStyle) {
   const dom = new JSDOM(
     fs.readFileSync(path.join(fixtures, name + ".html"), "utf8"),
     { url: "https://example.test/play", runScripts: "outside-only" },
@@ -28,7 +28,10 @@ function page(name = "play") {
   let clock = 0,
     serial = 0;
   let value = JSON.parse(
-    fs.readFileSync(path.join(fixtures, "boss.json"), "utf8"),
+    fs.readFileSync(
+      path.join(fixtures, name === "boss" ? "boss-admin.json" : "boss.json"),
+      "utf8",
+    ),
   );
   Object.defineProperty(w.performance, "now", { value: () => clock });
   Object.defineProperty(w.document, "hidden", {
@@ -51,6 +54,7 @@ function page(name = "play") {
     calls.push({ url, options });
     return responder(url, options);
   };
+  if (initialStyle) w.localStorage.setItem("rh.boss.style", initialStyle);
   w.eval(code);
   return {
     w,
@@ -124,7 +128,7 @@ test("attack sends only server-validated inputs and renders countdown", async ()
       s.hp -= 150;
       s.total_damage = 150;
       s.total_attacks = 1;
-      s.you.ready_at = s.server_time + 60;
+      s.you.ready_at = s.server_time + 30;
       s.you.last_request = sent.request_id;
       s.you.last_hit = {
         damage: 150,
@@ -148,7 +152,7 @@ test("attack sends only server-validated inputs and renders countdown", async ()
   const post = p.calls.find((c) => c.options.method === "POST");
   assert.equal(post.options.headers["X-CSRF-Token"], p.value.csrf);
   assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
-  assert.match(p.w.document.querySelector("#attackButton").textContent, /1:00/);
+  assert.match(p.w.document.querySelector("#attackButton").textContent, /0:30/);
   assert.match(p.w.document.querySelector("#hitResult").textContent, /150/);
   p.close();
 });
@@ -169,6 +173,9 @@ test("uncertain delivery keeps receipt and retry uses same ID", async () => {
     p.w.document.querySelector("#attackButton").textContent,
     /Retry last strike/,
   );
+  p.w.document
+    .querySelector("#attackButton")
+    .dispatchEvent(new p.w.Event("pointerleave"));
   p.w.document.querySelector("#attackButton").click();
   await flush();
   assert.equal(ids.length, 2);
@@ -185,13 +192,13 @@ test("older polls cannot reverse boss damage", async () => {
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.hp,
+    p.value.state.max_hp - p.value.state.hp,
   );
   p.respond(async () => response(old));
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.hp,
+    p.value.state.max_hp - p.value.state.hp,
   );
   p.close();
 });
@@ -315,13 +322,16 @@ test("same-raid updates cannot refill health even with a newer version or clock"
     p.value.state.version += versionBump;
     p.value.state.server_time += 5;
     await p.advance(5000);
-    assert.equal(p.w.document.querySelector("#bossHealthBar").value, hp);
+    assert.equal(
+      p.w.document.querySelector("#bossHealthBar").value,
+      p.value.state.max_hp - hp,
+    );
     assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   }
   p.close();
 });
 
-test("victory stays at zero until a different raid starts", async () => {
+test("defeat progress stays at 100 percent until a different raid starts", async () => {
   const p = page();
   await flush();
   p.value.state.hp = 0;
@@ -329,20 +339,23 @@ test("victory stays at zero until a different raid starts", async () => {
   p.value.state.status = "victory";
   p.value.state.version++;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
+  assert.equal(
+    p.w.document.querySelector("#bossHealthBar").value,
+    p.value.state.max_hp,
+  );
   p.value.state.hp = p.value.state.max_hp;
   p.value.state.total_damage = 0;
   p.value.state.status = "waiting";
   p.value.state.version++;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
-  p.value.state.raid_id = "new-host-started-raid";
-  p.value.state.server_time += 10;
-  await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
     p.value.state.max_hp,
   );
+  p.value.state.raid_id = "new-host-started-raid";
+  p.value.state.server_time += 10;
+  await p.advance(5000);
+  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
   p.close();
 });
 
@@ -361,7 +374,7 @@ test("explicit host health revisions update the current raid without losing dama
   p.value.state.health_revision = 1;
   await p.advance(5000);
   const bar = p.w.document.querySelector("#bossHealthBar");
-  assert.equal(bar.value, p.value.state.hp);
+  assert.equal(bar.value, p.value.state.max_hp - p.value.state.hp);
   assert.equal(bar.max, p.value.state.max_hp);
   assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   const saved = bar.value;
@@ -495,4 +508,346 @@ test("boss name and damage updates use text and preserve admin settings drafts",
     }
     p.close();
   }
+});
+
+test("stationary clicks and the other attack button cannot bypass the pointer latch", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    attack = doc.querySelector("#attackButton"),
+    dock = doc.querySelector("#dockAttack");
+  let hits = 0;
+  p.respond(async (url, options) => {
+    if (options.method === "POST") {
+      const body = JSON.parse(options.body),
+        s = p.value.state;
+      hits++;
+      s.version++;
+      s.total_attacks++;
+      s.you.attacks++;
+      s.total_damage += 100;
+      s.hp -= 100;
+      s.you.ready_at = s.server_time + 30;
+      s.you.last_request = body.request_id;
+      s.you.last_hit = {
+        damage: 100,
+        style: body.style,
+        weakness: false,
+        burst: false,
+      };
+      return response({ ok: true, state: s, hit: s.you.last_hit });
+    }
+    return response(p.value);
+  });
+  attack.click();
+  await flush();
+  p.value.state.server_time += 30;
+  await p.advance(5000);
+  assert.equal(attack.disabled, true);
+  attack.click();
+  dock.click();
+  await flush();
+  assert.equal(hits, 1);
+  assert.match(doc.querySelector("#rearmHint").textContent, /off/);
+  // Moving outside is detected even when a native disabled button suppresses leave events.
+  attack.getBoundingClientRect = () => ({
+    left: 10,
+    right: 110,
+    top: 10,
+    bottom: 60,
+  });
+  doc.dispatchEvent(
+    new p.w.MouseEvent("pointermove", { clientX: 120, clientY: 20 }),
+  );
+  assert.equal(attack.disabled, false);
+  attack.click();
+  await flush();
+  assert.equal(hits, 2);
+  assert.equal(doc.querySelector("#yourAttacks").textContent, "2");
+  p.close();
+});
+
+test("keyboard release re-arms attacks and a held activation key cannot repeat", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    attack = doc.querySelector("#attackButton");
+  attack.dispatchEvent(
+    new p.w.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+  );
+  attack.click();
+  await flush();
+  assert.equal(attack.disabled, true);
+  const repeat = new p.w.KeyboardEvent("keydown", {
+    key: "Enter",
+    repeat: true,
+    cancelable: true,
+  });
+  attack.dispatchEvent(repeat);
+  assert.equal(repeat.defaultPrevented, true);
+  doc.dispatchEvent(
+    new p.w.KeyboardEvent("keyup", { key: "Enter", bubbles: true }),
+  );
+  assert.equal(attack.disabled, false);
+  // Space normally dispatches click after keyup: it must not remain locked.
+  attack.dispatchEvent(
+    new p.w.KeyboardEvent("keydown", { key: " ", bubbles: true }),
+  );
+  doc.dispatchEvent(
+    new p.w.KeyboardEvent("keyup", { key: " ", bubbles: true }),
+  );
+  attack.click();
+  await flush();
+  assert.equal(attack.disabled, false);
+  p.close();
+});
+
+test("touch taps remain usable after their release", async () => {
+  const p = page();
+  await flush();
+  const attack = p.w.document.querySelector("#attackButton");
+  const touch = new p.w.Event("pointerdown");
+  Object.defineProperty(touch, "pointerType", { value: "touch" });
+  attack.dispatchEvent(touch);
+  attack.click();
+  await flush();
+  assert.equal(attack.disabled, false); // fake server returns no cooldown in this gesture-only test
+  p.close();
+});
+
+test("private admin feed uses admin authentication and removes names on expiry", async () => {
+  const p = page("boss");
+  await flush();
+  assert.equal(p.calls[0].url, "/admin/boss/status");
+  p.value.state.admin_leaders = [
+    {
+      name: "<img src=x onerror=alert(1)>",
+      alias: "Raider ABCD1234",
+      damage: 500,
+      attacks: 5,
+      name_provided: true,
+    },
+  ];
+  p.value.state.version++;
+  await p.advance(5000);
+  const list = p.w.document.querySelector("#adminBossLeaders");
+  assert.match(list.textContent, /<img/);
+  assert.equal(list.querySelector("img"), null);
+  p.respond(async () => response({ error: "Session expired" }, 401));
+  await p.advance(5000);
+  assert.doesNotMatch(list.textContent, /<img/);
+  assert.match(list.textContent, /Sign in/);
+  const count = p.calls.length;
+  await p.advance(60000);
+  assert.equal(p.calls.length, count);
+  assert.equal(p.w.document.querySelector("#bossNameInput").disabled, true);
+  p.close();
+});
+
+test("name save preserves typed drafts, unlocks play, and never sends an automatic attack", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    input = doc.querySelector("#playerUsername");
+  p.value.state.you.identity_ready = false;
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.equal(doc.querySelector("#attackButton").disabled, true);
+  input.value = "My full name";
+  input.dispatchEvent(new p.w.Event("input"));
+  await p.advance(5000);
+  assert.equal(input.value, "My full name");
+  p.respond(async (url, options) => {
+    if (url === "/play/api/profile") {
+      assert.equal(JSON.parse(options.body).username, "My full name");
+      p.value.state.you.display_name = "My full name";
+      p.value.state.you.identity_ready = true;
+      p.value.state.version++;
+    }
+    return response(p.value);
+  });
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  assert.match(doc.querySelector("#playerNameResult").textContent, /Saved/);
+  assert.equal(p.calls.filter((c) => c.url === "/play/api/attack").length, 0);
+  assert.equal(doc.querySelectorAll("#yourBadges li").length, 8);
+  assert.match(
+    doc.querySelector("#bossPercent").textContent,
+    /^0.00% defeated$/,
+  );
+  p.close();
+});
+
+test("saved name collapses into an editable identity without disturbing play", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
+  assert.match(doc.querySelector("#playingAs").textContent, /FixtureRaider/);
+  doc.querySelector("#editPlayerName").click();
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.equal(doc.activeElement.id, "playerUsername");
+  await p.advance(5000);
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
+
+test("style choice persists while weakness changes independently", async () => {
+  const p = page("play", "magic");
+  await flush();
+  const doc = p.w.document;
+  assert.equal(
+    doc.querySelector('[data-style="magic"]').getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(doc.querySelector("#dockStyle").value, "magic");
+  doc.querySelector('[data-style="bow"]').click();
+  assert.equal(p.w.localStorage.getItem("rh.boss.style"), "bow");
+  p.value.state.weakness = "blade";
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.equal(
+    doc.querySelector('[data-style="bow"]').getAttribute("aria-pressed"),
+    "true",
+  );
+  p.close();
+});
+
+test("recovery code is created only by an explicit owner action", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  assert.equal(
+    p.calls.filter((c) => c.url.includes("recovery-code")).length,
+    0,
+  );
+  p.respond(async (url, options) => {
+    if (url.endsWith("recovery-code")) {
+      assert.equal(options.method, "POST");
+      assert.ok(options.headers["X-CSRF-Token"]);
+      p.value.state.you.recovery_saved = true;
+      p.value.state.version++;
+      return response({ ...p.value, code: "private-fixture-code" });
+    }
+    return response(p.value);
+  });
+  doc.querySelector("#makeRecoveryCode").click();
+  await flush();
+  assert.equal(doc.querySelector("#recoveryCodeBox").hidden, false);
+  assert.equal(
+    doc.querySelector("#recoveryCode").value,
+    "private-fixture-code",
+  );
+  assert.equal(p.w.localStorage.getItem("private-fixture-code"), null);
+  assert.equal(p.calls.filter((c) => c.url.endsWith("/attack")).length, 0);
+  p.close();
+});
+
+test("recovery posts a private code and restores the owner view", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  p.respond(async (url, options) => {
+    if (url.endsWith("/recover")) {
+      assert.equal(JSON.parse(options.body).code, "fixture-secret");
+      p.value.state.you.display_name = "Restored raider";
+      p.value.state.version++;
+    }
+    return response(p.value);
+  });
+  doc.querySelector("#recoveryInput").value = "fixture-secret";
+  doc
+    .querySelector("#recoverPlayerForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(doc.querySelector("#playingAs").textContent, "Restored raider");
+  assert.equal(doc.querySelector("#recoveryInput").value, "");
+  assert.match(
+    doc.querySelector("#recoveryResult").textContent,
+    /Player restored/,
+  );
+  p.close();
+});
+
+test("rally lights the arena without sending an attack or changing damage", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  p.value.state.rally = { goal: 15, count: 15, unlocked: true };
+  p.value.state.version++;
+  const damage = p.value.state.rules.damage;
+  await p.advance(5000);
+  assert.ok(doc.querySelector("#bossStage").classList.contains("rally-lit"));
+  assert.match(doc.querySelector("#rallyTitle").textContent, /Arena lit/);
+  assert.equal(p.value.state.rules.damage, damage);
+  assert.equal(p.calls.filter((c) => c.options.method === "POST").length, 0);
+  p.close();
+});
+
+test("host previews are exact and presets never submit a new raid", async () => {
+  const p = page("boss");
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#bossMaxHealth").value = "1";
+  doc.querySelector("#bossMaxHealth").dispatchEvent(new p.w.Event("input"));
+  assert.match(doc.querySelector("#maxHealthPreview").textContent, /→ 1/);
+  doc.querySelector("#bossBaseDamage").value = "9007199254740991";
+  doc.querySelector("#bossBurstBonus").value = "9007199254740991";
+  doc.querySelector("#bossBaseDamage").dispatchEvent(new p.w.Event("input"));
+  assert.match(
+    doc.querySelector("#damagePreview").textContent,
+    /18,014,398,509,481,982/,
+  );
+  doc.querySelector("#raidPresets button").click();
+  assert.equal(doc.querySelector("#bossHealthInput").value, "10000000");
+  assert.equal(p.calls.filter((c) => c.options.method === "POST").length, 0);
+  p.close();
+});
+
+test("private history uses text and is cleared when the admin session expires", async () => {
+  const p = page("boss");
+  await flush();
+  const doc = p.w.document;
+  p.value.state.admin_history = [
+    {
+      action: "Boss settings",
+      actor: "Host",
+      at: 1800000000,
+      before: { name: "Old" },
+      after: { name: "<img src=x>" },
+    },
+  ];
+  p.value.state.version++;
+  await p.advance(5000);
+  assert.match(
+    doc.querySelector("#bossAdminHistory").textContent,
+    /<img src=x>/,
+  );
+  assert.equal(doc.querySelector("#bossAdminHistory img"), null);
+  p.respond(async () => response({ error: "Expired" }, 401));
+  await p.advance(5000);
+  assert.doesNotMatch(
+    doc.querySelector("#bossAdminHistory").textContent,
+    /<img src=x>/,
+  );
+  assert.match(doc.querySelector("#bossAdminHistory").textContent, /Sign in/);
+  p.close();
+});
+
+test("last checked ages between polls and exact totals remain available", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  await p.advance(2000);
+  assert.match(
+    doc.querySelector("#bossConnection").textContent,
+    /Last checked 2s ago/,
+  );
+  assert.match(doc.querySelector("#bossHealth").textContent, /2.4M/);
+  assert.match(doc.querySelector("#exactRaidTotals").textContent, /2,400,000/);
+  p.close();
 });

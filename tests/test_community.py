@@ -74,9 +74,11 @@ class CommunityTests(unittest.TestCase):
             state = result['state']
             self.assertEqual(state['you']['active_days'], 3)
             self.assertEqual(state['you']['attacks'], 100)
-            self.assertTrue(all(badge['earned'] for badge in state['you']['badges']))
+            self.assertTrue(all(badge['earned'] for badge in state['you']['badges'] if badge['id'] in {'first', 'burst', 'loyal'}))
+            self.assertEqual(len(state['you']['badges']), 8)
             self.assertEqual(state['total_damage'], 16_000)
-            self.assertEqual(state['rules']['daily_attacks'], 40)
+            self.assertIsNone(state['rules']['daily_attacks'])
+            self.assertEqual(state['rules']['cooldown'], 30)
         validate_boss(boss.export())
 
     def test_legacy_raid_migration_keeps_progress_and_counts_only_known_days(self):

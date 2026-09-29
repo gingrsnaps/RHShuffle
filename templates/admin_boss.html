@@ -1,9 +1,21 @@
 <section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
 <div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2 id="bossName">{{ boss_data.name }}</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
 <p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
-<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss health"></progress><p id="bossStory" class="muted"></p>
+<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.max_hp - boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss defeat progress"></progress><p id="bossStory" class="muted"></p>
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
 <p class="muted small">Live · Updates every 5 seconds</p>
+<section class="boss-balance" aria-labelledby="paceHeading">
+  <div><p class="eyebrow">RECENT RAID PACE</p><h3 id="paceHeading">Plan the next boss</h3><strong id="bossPace">Collecting recent hits…</strong><p id="bossEstimate" class="muted small"></p></div>
+  <p class="small muted">An estimate from the last hour, after at least 5 minutes and 10 hits. Attendance and damage settings can change it. HP is never adjusted automatically.</p>
+</section>
+<section class="boss-admin-leaders" aria-labelledby="adminLeadersHeading">
+  <h3 id="adminLeadersHeading">Top 5 damage <span class="tag">Admin only</span></h3>
+  <p class="small muted">Full player-submitted names. A Shuffle name match confirms spelling in the feed, not account ownership or an IP match.</p>
+  <ol id="adminBossLeaders" class="combat-list">
+    {% for row in boss_data.admin_leaders %}<li><div><strong>{{ loop.index }}. {{ row.name }}</strong><small>{{ row.alias }} · {{ row.attacks }} hits · {{ 'Self-reported' if row.name_provided else 'Username not supplied yet' }}</small></div><b>{{ '{:,}'.format(row.damage) }}</b></li>
+    {% else %}<li class="muted">No hits yet.</li>{% endfor %}
+  </ol>
+</section>
 {% if user %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
 <div class="boss-settings-grid">
   <section class="boss-setting" aria-labelledby="avatarHeading">
@@ -38,11 +50,22 @@
         <label for="bossMaxHealth">Maximum HP</label>
         <input id="bossMaxHealth" name="health" type="number" min="{{ boss_data.rules.min_hp }}"
                max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.max_hp }}" required>
-        <small class="muted">Damage already dealt stays. Remaining HP = maximum HP − damage.</small>
+        <small class="muted">Damage already dealt stays. Raising maximum HP adds the difference to remaining HP. Lowering it may defeat the boss. Recorded damage is retained.</small>
       </div>
-      <p class="muted small">This changes the current boss without clearing players or allowances. Raising HP can reopen a defeated boss. Automatic regeneration stays off.</p>
+      <output id="maxHealthPreview" class="edit-preview" aria-live="polite"></output>
+      <p class="muted small">This changes the current boss without clearing players or cooldowns. Raising HP can reopen a defeated boss. Automatic regeneration stays off.</p>
       <label class="boss-confirm"><input type="checkbox" name="confirm_health" value="yes" required> Change this raid's health.</label>
       <button class="button primary" type="submit">Save health</button>
+    </form>
+    <form method="post" action="/admin/boss/action" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
+      <input type="hidden" name="action" value="remaining_health"><input type="hidden" name="health_revision" value="{{ boss_data.health_revision }}">
+      <div class="field"><label for="bossRemainingHealth">Set remaining HP directly</label>
+        <input id="bossRemainingHealth" name="health" type="number" min="0" max="{{ boss_data.max_hp }}" step="1" value="{{ boss_data.hp }}" required>
+        <small class="muted">0 defeats the boss. Raising this value is an explicit admin heal; automatic regeneration stays off.</small></div>
+      <output id="remainingHealthPreview" class="edit-preview" aria-live="polite"></output>
+      <label class="boss-confirm"><input type="checkbox" name="confirm_health" value="yes" required> Set the remaining health.</label>
+      <button class="button" type="submit">Set remaining HP</button>
     </form>
   </section>
   <section class="boss-setting boss-identity-setting" aria-labelledby="bossSettingsHeading">
@@ -57,16 +80,35 @@
         <input id="bossNameInput" name="boss_name" maxlength="60" value="{{ boss_data.name }}" required>
       </div>
       <div class="boss-damage-fields">
-        <div class="field"><label for="bossBaseDamage">Base damage</label><input id="bossBaseDamage" name="base_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.damage }}" required></div>
-        <div class="field"><label for="bossWeakDamage">Weakness damage</label><input id="bossWeakDamage" name="weak_damage" type="number" min="1" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.weak_damage }}" required></div>
+        <div class="field"><label for="bossBaseDamage">Base damage</label><input id="bossBaseDamage" name="base_damage" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.damage }}" required></div>
+        <div class="field"><label for="bossWeakDamage">Weakness damage</label><input id="bossWeakDamage" name="weak_damage" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.weak_damage }}" required></div>
         <div class="field"><label for="bossBurstBonus">Burst bonus</label><input id="bossBurstBonus" name="burst_bonus" type="number" min="0" max="{{ boss_data.rules.max_damage }}" step="1" value="{{ boss_data.rules.burst_bonus }}" required></div>
       </div>
+      <output id="damagePreview" class="edit-preview" aria-live="polite"></output>
       <p class="muted small">Damage changes apply to future hits. Existing damage and cooldowns stay. The burst bonus applies every tenth hit.</p>
       <button class="button primary" type="submit">Save boss settings</button>
     </form>
   </section>
 </div>
-<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, player totals and allowances. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
+<details class="nested"><summary>Shared connections <span aria-hidden="true">+</span></summary>
+<p class="muted small">Allow a household to use separate browsers on one connection. Each player keeps a 30-second cooldown. This is an admin exception, not Shuffle account verification.</p>
+<ul id="householdList" class="combat-list"></ul>
+<form method="post" action="/admin/boss/action" class="stack">
+<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="household">
+<div class="field"><label for="householdName">An existing player on that connection</label><input id="householdName" name="player_name" maxlength="64" required></div>
+<div class="field"><label for="householdSlots">Allowed players</label><input id="householdSlots" name="slots" type="number" min="1" max="10" value="2" required><small class="muted">1 restores the default after other claims are released. This does not limit anyone's hits.</small></div>
+<button class="button" type="submit">Save allowance</button></form></details>
+<details class="nested"><summary>Release a player connection <span aria-hidden="true">+</span></summary>
+<p class="muted small">Use when a shared or changed IP blocks someone. This releases the connection only; the original browser keeps its username and badges. A player with a saved recovery code can restore their original profile. Saved damage stays.</p>
+<form method="post" action="/admin/boss/action" class="stack">
+<input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="release_player">
+<div class="field"><label for="releasePlayerName">Full registered username</label><input id="releasePlayerName" name="player_name" maxlength="64" required></div>
+<label class="boss-confirm"><input type="checkbox" name="confirm_release" value="yes" required> Release this connection.</label><button class="button" type="submit">Release connection</button></form></details>
+<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, current raid totals and cooldowns. Names and achievement progress carry forward. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div id="raidPresets" class="preset-row" aria-label="Health presets for the next raid"></div><p id="presetBasis" class="muted small"></p><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
+<details class="nested"><summary>Boss admin history <span aria-hidden="true">+</span></summary>
+<p class="muted small">Last 100 saved actions. Player hits are tracked separately.</p><ol id="bossAdminHistory" class="combat-list audit-list"></ol></details>
+<details class="nested"><summary>Request activity <span aria-hidden="true">+</span></summary>
+<p class="muted small">Temporary flags for bursts of rejected requests. These are not bans or proof of cheating. Normal 30-second attacks are allowed. Flags clear on restart.</p><ol id="bossAbuseFlags" class="combat-list"></ol></details>
 </section>
 
 {% if superadmin %}{% include "recovery_panel.html" %}{% endif %}

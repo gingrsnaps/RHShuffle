@@ -1,6 +1,7 @@
 """Small view models for change review and private recovery status."""
 import re
 
+from boss_progress import MAX_NUMBER
 from race import token
 from race_support import fmt_et, money
 
@@ -47,7 +48,7 @@ def valid_marker(value):
     if not isinstance(value, dict):
         return None
     for key in ('generated_at', 'boss_version', 'attacks', 'damage'):
-        if type(value.get(key)) is not int or not 0 <= value[key] <= 10**12:
+        if type(value.get(key)) is not int or not 0 <= value[key] <= (10**12 if key == 'generated_at' else MAX_NUMBER):
             return None
     for key, length in (('admin_token', 20), ('standings_token', 20), ('raid_id', 32)):
         if not isinstance(value.get(key), str) or not re.fullmatch(r'[a-f0-9]{%d}' % length, value[key]):

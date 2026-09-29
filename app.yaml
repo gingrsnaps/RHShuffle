@@ -27,9 +27,6 @@ services:
       - key: APP_ENV
         value: production
         scope: RUN_TIME
-      - key: STORAGE_MODE
-        value: local
-        scope: RUN_TIME
       - key: APP_STATE_KEY
         value: redhunllef
         scope: RUN_TIME

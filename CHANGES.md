@@ -1,169 +1,41 @@
-# Changes — 2026.09.28-boss-controls
+# Changes — 2026.09.28-community-polish
 
-All current administrator accounts can manage the community boss. Guest users
-cannot access editing forms or submit management actions. Every boss management action
-requires an authenticated current admin session and a valid CSRF token. Account
-management and private recovery downloads remain Superadmin-only.
+Implemented suggestions 2–9. Excluded the achievement-display change (#1) and
+external checkpoints (#10). No daily/weekly hit limits, new dependency, service,
+management command or second launcher was added.
 
-Add WebP to PNG/JPG/JPEG avatar uploads. Image decoding, resizing, metadata removal,
-size limits and rejection of animation remain. Public viewing of the avatar is
-retained, while upload/reset actions are restricted to admins.
+## Player experience
 
-Add boss name and base/weakness/burst damage settings. Names are escaped text.
-Damage is calculated from saved server settings; public request fields cannot
-supply damage or HP. Edits apply to new hits and preserve existing contributions,
-receipts, cooldowns and HP. Settings survive new raids, restarts and recovery.
-Separate settings revisions reject stale admin forms and old display updates.
+- Saved “Playing as…” summary with Edit; a private, downloadable recovery code.
+- Recovery preserves identity, raid damage, badges and the last attack receipt.
+- Admin-approved household allowances; 30-second server cooldown per approved player.
+- Fifteen-player Red rally: rolling ten-minute participation, cosmetic arena unlock.
+- Remembered style, compact totals with exact detail, stable attack buttons,
+  consistent configured boss names and a live last-checked label.
 
-Harden CSRF validation: missing stored tokens cannot match a predictable fallback;
-malformed Unicode tokens return a controlled error. Tests cover all seven boss
-management actions, guest/unknown/revoked/tampered sessions, forged roles, missing
-and invalid tokens, ordinary admin sign-in, removed accounts and public forgery.
+## Administration
 
-The barebones game, no automatic regeneration, original configured credentials,
-60-second provider checks and sole wager_backend.py launch remain unchanged.
-99 Python checks and 39 DOM/CSS checks passed; four optional PostgreSQL tests
-skipped. See docs/VALIDATION.md for scope and current external testing limits.
+- Recent pace and estimates, plus next-raid HP presets. Never automatic HP scaling.
+- Live health/damage previews and a bounded, persistent history of boss edits.
+- Shared connection controls and private request activity flags.
+- Separate source check and content-change times; automatic 60-second checks retained.
+- All boss mutation endpoints remain authenticated and CSRF-protected.
 
-## Previous boss admin release — 2026.09.28-boss-admin
+## Runtime
 
-The public game page is now barebones: arena, HP, attack controls, cooldowns,
-contributions and history. Long explanations, the tutorial, separate badge panel
-and game footer are removed. Existing combat rules and five-second updates stay.
+- Replaced active SQLite/PostgreSQL storage with atomic UTF-8 JSON.
+- Imports a previous local SQLite save once, read-only, and leaves it untouched.
+- Preserves existing accounts, hashes, secrets, current progress and images.
+- Caches committed files while detecting writes from another local process.
+- Rejected-request throttles never block an otherwise eligible 30-second attack.
+- Removed the optional PostgreSQL dependency file, its tests and CI service.
+- Existing manual recovery remains. No remote checkpoint integration was added.
 
-Superadmin controls now include PNG/JPG avatar upload/reset and confirmed edits
-to the current raid's maximum HP. Health edits preserve cumulative damage,
-player totals, receipts and allowances. A newer health revision distinguishes
-an intentional host edit from accidental regeneration or stale responses.
+## Retained
 
-Images are validated by Pillow, re-encoded without metadata, resized to 512px,
-kept outside the frequently written raid record, and served with a content hash
-and immutable cache header. The homepage, game and admin preview use the same
-image. Recovery checkpoints include the image; new raids retain it.
+Original Shuffle/Kick configuration, Superadmin seed, logos, race date publication,
+automatic provider jobs, public masking, uncensored admin Code Red Top 100,
+uncensored boss Top 5, admin image uploads, HP/damage editing, random weakness,
+mouse/keyboard re-arm, no automatic HP regeneration, unlimited hits and eight badges.
 
-Existing accounts, provider credentials, saved progress, local-storage default,
-60-second Shuffle/Kick jobs and sole wager_backend.py launcher are retained.
-Install the updated requirements before launching. No remote database is added.
-
-Verification: 94 Python tests and 38 DOM/CSS checks passed; four optional
-PostgreSQL checks skipped. Real-browser checks could not run in this workspace
-because Chromium crashed at launch. Current live providers/deployment were not
-verified; details and limits are in docs/VALIDATION.md.
-
-## Previous no-regeneration release — 2026.09.22-no-regen
-
-No-regeneration guard: the server rejects same-raid writes that increase HP,
-change maximum HP, reverse damage/attack totals, or roll back the version. A
-different boss requires the explicit new-raid control. Attack health is derived
-from cumulative committed damage, with no timed or daily regeneration.
-
-Health display: render the correct initial percentage instead of a temporary
-100% label. Ignore inconsistent healing snapshots even when their version/clock
-is newer. Cooldowns and daily allowances still reset normally; boss HP does not.
-
-Regression checks cover a week of inactivity, daily reset, pause/resume, a cold
-app restart retaining its saved file, rejected healing writes, and zero HP after
-victory. All 86 Python and 35 DOM/CSS checks pass; four optional PostgreSQL tests
-skip. Prior features, credentials and sole launcher are retained. Disk loss on
-App Platform still requires a recovery checkpoint or durable hosting.
-
-## Previous community update — 2026.09.22-community
-
-Community polish: add a live homepage boss invitation, mobile attack dock,
-quarter-health milestones, arena transitions, first-hit/ten-burst/three-day
-badges, copy-link fallback, and a victory recap including every contributor.
-All rewards are cosmetic; the multi-day damage rules are unchanged.
-
-Reliability: successful polls no longer erase attack errors. Main and mobile
-controls share receipts, cooldowns and retries. Lists preserve unchanged nodes;
-animation uses the browser animation API without forced layout reads. Public
-snapshots use conditional ETags and a fresh server-time header; private feeds
-remain no-store. Game rules are centralized and JS/CSS are readable source.
-
-Administration: compact expandable connection status, overview shortcuts,
-side-by-side signed change review, and readable recovery-file validation.
-Track generated exports and progress since export without changing the admin
-revision. Recovery metadata is validated separately from accounts/game state.
-Existing local progress and original credentials are preserved.
-
-Verification: 83 Python tests and 33 DOM/CSS checks pass; 4 optional PostgreSQL
-tests skip. Chromium verifies native login, source refresh, reviewed race
-publication, the 100-user Code Red list, recovery downloads/review, and shared
-boss damage across desktop/mobile players. Live external provider connectivity
-and a deployed DigitalOcean instance remain unverified.
-
-The sole launcher is still `python wager_backend.py`. There is no new production
-dependency or required remote database. Recovery exports remain manual; their
-generation does not confirm off-host storage. Full details are in
-`docs/COMMUNITY_UPDATE.md` and `docs/VALIDATION.md`.
-
-## Previous community boss release — 2026.09.22-boss
-
-Community game: add `/play` with a shared boss, signed guest profiles, atomic
-attacks, one-minute cooldowns, 40-hit raid-day allowances, rotating weaknesses,
-and every-tenth-hit Crimson burst. The default 2.4-million-HP encounter targets
-4–8 days for 100 active raiders. Victory is retained until a host starts again.
-
-Game presentation: animated red arena with the original logo, readable health,
-weapon buttons, personal burst meter, Top 10 contributors, recent attacks,
-past raids, and visible instructions. Add the homepage Join the boss fight CTA
-and header link. Remove the public Admin footer link and dashboard site footer.
-
-Host tools: a Community boss tab updates every five seconds and preserves input
-drafts. Superadmin pause/resume/restart actions use CSRF and a current-raid guard.
-Private recovery export/import now includes boss progress and hashed cooldown
-records. Race-only backups remain separate. No extra production dependency.
-
-DigitalOcean: use the documented DO-Connecting-IP visitor header when trusted
-App Platform ingress is enabled; ignore it on direct hosts. This also improves
-existing login rate limiting and IP access controls behind that ingress.
-
-Verification: 75 Python tests pass; 4 optional PostgreSQL tests skip. All 28
-DOM/CSS checks pass. Two real browser contexts see shared damage and host pause
-changes. A 100-player simulation finishes on raid day four at maximum matching
-attacks. Existing race publication, refresh, recovery, and Code Red checks pass.
-
-Previous local-storage release: remove the production PostgreSQL startup requirement. Default to built-in SQLite, ignore stale DATABASE_URL values in local mode, and remove the PostgreSQL driver from normal requirements. App Platform configuration contains only the Python web service. Production cookies and proxy handling remain independent of storage.
-
-Recovery: add a Superadmin-only private account/race export and automatic import from private/recovery.seed.json on a fresh instance. Existing saved state takes priority. The dashboard, logs, and README explicitly explain that App Platform local files do not persist through redeploys or container replacements; checkpoints are manual.
-
-
-Date publication: the bottom button now submits the required confirmation and clearly says **Confirm and publish race**. Drafts no longer look like completed saves.
-
-Refresh reliability: discard old-setting failure responses as well as successes; clear only obsolete ordinary backoff when dates change; retain provider rate limits. Keep one follow-up request when Refresh is pressed during an active check. Restart stopped workers from dashboard status reads.
-
-Progress: every admin tab shows published dates and separate provider outcomes. Manual requests have completion tickets; date publication triggers short follow-up polling automatically. An in-flight browser read no longer drops an immediate refresh request.
-
-Visuals: logo-red branding, burgundy surfaces, red buttons and active tabs, and readable progress panels. Original logo files are unchanged. No production dependency was added.
-
-Earlier verification: 57 Python tests and 20 DOM/CSS checks passed. A local HTTP fixture exercises date changes during a failed request and subsequent automatic publication; external Shuffle/Kick connectivity remains unverified here.
-
-Refresh patch: read the real form action attribute to avoid the hidden action input overriding the request URL. Fetch errors retain JSON and HTTP status; empty leaderboards explain waiting, source failure, and nonqualifying results. Regression tests cover the URL collision and manual-refresh publication to both boards. Accounts, credentials, and saved dates are retained.
-
-UTF-8 patch: startup asset reads now explicitly use UTF-8, fixing the exact Windows CP1252 decoding failure. Account state is untouched. A regression test recreates the original failure and verifies startup with existing accounts; test fixture/log encoding is explicit too.
-
-The underlying rebuild replaces the previous launcher, web handlers, update scheduler,
-provider clients, templates, and browser controller. It retains the original
-configuration, account seed, logo files, race meaning, weighting, and prizes.
-
-| Area | Result |
-| --- | --- |
-| Launch | `python wager_backend.py` starts Waitress and both provider jobs. |
-| Admin rendering | Complete HTML dashboard; scoped status updates cannot erase a form or page. |
-| Update timing | Automatic independent 60-second jobs and page polling; bounded manual polling. |
-| Persistence | Separate transactional admin and live records, local SQLite or hosted PostgreSQL. |
-| Migration | Existing data wins; legacy files/table untouched; private recovery checkpoint. |
-| Account setup | Original Superadmin imported automatically; no management command. |
-| Public UI | Compact podium, Top 15 table, clear race phase/countdown, source freshness. |
-| Admin UI | Overview, Race, Players, Settings; collapsible first 100 confirmed Code Red users. |
-| Provider errors | Retain previous values, identify the failing source, retry automatically. |
-| Code | Small focused Python modules, shared validation, native JS/CSS, comments at key boundaries. |
-| Delivery | Full source, configured ZIP, updated Linux/App Platform instructions, tests and CI. |
-
-The original files contain different schedules: the saved admin race is
-August 4–11, while settings defaults are August 18–25 (2026, 6 PM Eastern).
-Saved state takes precedence. This is documented and remains an explicit admin
-choice rather than an automatic change to historical race data.
-
-Legacy payout workflow and optional live-feed switches remain absent. The app
-is always live, with stale-cache preservation only during provider failures.
+See README for local-file lifetime on DigitalOcean App Platform.

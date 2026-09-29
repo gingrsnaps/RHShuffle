@@ -1,4 +1,4 @@
-/* Shared raid UI. The server owns damage, identity, cooldowns and daily limits.
+/* Shared raid UI. The server owns damage, identity, cooldowns and private names.
    Polling never attacks. A failed POST keeps its receipt ID for a safe retry. */
 (() => {
   "use strict";
@@ -10,8 +10,31 @@
     const el = $(id);
     if (el) el.textContent = String(value);
   };
-  const number = (value) => Number(value).toLocaleString("en-US");
+  const number = (value) =>
+    (typeof value === "bigint" ? value : Number(value)).toLocaleString("en-US");
+  const compact = new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+  function metric(id, value) {
+    text(id, Math.abs(value) >= 10000 ? compact.format(value) : number(value));
+    const el = $(id);
+    if (el) {
+      el.title = number(value);
+      el.setAttribute("aria-label", number(value));
+    }
+  }
+  let editingName = false;
   let labels = {};
+  let armed = true,
+    lockedButton = null,
+    inputMode = "mouse",
+    keyHeld = false,
+    nameDirty = false;
+  const nameInput = $("playerUsername");
+  nameInput?.addEventListener("input", () => {
+    nameDirty = true;
+  });
   const listCache = new Map();
   const effects = new Map();
   const button = $("attackButton"),
@@ -22,7 +45,8 @@
     selected = "blade",
     busy = false,
     timer,
-    polling = false;
+    polling = false,
+    authExpired = false;
   let receivedAt = performance.now(),
     lastGood = -Infinity,
     pending = null,
@@ -35,6 +59,7 @@
   // Gameplay still works in browsers that disable storage; cookies are required.
   try {
     pending = JSON.parse(sessionStorage.getItem(pendingKey));
+    selected = localStorage.getItem("rh.boss.style") || "blade";
   } catch (_) {
     /* optional */
   }
@@ -220,12 +245,26 @@
       error();
     }
     text("bossConnection", "Live · Shared raid connected");
-    text("bossHealth", `${number(state.hp)} / ${number(state.max_hp)} HP`);
-    text("bossPercent", ((state.hp / state.max_hp) * 100).toFixed(2) + "%");
+    text(
+      "bossHealth",
+      `${compact.format(state.hp)} / ${compact.format(state.max_hp)} HP`,
+    );
+    if ($("bossHealth"))
+      $("bossHealth").title =
+        `${number(state.hp)} / ${number(state.max_hp)} HP`;
+    text(
+      "exactRaidTotals",
+      `${number(state.hp)} / ${number(state.max_hp)} HP · ${number(state.total_damage)} damage · ${number(state.total_attacks)} hits`,
+    );
+    text(
+      "bossPercent",
+      (((state.max_hp - state.hp) / state.max_hp) * 100).toFixed(2) +
+        "% defeated",
+    );
     const bar = $("bossHealthBar");
     if (bar) {
       bar.max = state.max_hp;
-      bar.value = state.hp;
+      bar.value = state.max_hp - state.hp;
     }
     text(
       "bossPhase",
@@ -238,7 +277,7 @@
     text("bossDay", "Raid day " + state.day);
     text("bossRaiders", number(state.raiders));
     text("bossAttacks", number(state.total_attacks));
-    text("bossDamage", number(state.total_damage));
+    metric("bossDamage", state.total_damage);
     const story =
       state.status === "victory"
         ? "VICTORY. The Red crew brought the beast down. Every hit made this happen."
@@ -263,11 +302,26 @@
         el.classList.toggle("is-weak", el.dataset.style === state.weakness),
       );
     text("yourName", state.you.name);
-    text("yourDamage", number(state.you.damage));
-    text(
-      "yourRemaining",
-      `${state.you.remaining} / ${state.rules.daily_attacks}`,
-    );
+    metric("yourDamage", state.you.damage);
+    text("yourAttacks", number(state.you.attacks));
+    if (nameInput && !nameDirty && document.activeElement !== nameInput)
+      nameInput.value = state.you.display_name || "";
+    identityView();
+    rally();
+    if (admin) adminTools();
+    if (admin)
+      rows(
+        "adminBossLeaders",
+        state.admin_leaders || [],
+        "No hits yet.",
+        (r, i) =>
+          item(
+            `${i + 1}. ${r.name}`,
+            `${r.alias} · ${number(r.attacks)} hits · ${r.name_provided ? (r.shuffle_name_in_feed ? "Shuffle name match · unverified" : "Self-reported") : "Username not supplied yet"}`,
+            number(r.damage),
+          ),
+      );
+
     text(
       "burstLabel",
       state.you.burst_in === 1
@@ -320,6 +374,267 @@
     if (!admin && state.status === "victory") void recap();
     tick();
   }
+  function identityView() {
+    if (admin) return;
+    const own = Boolean(state.you.display_name);
+    text("playingAs", state.you.display_name || "");
+    if ($("playerIdentity"))
+      $("playerIdentity").hidden =
+        !own || !state.you.identity_ready || editingName;
+    if ($("playerNameForm"))
+      $("playerNameForm").hidden =
+        own && state.you.identity_ready && !editingName;
+    if ($("recoveryOwner")) $("recoveryOwner").hidden = !own;
+    text(
+      "recoverySaved",
+      state.you.recovery_saved
+        ? "Recovery code created. Creating another replaces the previous code."
+        : "Save a code to keep your player if cookies are cleared.",
+    );
+  }
+  function rally() {
+    const r = state.rally;
+    if (!r) return;
+    stage?.classList.toggle("rally-lit", Boolean(r.unlocked));
+    $("rallyStatus")?.classList.toggle("unlocked", Boolean(r.unlocked));
+    text("rallyTitle", r.unlocked ? "Red rally · Arena lit" : "Red rally");
+    text("rallyCount", `${r.count} / ${r.goal} raiders`);
+    text(
+      "rallyHint",
+      r.unlocked
+        ? "Unlocked together for this raid."
+        : "15 raiders hit within 10 minutes to light the arena.",
+    );
+    if ($("rallyBar")) {
+      $("rallyBar").max = r.goal;
+      $("rallyBar").value = r.count;
+    }
+  }
+  const changeLabels = {
+    hp: "Remaining HP",
+    max_hp: "Maximum HP",
+    damage: "Base",
+    weak_damage: "Weakness",
+    burst_bonus: "Burst bonus",
+    paused: "Paused",
+    name: "Name",
+    player: "Player",
+    slots: "Players",
+    avatar: "Avatar",
+    connection: "Connection",
+  };
+  function displayChange(key, value) {
+    if (key === "avatar" && typeof value === "string" && value.length === 64)
+      return "Image " + value.slice(0, 8);
+    return typeof value === "number" ? number(value) : String(value);
+  }
+  function adminTools() {
+    const b = state.balance;
+    if (b) {
+      text(
+        "bossPace",
+        b.observed
+          ? `${number(b.damage_per_hour)} damage / hour`
+          : "Collecting recent hits…",
+      );
+      text(
+        "bossEstimate",
+        state.status === "victory"
+          ? "Boss defeated."
+          : b.observed
+            ? `About ${b.remaining_seconds >= 86400 ? (b.remaining_seconds / 86400).toFixed(1) + " days" : duration(b.remaining_seconds)} remaining at this pace · ${number(b.sample_hits)} recent hits`
+            : `${number(b.sample_hits)} recent hits. Estimates appear after 5 minutes and 10 hits with damage.`,
+      );
+      const presets = $("raidPresets");
+      if (presets) {
+        for (const p of b.presets) {
+          let el = [...presets.children].find(
+            (e) => e.dataset.days === String(p.days),
+          );
+          if (!el) {
+            el = document.createElement("button");
+            el.type = "button";
+            el.className = "button small";
+            el.dataset.days = String(p.days);
+            el.addEventListener("click", () => {
+              $("bossHealthInput").value = el.dataset.hp;
+              $("bossHealthInput").focus();
+            });
+            presets.append(el);
+          }
+          el.dataset.hp = String(p.hp);
+          el.textContent = `${p.label} · ${compact.format(p.hp)} HP`;
+          el.title = `${number(p.hp)} HP${b.observed ? ` · about ${p.days} days at recent pace` : " · starting suggestion"}`;
+        }
+      }
+      text(
+        "presetBasis",
+        b.observed
+          ? "Presets target roughly 3, 5 or 7 days at the observed pace. They fill the next-raid field only; review and confirm to start."
+          : "Starting suggestions: 10M / 25M / 50M HP. Duration is unknown until activity is measured. These only fill the next-raid field.",
+      );
+    }
+    rows(
+      "householdList",
+      (state.households || []).map((h, i) => ({ ...h, id: String(i) })),
+      "No household exceptions. One player per connection is the default.",
+      (h) =>
+        item(
+          h.players.join(", ") || "Released connection",
+          `${h.players.length} registered · ${h.slots} allowed`,
+          "30s each",
+        ),
+    );
+    rows(
+      "bossAdminHistory",
+      (state.admin_history || []).map((h, i) => ({
+        ...h,
+        id: String(h.at) + ":" + i,
+      })),
+      "No host edits recorded in this release yet.",
+      (h) => {
+        const keys = [
+          ...new Set([...Object.keys(h.before), ...Object.keys(h.after)]),
+        ];
+        const changes = keys
+          .filter((k) => h.before[k] !== h.after[k])
+          .map(
+            (k) =>
+              `${changeLabels[k] || k}: ${displayChange(k, h.before[k])} → ${displayChange(k, h.after[k])}`,
+          );
+        return item(
+          `${h.action} · ${h.actor}`,
+          changes.join(" · ") || "Action confirmed; values unchanged.",
+          new Date(h.at * 1000).toLocaleString(),
+        );
+      },
+    );
+    rows(
+      "bossAbuseFlags",
+      (state.abuse_flags || []).map((f, i) => ({ ...f, id: String(i) + f.at })),
+      "No bursts of rejected requests detected.",
+      (f) =>
+        item(
+          `${f.alias} · ${f.category}`,
+          `${f.rejected} rejected requests · Connection ${f.tag}`,
+          new Date(f.at * 1000).toLocaleTimeString(),
+        ),
+    );
+    previews();
+  }
+  function whole(id) {
+    const value = $(id)?.value || "";
+    if (!/^\d+$/.test(value)) return null;
+    const n = BigInt(value);
+    return n <= BigInt(Number.MAX_SAFE_INTEGER) ? n : null;
+  }
+  function previews() {
+    if (!admin || !state) return;
+    const hp = BigInt(state.hp),
+      max = BigInt(state.max_hp),
+      nextMax = whole("bossMaxHealth"),
+      remaining = whole("bossRemainingHealth");
+    if (nextMax !== null && nextMax > 0n) {
+      const next = hp + nextMax - max;
+      text(
+        "maxHealthPreview",
+        `Remaining HP: ${number(hp)} → ${number(next < 0n ? 0n : next > nextMax ? nextMax : next)} · Maximum: ${number(max)} → ${number(nextMax)}`,
+      );
+    } else text("maxHealthPreview", "Enter a valid whole-number maximum HP.");
+    text(
+      "remainingHealthPreview",
+      remaining !== null && remaining <= max
+        ? `Remaining HP: ${number(hp)} → ${number(remaining)}${remaining > hp ? " · Explicit heal" : remaining === 0n ? " · Defeats the boss" : ""}`
+        : "Remaining HP must be between 0 and the current maximum.",
+    );
+    const base = whole("bossBaseDamage"),
+      weak = whole("bossWeakDamage"),
+      burst = whole("bossBurstBonus");
+    text(
+      "damagePreview",
+      [base, weak, burst].every((n) => n !== null)
+        ? `Next hit: base ${number(base)} · weakness ${number(weak)}. Every tenth hit: base ${number(base + burst)} · weakness ${number(weak + burst)}. Actual damage stops at remaining HP.`
+        : "Enter valid whole-number damage values.",
+    );
+  }
+  root
+    .querySelectorAll(
+      "#bossMaxHealth, #bossRemainingHealth, #bossBaseDamage, #bossWeakDamage, #bossBurstBonus",
+    )
+    .forEach((el) => el.addEventListener("input", previews));
+  $("editPlayerName")?.addEventListener("click", () => {
+    editingName = true;
+    identityView();
+    nameInput?.focus();
+  });
+  $("makeRecoveryCode")?.addEventListener("click", async (event) => {
+    const el = event.currentTarget;
+    el.disabled = true;
+    try {
+      const { response, value } = await request("/play/api/recovery-code", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrf },
+      });
+      if (!response.ok)
+        throw new Error(value.error || "Could not create a recovery code.");
+      apply(value);
+      $("recoveryCode").value = value.code;
+      $("recoveryCodeBox").hidden = false;
+      text(
+        "recoveryResult",
+        "Save this code somewhere private. It is only shown here.",
+      );
+    } catch (e) {
+      text("recoveryResult", e.message);
+    } finally {
+      el.disabled = false;
+    }
+  });
+  $("downloadRecovery")?.addEventListener("click", () => {
+    const blob = new Blob(
+      [
+        "RedHunllef player recovery code\nKeep private. Paste into Player recovery at /play.\n\n" +
+          $("recoveryCode").value +
+          "\n",
+      ],
+      { type: "text/plain;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob),
+      link = document.createElement("a");
+    link.href = url;
+    link.download = "redhunllef-player-recovery.txt";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  $("recoverPlayerForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const el = event.currentTarget.querySelector("button");
+    el.disabled = true;
+    try {
+      const { response, value } = await request("/play/api/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+        body: JSON.stringify({
+          raid_id: state.raid_id,
+          code: $("recoveryInput").value.trim(),
+        }),
+      });
+      if (!response.ok) throw new Error(value.error || "Recovery failed.");
+      remember(null);
+      editingName = false;
+      nameDirty = false;
+      apply(value);
+      $("recoveryInput").value = "";
+      text(
+        "recoveryResult",
+        "Player restored. Your hits, badges and cooldown were kept.",
+      );
+    } catch (e) {
+      text("recoveryResult", e.message);
+    } finally {
+      el.disabled = false;
+    }
+  });
   function achievements() {
     const milestones = state.milestones || [],
       achieved = milestones.filter((m) => m.reached);
@@ -337,12 +652,20 @@
       state.you.badges || [],
       "Land a hit to earn your first badge.",
       (b) => {
-        const li = item(b.label, b.description, b.earned ? "Earned" : "Locked");
+        const li = item(
+          b.label,
+          b.description,
+          b.earned ? "Earned" : `${b.progress || 0} / ${b.target || 1}`,
+        );
         li.classList.toggle("earned", b.earned);
         return li;
       },
     );
     text("yourActiveDays", state.you.active_days || 0);
+    text(
+      "badgeCount",
+      `${(state.you.badges || []).filter((b) => b.earned).length} / 8`,
+    );
     if (admin) return;
     const key = "rh.boss.achievements";
     try {
@@ -433,7 +756,7 @@
     }
   }
   function tick() {
-    if (!state) return;
+    if (!state || authExpired) return;
     const seconds = now(),
       stale = performance.now() - lastGood > 15000;
     text(
@@ -445,9 +768,16 @@
     text(
       "raidReset",
       state.resets_at
-        ? `Next raid day in ${duration(state.resets_at - seconds)}. Allowance refreshes then.`
+        ? `Next raid day in ${duration(state.resets_at - seconds)}.`
         : "The first community hit starts the 24-hour raid-day schedule.",
     );
+    if (!stale)
+      text(
+        "bossConnection",
+        `Live · Last checked ${Math.max(0, Math.floor((performance.now() - lastGood) / 1000))}s ago`,
+      );
+    else
+      text("bossConnection", "Reconnecting · Showing the last confirmed state");
     if (!button) return;
     const active = ["waiting", "active"].includes(state.status);
     // An unacknowledged click can be retried even if its first delivery caused
@@ -456,11 +786,11 @@
     const ready =
       active &&
       state.connection_ready &&
-      state.you.remaining > 0 &&
+      state.you.identity_ready &&
       seconds >= state.you.ready_at &&
       !stale &&
       !busy;
-    button.disabled = !(retry || ready);
+    button.disabled = !(armed && (retry || ready));
     button.textContent = busy
       ? "Landing your hit…"
       : stale
@@ -473,28 +803,37 @@
               ? "Raid paused"
               : !state.connection_ready
                 ? "Connection setup needed"
-                : !state.you.remaining
-                  ? "Rest up · Return next raid day"
+                : !state.you.identity_ready
+                  ? "Save your username to play"
                   : seconds < state.you.ready_at
                     ? `Next strike in ${duration(state.you.ready_at - seconds)}`
-                    : `Attack with ${labels[selected]} →`;
+                    : !armed
+                      ? inputMode === "keyboard"
+                        ? "Release the key to re-arm"
+                        : "Move off the button to re-arm"
+                      : `Attack with ${labels[selected]} →`;
     text(
       "attackHint",
       pending
         ? "Last strike unconfirmed. Retry safely; it won’t count twice."
         : state.status === "victory"
           ? "You helped write this chapter. The host can open the next raid."
-          : !state.you.remaining
-            ? "Daily allowance used by this browser or shared connection."
+          : !state.you.identity_ready
+            ? "Save your username for this connection."
             : `One strike every ${state.rules.cooldown}s · ${selected === state.weakness ? state.rules.weak_damage : state.rules.damage} damage${state.you.burst_in === 1 ? " + " + state.rules.burst_bonus + " burst" : ""}`,
     );
     if (dockButton) {
       dockButton.disabled = button.disabled;
       dockButton.textContent = button.textContent;
     }
+    text("dockRemaining", `${state.rules.cooldown}s cooldown · Unlimited hits`);
     text(
-      "dockRemaining",
-      `${state.you.remaining} / ${state.rules.daily_attacks} attacks left`,
+      "rearmHint",
+      !armed
+        ? inputMode === "keyboard"
+          ? "Release Enter or Space before your next hit."
+          : "Move your pointer off the attack button before your next hit."
+        : "",
     );
     if (stale)
       text("bossConnection", "Reconnecting · Showing the last confirmed state");
@@ -521,25 +860,55 @@
   }
   async function poll() {
     clearTimeout(timer);
-    if (document.hidden || polling) return;
+    if (document.hidden || polling || authExpired) return;
     polling = true;
     try {
-      const { response, value } = await request("/play/api/state");
-      if (!response.ok)
+      const { response, value } = await request(
+        admin ? "/admin/boss/status" : "/play/api/state",
+      );
+      if (!response.ok) {
+        if (admin && response.status === 401) {
+          authExpired = true;
+          rows(
+            "adminBossLeaders",
+            [],
+            "Sign in again to see private names.",
+            () => null,
+          );
+          for (const id of [
+            "bossAdminHistory",
+            "householdList",
+            "bossAbuseFlags",
+          ])
+            rows(id, [], "Sign in again to view this information.", () => null);
+          root.querySelectorAll("form button, form input").forEach((el) => {
+            el.disabled = true;
+          });
+          text("bossConnection", "Session expired · Sign in again");
+          clearTimeout(timer);
+          polling = false;
+          return;
+        }
         throw new Error(value.error || "The raid is temporarily unavailable.");
+      }
       apply(value);
     } catch (_) {
       text("bossConnection", "Reconnecting · Your saved damage is safe");
       tick();
     } finally {
       polling = false;
-      if (!document.hidden)
+      if (!document.hidden && !authExpired)
         timer = setTimeout(poll, (state?.rules.poll_seconds || 5) * 1000);
     }
   }
   function choose(style) {
     if (!labels[style]) return;
     selected = style;
+    try {
+      localStorage.setItem("rh.boss.style", style);
+    } catch (_) {
+      /* storage is optional */
+    }
     root
       .querySelectorAll("[data-style]")
       .forEach((b) =>
@@ -556,7 +925,83 @@
   $("dockStyle")?.addEventListener("change", (event) =>
     choose(event.target.value),
   );
-  dockButton?.addEventListener("click", () => button?.click());
+  function rearm() {
+    armed = true;
+    lockedButton = null;
+    tick();
+  }
+  for (const control of [button, dockButton].filter(Boolean)) {
+    control.addEventListener("pointerdown", (event) => {
+      inputMode = event.pointerType || "mouse";
+    });
+    control.addEventListener("pointerleave", () => {
+      if (lockedButton === control && inputMode !== "keyboard") rearm();
+    });
+    control.addEventListener("keydown", (event) => {
+      if (!["Enter", " "].includes(event.key)) return;
+      if (event.repeat) {
+        event.preventDefault();
+        return;
+      }
+      inputMode = "keyboard";
+      keyHeld = true;
+    });
+    // Mouse click latches until the pointer leaves. Touch taps naturally leave
+    // the surface on release. Keyboard users must release their activation key.
+    control.addEventListener("click", (event) => {
+      void attack(event, control);
+    });
+  }
+  document.addEventListener("keyup", (event) => {
+    if (["Enter", " "].includes(event.key)) {
+      keyHeld = false;
+      if (inputMode === "keyboard") rearm();
+    }
+  });
+  document.addEventListener("pointermove", (event) => {
+    if (
+      armed ||
+      !lockedButton ||
+      inputMode === "keyboard" ||
+      event.pointerType === "touch"
+    )
+      return;
+    const r = lockedButton.getBoundingClientRect();
+    if (
+      event.clientX < r.left ||
+      event.clientX > r.right ||
+      event.clientY < r.top ||
+      event.clientY > r.bottom
+    )
+      rearm();
+  });
+  // A name is saved by the server, never trusted from attack JSON or a URL.
+  $("playerNameForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitted = nameInput.value;
+    const save = event.currentTarget.querySelector("button");
+    save.disabled = true;
+    try {
+      const { response, value } = await request("/play/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+        body: JSON.stringify({ raid_id: state.raid_id, username: submitted }),
+      });
+      if (!response.ok)
+        throw new Error(value.error || "Your username could not be saved.");
+      if (nameInput.value === submitted) nameDirty = false;
+      editingName = false;
+      apply(value);
+      text(
+        "playerNameResult",
+        "Saved · Admins can see your full submitted name.",
+      );
+    } catch (e) {
+      text("playerNameResult", e.message);
+    } finally {
+      save.disabled = false;
+    }
+  });
   $("dismissBossError")?.addEventListener("click", () => error());
   $("dismissMilestone")?.addEventListener("click", () => {
     $("milestoneBanner").hidden = true;
@@ -577,56 +1022,60 @@
       text("shareResult", "Select and copy your raid link.");
     }
   });
-  if (button)
-    button.addEventListener("click", async () => {
-      if (busy || button.disabled) return;
-      if (!pending) {
-        const bytes = new Uint8Array(16);
-        crypto.getRandomValues(bytes);
-        remember({
-          request_id: Array.from(bytes, (b) =>
-            b.toString(16).padStart(2, "0"),
-          ).join(""),
-          raid_id: state.raid_id,
-          style: selected,
-          name: state.you.name,
-        });
+  async function attack(event, control) {
+    if (busy || control.disabled || !armed) return;
+    armed = false;
+    lockedButton = control;
+    // Touch click follows pointer-up; no held pointer remains on the button.
+    if (inputMode === "touch" || (inputMode === "keyboard" && !keyHeld))
+      rearm();
+    if (!pending) {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      remember({
+        request_id: Array.from(bytes, (b) =>
+          b.toString(16).padStart(2, "0"),
+        ).join(""),
+        raid_id: state.raid_id,
+        style: selected,
+        name: state.you.name,
+      });
+    }
+    const receipt = pending.request_id;
+    busy = true;
+    error();
+    tick();
+    try {
+      const { response, value } = await request("/play/api/attack", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+        body: JSON.stringify({
+          request_id: pending.request_id,
+          raid_id: pending.raid_id,
+          style: pending.style,
+        }),
+      });
+      if (value.state) apply(value);
+      if (!response.ok) {
+        // A definitive rejection did not land. A 5xx may have happened after
+        // commit, so retain its receipt until a state check resolves it.
+        if (response.status < 500) remember(null);
+        throw new Error(value.error || "The strike could not be confirmed.");
       }
-      const receipt = pending.request_id;
-      busy = true;
-      error();
+      strikeFeedback(value.hit, receipt);
+      remember(null);
+    } catch (e) {
+      error(
+        e.name === "AbortError"
+          ? "The connection timed out. Your hit may have landed. Retry the same strike safely."
+          : e.message,
+      );
+    } finally {
+      busy = false;
       tick();
-      try {
-        const { response, value } = await request("/play/api/attack", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-          body: JSON.stringify({
-            request_id: pending.request_id,
-            raid_id: pending.raid_id,
-            style: pending.style,
-          }),
-        });
-        if (value.state) apply(value);
-        if (!response.ok) {
-          // A definitive rejection did not land. A 5xx may have happened after
-          // commit, so retain its receipt until a state check resolves it.
-          if (response.status < 500) remember(null);
-          throw new Error(value.error || "The strike could not be confirmed.");
-        }
-        strikeFeedback(value.hit, receipt);
-        remember(null);
-      } catch (e) {
-        error(
-          e.name === "AbortError"
-            ? "The connection timed out. Your hit may have landed. Retry the same strike safely."
-            : e.message,
-        );
-      } finally {
-        busy = false;
-        tick();
-        void poll();
-      }
-    });
+      void poll();
+    }
+  }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) clearTimeout(timer);
     else void poll();
@@ -634,9 +1083,10 @@
   window.addEventListener("online", () => void poll());
   try {
     apply(JSON.parse(root.dataset.bossBootstrap));
+    choose(labels[selected] ? selected : "blade");
   } catch (_) {
     error("Reload to reconnect to the raid.");
   }
-  if (!admin) setInterval(tick, 1000);
+  setInterval(tick, 1000);
   void poll();
 })();
