@@ -287,14 +287,13 @@ class CommunityBoss:
         with self.lock:
             with self.store.connection(transaction=True) as conn:
                 state = self._read(conn, locked=True)
-                if raid_id != state['id']:
-                    raise BossError('Another raid started. Refresh before saving your name.', 'new_raid', 409)
+                # A name belongs to the persistent player, not one raid. A host
+                # restart between page load and Save must not reject the name.
                 previous = copy.deepcopy(state)
                 pk = _key(state, 'player', guest)
                 profiles = state.setdefault('profiles', {})
-                for key, profile in profiles.items():
-                    if key != pk and profile['name'].casefold() == name.casefold():
-                        raise BossError('That username is already registered. Use your recovery code or original browser.', 'name_claimed', 409)
+                # Names are self-reported labels, never recovery credentials.
+                # Reusing a label creates no link to another player's record.
                 own = profiles.get(pk)
                 if own and own['name'] == name:
                     self.state, self.loaded_at = state, time.monotonic()

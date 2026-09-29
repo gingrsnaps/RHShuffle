@@ -141,10 +141,9 @@ class PlayerAccessTests(unittest.TestCase):
     def test_name_collision_does_not_give_access_to_someone_elses_profile(self):
         a = self.player('ReservedName'); self.hit(a)
         b = self.player()
-        self.assertEqual(self.post(b, '/play/api/profile', username='reservedname').status_code, 409)
-        self.assertEqual(self.hit(b).status_code, 409)
+        self.assertEqual(self.post(b, '/play/api/profile', username='reservedname').status_code, 200)
+        self.assertEqual(b.get('/play/api/state').json['state']['you']['damage'], 0)
         self.assertNotIn('ReservedName', b.get('/play/api/state').text)
-        self.assertEqual(self.post(b, '/play/api/profile', username='OwnName').status_code, 200)
         self.assertEqual(self.hit(b).status_code, 200)
         self.assertNotEqual(a.get('/play/api/state').json['state']['you']['name'], b.get('/play/api/state').json['state']['you']['name'])
 

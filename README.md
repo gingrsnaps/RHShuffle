@@ -1,9 +1,42 @@
 # RedHunllef
 
-Release **2026.09.29-player-access**. This is the complete configured application.
+Release **2026.09.29-username-save**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
+
+## Username save repair
+
+The previous save could be rejected after the separate page/admin session expired,
+even though the persistent player cookie was still valid. The form also lacked a
+native POST action, so a missing JavaScript handler reloaded the page without saving.
+Finally, a display name left in an older profile could block a returning player.
+
+- Game writes now use a CSRF token bound to the signed player cookie. Expiring,
+  logging into or logging out of admin does not invalidate the game form. Admin
+  writes still require their authenticated session and separate CSRF token.
+- Save works through both the live interface and a regular server form. A successful
+  save shows **Playing as…** and a visible confirmation. The regular form redirects
+  back to the game without putting the username in the URL.
+- Errors retain the draft and show the reason. A failed live save offers **Save with
+  page reload**. The interface never reports success without a confirmed saved name.
+- Display names are labels, not login credentials. A name can be reused by a new
+  browser, but that never grants another player's stats, badges or recovery code.
+  To restore your existing stats after losing cookies, use your private recovery code.
+- A host starting a new raid while the name form is open no longer blocks saving.
+- Player records, recovery codes, boss health, damage, admin accounts and original
+  integration credentials remain intact. No new dependency or separate launcher.
+
+After updating, restart the app and reload `/play`. `/healthz` should show release
+**2026.09.29-username-save**. If it shows something else, the old application is
+still serving requests. Do not clear your player cookie or delete `data/`.
+
+For a hosted installation, open the normal **HTTPS** website directly. Cookies are
+specific to the browser and hostname; changing between localhost, an IP address,
+the App Platform hostname and your custom domain does not share a player cookie.
+Local testing should use `http://localhost:8080` with `APP_ENV=local` and
+`SESSION_COOKIE_SECURE=auto`; keep `SESSION_COOKIE_SECURE=always` for hosted HTTPS.
+If cookies are blocked, the app now says so instead of claiming a successful save.
 
 ## Boss access repair
 
@@ -212,7 +245,7 @@ neither renames a player nor gives an extra hit. Old connection/household record
 are accepted when reading existing saves but are no longer admission rules.
 
 A cookie identifies a browser, not a verified person. Clearing cookies or using a
-new browser can create a different identity with a different name; the game does
+new browser can create a different identity, including the same display name; the game does
 not claim to prevent every multi-account bot. It retains server cooldowns,
 idempotent receipts, per-browser request throttles and admin-only controls. Names
 remain self-reported; a Shuffle spelling match is not ownership verification.
@@ -281,12 +314,16 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-The release passed 132 backend tests and 57 DOM/interface checks. Coverage includes
+Validation covers 141 backend tests and 61 DOM/HTTP interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
 validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
 cooldowns, migration, atomic-write failures and simultaneous writers. New regression
 checks include 100 concurrent players sharing one proxy, absent IP headers, changing
-addresses, names retained after restart, and delayed browser responses.
+addresses, names retained after restart, expired page sessions, native form saves,
+duplicate-name isolation, visible save failures and delayed browser responses.
+The HTTP interface test loads both shipped scripts and uses a real Waitress server
+and cookie jar; the username endpoint is not mocked. It saves a name, reloads the
+page, lands an attack and checks a second independent player with the same label.
 
 No live Shuffle/Kick request or DigitalOcean deployment was performed during these
 checks. Provider tests use synthetic responses; native browser visual rendering was
@@ -300,3 +337,7 @@ python tests/render_fixtures.py .test-fixtures
 npm --prefix tests install --ignore-scripts
 npm --prefix tests test
 ```
+
+The HTTP interface test runs `python` by default. If your test environment uses a
+different interpreter, set `RH_TEST_PYTHON` to that interpreter's executable path.
+Node is used only by developer tests; it is not a deployment dependency.

@@ -1,5 +1,5 @@
 {
-  "release": "2026.09.29-player-access",
+  "release": "2026.09.29-username-save",
   "packaging": "complete",
   "entry_point": "python wager_backend.py",
   "storage": "local JSON (automatic)",
@@ -33,24 +33,24 @@
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 3461,
-      "sha256": "b4a8b2a2f81a5a8b01575bc822f8c608fb40163cc8683dce9d6607048139d034"
+      "bytes": 4400,
+      "sha256": "0ab51fa35df2a3239f725c246141be021efb356afb41b3dcfefaa95e6e3ac9b7"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 5471,
-      "sha256": "d37cf69420cd17a394c463f8a76a4daeedf20f6c85f33fdb3fdbf05c27664616"
+      "bytes": 5812,
+      "sha256": "c2bd196acc6a4c0bcb30d73a858333b01ce7f1fc8878f9ea01c80c2340c8a4a8"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 17122,
-      "sha256": "e37c83e4906edc07b1331a9a9cff9ce65c09cb7949d31df2bd10776e7e0391dd"
+      "bytes": 19931,
+      "sha256": "8c4a8eaadc14fd4c8b993da215b3990e3d7718c15ccfcd031feeb3670ee880b6"
     },
     "START_HERE.md": {
-      "bytes": 2545,
-      "sha256": "a0a0370e54e9a97c22e8ae8431c1712b2ec2bca31b2651d0f44ed92cdc64b6ce"
+      "bytes": 2931,
+      "sha256": "2b970512faa77d208861472f26dcecf892aa56ed60ae312850b033039ea02fca"
     },
     "abuse_guard.py": {
       "bytes": 2063,
@@ -61,8 +61,8 @@
       "sha256": "1a57629c19f2f3a294691d2fd6b74d5355f4311c10201858598058093bfc878b"
     },
     "boss.py": {
-      "bytes": 37554,
-      "sha256": "fca3fcc7162e711cf907dbb9f474cd6ec9f3cac9e0d1be71c3add50aeba9e48b"
+      "bytes": 37432,
+      "sha256": "58eab511232b84e146fdce54099c611e35a12fd97d1daa835dd3d0f918bfb253"
     },
     "boss_avatar.py": {
       "bytes": 3708,
@@ -73,24 +73,24 @@
       "sha256": "dd7e5464f9e63c5afd9ffd6e1897318bcbdcf368028adf547c3ac4c150020a8d"
     },
     "boss_progress.py": {
-      "bytes": 5234,
-      "sha256": "509a8f5b6537588a639123112f869f26fcecab5473e3f9d31c347d26cf5be419"
+      "bytes": 5327,
+      "sha256": "8eee0a96219866030d0b6a2b83d73a1fd01dcfbacd697e1238fbf26d6a7c9d40"
     },
     "config.py": {
       "bytes": 5327,
-      "sha256": "954572a23e7e92018f6ca5c88f7538ebdad999907116df4a145ecd81588547fa"
+      "sha256": "d91f73c050c399ff6d474e62c8cab76219948c73e3c2e32727f5999f66b349f3"
     },
     "docs/COMMUNITY_BOSS.md": {
-      "bytes": 4032,
-      "sha256": "6aa8fc79d99cd0a41988d94e3273a195c29d14c47bb859d4cc4b8b950e685ae2"
+      "bytes": 4535,
+      "sha256": "2126e1a83b493691e7ec484a22800bba154d1c2d3bcf5ed4dd1e394045b9f7fe"
     },
     "docs/COMMUNITY_UPDATE.md": {
       "bytes": 2025,
       "sha256": "0acf9ed9d50e9701a7877d6b8447fab8c16d90dea1b5a837d2b5c5cc5e69cbd7"
     },
     "docs/VALIDATION.md": {
-      "bytes": 3438,
-      "sha256": "8953867170ca619f9c7376902ed14388cce42e71a5784345aa0f8c5d337b54c4"
+      "bytes": 3960,
+      "sha256": "f3f8abf16f88af2254b3f01e2f06e0366635108466bd7f59519f79edd3f1fc2c"
     },
     "integrations.py": {
       "bytes": 7041,
@@ -129,16 +129,16 @@
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 26877,
-      "sha256": "38c0a28989d21f17bea731fcb15910531bac2ce64e104bb149c69b6e9cc87a0b"
+      "bytes": 26945,
+      "sha256": "d435568ba340273c9eada95c051017f41243765575e80f05dce0491818ef20d7"
     },
     "static/boss.css": {
       "bytes": 22172,
       "sha256": "48902dc3cbada39b92b6b4cff8bfb319437302c094aff9cfc2253a82760486fc"
     },
     "static/boss.js": {
-      "bytes": 38037,
-      "sha256": "8738eaf6f0092918ea4d273d5792750c1da84ceda81084f845c7dabe20e737c4"
+      "bytes": 39563,
+      "sha256": "0867b453b51bd0487434e9cb1cc678740a395fab905cc227e518d195a791031d"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -185,12 +185,12 @@
       "sha256": "eac3e3a11afe3a41e8f25c6b138a9f33ace38e782759407a90ca5ce493ae0aa0"
     },
     "templates/base.html": {
-      "bytes": 2129,
-      "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
+      "bytes": 2158,
+      "sha256": "9d2172b68923fe1fe0787811556246e56fda5cf71e3d59fbb64e2217bc4ecbae"
     },
     "templates/boss.html": {
-      "bytes": 9362,
-      "sha256": "ae7445b6e8c03de01198b92cf509568f37cad82cdabba2156fecefa5abd5b044"
+      "bytes": 10402,
+      "sha256": "a4a4f9b8f3c6c4c6717a4a859ca613807b4c682f9ffda3c1f4f6e778ba72fd1d"
     },
     "templates/change_review.html": {
       "bytes": 690,
@@ -228,6 +228,10 @@
       "bytes": 3264,
       "sha256": "aa767480ff5952bd49ddcd5ca84b734ea89d33b8def2957c407c6ba2cad5179e"
     },
+    "tests/serve_game_fixture.py": {
+      "bytes": 759,
+      "sha256": "1ddbd387a1d7fa5092076f8827b62f71b1799517e5c80fb4d233fca9e8f28a8b"
+    },
     "tests/test_app.py": {
       "bytes": 41139,
       "sha256": "da032a0e70ec5bc238adde670312e45439fe03839b33384e50d61f22fd72aa62"
@@ -241,8 +245,8 @@
       "sha256": "0135081f79b247dd4c9e8a582e948715f2ea9a854aeb1adcba1cf49707e6e59a"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 30379,
-      "sha256": "68280f0dd5e99a69c7e732e33cdd3425cb8150d9838400b5eddd86c37b356f5b"
+      "bytes": 33195,
+      "sha256": "9662742be50b98df0ebd34bdd706a5440ce9775fc0d2a33668879b8823dae2db"
     },
     "tests/test_comfort_update.py": {
       "bytes": 14098,
@@ -257,16 +261,24 @@
       "sha256": "9c586be46edbac59571842f55b16adb604173c0d5537f079924adaf369d051da"
     },
     "tests/test_player_access.py": {
-      "bytes": 8262,
-      "sha256": "c4a13b8b93882dcd9c89b730be450dc37995efbfb23ffd01d623f91cd06592cc"
+      "bytes": 8195,
+      "sha256": "cf09039e1421a3e617ed88ab8ebdd97442b0840f2162ce16692631e52b0cfe8d"
     },
     "tests/test_raid_update.py": {
-      "bytes": 12891,
-      "sha256": "ba4fa7f9396e2c9539b42e2ffba7e1b567b95efa8010d845b3c27e593213a3b2"
+      "bytes": 13075,
+      "sha256": "28f7572c090f2912d032e8234dc42460a971f29c24811a3a93f28081d27d260c"
+    },
+    "tests/test_username_http.cjs": {
+      "bytes": 7689,
+      "sha256": "47599de85165895411693ebfec3eb27fac05e4a04c93adbe3c4f626ba08c9fb3"
+    },
+    "tests/test_username_save.py": {
+      "bytes": 8152,
+      "sha256": "d5146dff2ea6d3950bf31d3f983d5adf755a96665671ed1ed00b9a440ab103d4"
     },
     "wager_backend.py": {
-      "bytes": 47402,
-      "sha256": "dc0f4b3e8270a72a78edf2232c67ae8b76ab66396b7c09c003004f79f6734a9c"
+      "bytes": 49890,
+      "sha256": "f05fca24819c54b23bc7816bffe94cd81142a6bba380a22e343a37a9fe3ea829"
     }
   }
 }

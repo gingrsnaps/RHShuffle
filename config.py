@@ -5,7 +5,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.29-player-access"
+RELEASE = "2026.09.29-username-save"
 INTERVAL = 60
 
 

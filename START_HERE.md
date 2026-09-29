@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.09.29-player-access** — complete configured package.
+Release **2026.09.29-username-save** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -49,3 +49,9 @@ uploads/name/HP/damage controls remain intact.
 
 Read `README.md` for migration/deployment details and `FULL_CODE_BLOCKS.md` for the
 complete source in individual code blocks.
+
+This release also repairs the username form itself: page-session expiry no longer
+blocks a valid player, Save has a native server fallback, and stale name reservations
+cannot lock out a new browser. Name reuse does not recover another player's stats.
+After restarting, reload `/play` and confirm `/healthz` reports
+`2026.09.29-username-save`. Keep your current cookies and save files.

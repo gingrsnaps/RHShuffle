@@ -1,6 +1,6 @@
 # RedHunllef — complete configured code
 
-Release **2026.09.29-player-access**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
+Release **2026.09.29-username-save**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
 
 Run only `python wager_backend.py`. Keep all supporting files together and preserve existing `data/` and private configuration when updating. The eight achievements are unchanged; hits remain unlimited per day/week with a 30-second cooldown. No external SQL or backup service is required.
 
@@ -69,6 +69,22 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
+# Changes — 2026.09.29-username-save
+
+- Reproduced and fixed a rejected name save when the page session expired while
+  the signed player cookie remained valid. Game CSRF is now bound to that player.
+- Added a complete native POST form and POST/redirect/GET confirmation.
+- Kept typed drafts on errors; added visible confirmation and a full-page fallback.
+- Stop false success responses and duplicate in-flight form submissions.
+- Allow reuse of display labels without reading, merging or replacing another player.
+- Save names independently of raid IDs; a host restart cannot invalidate a name form.
+- Added actual HTTP/cookie/script integration tests plus permission and persistence checks.
+- Read the release from rendered page metadata so upgrades do not leave a stale
+  hardcoded version warning in the public/admin JavaScript.
+- No data reset, dependency, SQL service, hit quota or extra launch script added.
+
+## Previous release
+
 # Changes — 2026.09.29-player-access
 
 ## Fixed community access and username persistence
@@ -139,7 +155,7 @@ See README for local-file lifetime on DigitalOcean App Platform.
 ```markdown
 # Complete file structure
 
-Release **2026.09.29-player-access**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.09.29-username-save**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -195,6 +211,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `templates/recovery_panel.html` | Rendered page or shared template. |
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |
 | `tests/test_app.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss_admin.py` | Developer test/fixture support; not needed to launch the website. |
@@ -204,6 +221,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_username_http.cjs` | Both shipped scripts against real HTTP and a cookie jar; no mocked username save. |
+| `tests/test_username_save.py` | Native saves, expired page sessions, browser ownership, recovery, and admin isolation. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
 
 The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
@@ -222,10 +241,43 @@ web: python wager_backend.py
 ````markdown
 # RedHunllef
 
-Release **2026.09.29-player-access**. This is the complete configured application.
+Release **2026.09.29-username-save**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
+
+## Username save repair
+
+The previous save could be rejected after the separate page/admin session expired,
+even though the persistent player cookie was still valid. The form also lacked a
+native POST action, so a missing JavaScript handler reloaded the page without saving.
+Finally, a display name left in an older profile could block a returning player.
+
+- Game writes now use a CSRF token bound to the signed player cookie. Expiring,
+  logging into or logging out of admin does not invalidate the game form. Admin
+  writes still require their authenticated session and separate CSRF token.
+- Save works through both the live interface and a regular server form. A successful
+  save shows **Playing as…** and a visible confirmation. The regular form redirects
+  back to the game without putting the username in the URL.
+- Errors retain the draft and show the reason. A failed live save offers **Save with
+  page reload**. The interface never reports success without a confirmed saved name.
+- Display names are labels, not login credentials. A name can be reused by a new
+  browser, but that never grants another player's stats, badges or recovery code.
+  To restore your existing stats after losing cookies, use your private recovery code.
+- A host starting a new raid while the name form is open no longer blocks saving.
+- Player records, recovery codes, boss health, damage, admin accounts and original
+  integration credentials remain intact. No new dependency or separate launcher.
+
+After updating, restart the app and reload `/play`. `/healthz` should show release
+**2026.09.29-username-save**. If it shows something else, the old application is
+still serving requests. Do not clear your player cookie or delete `data/`.
+
+For a hosted installation, open the normal **HTTPS** website directly. Cookies are
+specific to the browser and hostname; changing between localhost, an IP address,
+the App Platform hostname and your custom domain does not share a player cookie.
+Local testing should use `http://localhost:8080` with `APP_ENV=local` and
+`SESSION_COOKIE_SECURE=auto`; keep `SESSION_COOKIE_SECURE=always` for hosted HTTPS.
+If cookies are blocked, the app now says so instead of claiming a successful save.
 
 ## Boss access repair
 
@@ -434,7 +486,7 @@ neither renames a player nor gives an extra hit. Old connection/household record
 are accepted when reading existing saves but are no longer admission rules.
 
 A cookie identifies a browser, not a verified person. Clearing cookies or using a
-new browser can create a different identity with a different name; the game does
+new browser can create a different identity, including the same display name; the game does
 not claim to prevent every multi-account bot. It retains server cooldowns,
 idempotent receipts, per-browser request throttles and admin-only controls. Names
 remain self-reported; a Shuffle spelling match is not ownership verification.
@@ -503,12 +555,16 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-The release passed 132 backend tests and 57 DOM/interface checks. Coverage includes
+Validation covers 141 backend tests and 61 DOM/HTTP interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
 validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
 cooldowns, migration, atomic-write failures and simultaneous writers. New regression
 checks include 100 concurrent players sharing one proxy, absent IP headers, changing
-addresses, names retained after restart, and delayed browser responses.
+addresses, names retained after restart, expired page sessions, native form saves,
+duplicate-name isolation, visible save failures and delayed browser responses.
+The HTTP interface test loads both shipped scripts and uses a real Waitress server
+and cookie jar; the username endpoint is not mocked. It saves a name, reloads the
+page, lands an attack and checks a second independent player with the same label.
 
 No live Shuffle/Kick request or DigitalOcean deployment was performed during these
 checks. Provider tests use synthetic responses; native browser visual rendering was
@@ -522,6 +578,10 @@ python tests/render_fixtures.py .test-fixtures
 npm --prefix tests install --ignore-scripts
 npm --prefix tests test
 ```
+
+The HTTP interface test runs `python` by default. If your test environment uses a
+different interpreter, set `RH_TEST_PYTHON` to that interpreter's executable path.
+Node is used only by developer tests; it is not a deployment dependency.
 ````
 
 ## START_HERE.md
@@ -529,7 +589,7 @@ npm --prefix tests test
 ````markdown
 # Start RedHunllef
 
-Release **2026.09.29-player-access** — complete configured package.
+Release **2026.09.29-username-save** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -578,6 +638,12 @@ uploads/name/HP/damage controls remain intact.
 
 Read `README.md` for migration/deployment details and `FULL_CODE_BLOCKS.md` for the
 complete source in individual code blocks.
+
+This release also repairs the username form itself: page-session expiry no longer
+blocks a valid player, Save has a native server fallback, and stale name reservations
+cannot lock out a new browser. Name reuse does not recover another player's stats.
+After restarting, reload `/play` and confirm `/healthz` reports
+`2026.09.29-username-save`. Keep your current cookies and save files.
 ````
 
 ## abuse_guard.py
@@ -988,14 +1054,13 @@ class CommunityBoss:
         with self.lock:
             with self.store.connection(transaction=True) as conn:
                 state = self._read(conn, locked=True)
-                if raid_id != state['id']:
-                    raise BossError('Another raid started. Refresh before saving your name.', 'new_raid', 409)
+                # A name belongs to the persistent player, not one raid. A host
+                # restart between page load and Save must not reject the name.
                 previous = copy.deepcopy(state)
                 pk = _key(state, 'player', guest)
                 profiles = state.setdefault('profiles', {})
-                for key, profile in profiles.items():
-                    if key != pk and profile['name'].casefold() == name.casefold():
-                        raise BossError('That username is already registered. Use your recovery code or original browser.', 'name_claimed', 409)
+                # Names are self-reported labels, never recovery credentials.
+                # Reusing a label creates no link to another player's record.
                 own = profiles.get(pk)
                 if own and own['name'] == name:
                     self.state, self.loaded_at = state, time.monotonic()
@@ -1490,7 +1555,10 @@ STYLES = ('blade', 'bow', 'magic')
 
 
 def username(value):
-    if not isinstance(value, str) or not 1 <= len(value.strip()) <= 64 or not value.isprintable():
+    if not isinstance(value, str):
+        raise ValueError('Enter a username of 1–64 printable characters.')
+    value = value.strip()
+    if not 1 <= len(value) <= 64 or not value.isprintable():
         raise ValueError('Enter a username of 1–64 printable characters.')
     return value.strip()
 
@@ -1537,7 +1605,6 @@ def badges(player, now=0):
 def validate_profiles(profiles, limit, households=None):
     if not isinstance(profiles, dict) or len(profiles) > limit:
         raise ValueError('Invalid community player profiles.')
-    names = set()
     # Network/household fields are accepted for recovery compatibility only.
     # Multiple independent profiles may have the same legacy network value.
     for key, p in profiles.items():
@@ -1547,9 +1614,8 @@ def validate_profiles(profiles, limit, households=None):
         network = p.get('network')
         if not isinstance(network, str) or not re.fullmatch(r'[a-f0-9]{64}', network):
             raise ValueError('Invalid private connection identifier.')
-        if name.casefold() in names:
-            raise ValueError('Duplicate community username.')
-        names.add(name.casefold())
+        # Duplicate display labels are safe: identity, stats and recovery use
+        # the signed browser's hashed key, never a submitted name.
         if 'recovery_hash' in p and (not isinstance(p['recovery_hash'], str) or not re.fullmatch(r'[a-f0-9]{64}', p['recovery_hash'])):
             raise ValueError('Invalid private recovery digest.')
         if 'recovery_at' in p and (type(p['recovery_at']) not in (int, float) or not 0 <= p['recovery_at'] <= 10**12):
@@ -1583,7 +1649,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.29-player-access"
+RELEASE = "2026.09.29-username-save"
 INTERVAL = 60
 
 
@@ -1689,8 +1755,9 @@ block registration, recovery or attacks. No household approval or raid reset is
 needed. Old network records are retained for compatibility, not used for admission.
 
 A browser identity is not proof of a unique human; cookie deletion can create a
-new player. Existing names cannot be claimed just by typing them. Use the original
-browser or a valid recovery code to restore an existing profile.
+new player. Display labels can be reused, but typing a name never restores or
+claims another profile. Use the original browser or a valid recovery code to restore
+existing stats. Each duplicate label has its own public raider alias and cooldown.
 
 A private recovery code restores the original identity after cookie loss. The
 server stores a digest; the code is shown once when created. A replacement revokes
@@ -1725,6 +1792,12 @@ launch script remains `wager_backend.py`.
 App Platform replaces local files on redeploy/container replacement. Use the
 existing manual private recovery export before a planned redeployment; progress
 after the latest export can still be lost. No external backup service was added.
+
+Username forms submit to `/play/profile` using ordinary POST if JavaScript does not
+intercept them. The live interface uses `/play/api/profile`. Both call the same
+validation and atomic save. Public game writes accept a player-bound CSRF token;
+the separate admin session and its CSRF checks remain mandatory for admin changes.
+Neither a lost admin session nor a newly started raid prevents a name save.
 ```
 
 ## docs/COMMUNITY_UPDATE.md
@@ -1761,18 +1834,25 @@ not require resetting the boss. Identity fields never come from arbitrary IP hea
 ## docs/VALIDATION.md
 
 ```markdown
-# Validation — 2026.09.29-player-access
+# Validation — 2026.09.29-username-save
 
-All **132 backend tests** were validated across the suite and targeted reruns.
-The initial suite passed 130; two assertions that expected the retired shared-IP
-restriction were updated to test per-player cooldowns and passed on rerun. **57 DOM/interface checks**
-passed, including the new shared-proxy, saved-name and delayed-response regressions.
+**141 backend tests** validated: the full run passed 140; its one remaining assertion
+expected duplicate display names to be rejected. That assertion was changed to
+verify independent identities and unchanged original damage, then passed on rerun.
+**61 DOM/HTTP interface checks** passed in a single final run.
+
+New coverage includes both shipped browser scripts talking to a real Waitress
+server through a cookie jar: save after page-session loss, reload, attack, a second
+player with the same name, and a real native form POST without JavaScript. Server
+tests also cover cold restart, invalid cookie/CSRF rejection, preservation of drafts,
+admin token separation, a raid restart during name entry and recovery-token rotation.
+The real HTTP transport does not stub the username endpoint or its JSON responses.
 
 | Area | Verified behavior |
 | --- | --- |
 | JSON saves | Fresh startup, retained accounts, cold restart, corrupt-file refusal, failed atomic replacement rollback, two simultaneous store instances retaining every hit. |
 | Names | Retained after IP/header changes, refresh, application restart and new raid. Cookie is not silently replaced on reload. Recovery can share a network with another active player. |
-| Isolation | One browser flooding rejected registrations does not stop other browsers on the same IP. Name collisions cannot claim another player. |
+| Isolation | One browser flooding rejected registrations does not stop other browsers on the same IP. Duplicate labels stay independent and cannot claim another player. |
 | Migration | Previous SQLite accounts/revision/live snapshot/raid imported exactly; old file unchanged; no SQLite created on a fresh install. |
 | Recovery codes | Authenticated owner issuance, CSRF rejection, forgery and replaced-code rejection, digest-only storage, original alias/hits/badges/receipt/cooldown retained. |
 | Community access | 100 concurrent browser identities register and attack through one proxy IP, then each attacks again after 30 seconds. No approvals. Same-identity simultaneous clicks still allow only one hit. |
@@ -1791,7 +1871,7 @@ Validation uses synthetic provider responses and disposable local saves. It did
 not contact the live Shuffle/Kick accounts or deploy to DigitalOcean. This Linux
 workspace ran Python 3.12; Windows/Python 3.14 was not executed natively. An encoding
 regression test simulates the earlier Windows text-decoding failure. Browser checks
-use rendered templates in jsdom; native Chromium was unavailable, so no new native
+use rendered templates in jsdom, including the real HTTP integration; native Chromium was unavailable, so no new native
 visual-rendering claim is made.
 
 The extracted ZIP startup checks and package integrity results are recorded during
@@ -3774,7 +3854,11 @@ python-3.13.12
       const result = await getJSON(url);
       apply(result, began);
       notice("networkError", "");
-      if (result.release && result.release !== "2026.09.29-player-access")
+      if (
+        result.release &&
+        document.body.dataset.release &&
+        result.release !== document.body.dataset.release
+      )
         notice(
           "networkError",
           "A newer version was deployed. Save your draft, then reload.",
@@ -5112,13 +5196,14 @@ python-3.13.12
       el.setAttribute("aria-label", number(value));
     }
   }
-  let editingName = false;
+  let editingName = root.dataset.editName === "1",
+    savingName = false;
   let labels = {};
   let armed = true,
     lockedButton = null,
     inputMode = "mouse",
     keyHeld = false,
-    nameDirty = false;
+    nameDirty = editingName;
   const nameInput = $("playerUsername");
   nameInput?.addEventListener("input", () => {
     nameDirty = true;
@@ -5315,7 +5400,13 @@ python-3.13.12
       throw new Error(
         "Boss progress moved backwards; retaining the last confirmed state.",
       );
-    if (value.csrf) csrf = value.csrf;
+    if (value.player_csrf && !admin) csrf = value.player_csrf;
+    else if (value.csrf) csrf = value.csrf;
+    const nameForm = $("playerNameForm");
+    if (nameForm && csrf) {
+      nameForm.elements.namedItem("csrf").value = csrf;
+      nameForm.elements.namedItem("raid_id").value = next.raid_id;
+    }
     state = next;
     labels = state.rules.styles;
     text("bossName", state.name || "Crimson Hunllef");
@@ -5645,7 +5736,8 @@ python-3.13.12
       "#bossMaxHealth, #bossRemainingHealth, #bossBaseDamage, #bossWeakDamage, #bossBurstBonus",
     )
     .forEach((el) => el.addEventListener("input", previews));
-  $("editPlayerName")?.addEventListener("click", () => {
+  $("editPlayerName")?.addEventListener("click", (event) => {
+    event.preventDefault();
     editingName = true;
     identityView();
     nameInput?.focus();
@@ -6076,29 +6168,59 @@ python-3.13.12
   });
   // A name is saved by the server, never trusted from attack JSON or a URL.
   $("playerNameForm")?.addEventListener("submit", async (event) => {
+    // The HTML POST is a complete fallback when scripts/bootstrap/network fail.
+    // Never intercept it until the game has a usable state and CSRF token.
+    if (!state || !csrf || event.submitter?.id === "saveNamePage") return;
     event.preventDefault();
+    if (savingName) return;
     const submitted = nameInput.value;
-    const save = event.currentTarget.querySelector("button");
+    const form = event.currentTarget,
+      save = form.querySelector("button"),
+      label = save.textContent;
+    savingName = true;
     save.disabled = true;
+    save.textContent = "Saving…";
+    form.setAttribute("aria-busy", "true");
+    text("playerNameResult", "Saving your username…");
+    $("saveNamePage").hidden = true;
     try {
       const { response, value } = await request("/play/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
         body: JSON.stringify({ raid_id: state.raid_id, username: submitted }),
       });
-      if (!response.ok)
+      if (!response.ok || value.ok === false)
         throw new Error(value.error || "Your username could not be saved.");
-      if (nameInput.value === submitted) nameDirty = false;
-      editingName = false;
+      if (
+        !value.state?.you?.identity_ready ||
+        value.state.you.display_name !== submitted.trim()
+      )
+        throw new Error(
+          "The server did not confirm your username. Your draft is still here; try Save with page reload.",
+        );
+      nameDirty = nameInput.value !== submitted;
+      editingName = nameDirty;
       apply(value);
       text(
         "playerNameResult",
-        "Saved · Admins can see your full submitted name.",
+        "Saved. Playing as " + value.state.you.display_name + ".",
       );
     } catch (e) {
-      text("playerNameResult", e.message);
+      editingName = true;
+      nameDirty = true;
+      identityView();
+      text(
+        "playerNameResult",
+        e.name === "AbortError"
+          ? "Save timed out. Your name may already be saved; retry safely or use Save with page reload."
+          : e.message,
+      );
+      $("saveNamePage").hidden = false;
     } finally {
+      savingName = false;
       save.disabled = false;
+      save.textContent = label;
+      form.removeAttribute("aria-busy");
     }
   });
   $("dismissBossError")?.addEventListener("click", () => error());
@@ -8545,7 +8667,7 @@ def upgrade_store(value, defaults, health_defaults):
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
 <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}">
 <link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}</head>
-<body {% block attributes %}{% endblock %}>
+<body data-release="{{ release }}" {% block attributes %}{% endblock %}>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="shell header-inner"><a class="brand" href="/"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="36" height="36"><span><span data-site-text="site_name">{{ data.site.site_name if data is defined else 'RedHunllef' }}</span><span class="brand-sub">THE COMMUNITY RACE</span></span></a>
 <nav aria-label="Main navigation">{% block navigation %}<a href="/#leaderboard">Leaderboard</a><a class="play-nav" href="/play">Boss fight</a><a class="community-nav" data-site-text="community_name" data-site-link="community_url" href="{{ data.site.community_url }}" {% if not data.site.community_url %}hidden{% endif %} target="_blank" rel="noopener">{{ data.site.community_name }}</a><a class="button small" data-site-link="stream_url" href="{{ data.site.stream_url }}" target="_blank" rel="noopener">Watch on Kick <span aria-hidden="true">↗</span></a>{% endblock %}</nav></div></header>
@@ -8574,7 +8696,8 @@ def upgrade_store(value, defaults, health_defaults):
 
 {% block content %}
 <main id="main" class="shell boss-page" data-boss-root
-      data-boss-bootstrap="{{ {'state': boss_data, 'csrf': csrf()} | tojson | forceescape }}">
+      data-edit-name="{{ '1' if name_error or request.args.get('edit_name') == '1' else '0' }}"
+      data-boss-bootstrap="{{ {'state': boss_data, 'csrf': csrf(), 'player_csrf': player_csrf} | tojson | forceescape }}">
   <div class="boss-live">
     <span id="bossConnection" role="status">Connecting…</span>
     <div class="share-tools">
@@ -8656,17 +8779,22 @@ def upgrade_store(value, defaults, health_defaults):
       <div class="burst-meter" id="burstMeter" aria-hidden="true">
         {% for n in range(boss_data.rules.burst_every) %}<span></span>{% endfor %}
       </div>
-      <div id="playerIdentity" class="player-identity" hidden>
-        <span>Playing as <strong id="playingAs"></strong></span>
-        <button id="editPlayerName" type="button" class="text-button">Edit</button>
+      <div id="playerIdentity" class="player-identity" {% if not boss_data.you.identity_ready or name_error or request.args.get('edit_name') == '1' %}hidden{% endif %}>
+        <span>Playing as <strong id="playingAs">{{ boss_data.you.display_name }}</strong></span>
+        <a id="editPlayerName" href="{{ url_for('play', edit_name='1', _anchor='yourTurn') }}" class="text-button">Edit</a>
       </div>
-      <form id="playerNameForm" class="player-name-form">
+      <form id="playerNameForm" class="player-name-form" method="post" action="{{ url_for('boss_profile_form') }}"
+            {% if boss_data.you.identity_ready and not name_error and request.args.get('edit_name') != '1' %}hidden{% endif %}>
+        <input type="hidden" name="csrf" value="{{ player_csrf }}">
+        <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
         <label for="playerUsername">Community / Shuffle username</label>
-        <div class="player-name-row"><input id="playerUsername" name="username" maxlength="64" required
-          autocomplete="username" value="{{ boss_data.you.display_name }}"><button class="button small" type="submit">Save</button></div>
+        <div class="player-name-row"><input id="playerUsername" name="username" type="text" maxlength="64" required
+          autocomplete="username" spellcheck="false" value="{{ name_draft if name_draft is defined else boss_data.you.display_name }}"
+          aria-describedby="playerNameResult"><button class="button small" type="submit">Save</button></div>
         <small class="muted">Your name stays on this browser. Other players see only your raider alias.</small>
-        <span id="playerNameResult" class="small" role="status"></span>
+        <button id="saveNamePage" class="text-button" type="submit" hidden>Save with page reload</button>
       </form>
+      <p id="playerNameResult" class="small" role="status" aria-live="polite">{% if name_error %}{{ name_error }}{% elif request.args.get('saved') == '1' and boss_data.you.identity_ready %}Saved. Playing as {{ boss_data.you.display_name }}.{% endif %}</p>
       <details id="profileRecovery" class="profile-recovery">
         <summary>Player recovery</summary>
         <div id="recoveryOwner" hidden>
@@ -8910,6 +9038,34 @@ def render(destination):
 
 if __name__ == "__main__":
     render(Path(sys.argv[1]))
+```
+
+## tests/serve_game_fixture.py
+
+```python
+"""Isolated HTTP fixture for DOM integration tests; never starts provider jobs."""
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from wager_backend import create_app
+from waitress import create_server
+
+with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {
+    'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'fixture-only',
+    'SESSION_COOKIE_SECURE':'never',
+}, clear=True):
+    app = create_app(Path(folder), testing=True)
+    server = create_server(app, host='127.0.0.1', port=0, threads=6)
+    print(json.dumps({'port':server.effective_port}), flush=True)
+    try:
+        server.run()
+    finally:
+        server.close()
 ```
 
 ## tests/test_app.py
@@ -10484,7 +10640,10 @@ test("attack sends only server-validated inputs and renders countdown", async ()
   ]);
   assert.equal(sent.style, "bow");
   const post = p.calls.find((c) => c.options.method === "POST");
-  assert.equal(post.options.headers["X-CSRF-Token"], p.value.csrf);
+  assert.equal(
+    post.options.headers["X-CSRF-Token"],
+    p.value.player_csrf || p.value.csrf,
+  );
   assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
   assert.match(p.w.document.querySelector("#attackButton").textContent, /0:30/);
   assert.match(p.w.document.querySelector("#hitResult").textContent, /150/);
@@ -11264,6 +11423,86 @@ test("player writes briefly disable attacks without clearing a saved identity", 
   finish();
   await flush();
   assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
+
+test("rejected name stays editable with a visible message and native fallback", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#editPlayerName").click();
+  const input = doc.querySelector("#playerUsername");
+  input.value = "Keep this draft";
+  input.dispatchEvent(new p.w.Event("input"));
+  p.respond(async (url) =>
+    url.endsWith("/profile")
+      ? response({ ok: false, error: "Save unavailable; please retry." }, 503)
+      : response(p.value),
+  );
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  await p.advance(5000);
+  assert.equal(input.value, "Keep this draft");
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.match(
+    doc.querySelector("#playerNameResult").textContent,
+    /Save unavailable/,
+  );
+  assert.equal(doc.querySelector("#saveNamePage").hidden, false);
+  assert.equal(doc.querySelector("#playerNameForm").method, "post");
+  assert.ok(
+    doc.querySelector("#playerNameForm").action.endsWith("/play/profile"),
+  );
+  p.close();
+});
+
+test("an HTTP 200 without the saved name cannot display a false success", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "Unconfirmed";
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.match(
+    doc.querySelector("#playerNameResult").textContent,
+    /did not confirm/,
+  );
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.equal(doc.querySelector("#playerUsername").value, "Unconfirmed");
+  p.close();
+});
+
+test("repeated save submits one write and its success remains visible", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    form = doc.querySelector("#playerNameForm");
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "Save Once";
+  let finish;
+  p.respond(
+    async () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  form.dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  form.dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(p.calls.filter((c) => c.url.endsWith("/profile")).length, 1);
+  p.value.state.you.display_name = "Save Once";
+  p.value.state.version++;
+  finish(response(p.value));
+  await flush();
+  assert.equal(form.hidden, true);
+  const notice = doc.querySelector("#playerNameResult");
+  assert.equal(form.contains(notice), false);
+  assert.match(notice.textContent, /Saved\. Playing as Save Once/);
   p.close();
 });
 ```
@@ -12115,10 +12354,9 @@ class PlayerAccessTests(unittest.TestCase):
     def test_name_collision_does_not_give_access_to_someone_elses_profile(self):
         a = self.player('ReservedName'); self.hit(a)
         b = self.player()
-        self.assertEqual(self.post(b, '/play/api/profile', username='reservedname').status_code, 409)
-        self.assertEqual(self.hit(b).status_code, 409)
+        self.assertEqual(self.post(b, '/play/api/profile', username='reservedname').status_code, 200)
+        self.assertEqual(b.get('/play/api/state').json['state']['you']['damage'], 0)
         self.assertNotIn('ReservedName', b.get('/play/api/state').text)
-        self.assertEqual(self.post(b, '/play/api/profile', username='OwnName').status_code, 200)
         self.assertEqual(self.hit(b).status_code, 200)
         self.assertNotEqual(a.get('/play/api/state').json['state']['you']['name'], b.get('/play/api/state').json['state']['you']['name'])
 
@@ -12201,8 +12439,10 @@ class RaidUpdateTests(unittest.TestCase):
         self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
         self.assertTrue(a.get('/play/api/state').json['state']['you']['identity_ready'])
         self.assertEqual(self.attack(a).status_code, 200)
-        self.assertEqual(self.name(b, 'Alice').status_code, 409)
-        self.assertEqual(self.name(b, 'Bob').status_code, 200)
+        self.assertEqual(self.name(b, 'Alice').status_code, 200)
+        # Reusing a display label never inherits the first player's damage.
+        self.assertEqual(b.get('/play/api/state').json['state']['you']['damage'], 0)
+        self.assertEqual(a.get('/play/api/state').json['state']['you']['attacks'], 2)
 
     def test_profile_forgery_cannot_change_another_player_or_game_settings(self):
         a, _ = self.client(name='Alice'); b, _ = self.client('192.0.2.2')
@@ -12363,6 +12603,387 @@ class RaidUpdateTests(unittest.TestCase):
 if __name__ == '__main__': unittest.main()
 ```
 
+## tests/test_username_http.cjs
+
+```javascript
+/* Real page + both shipped scripts + HTTP + cookie jar. No mocked save API. */
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const path = require("node:path");
+const { spawn } = require("node:child_process");
+const { once } = require("node:events");
+const { JSDOM, CookieJar, VirtualConsole } = require("jsdom");
+
+async function until(check, description) {
+  const deadline = Date.now() + 7000;
+  while (Date.now() < deadline) {
+    if (await check()) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error("Timed out: " + description);
+}
+
+test("username saves through the actual website and persists with real cookies", async (t) => {
+  const python = process.env.RH_TEST_PYTHON || "python";
+  const server = spawn(
+    python,
+    [path.join(__dirname, "serve_game_fixture.py")],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  let output = "",
+    errors = "",
+    processError;
+  const windows = new Set();
+  let pendingRequests = 0;
+  async function close(dom) {
+    if (!windows.has(dom)) return;
+    Object.defineProperty(dom.window.document, "hidden", {
+      value: true,
+      configurable: true,
+    });
+    dom.window.document.dispatchEvent(new dom.window.Event("visibilitychange"));
+    await until(
+      () => pendingRequests === 0,
+      "HTTP requests finish before tab close",
+    );
+    for (let i = 0; i < 4; i++)
+      await new Promise((resolve) => setImmediate(resolve));
+    dom.window.close();
+    windows.delete(dom);
+  }
+  server.stdout.on("data", (chunk) => (output += chunk));
+  server.stderr.on("data", (chunk) => (errors += chunk));
+  server.on("error", (error) => (processError = error));
+  t.after(async () => {
+    for (const dom of windows) await close(dom);
+    if (server.exitCode === null && !processError) {
+      const stopped = once(server, "exit");
+      server.kill();
+      await stopped;
+    }
+  });
+  await until(() => {
+    if (processError) throw processError;
+    if (server.exitCode !== null) throw new Error(errors);
+    return output.includes("\n");
+  }, "fixture starts");
+  const base = "http://127.0.0.1:" + JSON.parse(output.split("\n")[0]).port;
+
+  async function transport(jar, url, options = {}) {
+    const target = new URL(url, base).href;
+    const headers = new Headers(options.headers);
+    const cookie = jar.getCookieStringSync(target);
+    if (cookie) headers.set("Cookie", cookie);
+    pendingRequests++;
+    try {
+      const response = await fetch(target, {
+        ...options,
+        headers,
+        redirect: "manual",
+      });
+      for (const cookie of response.headers.getSetCookie())
+        jar.setCookieSync(cookie, target);
+      await response.clone().arrayBuffer();
+      return response;
+    } finally {
+      pendingRequests--;
+    }
+  }
+  async function page(jar, scripts = true) {
+    const faults = [];
+    const console = new VirtualConsole();
+    console.on("jsdomError", (error) => faults.push(error.message));
+    const dom = await JSDOM.fromURL(base + "/play", {
+      cookieJar: jar,
+      runScripts: scripts ? "dangerously" : "outside-only",
+      resources: scripts ? "usable" : undefined,
+      pretendToBeVisual: true,
+      virtualConsole: console,
+      beforeParse(window) {
+        // Undici requires its own AbortSignal class; this is transport glue,
+        // not a substitute for the real script, request, cookie jar or server.
+        window.AbortController = globalThis.AbortController;
+        window.AbortSignal = globalThis.AbortSignal;
+        window.fetch = (url, options) => transport(jar, url, options);
+      },
+    });
+    windows.add(dom);
+    if (scripts) {
+      await until(
+        () =>
+          dom.window.document
+            .querySelector("#bossConnection")
+            .textContent.startsWith("Live"),
+        "game scripts start",
+      );
+      assert.deepEqual(faults, []);
+    }
+    return { dom, w: dom.window, doc: dom.window.document, faults };
+  }
+  async function save(p, name) {
+    const input = p.doc.querySelector("#playerUsername");
+    input.value = name;
+    input.dispatchEvent(new p.w.Event("input", { bubbles: true }));
+    p.doc.querySelector("#playerNameForm button[type=submit]").click();
+    try {
+      await until(
+        () => p.doc.querySelector("#playerIdentity").hidden === false,
+        "saved player appears",
+      );
+    } catch (error) {
+      throw new Error(
+        error.message +
+          ": " +
+          JSON.stringify({
+            result: p.doc.querySelector("#playerNameResult").textContent,
+            game: p.doc.querySelector("#bossError").textContent,
+            input: input.value,
+            faults: p.faults,
+            server: errors,
+          }),
+      );
+    }
+    assert.equal(p.doc.querySelector("#playingAs").textContent, name);
+    assert.equal(p.doc.querySelector("#playerNameForm").hidden, true);
+    assert.match(p.doc.querySelector("#playerNameResult").textContent, /Saved/);
+    assert.equal(p.doc.querySelector("#attackButton").disabled, false);
+    assert.deepEqual(p.faults, []);
+  }
+
+  const jar = new CookieJar();
+  const first = await page(jar);
+  // The old release rejects this Save even though the year-long player cookie
+  // is valid. Keep the page open while the independent session is removed.
+  jar.setCookieSync("session=; Max-Age=0; Path=/", base);
+  await save(first, "HTTP Raider");
+  const state = await (await transport(jar, "/play/api/state")).json();
+  assert.equal(state.state.you.display_name, "HTTP Raider");
+  assert.equal(state.player_cookie_ready, true);
+  await close(first.dom);
+  const reload = await page(jar);
+  assert.equal(
+    reload.doc.querySelector("#playingAs").textContent,
+    "HTTP Raider",
+  );
+  assert.equal(reload.doc.querySelector("#playerNameForm").hidden, true);
+  assert.equal(reload.doc.querySelector("#attackButton").disabled, false);
+  reload.doc.querySelector("#attackButton").click();
+  await until(
+    () => reload.doc.querySelector("#yourAttacks").textContent === "1",
+    "saved player can attack",
+  );
+  const afterHit = await (await transport(jar, "/play/api/state")).json();
+  assert.equal(afterHit.state.you.display_name, "HTTP Raider");
+  assert.equal(afterHit.state.you.attacks, 1);
+  assert.equal(afterHit.state.you.can_attack, false);
+
+  // Same display label, same HTTP peer, independent identity and progress.
+  const otherJar = new CookieJar();
+  const other = await page(otherJar);
+  await save(other, "HTTP Raider");
+  const otherState = await (
+    await transport(otherJar, "/play/api/state")
+  ).json();
+  assert.notEqual(otherState.state.you.name, state.state.you.name);
+  assert.equal(otherState.state.you.damage, 0);
+
+  // Exercise the literal native form with no JS at all, including the redirect.
+  const nativeJar = new CookieJar();
+  const native = await page(nativeJar, false);
+  const form = native.doc.querySelector("#playerNameForm");
+  assert.equal(form.method, "post");
+  form.elements.namedItem("username").value = "Native HTTP Raider";
+  const fields = new URLSearchParams(new native.w.FormData(form));
+  nativeJar.setCookieSync("session=; Max-Age=0; Path=/", base);
+  const response = await transport(nativeJar, form.action, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: fields.toString(),
+  });
+  assert.equal(response.status, 303);
+  const confirmed = await page(nativeJar, false);
+  assert.equal(
+    confirmed.doc.querySelector("#playingAs").textContent,
+    "Native HTTP Raider",
+  );
+  assert.equal(confirmed.doc.querySelector("#playerIdentity").hidden, false);
+  assert.equal(confirmed.doc.querySelector("#playerNameForm").hidden, true);
+});
+```
+
+## tests/test_username_save.py
+
+```python
+"""Username form, cookie ownership and real persistence regressions."""
+from html.parser import HTMLParser
+import secrets
+import unittest
+
+import test_comfort_update as support
+from boss import validate_boss
+from wager_backend import create_app
+
+
+class NameForm(HTMLParser):
+    def __init__(self, html):
+        super().__init__()
+        self.active = False
+        self.attributes, self.fields = {}, {}
+        self.feed(html)
+
+    def handle_starttag(self, tag, attributes):
+        attrs = dict(attributes)
+        if tag == 'form':
+            self.active = attrs.get('id') == 'playerNameForm'
+            if self.active:
+                self.attributes = attrs
+        if self.active and tag == 'input' and 'name' in attrs:
+            self.fields[attrs['name']] = attrs.get('value', '')
+
+    def handle_endtag(self, tag):
+        if tag == 'form':
+            self.active = False
+
+
+class UsernameSaveTests(unittest.TestCase):
+    setUp = support.ComfortTests.setUp
+    player = support.ComfortTests.player
+    post = support.ComfortTests.post
+    hit = support.ComfortTests.hit
+
+    def save(self, client, value, name):
+        return client.post('/play/api/profile', json={
+            'username': name, 'raid_id': value['state']['raid_id'],
+        }, headers={'X-CSRF-Token': value['player_csrf']})
+
+    def test_actual_html_form_saves_without_javascript_and_survives_reload(self):
+        c = self.app.test_client()
+        form = NameForm(c.get('/play').text)
+        self.assertEqual(form.attributes['method'], 'post')
+        self.assertEqual(form.attributes['action'], '/play/profile')
+        cookie = c.get_cookie('rh_raider').value
+        # This is the browser's native form payload, not a separately invented API request.
+        response = c.post(form.attributes['action'], data={**form.fields, 'username': 'Native Raider'})
+        self.assertEqual(response.status_code, 303)
+        self.assertNotIn('Native', response.headers['Location'])
+        page = c.get(response.headers['Location'])
+        self.assertIn('Playing as <strong id="playingAs">Native Raider</strong>', page.text)
+        self.assertIn('hidden', NameForm(page.text).attributes)
+        self.assertEqual(c.get_cookie('rh_raider').value, cookie)
+        for _ in range(3):
+            self.assertEqual(c.get('/play/api/state').json['state']['you']['display_name'], 'Native Raider')
+        restarted = create_app(self.root, testing=True)
+        same = restarted.test_client()
+        same.set_cookie('rh_raider', cookie)
+        self.assertIn('Native Raider', same.get('/play').text)
+
+    def test_expired_page_session_cannot_break_valid_player_cookie(self):
+        c = self.player()
+        value = c.get('/play/api/state').json
+        cookie = c.get_cookie('rh_raider').value
+        c.delete_cookie('session')
+        self.assertEqual(self.save(c, value, 'Persistent Raider').status_code, 200)
+        c.delete_cookie('session')
+        hit = c.post('/play/api/attack', json={'raid_id': value['state']['raid_id'],
+            'style': 'blade', 'request_id': secrets.token_hex(16)},
+            headers={'X-CSRF-Token': value['player_csrf']})
+        self.assertEqual(hit.status_code, 200)
+        c.delete_cookie('session')
+        recovery = c.post('/play/api/recovery-code', headers={'X-CSRF-Token': value['player_csrf']})
+        self.assertEqual(recovery.status_code, 200)
+        self.assertEqual(c.get_cookie('rh_raider').value, cookie)
+
+    def test_login_rotation_keeps_player_token_but_player_token_cannot_edit_admin(self):
+        c = self.player()
+        value = c.get('/play/api/state').json
+        with c.session_transaction() as session:
+            session.update(user='gingrsnaps', auth_version=1, csrf='rotated-admin-token')
+        self.assertEqual(self.save(c, value, 'Same Browser').status_code, 200)
+        saved = self.b.export()
+        response = c.post('/admin/boss/action', data={'csrf': value['player_csrf'],
+            'action': 'pause', 'raid_id': value['state']['raid_id']})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.b.export(), saved)
+
+    def test_player_tokens_are_browser_bound_and_missing_cookies_are_explained(self):
+        a, b = self.player(), self.player()
+        value = a.get('/play/api/state').json
+        self.assertEqual(self.save(b, value, 'Forged').status_code, 400)
+        bad = {**value, 'player_csrf': '🔥'}
+        self.assertEqual(self.save(a, bad, 'Forged').status_code, 400)
+        a.delete_cookie('rh_raider')
+        response = self.save(a, value, 'Missing Cookie')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['code'], 'player_cookie_required')
+        self.assertIn('cookie', response.json['error'])
+        self.assertFalse(self.b.export().get('profiles'))
+
+    def test_native_failure_preserves_draft_and_returns_a_working_form(self):
+        c = self.player()
+        form = NameForm(c.get('/play').text)
+        response = c.post('/play/profile', data={**form.fields, 'username': 'Keep my draft', 'csrf': 'expired'})
+        self.assertEqual(response.status_code, 400)
+        repaired = NameForm(response.text)
+        self.assertEqual(repaired.fields['username'], 'Keep my draft')
+        self.assertEqual(repaired.attributes['method'], 'post')
+        self.assertNotIn('hidden', repaired.attributes)
+        self.assertEqual(c.post(repaired.attributes['action'], data=repaired.fields).status_code, 303)
+        value = c.get('/play/api/state').json
+        self.assertEqual(value['state']['you']['display_name'], 'Keep my draft')
+
+    def test_name_save_does_not_depend_on_the_raid_open_when_form_loaded(self):
+        c = self.player()
+        value = c.get('/play/api/state').json
+        self.b.control('restart', value['state']['raid_id'])
+        self.assertEqual(self.save(c, value, 'Next Raid Too').status_code, 200)
+        self.assertEqual(c.get('/play/api/state').json['state']['you']['display_name'], 'Next Raid Too')
+
+    def test_reusing_a_name_cannot_claim_or_change_another_players_progress(self):
+        a = self.player('Same Name')
+        self.hit(a)
+        code = self.post(a, '/play/api/recovery-code').json['code']
+        before = self.b.export()
+        b = self.player('Same Name')
+        av, bv = [c.get('/play/api/state').json['state']['you'] for c in (a, b)]
+        self.assertNotEqual(av['name'], bv['name'])
+        self.assertEqual(bv['damage'], 0)
+        self.assertFalse(bv['recovery_saved'])
+        self.assertTrue(av['recovery_saved'])
+        for key, profile in before['profiles'].items():
+            self.assertEqual(self.b.export()['profiles'][key], profile)
+        self.assertNotIn(code, b.get('/play/api/state').text)
+        self.assertEqual(self.hit(b).status_code, 200)
+        validate_boss(self.b.export())
+        restarted = create_app(self.root, testing=True)
+        self.assertEqual(len(restarted.extensions['boss'].export()['profiles']), 2)
+
+    def test_native_validation_is_escaped_and_does_not_erase_existing_name(self):
+        c = self.player('Existing')
+        form = NameForm(c.get('/play?edit_name=1').text)
+        value = ' <img src=x>\x01 '
+        response = c.post('/play/profile', data={**form.fields, 'username': value})
+        self.assertEqual(response.status_code, 422)
+        self.assertNotIn('<img src=x>', response.text)
+        self.assertIn('&lt;img src=x&gt;', response.text)
+        self.assertEqual(c.get('/play/api/state').json['state']['you']['display_name'], 'Existing')
+
+    def test_recovery_rotates_player_token_to_recovered_identity(self):
+        a = self.player('Owner'); self.hit(a)
+        code = self.post(a, '/play/api/recovery-code').json['code']
+        b = self.player('Other')
+        old = b.get('/play/api/state').json['player_csrf']
+        recovered = self.post(b, '/play/api/recover', code=code).json
+        self.assertNotEqual(recovered['player_csrf'], old)
+        self.assertEqual(self.save(b, recovered, 'Owner').status_code, 200)
+        self.assertEqual(self.save(b, {**recovered, 'player_csrf':old}, 'Other').status_code, 400)
+
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
 ## wager_backend.py
 
 ```python
@@ -12379,6 +13000,7 @@ from decimal import Decimal
 from functools import wraps
 import io
 import hashlib
+import hmac
 import ipaddress
 import json
 import logging
@@ -12391,7 +13013,7 @@ import time
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
 from itsdangerous import BadSignature, URLSafeSerializer, URLSafeTimedSerializer
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import BadRequest, HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
@@ -12470,8 +13092,11 @@ def create_app(root=None, testing=False):
             "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
-    def json_error(message, status):
-        return jsonify(ok=False, error=message, status=status, release=RELEASE), status
+    def json_error(message, status, code=None):
+        body = dict(ok=False, error=message, status=status, release=RELEASE)
+        if code:
+            body['code'] = code
+        return jsonify(body), status
 
     def require_csrf():
         expected = session.get('csrf')
@@ -12552,8 +13177,10 @@ def create_app(root=None, testing=False):
     @app.errorhandler(HTTPException)
     def page_error(error):
         LOG.warning("HTTP %s %s returned %s (%s).", request.method, request.endpoint or "unmatched route", error.code, error.name)
+        if request.endpoint in {'boss_profile', 'boss_profile_form'} and not wants_json():
+            return render_play(name_error=error.description, name_draft=request.form.get('username', '')[:64]), error.code
         if wants_json():
-            return json_error(error.description, error.code)
+            return json_error(error.description, error.code, getattr(error, 'problem_code', None))
         return render_template("error.html", title="Page unavailable" if error.code == 404 else "Request could not be completed",
                                message=error.description), error.code
 
@@ -12594,13 +13221,44 @@ def create_app(root=None, testing=False):
                 g.guest = g.new_guest = secrets.token_hex(16)
         return g.guest
 
+    def player_csrf():
+        """Bind game writes to the signed raider, independently of admin login.
+
+        The secret-bearing cookie stays HttpOnly. A different browser cannot
+        reuse this token, and expiring/logging out of admin does not break play.
+        """
+        secret = app.secret_key.encode() if isinstance(app.secret_key, str) else app.secret_key
+        return hmac.new(secret, ('boss-write-v1:' + guest()).encode(), hashlib.sha256).hexdigest()
+
+    def require_player_csrf():
+        guest()
+        if getattr(g, 'new_guest', None):
+            failure = BadRequest(description='Your browser did not return the player cookie. Open the game directly on its HTTPS site, allow site cookies, then reload. Use http://localhost:8080 for local testing.')
+            failure.problem_code = 'player_cookie_required'
+            raise failure
+        supplied = request.headers.get('X-CSRF-Token') or request.form.get('csrf', '')
+        if isinstance(supplied, str) and supplied.isascii() and hmac.compare_digest(supplied, player_csrf()):
+            return
+        # Previously open game pages remain compatible while the new assets load.
+        # Admin endpoints still accept only their authenticated session token.
+        try:
+            require_csrf()
+        except BadRequest as failure:
+            failure.problem_code = 'csrf_expired'
+            raise
+
+    def render_play(**values):
+        return render_template('boss.html', data=runtime.public(),
+                               boss_data=boss.status(guest(), g.client_ip), player_csrf=player_csrf(), **values)
+
     @app.get("/play")
     def play():
-        return render_template("boss.html", data=runtime.public(), boss_data=boss.status(guest(), g.client_ip))
+        return render_play()
 
     @app.get("/play/api/state")
     def boss_state():
-        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
+        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf(),
+                       player_csrf=player_csrf(), player_cookie_ready=not bool(getattr(g, 'new_guest', None)))
 
     def guard_key(identity, category):
         # Rejected requests belong to a signed browser, not every person behind
@@ -12617,26 +13275,22 @@ def create_app(root=None, testing=False):
 
     @app.post('/play/api/recovery-code')
     def boss_recovery_code():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None):
-            return json_error('Save your username before creating a recovery code.', 400)
         limited = throttled('registration', identity, '')
         if limited: return limited
         try:
             code = recovery_signer.dumps({'guest': identity, 'nonce': secrets.token_hex(16)})
             boss.save_recovery(identity, hashlib.sha256(code.encode()).hexdigest())
-            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf())
+            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf(), player_csrf=player_csrf())
         except BossError as exc:
             abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
             return json_error(str(exc), exc.status)
 
     @app.post('/play/api/recover')
     def boss_recover():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None):
-            return json_error('Enable cookies and reload before recovering.', 400)
         limited = throttled('recovery', identity, '')
         if limited: return limited
         body = request.get_json(silent=True) or {}
@@ -12650,33 +13304,46 @@ def create_app(root=None, testing=False):
                 raise BadSignature('Invalid recovery code')
             value = boss.recover_profile(original, g.client_ip, hashlib.sha256(code.encode()).hexdigest(), body.get('raid_id'))
             g.guest = g.new_guest = original
-            return jsonify(ok=True, state=value, csrf=csrf())
+            return jsonify(ok=True, state=value, csrf=csrf(), player_csrf=player_csrf())
         except (BadSignature, BossError) as exc:
             abuse.rejected('recovery', guard_key(identity, 'recovery'), 'Profile recovery')
             return json_error('That recovery code is invalid or was replaced.' if isinstance(exc, BadSignature) else str(exc),
                               getattr(exc, 'status', 400))
 
+    @app.post('/play/profile', endpoint='boss_profile_form')
     @app.post('/play/api/profile')
     def boss_profile():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None):
-            return json_error('Enable cookies and reload before saving your username.', 400)
+        native = not wants_json()
         limited = throttled('registration', identity, '')
-        if limited: return limited
-        body = request.get_json(silent=True)
+        if limited:
+            if not native:
+                return limited
+            response, status = limited
+            return render_play(name_error=response.get_json()['error'], name_draft=request.form.get('username', '')[:64]), status
+        body = request.form if native else request.get_json(silent=True)
+        if native:
+            body = body.to_dict()
         if not isinstance(body, dict):
             abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
             return json_error('Send a valid username request.', 400)
         try:
             view = boss.register(identity, g.client_ip, body.get('raid_id'), body.get('username'))
-            return jsonify(ok=True, state=view, csrf=csrf())
+            LOG.info('BOSS Player name saved; browser identity retained (%s).', RELEASE)
+            if native:
+                return redirect(url_for('play', saved='1', _anchor='yourTurn'), code=303)
+            return jsonify(ok=True, state=view, csrf=csrf(), player_csrf=player_csrf())
         except (ValueError, BossError) as exc:
             abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
-            response = jsonify(ok=False, error=str(exc), state=boss.status(identity, g.client_ip))
+            status = getattr(exc, 'status', 422)
+            LOG.warning('BOSS Player name rejected (%s); existing player was kept.', getattr(exc, 'code', 'invalid_name'))
+            if native:
+                return render_play(name_error=str(exc), name_draft=str(body.get('username', ''))[:64]), status
+            response = jsonify(ok=False, error=str(exc), code=getattr(exc, 'code', 'invalid_name'), state=boss.status(identity, g.client_ip))
             if getattr(exc, 'retry_after', 0):
                 response.headers['Retry-After'] = str(exc.retry_after)
-            return response, getattr(exc, 'status', 422)
+            return response, status
 
     def boss_admin_view():
         value = boss.admin_status()
@@ -12717,10 +13384,8 @@ def create_app(root=None, testing=False):
 
     @app.post("/play/api/attack")
     def boss_attack():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, "new_guest", None):
-            return json_error("Enable cookies and reload the game before attacking.", 400)
         body = request.get_json(silent=True)
         view = boss.status(identity, g.client_ip)
         valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)
@@ -13196,7 +13861,7 @@ if __name__ == "__main__":
 
 ```json
 {
-  "release": "2026.09.29-player-access",
+  "release": "2026.09.29-username-save",
   "packaging": "complete",
   "entry_point": "python wager_backend.py",
   "storage": "local JSON (automatic)",
@@ -13230,24 +13895,24 @@ if __name__ == "__main__":
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 3461,
-      "sha256": "b4a8b2a2f81a5a8b01575bc822f8c608fb40163cc8683dce9d6607048139d034"
+      "bytes": 4400,
+      "sha256": "0ab51fa35df2a3239f725c246141be021efb356afb41b3dcfefaa95e6e3ac9b7"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 5471,
-      "sha256": "d37cf69420cd17a394c463f8a76a4daeedf20f6c85f33fdb3fdbf05c27664616"
+      "bytes": 5812,
+      "sha256": "c2bd196acc6a4c0bcb30d73a858333b01ce7f1fc8878f9ea01c80c2340c8a4a8"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 17122,
-      "sha256": "e37c83e4906edc07b1331a9a9cff9ce65c09cb7949d31df2bd10776e7e0391dd"
+      "bytes": 19931,
+      "sha256": "8c4a8eaadc14fd4c8b993da215b3990e3d7718c15ccfcd031feeb3670ee880b6"
     },
     "START_HERE.md": {
-      "bytes": 2545,
-      "sha256": "a0a0370e54e9a97c22e8ae8431c1712b2ec2bca31b2651d0f44ed92cdc64b6ce"
+      "bytes": 2931,
+      "sha256": "2b970512faa77d208861472f26dcecf892aa56ed60ae312850b033039ea02fca"
     },
     "abuse_guard.py": {
       "bytes": 2063,
@@ -13258,8 +13923,8 @@ if __name__ == "__main__":
       "sha256": "1a57629c19f2f3a294691d2fd6b74d5355f4311c10201858598058093bfc878b"
     },
     "boss.py": {
-      "bytes": 37554,
-      "sha256": "fca3fcc7162e711cf907dbb9f474cd6ec9f3cac9e0d1be71c3add50aeba9e48b"
+      "bytes": 37432,
+      "sha256": "58eab511232b84e146fdce54099c611e35a12fd97d1daa835dd3d0f918bfb253"
     },
     "boss_avatar.py": {
       "bytes": 3708,
@@ -13270,24 +13935,24 @@ if __name__ == "__main__":
       "sha256": "dd7e5464f9e63c5afd9ffd6e1897318bcbdcf368028adf547c3ac4c150020a8d"
     },
     "boss_progress.py": {
-      "bytes": 5234,
-      "sha256": "509a8f5b6537588a639123112f869f26fcecab5473e3f9d31c347d26cf5be419"
+      "bytes": 5327,
+      "sha256": "8eee0a96219866030d0b6a2b83d73a1fd01dcfbacd697e1238fbf26d6a7c9d40"
     },
     "config.py": {
       "bytes": 5327,
-      "sha256": "954572a23e7e92018f6ca5c88f7538ebdad999907116df4a145ecd81588547fa"
+      "sha256": "d91f73c050c399ff6d474e62c8cab76219948c73e3c2e32727f5999f66b349f3"
     },
     "docs/COMMUNITY_BOSS.md": {
-      "bytes": 4032,
-      "sha256": "6aa8fc79d99cd0a41988d94e3273a195c29d14c47bb859d4cc4b8b950e685ae2"
+      "bytes": 4535,
+      "sha256": "2126e1a83b493691e7ec484a22800bba154d1c2d3bcf5ed4dd1e394045b9f7fe"
     },
     "docs/COMMUNITY_UPDATE.md": {
       "bytes": 2025,
       "sha256": "0acf9ed9d50e9701a7877d6b8447fab8c16d90dea1b5a837d2b5c5cc5e69cbd7"
     },
     "docs/VALIDATION.md": {
-      "bytes": 3438,
-      "sha256": "8953867170ca619f9c7376902ed14388cce42e71a5784345aa0f8c5d337b54c4"
+      "bytes": 3960,
+      "sha256": "f3f8abf16f88af2254b3f01e2f06e0366635108466bd7f59519f79edd3f1fc2c"
     },
     "integrations.py": {
       "bytes": 7041,
@@ -13326,16 +13991,16 @@ if __name__ == "__main__":
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 26877,
-      "sha256": "38c0a28989d21f17bea731fcb15910531bac2ce64e104bb149c69b6e9cc87a0b"
+      "bytes": 26945,
+      "sha256": "d435568ba340273c9eada95c051017f41243765575e80f05dce0491818ef20d7"
     },
     "static/boss.css": {
       "bytes": 22172,
       "sha256": "48902dc3cbada39b92b6b4cff8bfb319437302c094aff9cfc2253a82760486fc"
     },
     "static/boss.js": {
-      "bytes": 38037,
-      "sha256": "8738eaf6f0092918ea4d273d5792750c1da84ceda81084f845c7dabe20e737c4"
+      "bytes": 39563,
+      "sha256": "0867b453b51bd0487434e9cb1cc678740a395fab905cc227e518d195a791031d"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -13382,12 +14047,12 @@ if __name__ == "__main__":
       "sha256": "eac3e3a11afe3a41e8f25c6b138a9f33ace38e782759407a90ca5ce493ae0aa0"
     },
     "templates/base.html": {
-      "bytes": 2129,
-      "sha256": "7e11c5da247412157017d31b42f0a976658d011fb7ad55616c15a92538a895b9"
+      "bytes": 2158,
+      "sha256": "9d2172b68923fe1fe0787811556246e56fda5cf71e3d59fbb64e2217bc4ecbae"
     },
     "templates/boss.html": {
-      "bytes": 9362,
-      "sha256": "ae7445b6e8c03de01198b92cf509568f37cad82cdabba2156fecefa5abd5b044"
+      "bytes": 10402,
+      "sha256": "a4a4f9b8f3c6c4c6717a4a859ca613807b4c682f9ffda3c1f4f6e778ba72fd1d"
     },
     "templates/change_review.html": {
       "bytes": 690,
@@ -13425,6 +14090,10 @@ if __name__ == "__main__":
       "bytes": 3264,
       "sha256": "aa767480ff5952bd49ddcd5ca84b734ea89d33b8def2957c407c6ba2cad5179e"
     },
+    "tests/serve_game_fixture.py": {
+      "bytes": 759,
+      "sha256": "1ddbd387a1d7fa5092076f8827b62f71b1799517e5c80fb4d233fca9e8f28a8b"
+    },
     "tests/test_app.py": {
       "bytes": 41139,
       "sha256": "da032a0e70ec5bc238adde670312e45439fe03839b33384e50d61f22fd72aa62"
@@ -13438,8 +14107,8 @@ if __name__ == "__main__":
       "sha256": "0135081f79b247dd4c9e8a582e948715f2ea9a854aeb1adcba1cf49707e6e59a"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 30379,
-      "sha256": "68280f0dd5e99a69c7e732e33cdd3425cb8150d9838400b5eddd86c37b356f5b"
+      "bytes": 33195,
+      "sha256": "9662742be50b98df0ebd34bdd706a5440ce9775fc0d2a33668879b8823dae2db"
     },
     "tests/test_comfort_update.py": {
       "bytes": 14098,
@@ -13454,16 +14123,24 @@ if __name__ == "__main__":
       "sha256": "9c586be46edbac59571842f55b16adb604173c0d5537f079924adaf369d051da"
     },
     "tests/test_player_access.py": {
-      "bytes": 8262,
-      "sha256": "c4a13b8b93882dcd9c89b730be450dc37995efbfb23ffd01d623f91cd06592cc"
+      "bytes": 8195,
+      "sha256": "cf09039e1421a3e617ed88ab8ebdd97442b0840f2162ce16692631e52b0cfe8d"
     },
     "tests/test_raid_update.py": {
-      "bytes": 12891,
-      "sha256": "ba4fa7f9396e2c9539b42e2ffba7e1b567b95efa8010d845b3c27e593213a3b2"
+      "bytes": 13075,
+      "sha256": "28f7572c090f2912d032e8234dc42460a971f29c24811a3a93f28081d27d260c"
+    },
+    "tests/test_username_http.cjs": {
+      "bytes": 7689,
+      "sha256": "47599de85165895411693ebfec3eb27fac05e4a04c93adbe3c4f626ba08c9fb3"
+    },
+    "tests/test_username_save.py": {
+      "bytes": 8152,
+      "sha256": "d5146dff2ea6d3950bf31d3f983d5adf755a96665671ed1ed00b9a440ab103d4"
     },
     "wager_backend.py": {
-      "bytes": 47402,
-      "sha256": "dc0f4b3e8270a72a78edf2232c67ae8b76ab66396b7c09c003004f79f6734a9c"
+      "bytes": 49890,
+      "sha256": "f05fca24819c54b23bc7816bffe94cd81142a6bba380a22e343a37a9fe3ea829"
     }
   }
 }

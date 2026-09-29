@@ -1,3 +1,19 @@
+# Changes — 2026.09.29-username-save
+
+- Reproduced and fixed a rejected name save when the page session expired while
+  the signed player cookie remained valid. Game CSRF is now bound to that player.
+- Added a complete native POST form and POST/redirect/GET confirmation.
+- Kept typed drafts on errors; added visible confirmation and a full-page fallback.
+- Stop false success responses and duplicate in-flight form submissions.
+- Allow reuse of display labels without reading, merging or replacing another player.
+- Save names independently of raid IDs; a host restart cannot invalidate a name form.
+- Added actual HTTP/cookie/script integration tests plus permission and persistence checks.
+- Read the release from rendered page metadata so upgrades do not leave a stale
+  hardcoded version warning in the public/admin JavaScript.
+- No data reset, dependency, SQL service, hit quota or extra launch script added.
+
+## Previous release
+
 # Changes — 2026.09.29-player-access
 
 ## Fixed community access and username persistence

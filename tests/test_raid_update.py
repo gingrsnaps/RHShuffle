@@ -70,8 +70,10 @@ class RaidUpdateTests(unittest.TestCase):
         self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
         self.assertTrue(a.get('/play/api/state').json['state']['you']['identity_ready'])
         self.assertEqual(self.attack(a).status_code, 200)
-        self.assertEqual(self.name(b, 'Alice').status_code, 409)
-        self.assertEqual(self.name(b, 'Bob').status_code, 200)
+        self.assertEqual(self.name(b, 'Alice').status_code, 200)
+        # Reusing a display label never inherits the first player's damage.
+        self.assertEqual(b.get('/play/api/state').json['state']['you']['damage'], 0)
+        self.assertEqual(a.get('/play/api/state').json['state']['you']['attacks'], 2)
 
     def test_profile_forgery_cannot_change_another_player_or_game_settings(self):
         a, _ = self.client(name='Alice'); b, _ = self.client('192.0.2.2')

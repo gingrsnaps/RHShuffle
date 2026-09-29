@@ -27,8 +27,9 @@ block registration, recovery or attacks. No household approval or raid reset is
 needed. Old network records are retained for compatibility, not used for admission.
 
 A browser identity is not proof of a unique human; cookie deletion can create a
-new player. Existing names cannot be claimed just by typing them. Use the original
-browser or a valid recovery code to restore an existing profile.
+new player. Display labels can be reused, but typing a name never restores or
+claims another profile. Use the original browser or a valid recovery code to restore
+existing stats. Each duplicate label has its own public raider alias and cooldown.
 
 A private recovery code restores the original identity after cookie loss. The
 server stores a digest; the code is shown once when created. A replacement revokes
@@ -63,3 +64,9 @@ launch script remains `wager_backend.py`.
 App Platform replaces local files on redeploy/container replacement. Use the
 existing manual private recovery export before a planned redeployment; progress
 after the latest export can still be lost. No external backup service was added.
+
+Username forms submit to `/play/profile` using ordinary POST if JavaScript does not
+intercept them. The live interface uses `/play/api/profile`. Both call the same
+validation and atomic save. Public game writes accept a player-bound CSRF token;
+the separate admin session and its CSRF checks remain mandatory for admin changes.
+Neither a lost admin session nor a newly started raid prevents a name save.

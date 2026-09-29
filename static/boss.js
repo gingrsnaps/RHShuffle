@@ -24,13 +24,14 @@
       el.setAttribute("aria-label", number(value));
     }
   }
-  let editingName = false;
+  let editingName = root.dataset.editName === "1",
+    savingName = false;
   let labels = {};
   let armed = true,
     lockedButton = null,
     inputMode = "mouse",
     keyHeld = false,
-    nameDirty = false;
+    nameDirty = editingName;
   const nameInput = $("playerUsername");
   nameInput?.addEventListener("input", () => {
     nameDirty = true;
@@ -227,7 +228,13 @@
       throw new Error(
         "Boss progress moved backwards; retaining the last confirmed state.",
       );
-    if (value.csrf) csrf = value.csrf;
+    if (value.player_csrf && !admin) csrf = value.player_csrf;
+    else if (value.csrf) csrf = value.csrf;
+    const nameForm = $("playerNameForm");
+    if (nameForm && csrf) {
+      nameForm.elements.namedItem("csrf").value = csrf;
+      nameForm.elements.namedItem("raid_id").value = next.raid_id;
+    }
     state = next;
     labels = state.rules.styles;
     text("bossName", state.name || "Crimson Hunllef");
@@ -557,7 +564,8 @@
       "#bossMaxHealth, #bossRemainingHealth, #bossBaseDamage, #bossWeakDamage, #bossBurstBonus",
     )
     .forEach((el) => el.addEventListener("input", previews));
-  $("editPlayerName")?.addEventListener("click", () => {
+  $("editPlayerName")?.addEventListener("click", (event) => {
+    event.preventDefault();
     editingName = true;
     identityView();
     nameInput?.focus();
@@ -988,29 +996,59 @@
   });
   // A name is saved by the server, never trusted from attack JSON or a URL.
   $("playerNameForm")?.addEventListener("submit", async (event) => {
+    // The HTML POST is a complete fallback when scripts/bootstrap/network fail.
+    // Never intercept it until the game has a usable state and CSRF token.
+    if (!state || !csrf || event.submitter?.id === "saveNamePage") return;
     event.preventDefault();
+    if (savingName) return;
     const submitted = nameInput.value;
-    const save = event.currentTarget.querySelector("button");
+    const form = event.currentTarget,
+      save = form.querySelector("button"),
+      label = save.textContent;
+    savingName = true;
     save.disabled = true;
+    save.textContent = "Saving…";
+    form.setAttribute("aria-busy", "true");
+    text("playerNameResult", "Saving your username…");
+    $("saveNamePage").hidden = true;
     try {
       const { response, value } = await request("/play/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
         body: JSON.stringify({ raid_id: state.raid_id, username: submitted }),
       });
-      if (!response.ok)
+      if (!response.ok || value.ok === false)
         throw new Error(value.error || "Your username could not be saved.");
-      if (nameInput.value === submitted) nameDirty = false;
-      editingName = false;
+      if (
+        !value.state?.you?.identity_ready ||
+        value.state.you.display_name !== submitted.trim()
+      )
+        throw new Error(
+          "The server did not confirm your username. Your draft is still here; try Save with page reload.",
+        );
+      nameDirty = nameInput.value !== submitted;
+      editingName = nameDirty;
       apply(value);
       text(
         "playerNameResult",
-        "Saved · Admins can see your full submitted name.",
+        "Saved. Playing as " + value.state.you.display_name + ".",
       );
     } catch (e) {
-      text("playerNameResult", e.message);
+      editingName = true;
+      nameDirty = true;
+      identityView();
+      text(
+        "playerNameResult",
+        e.name === "AbortError"
+          ? "Save timed out. Your name may already be saved; retry safely or use Save with page reload."
+          : e.message,
+      );
+      $("saveNamePage").hidden = false;
     } finally {
+      savingName = false;
       save.disabled = false;
+      save.textContent = label;
+      form.removeAttribute("aria-busy");
     }
   });
   $("dismissBossError")?.addEventListener("click", () => error());

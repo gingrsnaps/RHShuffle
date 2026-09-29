@@ -12,7 +12,10 @@ STYLES = ('blade', 'bow', 'magic')
 
 
 def username(value):
-    if not isinstance(value, str) or not 1 <= len(value.strip()) <= 64 or not value.isprintable():
+    if not isinstance(value, str):
+        raise ValueError('Enter a username of 1–64 printable characters.')
+    value = value.strip()
+    if not 1 <= len(value) <= 64 or not value.isprintable():
         raise ValueError('Enter a username of 1–64 printable characters.')
     return value.strip()
 
@@ -59,7 +62,6 @@ def badges(player, now=0):
 def validate_profiles(profiles, limit, households=None):
     if not isinstance(profiles, dict) or len(profiles) > limit:
         raise ValueError('Invalid community player profiles.')
-    names = set()
     # Network/household fields are accepted for recovery compatibility only.
     # Multiple independent profiles may have the same legacy network value.
     for key, p in profiles.items():
@@ -69,9 +71,8 @@ def validate_profiles(profiles, limit, households=None):
         network = p.get('network')
         if not isinstance(network, str) or not re.fullmatch(r'[a-f0-9]{64}', network):
             raise ValueError('Invalid private connection identifier.')
-        if name.casefold() in names:
-            raise ValueError('Duplicate community username.')
-        names.add(name.casefold())
+        # Duplicate display labels are safe: identity, stats and recovery use
+        # the signed browser's hashed key, never a submitted name.
         if 'recovery_hash' in p and (not isinstance(p['recovery_hash'], str) or not re.fullmatch(r'[a-f0-9]{64}', p['recovery_hash'])):
             raise ValueError('Invalid private recovery digest.')
         if 'recovery_at' in p and (type(p['recovery_at']) not in (int, float) or not 0 <= p['recovery_at'] <= 10**12):

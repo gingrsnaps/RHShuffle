@@ -11,6 +11,7 @@ from decimal import Decimal
 from functools import wraps
 import io
 import hashlib
+import hmac
 import ipaddress
 import json
 import logging
@@ -23,7 +24,7 @@ import time
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask.sessions import SecureCookieSessionInterface
 from itsdangerous import BadSignature, URLSafeSerializer, URLSafeTimedSerializer
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import BadRequest, HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
@@ -102,8 +103,11 @@ def create_app(root=None, testing=False):
             "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
-    def json_error(message, status):
-        return jsonify(ok=False, error=message, status=status, release=RELEASE), status
+    def json_error(message, status, code=None):
+        body = dict(ok=False, error=message, status=status, release=RELEASE)
+        if code:
+            body['code'] = code
+        return jsonify(body), status
 
     def require_csrf():
         expected = session.get('csrf')
@@ -184,8 +188,10 @@ def create_app(root=None, testing=False):
     @app.errorhandler(HTTPException)
     def page_error(error):
         LOG.warning("HTTP %s %s returned %s (%s).", request.method, request.endpoint or "unmatched route", error.code, error.name)
+        if request.endpoint in {'boss_profile', 'boss_profile_form'} and not wants_json():
+            return render_play(name_error=error.description, name_draft=request.form.get('username', '')[:64]), error.code
         if wants_json():
-            return json_error(error.description, error.code)
+            return json_error(error.description, error.code, getattr(error, 'problem_code', None))
         return render_template("error.html", title="Page unavailable" if error.code == 404 else "Request could not be completed",
                                message=error.description), error.code
 
@@ -226,13 +232,44 @@ def create_app(root=None, testing=False):
                 g.guest = g.new_guest = secrets.token_hex(16)
         return g.guest
 
+    def player_csrf():
+        """Bind game writes to the signed raider, independently of admin login.
+
+        The secret-bearing cookie stays HttpOnly. A different browser cannot
+        reuse this token, and expiring/logging out of admin does not break play.
+        """
+        secret = app.secret_key.encode() if isinstance(app.secret_key, str) else app.secret_key
+        return hmac.new(secret, ('boss-write-v1:' + guest()).encode(), hashlib.sha256).hexdigest()
+
+    def require_player_csrf():
+        guest()
+        if getattr(g, 'new_guest', None):
+            failure = BadRequest(description='Your browser did not return the player cookie. Open the game directly on its HTTPS site, allow site cookies, then reload. Use http://localhost:8080 for local testing.')
+            failure.problem_code = 'player_cookie_required'
+            raise failure
+        supplied = request.headers.get('X-CSRF-Token') or request.form.get('csrf', '')
+        if isinstance(supplied, str) and supplied.isascii() and hmac.compare_digest(supplied, player_csrf()):
+            return
+        # Previously open game pages remain compatible while the new assets load.
+        # Admin endpoints still accept only their authenticated session token.
+        try:
+            require_csrf()
+        except BadRequest as failure:
+            failure.problem_code = 'csrf_expired'
+            raise
+
+    def render_play(**values):
+        return render_template('boss.html', data=runtime.public(),
+                               boss_data=boss.status(guest(), g.client_ip), player_csrf=player_csrf(), **values)
+
     @app.get("/play")
     def play():
-        return render_template("boss.html", data=runtime.public(), boss_data=boss.status(guest(), g.client_ip))
+        return render_play()
 
     @app.get("/play/api/state")
     def boss_state():
-        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf())
+        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf(),
+                       player_csrf=player_csrf(), player_cookie_ready=not bool(getattr(g, 'new_guest', None)))
 
     def guard_key(identity, category):
         # Rejected requests belong to a signed browser, not every person behind
@@ -249,26 +286,22 @@ def create_app(root=None, testing=False):
 
     @app.post('/play/api/recovery-code')
     def boss_recovery_code():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None):
-            return json_error('Save your username before creating a recovery code.', 400)
         limited = throttled('registration', identity, '')
         if limited: return limited
         try:
             code = recovery_signer.dumps({'guest': identity, 'nonce': secrets.token_hex(16)})
             boss.save_recovery(identity, hashlib.sha256(code.encode()).hexdigest())
-            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf())
+            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf(), player_csrf=player_csrf())
         except BossError as exc:
             abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
             return json_error(str(exc), exc.status)
 
     @app.post('/play/api/recover')
     def boss_recover():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None):
-            return json_error('Enable cookies and reload before recovering.', 400)
         limited = throttled('recovery', identity, '')
         if limited: return limited
         body = request.get_json(silent=True) or {}
@@ -282,33 +315,46 @@ def create_app(root=None, testing=False):
                 raise BadSignature('Invalid recovery code')
             value = boss.recover_profile(original, g.client_ip, hashlib.sha256(code.encode()).hexdigest(), body.get('raid_id'))
             g.guest = g.new_guest = original
-            return jsonify(ok=True, state=value, csrf=csrf())
+            return jsonify(ok=True, state=value, csrf=csrf(), player_csrf=player_csrf())
         except (BadSignature, BossError) as exc:
             abuse.rejected('recovery', guard_key(identity, 'recovery'), 'Profile recovery')
             return json_error('That recovery code is invalid or was replaced.' if isinstance(exc, BadSignature) else str(exc),
                               getattr(exc, 'status', 400))
 
+    @app.post('/play/profile', endpoint='boss_profile_form')
     @app.post('/play/api/profile')
     def boss_profile():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, 'new_guest', None):
-            return json_error('Enable cookies and reload before saving your username.', 400)
+        native = not wants_json()
         limited = throttled('registration', identity, '')
-        if limited: return limited
-        body = request.get_json(silent=True)
+        if limited:
+            if not native:
+                return limited
+            response, status = limited
+            return render_play(name_error=response.get_json()['error'], name_draft=request.form.get('username', '')[:64]), status
+        body = request.form if native else request.get_json(silent=True)
+        if native:
+            body = body.to_dict()
         if not isinstance(body, dict):
             abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
             return json_error('Send a valid username request.', 400)
         try:
             view = boss.register(identity, g.client_ip, body.get('raid_id'), body.get('username'))
-            return jsonify(ok=True, state=view, csrf=csrf())
+            LOG.info('BOSS Player name saved; browser identity retained (%s).', RELEASE)
+            if native:
+                return redirect(url_for('play', saved='1', _anchor='yourTurn'), code=303)
+            return jsonify(ok=True, state=view, csrf=csrf(), player_csrf=player_csrf())
         except (ValueError, BossError) as exc:
             abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
-            response = jsonify(ok=False, error=str(exc), state=boss.status(identity, g.client_ip))
+            status = getattr(exc, 'status', 422)
+            LOG.warning('BOSS Player name rejected (%s); existing player was kept.', getattr(exc, 'code', 'invalid_name'))
+            if native:
+                return render_play(name_error=str(exc), name_draft=str(body.get('username', ''))[:64]), status
+            response = jsonify(ok=False, error=str(exc), code=getattr(exc, 'code', 'invalid_name'), state=boss.status(identity, g.client_ip))
             if getattr(exc, 'retry_after', 0):
                 response.headers['Retry-After'] = str(exc.retry_after)
-            return response, getattr(exc, 'status', 422)
+            return response, status
 
     def boss_admin_view():
         value = boss.admin_status()
@@ -349,10 +395,8 @@ def create_app(root=None, testing=False):
 
     @app.post("/play/api/attack")
     def boss_attack():
-        require_csrf()
+        require_player_csrf()
         identity = guest()
-        if getattr(g, "new_guest", None):
-            return json_error("Enable cookies and reload the game before attacking.", 400)
         body = request.get_json(silent=True)
         view = boss.status(identity, g.client_ip)
         valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)

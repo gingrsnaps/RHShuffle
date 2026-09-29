@@ -1,15 +1,22 @@
-# Validation — 2026.09.29-player-access
+# Validation — 2026.09.29-username-save
 
-All **132 backend tests** were validated across the suite and targeted reruns.
-The initial suite passed 130; two assertions that expected the retired shared-IP
-restriction were updated to test per-player cooldowns and passed on rerun. **57 DOM/interface checks**
-passed, including the new shared-proxy, saved-name and delayed-response regressions.
+**141 backend tests** validated: the full run passed 140; its one remaining assertion
+expected duplicate display names to be rejected. That assertion was changed to
+verify independent identities and unchanged original damage, then passed on rerun.
+**61 DOM/HTTP interface checks** passed in a single final run.
+
+New coverage includes both shipped browser scripts talking to a real Waitress
+server through a cookie jar: save after page-session loss, reload, attack, a second
+player with the same name, and a real native form POST without JavaScript. Server
+tests also cover cold restart, invalid cookie/CSRF rejection, preservation of drafts,
+admin token separation, a raid restart during name entry and recovery-token rotation.
+The real HTTP transport does not stub the username endpoint or its JSON responses.
 
 | Area | Verified behavior |
 | --- | --- |
 | JSON saves | Fresh startup, retained accounts, cold restart, corrupt-file refusal, failed atomic replacement rollback, two simultaneous store instances retaining every hit. |
 | Names | Retained after IP/header changes, refresh, application restart and new raid. Cookie is not silently replaced on reload. Recovery can share a network with another active player. |
-| Isolation | One browser flooding rejected registrations does not stop other browsers on the same IP. Name collisions cannot claim another player. |
+| Isolation | One browser flooding rejected registrations does not stop other browsers on the same IP. Duplicate labels stay independent and cannot claim another player. |
 | Migration | Previous SQLite accounts/revision/live snapshot/raid imported exactly; old file unchanged; no SQLite created on a fresh install. |
 | Recovery codes | Authenticated owner issuance, CSRF rejection, forgery and replaced-code rejection, digest-only storage, original alias/hits/badges/receipt/cooldown retained. |
 | Community access | 100 concurrent browser identities register and attack through one proxy IP, then each attacks again after 30 seconds. No approvals. Same-identity simultaneous clicks still allow only one hit. |
@@ -28,7 +35,7 @@ Validation uses synthetic provider responses and disposable local saves. It did
 not contact the live Shuffle/Kick accounts or deploy to DigitalOcean. This Linux
 workspace ran Python 3.12; Windows/Python 3.14 was not executed natively. An encoding
 regression test simulates the earlier Windows text-decoding failure. Browser checks
-use rendered templates in jsdom; native Chromium was unavailable, so no new native
+use rendered templates in jsdom, including the real HTTP integration; native Chromium was unavailable, so no new native
 visual-rendering claim is made.
 
 The extracted ZIP startup checks and package integrity results are recorded during

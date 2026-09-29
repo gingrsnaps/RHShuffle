@@ -12,7 +12,8 @@
 
 {% block content %}
 <main id="main" class="shell boss-page" data-boss-root
-      data-boss-bootstrap="{{ {'state': boss_data, 'csrf': csrf()} | tojson | forceescape }}">
+      data-edit-name="{{ '1' if name_error or request.args.get('edit_name') == '1' else '0' }}"
+      data-boss-bootstrap="{{ {'state': boss_data, 'csrf': csrf(), 'player_csrf': player_csrf} | tojson | forceescape }}">
   <div class="boss-live">
     <span id="bossConnection" role="status">Connecting…</span>
     <div class="share-tools">
@@ -94,17 +95,22 @@
       <div class="burst-meter" id="burstMeter" aria-hidden="true">
         {% for n in range(boss_data.rules.burst_every) %}<span></span>{% endfor %}
       </div>
-      <div id="playerIdentity" class="player-identity" hidden>
-        <span>Playing as <strong id="playingAs"></strong></span>
-        <button id="editPlayerName" type="button" class="text-button">Edit</button>
+      <div id="playerIdentity" class="player-identity" {% if not boss_data.you.identity_ready or name_error or request.args.get('edit_name') == '1' %}hidden{% endif %}>
+        <span>Playing as <strong id="playingAs">{{ boss_data.you.display_name }}</strong></span>
+        <a id="editPlayerName" href="{{ url_for('play', edit_name='1', _anchor='yourTurn') }}" class="text-button">Edit</a>
       </div>
-      <form id="playerNameForm" class="player-name-form">
+      <form id="playerNameForm" class="player-name-form" method="post" action="{{ url_for('boss_profile_form') }}"
+            {% if boss_data.you.identity_ready and not name_error and request.args.get('edit_name') != '1' %}hidden{% endif %}>
+        <input type="hidden" name="csrf" value="{{ player_csrf }}">
+        <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
         <label for="playerUsername">Community / Shuffle username</label>
-        <div class="player-name-row"><input id="playerUsername" name="username" maxlength="64" required
-          autocomplete="username" value="{{ boss_data.you.display_name }}"><button class="button small" type="submit">Save</button></div>
+        <div class="player-name-row"><input id="playerUsername" name="username" type="text" maxlength="64" required
+          autocomplete="username" spellcheck="false" value="{{ name_draft if name_draft is defined else boss_data.you.display_name }}"
+          aria-describedby="playerNameResult"><button class="button small" type="submit">Save</button></div>
         <small class="muted">Your name stays on this browser. Other players see only your raider alias.</small>
-        <span id="playerNameResult" class="small" role="status"></span>
+        <button id="saveNamePage" class="text-button" type="submit" hidden>Save with page reload</button>
       </form>
+      <p id="playerNameResult" class="small" role="status" aria-live="polite">{% if name_error %}{{ name_error }}{% elif request.args.get('saved') == '1' and boss_data.you.identity_ready %}Saved. Playing as {{ boss_data.you.display_name }}.{% endif %}</p>
       <details id="profileRecovery" class="profile-recovery">
         <summary>Player recovery</summary>
         <div id="recoveryOwner" hidden>

@@ -150,7 +150,10 @@ test("attack sends only server-validated inputs and renders countdown", async ()
   ]);
   assert.equal(sent.style, "bow");
   const post = p.calls.find((c) => c.options.method === "POST");
-  assert.equal(post.options.headers["X-CSRF-Token"], p.value.csrf);
+  assert.equal(
+    post.options.headers["X-CSRF-Token"],
+    p.value.player_csrf || p.value.csrf,
+  );
   assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
   assert.match(p.w.document.querySelector("#attackButton").textContent, /0:30/);
   assert.match(p.w.document.querySelector("#hitResult").textContent, /150/);
@@ -930,5 +933,85 @@ test("player writes briefly disable attacks without clearing a saved identity", 
   finish();
   await flush();
   assert.equal(doc.querySelector("#attackButton").disabled, false);
+  p.close();
+});
+
+test("rejected name stays editable with a visible message and native fallback", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#editPlayerName").click();
+  const input = doc.querySelector("#playerUsername");
+  input.value = "Keep this draft";
+  input.dispatchEvent(new p.w.Event("input"));
+  p.respond(async (url) =>
+    url.endsWith("/profile")
+      ? response({ ok: false, error: "Save unavailable; please retry." }, 503)
+      : response(p.value),
+  );
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  await p.advance(5000);
+  assert.equal(input.value, "Keep this draft");
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.match(
+    doc.querySelector("#playerNameResult").textContent,
+    /Save unavailable/,
+  );
+  assert.equal(doc.querySelector("#saveNamePage").hidden, false);
+  assert.equal(doc.querySelector("#playerNameForm").method, "post");
+  assert.ok(
+    doc.querySelector("#playerNameForm").action.endsWith("/play/profile"),
+  );
+  p.close();
+});
+
+test("an HTTP 200 without the saved name cannot display a false success", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document;
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "Unconfirmed";
+  doc
+    .querySelector("#playerNameForm")
+    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.match(
+    doc.querySelector("#playerNameResult").textContent,
+    /did not confirm/,
+  );
+  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
+  assert.equal(doc.querySelector("#playerUsername").value, "Unconfirmed");
+  p.close();
+});
+
+test("repeated save submits one write and its success remains visible", async () => {
+  const p = page();
+  await flush();
+  const doc = p.w.document,
+    form = doc.querySelector("#playerNameForm");
+  doc.querySelector("#editPlayerName").click();
+  doc.querySelector("#playerUsername").value = "Save Once";
+  let finish;
+  p.respond(
+    async () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  form.dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  form.dispatchEvent(new p.w.Event("submit", { cancelable: true }));
+  await flush();
+  assert.equal(p.calls.filter((c) => c.url.endsWith("/profile")).length, 1);
+  p.value.state.you.display_name = "Save Once";
+  p.value.state.version++;
+  finish(response(p.value));
+  await flush();
+  assert.equal(form.hidden, true);
+  const notice = doc.querySelector("#playerNameResult");
+  assert.equal(form.contains(notice), false);
+  assert.match(notice.textContent, /Saved\. Playing as Save Once/);
   p.close();
 });

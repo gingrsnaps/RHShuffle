@@ -1,6 +1,6 @@
 # Complete file structure
 
-Release **2026.09.29-player-access**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.09.29-username-save**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -56,6 +56,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `templates/recovery_panel.html` | Rendered page or shared template. |
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |
 | `tests/test_app.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss_admin.py` | Developer test/fixture support; not needed to launch the website. |
@@ -65,6 +66,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_username_http.cjs` | Both shipped scripts against real HTTP and a cookie jar; no mocked username save. |
+| `tests/test_username_save.py` | Native saves, expired page sessions, browser ownership, recovery, and admin isolation. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
 
 The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
