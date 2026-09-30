@@ -277,7 +277,7 @@
     const bar = $("bossHealthBar");
     if (bar) {
       bar.max = state.max_hp;
-      bar.value = state.max_hp - state.hp;
+      bar.value = state.hp;
     }
     text(
       "bossPhase",

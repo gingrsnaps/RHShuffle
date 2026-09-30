@@ -55,7 +55,7 @@
         <span id="bossPercent">{{ '%.2f' | format((boss_data.max_hp - boss_data.hp) / boss_data.max_hp * 100) }}% defeated</span>
       </div>
       <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}"
-                value="{{ boss_data.max_hp - boss_data.hp }}" aria-label="Boss defeat progress"></progress>
+                value="{{ boss_data.hp }}" aria-label="Boss health remaining"></progress>
       <details class="exact-totals"><summary>Exact raid totals</summary><p id="exactRaidTotals" class="small"></p></details>
       <ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
       <div class="rally-status" id="rallyStatus">
