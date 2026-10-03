@@ -1,9 +1,23 @@
-# Validation — 2026.09.29-username-save
+# Validation — 2026.10.03-weekly-history
 
-**141 backend tests** validated: the full run passed 140; its one remaining assertion
-expected duplicate display names to be rejected. That assertion was changed to
-verify independent identities and unchanged original damage, then passed on rerun.
-**61 DOM/HTTP interface checks** passed in a single final run.
+**157 backend tests** validated across the full run and targeted HTTP reruns.
+The full run passed 155; two localhost transport tests required permission to open
+local test sockets. Those were rerun with that access. The date-publication test
+now distinguishes live-window calls from interleaved weekly-history requests.
+**65 DOM/HTTP interface checks** passed together, including a real Waitress server
+and cookie jar. The deployed app still has no Node dependency.
+
+This release adds tests for Tuesday 6 PM cutoffs, four contiguous completed weeks,
+167/169-hour DST weeks, exact provider date ranges, a censored Top 25, cache-only
+page reads, rollover pruning, archived overrides/prizes, unknown-prize handling,
+empty versus unavailable results, retry delays, stale-revision refusal, private
+recovery, initial/full/partial/zero homepage HP, 60-second history polling, tab
+visibility, reconnect and safe DOM text rendering.
+
+Expanded admin checks cover all five tabs, account creation/reset/removal, logout,
+ban/unban, clearing logs, self-block prevention behind App Platform ingress, and
+session/CSRF rejection for every general admin write. The existing race, backup,
+CSV, avatar format, boss settings and admin permissions suites also run.
 
 New coverage includes both shipped browser scripts talking to a real Waitress
 server through a cookie jar: save after page-session loss, reload, attack, a second

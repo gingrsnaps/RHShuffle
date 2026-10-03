@@ -100,7 +100,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -165,7 +165,7 @@ def create_app(root=None, testing=False):
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -204,6 +204,16 @@ def create_app(root=None, testing=False):
     @app.get("/")
     def index():
         return render_template("index.html", data=public_snapshot())
+
+    @app.get('/history')
+    def public_history():
+        # This request reads a small saved snapshot; it never calls Shuffle.
+        return render_template('history.html', data=runtime.public(),
+                               history=runtime.history.public(request.args.get('week')))
+
+    @app.get('/history-state')
+    def history_state():
+        return jsonify(release=RELEASE, **runtime.history.public(request.args.get('week')))
 
     def public_snapshot():
         value = runtime.public()
@@ -596,6 +606,7 @@ def create_app(root=None, testing=False):
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
             value.update(boss.recovery())
+            value['weekly_history'] = runtime.store.live('weekly_history')
             marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
             value["recovery_export"] = marker
             runtime.store.checkpoint(marker)
@@ -789,7 +800,7 @@ def create_app(root=None, testing=False):
                 reason, detail = "before-restore", "Backup restored. Accounts preserved; a private recovery copy was saved."
             elif action_name in {"ban_ip", "unban_ip"}:
                 ip = str(ipaddress.ip_address(request.form.get("ip", "")))
-                if action_name == "ban_ip" and ip == request.remote_addr:
+                if action_name == "ban_ip" and ip == g.client_ip:
                     raise ValueError("You cannot block the address you are using.")
                 candidate["banned_ips"] = sorted(set(candidate["banned_ips"]) | {ip}) if action_name == "ban_ip" else [x for x in candidate["banned_ips"] if x != ip]
             elif action_name == "clear_audit":

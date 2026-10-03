@@ -1,6 +1,6 @@
 # RedHunllef — complete configured code
 
-Release **2026.09.29-username-save**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
+Release **2026.10.03-weekly-history**. Every file below is a full text block. The ZIP contains ready-to-use files. Original logos are encoded as base64 here and are included as image files in the ZIP. This configured package includes private credentials/account seed data; keep it private.
 
 Run only `python wager_backend.py`. Keep all supporting files together and preserve existing `data/` and private configuration when updating. The eight achievements are unchanged; hits remain unlimited per day/week with a 30-second cooldown. No external SQL or backup service is required.
 
@@ -69,7 +69,24 @@ integrations.json
 ## CHANGES.md
 
 ```markdown
-# Changes — 2026.09.29-username-save
+# Changes — 2026.10.03-weekly-history
+
+- Fixed the separately rendered homepage boss HP bar in HTML and live JavaScript.
+  Full HP is full; victory is empty. Included the existing arena/admin bar fixes.
+- Added History navigation, a responsive public page and a cached read-only API.
+  Four completed Tuesday 6 PM Eastern weeks, including DST changes, show Top 25
+  weighted wagers with server-masked usernames.
+- Backfill runs automatically inside the sole launcher. Cache reads do not contact
+  Shuffle; retries retain saved results and honor provider backoff.
+- Reuse exact archived race settings/overrides/prizes where present. Unknown
+  historical prizes remain unknown; no current prize-pool substitution.
+- Include weekly history in the existing full private recovery export/import.
+- Fixed admin self-block protection when using DigitalOcean's visitor IP header.
+- Added calendar/privacy/cache/recovery/HP tests and expanded account/log/IP/admin
+  permission checks. Existing admin and multiplayer regression suites are retained.
+- No new runtime dependencies, database, extra launcher, or hit quotas.
+
+## Previous release — 2026.09.29-username-save
 
 - Reproduced and fixed a rejected name save when the page session expired while
   the signed player cookie remained valid. Game CSRF is now bound to that player.
@@ -155,7 +172,7 @@ See README for local-file lifetime on DigitalOcean App Platform.
 ```markdown
 # Complete file structure
 
-Release **2026.09.29-username-save**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.10.03-weekly-history**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -189,6 +206,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `static/app.js` | Public/admin race interface and source refresh controls. |
 | `static/boss.css` | Responsive arena, game controls and boss admin styling. |
 | `static/boss.js` | Game/admin interface, recovery UI, previews and automatic polls. |
+| `static/history.css` | Responsive red completed-week cards and table. |
+| `static/history.js` | Automatic cached-history reads, native week navigation and safe rendering. |
 | `static/redlogo.ico` | Original favicon; unchanged. |
 | `static/redlogo.png` | Original PNG logo; unchanged. |
 | `static/style.css` | Shared responsive red website/admin styling. |
@@ -204,6 +223,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `templates/boss.html` | Rendered page or shared template. |
 | `templates/change_review.html` | Rendered page or shared template. |
 | `templates/error.html` | Rendered page or shared template. |
+| `templates/history.html` | Rendered page or shared template. |
 | `templates/icons.html` | Rendered page or shared template. |
 | `templates/index.html` | Rendered page or shared template. |
 | `templates/login.html` | Rendered page or shared template. |
@@ -212,6 +232,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |
+| `tests/test_admin_controls.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_app.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss_admin.py` | Developer test/fixture support; not needed to launch the website. |
@@ -219,11 +240,14 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_history_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_username_http.cjs` | Both shipped scripts against real HTTP and a cookie jar; no mocked username save. |
 | `tests/test_username_save.py` | Native saves, expired page sessions, browser ownership, recovery, and admin isolation. |
+| `tests/test_weekly_history.py` | Developer test/fixture support; not needed to launch the website. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
+| `weekly_history.py` | Automatic four-week Tuesday 6 PM Eastern history with a masked public Top 25. |
 
 The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
 
@@ -241,10 +265,61 @@ web: python wager_backend.py
 ````markdown
 # RedHunllef
 
-Release **2026.09.29-username-save**. This is the complete configured application.
+Release **2026.10.03-weekly-history**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
+
+## This update: health bars and weekly history
+
+The homepage uses a different health bar from the arena. The earlier patch changed
+the arena/admin templates but missed `templates/index.html` and `static/app.js`.
+This release corrects both initial HTML and automatic homepage updates: **full HP
+means a full bar; zero HP means an empty bar**. The separate percentage-defeated
+label in the arena still increases from 0% to 100%.
+
+Choose **History** in the public navigation, or open `/history`:
+
+- Four most recently **completed** weeks, newest first. Each runs from Tuesday
+  at **6:00 PM America/New_York** to the following Tuesday at that same local time.
+  Daylight saving changes are included; a calendar week can be 167 or 169 hours.
+  The in-progress week stays on the current leaderboard.
+- Each week shows the **top 25 qualifying weighted-wager players**. Names are
+  censored on the server in both HTML and JSON, using the existing first-two-letters
+  masking convention. Browsers never receive full historical usernames.
+- Four native week links work without JavaScript. With JavaScript, the page reads
+  the shared cache automatically every 60 seconds, pauses while hidden, and catches
+  up when visible. Switching weeks does not trigger an affiliate API request.
+- One background thread inside `wager_backend.py` loads the four date ranges using
+  the existing Shuffle affiliate endpoint and credentials. It notices a newly
+  completed week within 60 seconds, subject to provider delays. The newest closed
+  week is rechecked hourly during its first day; older weeks are rechecked daily
+  for corrections. Live race/Kick checks remain automatic every 60 seconds.
+- Saved settings and overrides for an exact historical window determine its
+  campaign and recorded prizes. When no matching settings exist, history queries
+  the current campaign for that date range, applies no current-race overrides, and
+  shows prizes as `—`. It never substitutes today's prize pool for an old week.
+  The existing 15 paid places are unchanged; places 16–25 receive no prize when a
+  matching schedule is known. Recorded prizes do not assert payment was made.
+- The cache uses the existing JSON save and is included in the Superadmin's full
+  **Private recovery file**. No SQL or additional process is needed. Failed checks
+  retain saved results and show a delayed status. Missing results are not presented
+  as a confirmed zero-player week.
+
+Historical retrieval uses the same date-window API contract as the live race.
+Actual historical availability depends on Shuffle retaining and returning those
+periods for your affiliate account. This release was tested with synthetic data;
+it does not claim that the live account's historical responses were verified.
+
+Admin regression coverage includes all five dashboard tabs, native login/logout,
+race preview/publication, automatic/manual refresh, overrides, Code Red Top 100,
+CSV export, accounts/passwords, backups/restore, logs/IP controls, and boss
+name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to use
+the actual trusted visitor IP on App Platform instead of the proxy socket address.
+
+After updating, restart the app and reload the homepage. `/healthz` should report
+**2026.10.03-weekly-history**. Asset versions change automatically, so the new
+scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
 
@@ -269,7 +344,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.09.29-username-save**. If it shows something else, the old application is
+**2026.10.03-weekly-history**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -360,7 +435,7 @@ filesystem. Changes made after that download will not be in that recovery file.
 ## Fresh installation
 
 Extract the entire `redhunllef-rebuilt/` folder, open a terminal in it, and use the
-two commands above. Visit `http://localhost:8080`, `/play`, and `/admin`.
+two commands above. Visit `http://localhost:8080`, `/history`, `/play`, and `/admin`.
 
 The original supplied Superadmin is **gingrsnaps / enok2121**. The bundled original
 account hashes and Shuffle/Kick configuration are preserved. Existing saved
@@ -461,7 +536,7 @@ to you and administrators; other visitors see a raider alias.
 | Default damage | 100 base, 150 weakness, +100 burst every tenth hit. Admin-editable. |
 | Weakness | Random stable draw every 10 minutes, shared by all players. Repeats are valid. |
 | Health | Never regenerates automatically. Confirmed damage stays saved. |
-| Progress bar | 0% to 100% defeated, based on remaining/max HP. |
+| Health bar | Full to empty on the homepage, game and admin views; the separate defeated counter rises from 0% to 100%. |
 | Input re-arm | Mouse pointer must leave the attack button; keyboard must release its activation key; touch taps work on release. |
 | Red rally | 15 distinct raiders in a rolling 10-minute window; cosmetic arena lighting lasts until a new raid. |
 | Achievements | Existing eight badges and progress display retained; achievement history carries across raids. |
@@ -555,13 +630,15 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-Validation covers 141 backend tests and 61 DOM/HTTP interface checks. Coverage includes
+Validation covers 157 backend tests and 65 DOM/HTTP interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
 validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
 cooldowns, migration, atomic-write failures and simultaneous writers. New regression
 checks include 100 concurrent players sharing one proxy, absent IP headers, changing
 addresses, names retained after restart, expired page sessions, native form saves,
 duplicate-name isolation, visible save failures and delayed browser responses.
+Weekly-history tests cover all four ranges, DST, Top 25 masking, cached reads,
+historical prizes, retry preservation, recovery and automatic navigation updates.
 The HTTP interface test loads both shipped scripts and uses a real Waitress server
 and cookie jar; the username endpoint is not mocked. It saves a name, reloads the
 page, lands an attack and checks a second independent player with the same label.
@@ -589,7 +666,7 @@ Node is used only by developer tests; it is not a deployment dependency.
 ````markdown
 # Start RedHunllef
 
-Release **2026.09.29-username-save** — complete configured package.
+Release **2026.10.03-weekly-history** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -603,6 +680,7 @@ No database service, SQL setup, account-creation command or extra worker is need
 The app creates `data/state.json` and imports an existing previous local save.
 
 - Website: `/`
+- Public history: `/history` — four completed Tuesday 6 PM Eastern weeks; masked Top 25.
 - Community boss: `/play`
 - Admin: `/admin`
 - Original supplied Superadmin: **gingrsnaps / enok2121**. Existing accounts/passwords win.
@@ -643,7 +721,13 @@ This release also repairs the username form itself: page-session expiry no longe
 blocks a valid player, Save has a native server fallback, and stale name reservations
 cannot lock out a new browser. Name reuse does not recover another player's stats.
 After restarting, reload `/play` and confirm `/healthz` reports
-`2026.09.29-username-save`. Keep your current cookies and save files.
+`2026.10.03-weekly-history`. Keep your current cookies and save files.
+
+The homepage, arena and admin HP bars now drain from full to empty. History fills
+automatically from Shuffle date-range requests and retains confirmed results in
+the existing JSON save. Public history names are masked before delivery. Its page
+checks every 60 seconds; completed source periods are rechecked hourly/daily. Saved
+historical prizes appear only when settings for that exact week are available.
 ````
 
 ## abuse_guard.py
@@ -1649,7 +1733,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.09.29-username-save"
+RELEASE = "2026.10.03-weekly-history"
 INTERVAL = 60
 
 
@@ -1834,12 +1918,26 @@ not require resetting the boss. Identity fields never come from arbitrary IP hea
 ## docs/VALIDATION.md
 
 ```markdown
-# Validation — 2026.09.29-username-save
+# Validation — 2026.10.03-weekly-history
 
-**141 backend tests** validated: the full run passed 140; its one remaining assertion
-expected duplicate display names to be rejected. That assertion was changed to
-verify independent identities and unchanged original damage, then passed on rerun.
-**61 DOM/HTTP interface checks** passed in a single final run.
+**157 backend tests** validated across the full run and targeted HTTP reruns.
+The full run passed 155; two localhost transport tests required permission to open
+local test sockets. Those were rerun with that access. The date-publication test
+now distinguishes live-window calls from interleaved weekly-history requests.
+**65 DOM/HTTP interface checks** passed together, including a real Waitress server
+and cookie jar. The deployed app still has no Node dependency.
+
+This release adds tests for Tuesday 6 PM cutoffs, four contiguous completed weeks,
+167/169-hour DST weeks, exact provider date ranges, a censored Top 25, cache-only
+page reads, rollover pruning, archived overrides/prizes, unknown-prize handling,
+empty versus unavailable results, retry delays, stale-revision refusal, private
+recovery, initial/full/partial/zero homepage HP, 60-second history polling, tab
+visibility, reconnect and safe DOM text rendering.
+
+Expanded admin checks cover all five tabs, account creation/reset/removal, logout,
+ban/unban, clearing logs, self-block prevention behind App Platform ingress, and
+session/CSRF rejection for every general admin write. The existing race, backup,
+CSV, avatar format, boss settings and admin permissions suites also run.
 
 New coverage includes both shipped browser scripts talking to a real Waitress
 server through a cookie jar: save after page-session loss, reload, attack, a second
@@ -2835,7 +2933,7 @@ Pillow==12.3.0
 ## runtime.py
 
 ```python
-"""One runtime, two independent minute jobs, and atomic published snapshots."""
+"""One runtime, independent live jobs, and cached completed-week history."""
 import copy
 from decimal import Decimal
 import logging
@@ -2848,6 +2946,7 @@ from integrations import Providers, ProviderError
 from storage import Store, StoreError, Conflict
 from race import calculate, empty, freshness, normalize, phase, rank, token
 from race_support import fmt_et, money, race_key
+from weekly_history import WeeklyHistory
 
 LOG = logging.getLogger("redhunllef")
 
@@ -2855,6 +2954,7 @@ LOG = logging.getLogger("redhunllef")
 class Runtime:
     def __init__(self, config):
         self.config, self.store, self.providers = config, Store(config), Providers(config)
+        self.history = WeeklyHistory(config, self.store, self.providers)
         self.lock, self.stop_event = threading.RLock(), threading.Event()
         self.revision, self.admin = self.store.admin()
         self.shuffle = self.store.live("shuffle") or empty(self.admin["site_settings"])
@@ -3139,9 +3239,11 @@ class Runtime:
                     LOG.warning("%s Restarted a stopped automatic worker.", name.upper())
         if initial:
             LOG.info("LIVE Automatic Shuffle and Kick checks started; cadence=%ss.", INTERVAL)
+        self.history.start()
 
     def stop(self):
         self.stop_event.set()
+        self.history.stop()
         for event in self.events.values():
             event.set()
         for thread in self.threads.values():
@@ -3741,7 +3843,7 @@ python-3.13.12
         const bar = id("inviteHealth");
         if (bar) {
           bar.max = b.max_hp;
-          bar.value = b.max_hp - b.hp;
+          bar.value = b.hp;
         }
       }
       text(
@@ -5449,7 +5551,7 @@ python-3.13.12
     const bar = $("bossHealthBar");
     if (bar) {
       bar.max = state.max_hp;
-      bar.value = state.max_hp - state.hp;
+      bar.value = state.hp;
     }
     text(
       "bossPhase",
@@ -6313,6 +6415,285 @@ python-3.13.12
 })();
 ```
 
+## static/history.css
+
+```css
+/* History shares the site's red palette and works without JavaScript. */
+.history-page {
+  padding-top: 52px;
+  padding-bottom: 30px;
+}
+.history-heading,
+.history-result-heading,
+.history-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.history-heading {
+  margin-bottom: 28px;
+}
+.history-heading h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+.history-heading .lead {
+  max-width: 600px;
+}
+.history-heading > a {
+  flex-shrink: 0;
+}
+.history-weeks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.history-weeks a {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+.history-weeks a:hover {
+  border-color: var(--accent);
+  background: var(--panel-high);
+}
+.history-weeks a[aria-current] {
+  border-color: var(--brand);
+  box-shadow: inset 0 3px 0 var(--brand);
+  background: #29171c;
+}
+.history-weeks small {
+  color: var(--muted);
+}
+.site-header a[aria-current] {
+  color: var(--accent);
+}
+.history-results {
+  padding: 26px;
+}
+.history-result-heading h2 {
+  margin: 8px 0 0;
+}
+.history-window {
+  margin: 12px 0 24px;
+}
+.history-results table {
+  min-width: 520px;
+}
+.history-results th {
+  white-space: nowrap;
+}
+.history-results tbody tr:nth-child(-n + 3) .rank {
+  color: var(--accent);
+}
+.history-meta {
+  margin: 18px 0 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+@media (max-width: 850px) {
+  .history-weeks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .history-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 520px) {
+  .history-page {
+    padding-top: 30px;
+  }
+  .history-results {
+    padding: 18px 12px;
+  }
+  .history-weeks a {
+    padding: 14px 12px;
+  }
+  .history-weeks strong {
+    font-size: 0.9rem;
+  }
+  .history-result-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+```
+
+## static/history.js
+
+```javascript
+/* Read the shared cache once a minute. Week links also work without scripts. */
+(() => {
+  "use strict";
+  const main = document.querySelector(".history-page");
+  if (!main) return;
+  const id = (name) => document.getElementById(name);
+  const text = (name, value) => {
+    id(name).textContent = value;
+  };
+  const labels = {
+    ready: "Results available",
+    partial: "Partial results",
+    delayed: "Update delayed",
+    loading: "Loading results",
+  };
+  let selected = main.dataset.selectedWeek,
+    timer,
+    busy = false;
+  let renderedRows = "";
+
+  function apply(value) {
+    const week = value.selected;
+    if (
+      value.release !== document.body.dataset.release ||
+      !week ||
+      !Array.isArray(week.rows) ||
+      week.rows.length > 25 ||
+      value.weeks?.length !== 4
+    )
+      throw new Error("Release mismatch or incomplete history response");
+    // Only rebuild week links at the weekly rollover, preserving keyboard focus.
+    const navigation = id("historyWeeks");
+    const existing = [...navigation.querySelectorAll("[data-week]")].map(
+      (a) => a.dataset.week,
+    );
+    if (existing.join() !== value.weeks.map((w) => w.id).join()) {
+      const focusWeek = document.activeElement?.dataset.week;
+      const links = value.weeks.map((item, index) => {
+        const link = document.createElement("a");
+        link.href = "/history?week=" + encodeURIComponent(item.id);
+        link.dataset.week = item.id;
+        for (const [tag, content, className] of [
+          [
+            "span",
+            index ? "WEEK " + (index + 1) : "LATEST COMPLETED",
+            "eyebrow",
+          ],
+          ["strong", item.label, ""],
+          ["small", "Tuesday → Tuesday", ""],
+        ]) {
+          const node = document.createElement(tag);
+          node.textContent = content;
+          node.className = className;
+          link.append(node);
+        }
+        return link;
+      });
+      navigation.replaceChildren(...links);
+      links
+        .find((a) => a.dataset.week === focusWeek)
+        ?.focus({ preventScroll: true });
+    }
+    selected = week.id;
+    for (const link of navigation.querySelectorAll("a")) {
+      if (link.dataset.week === selected)
+        link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    }
+    text("historyTitle", week.label);
+    text("historyWindow", week.start_et + " → " + week.end_et);
+    text("historyStatus", labels[week.status] || "Loading results");
+    text("historyMessage", week.message || "");
+    id("historyMessage").hidden = !week.message;
+    text(
+      "historyCount",
+      week.count === null
+        ? "Waiting for the first result"
+        : week.count + " qualifying players · showing up to 25",
+    );
+    text("historyChecked", "Last checked: " + week.updated_et);
+    text(
+      "historyPrizeNote",
+      week.prizes_known
+        ? "Prizes use this week’s saved race settings; only the top 15 places are paid."
+        : "No matching prize schedule was saved for this week. Prizes are shown as —.",
+    );
+    const encoded = JSON.stringify([week.id, week.rows, week.status]);
+    if (encoded !== renderedRows) {
+      const rows = week.rows.map((row) => {
+        const tr = document.createElement("tr");
+        [
+          String(row.rank).padStart(2, "0"),
+          row.username,
+          row.wager,
+          row.prize,
+        ].forEach((content, index) => {
+          const td = document.createElement("td");
+          td.className = ["rank", "", "number", "number accent"][index];
+          td.textContent = content;
+          tr.append(td);
+        });
+        return tr;
+      });
+      if (!rows.length) {
+        const tr = document.createElement("tr"),
+          td = document.createElement("td");
+        td.colSpan = 4;
+        td.className = "empty";
+        td.textContent =
+          week.status === "ready"
+            ? "No qualifying wagers returned for this week."
+            : "Results are not available yet. This page checks automatically.";
+        tr.append(td);
+        rows.push(tr);
+      }
+      id("historyRows").replaceChildren(...rows);
+      renderedRows = encoded;
+    }
+  }
+
+  async function poll() {
+    clearTimeout(timer);
+    if (document.hidden || busy) return;
+    busy = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(
+        "/history-state?week=" + encodeURIComponent(selected),
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        },
+      );
+      if (
+        !response.ok ||
+        !response.headers.get("content-type")?.includes("application/json")
+      )
+        throw new Error("History unavailable");
+      apply(await response.json());
+      id("historyNetwork").hidden = true;
+    } catch {
+      text(
+        "historyNetwork",
+        "Could not check for updates. Saved results remain visible; retrying in 60 seconds. Reload if you recently installed an update.",
+      );
+      id("historyNetwork").hidden = false;
+    } finally {
+      clearTimeout(timeout);
+      busy = false;
+      if (!document.hidden) timer = setTimeout(poll, 60000);
+    }
+  }
+  document.addEventListener("visibilitychange", () => {
+    clearTimeout(timer);
+    if (!document.hidden) poll();
+  });
+  poll();
+})();
+```
+
 ## static/redlogo.ico
 
 ```base64
@@ -6622,6 +7003,7 @@ p {
 .header-inner {
   min-height: 78px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
@@ -7388,6 +7770,9 @@ details[open] > summary .expand-icon {
   }
   .header-inner {
     min-height: 68px;
+    gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
   .brand {
     font-size: 0.75rem;
@@ -7403,9 +7788,12 @@ details[open] > summary .expand-icon {
   .site-header nav {
     gap: 12px;
     font-size: 0.72rem;
+    flex: 1 0 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
   .site-header nav > a:first-child {
-    display: none;
+    display: inline-flex;
   }
   .site-header .button {
     padding: 8px 11px;
@@ -8127,6 +8515,7 @@ from race import empty
 from boss import validate_boss
 from boss_avatar import validate_avatar
 from presentation import valid_marker
+from weekly_history import clean_history
 
 LOG = logging.getLogger("redhunllef")
 
@@ -8261,6 +8650,7 @@ class Store:
                         pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
                         secret_key=secrets.token_hex(32), site_settings=self.config.site)
                 admin, _ = upgrade_store(legacy, self.config.site, {})
+                weekly = clean_history(admin.pop('weekly_history', None))
                 game = admin.pop("community_boss", None)
                 game = validate_boss(game) if game is not None else None
                 avatar = validate_avatar(admin.pop("community_boss_avatar", None))
@@ -8276,7 +8666,7 @@ class Store:
                              count=len(snapshots["last_top15"]), warning="Only the saved Top 15 is available until Shuffle responds." if snapshots["last_top15"] else "")
                 saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
                                         raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
-                value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved},
+                value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved, "weekly_history":weekly},
                              boss=game, avatar=avatar, checkpoint=marker, recoveries=[])
                 self.backup_in(value, "before-rebuild-import", {"admin": legacy, "source": source})
                 LOG.info("MIGRATION Imported %s; original accounts, hashes and dates retained.", source)
@@ -8398,6 +8788,7 @@ import copy
 import secrets
 import time
 from race_support import STORE_VERSION, canonical_site, clean_overrides, clean_snapshots, integer, race_key, validate_site
+from weekly_history import clean_history
 
 
 def upgrade_store(value, defaults, health_defaults):
@@ -8406,6 +8797,8 @@ def upgrade_store(value, defaults, health_defaults):
         raise ValueError("The admin store must contain a JSON object.")
     original = copy.deepcopy(value)
     store = copy.deepcopy(value)
+    if 'weekly_history' in store:
+        store['weekly_history'] = clean_history(store['weekly_history'])
     version = integer(store.get("version"))
     if version > STORE_VERSION:
         raise RuntimeError("This admin store belongs to a newer application version.")
@@ -8510,7 +8903,7 @@ def upgrade_store(value, defaults, health_defaults):
 <section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
 <div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2 id="bossName">{{ boss_data.name }}</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
 <p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
-<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.max_hp - boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss defeat progress"></progress><p id="bossStory" class="muted"></p>
+<div class="hp-label"><strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong><span id="bossPercent"></span></div><progress id="bossHealthBar" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Boss health remaining"></progress><p id="bossStory" class="muted"></p>
 <div class="raid-stats"><div><strong id="bossRaiders">{{ boss_data.raiders }}</strong><span>raiders</span></div><div><strong id="bossAttacks">{{ boss_data.total_attacks }}</strong><span>attacks</span></div><div><strong id="bossDamage">{{ boss_data.total_damage }}</strong><span>damage</span></div></div>
 <p class="muted small">Live · Updates every 5 seconds</p>
 <section class="boss-balance" aria-labelledby="paceHeading">
@@ -8670,7 +9063,7 @@ def upgrade_store(value, defaults, health_defaults):
 <body data-release="{{ release }}" {% block attributes %}{% endblock %}>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="shell header-inner"><a class="brand" href="/"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="36" height="36"><span><span data-site-text="site_name">{{ data.site.site_name if data is defined else 'RedHunllef' }}</span><span class="brand-sub">THE COMMUNITY RACE</span></span></a>
-<nav aria-label="Main navigation">{% block navigation %}<a href="/#leaderboard">Leaderboard</a><a class="play-nav" href="/play">Boss fight</a><a class="community-nav" data-site-text="community_name" data-site-link="community_url" href="{{ data.site.community_url }}" {% if not data.site.community_url %}hidden{% endif %} target="_blank" rel="noopener">{{ data.site.community_name }}</a><a class="button small" data-site-link="stream_url" href="{{ data.site.stream_url }}" target="_blank" rel="noopener">Watch on Kick <span aria-hidden="true">↗</span></a>{% endblock %}</nav></div></header>
+<nav aria-label="Main navigation">{% block navigation %}<a href="/#leaderboard">Leaderboard</a><a href="/history" {% if request.endpoint=='public_history' %}aria-current="page"{% endif %}>History</a><a class="play-nav" href="/play">Boss fight</a><a class="community-nav" data-site-text="community_name" data-site-link="community_url" href="{{ data.site.community_url }}" {% if not data.site.community_url %}hidden{% endif %} target="_blank" rel="noopener">{{ data.site.community_name }}</a><a class="button small" data-site-link="stream_url" href="{{ data.site.stream_url }}" target="_blank" rel="noopener">Watch on Kick <span aria-hidden="true">↗</span></a>{% endblock %}</nav></div></header>
 {% block content %}{% endblock %}
 {% block site_footer %}<footer class="shell footer"><span>RedHunllef <span class="muted">· Community first.</span></span><span class="muted">{% block footer %}<a data-site-link="responsible_gambling_url" href="{{ data.site.responsible_gambling_url }}" {% if not data.site.responsible_gambling_url %}hidden{% endif %} target="_blank" rel="noopener">Play responsibly · 18+</a>{% endblock %}</span></footer>{% endblock %}
 <div id="toast" class="toast" role="status" hidden></div>
@@ -8739,7 +9132,7 @@ def upgrade_store(value, defaults, health_defaults):
         <span id="bossPercent">{{ '%.2f' | format((boss_data.max_hp - boss_data.hp) / boss_data.max_hp * 100) }}% defeated</span>
       </div>
       <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}"
-                value="{{ boss_data.max_hp - boss_data.hp }}" aria-label="Boss defeat progress"></progress>
+                value="{{ boss_data.hp }}" aria-label="Boss health remaining"></progress>
       <details class="exact-totals"><summary>Exact raid totals</summary><p id="exactRaidTotals" class="small"></p></details>
       <ul id="bossMilestones" class="milestone-rail" aria-label="Community milestones"></ul>
       <div class="rally-status" id="rallyStatus">
@@ -8887,6 +9280,44 @@ def upgrade_store(value, defaults, health_defaults):
 {% block footer %}RedHunllef Wager Race{% endblock %}
 ```
 
+## templates/history.html
+
+```html
+{% extends 'base.html' %}
+{% block title %}Race History · RedHunllef{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='history.css', v=asset_version) }}">{% endblock %}
+{% block content %}
+{% set week = history.selected %}
+<main id="main" class="shell history-page" data-selected-week="{{ week.id }}">
+  <header class="history-heading">
+    <div><p class="eyebrow">THE LAST FOUR WEEKS</p><h1>Race history<span class="accent">.</span></h1>
+    <p class="lead">The community's top 25. Every Tuesday at 6 PM Eastern, a new week closes.</p></div>
+    <a class="button" href="/#leaderboard">Current leaderboard <span aria-hidden="true">↗</span></a>
+  </header>
+  <nav id="historyWeeks" class="history-weeks" aria-label="Completed weeks">
+    {% for item in history.weeks %}<a href="{{ url_for('public_history', week=item.id) }}" data-week="{{ item.id }}" {% if item.id==week.id %}aria-current="page"{% endif %}>
+      <span class="eyebrow">{{ 'LATEST COMPLETED' if loop.first else 'WEEK ' ~ loop.index }}</span><strong>{{ item.label }}</strong><small>Tuesday → Tuesday</small>
+    </a>{% endfor %}
+  </nav>
+  <section class="panel history-results" aria-labelledby="historyTitle">
+    <div class="history-result-heading"><div><p class="eyebrow">TOP 25 · USERNAMES PROTECTED</p><h2 id="historyTitle">{{ week.label }}</h2></div><span id="historyStatus" class="badge">{{ {'ready':'Results available','partial':'Partial results','delayed':'Update delayed','loading':'Loading results'}[week.status] }}</span></div>
+    <p class="muted history-window" id="historyWindow">{{ week.start_et }} → {{ week.end_et }}</p>
+    <p id="historyMessage" class="notice" role="status" {% if not week.message %}hidden{% endif %}>{{ week.message }}</p>
+    <p id="historyNetwork" class="notice warning" role="status" hidden></p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Historical top 25 leaderboard">
+      <table><thead><tr><th scope="col">Place</th><th scope="col">Player</th><th scope="col" class="number">Weighted wager</th><th scope="col" class="number">Recorded prize</th></tr></thead>
+      <tbody id="historyRows">{% for row in week.rows %}<tr><td class="rank">{{ '%02d'|format(row.rank) }}</td><td><strong>{{ row.username }}</strong></td><td class="number">{{ row.wager }}</td><td class="number accent">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="4" class="empty">{{ 'No qualifying wagers returned for this week.' if week.status=='ready' else 'Results are not available yet. This page checks automatically.' }}</td></tr>{% endfor %}</tbody></table>
+    </div>
+    <div class="history-meta"><span id="historyCount">{{ week.count ~ ' qualifying players · showing up to 25' if week.count is not none else 'Waiting for the first result' }}</span><span id="historyChecked">Last checked: {{ week.updated_et }}</span></div>
+    <p id="historyPrizeNote" class="muted small">{{ 'Prizes use this week’s saved race settings; only the top 15 places are paid.' if week.prizes_known else 'No matching prize schedule was saved for this week. Prizes are shown as —.' }}</p>
+  </section>
+  <div class="leaderboard-foot"><span>Tuesday 6 PM → Tuesday 6 PM Eastern · daylight saving time included</span><span>Page updates every 60 seconds</span></div>
+  <noscript><p class="notice">Select any week above. Reload to see the latest saved results.</p></noscript>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='history.js', v=asset_version) }}" defer></script>{% endblock %}
+```
+
 ## templates/icons.html
 
 ```html
@@ -8914,7 +9345,7 @@ def upgrade_store(value, defaults, health_defaults):
 <img id="inviteAvatar" src="{{ data.boss.avatar_url }}" class="{% if data.boss.avatar_custom %}custom-avatar{% endif %}" alt="" width="52" height="52">
 <div class="invite-copy"><p class="eyebrow"><span id="inviteBossName">{{ data.boss.name }}</span> · COMMUNITY BOSS</p><h2 id="inviteTitle">{{ 'The crew conquered ' ~ data.boss.name ~ '.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Red needs a raid party.' }}</h2>
 <p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p>
-<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.max_hp - data.boss.hp }}" aria-label="Community boss defeat progress"></progress></div>
+<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Community boss health remaining"></progress></div>
 <a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Join the boss fight' }}</span> <span aria-hidden="true">→</span></a>
 </section>
 <section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
@@ -9018,10 +9449,12 @@ def render(destination):
             snapshot = calculate({**empty(admin["site_settings"]), **normalize(source, admin["site_settings"]),
                                   "updated_at": now, "ok": True}, admin, runtime.config)
             runtime.commit(admin, runtime.revision, snapshot=snapshot)
+            with patch.object(runtime.providers, 'shuffle', return_value=source):
+                runtime.history.check()
             client = app.test_client()
             opening = client.get('/play/api/state').json
             client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'FixtureRaider'}, headers={'X-CSRF-Token':opening['csrf']})
-            for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play"}.items():
+            for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play", "history": "/history"}.items():
                 (destination/(name+".html")).write_text(client.get(url).text, encoding="utf-8")
             with client.session_transaction() as session:
                 session.update(user="gingrsnaps", auth_version=1, csrf="fixture-csrf")
@@ -9032,6 +9465,7 @@ def render(destination):
             public = client.get("/public-state")
             (destination/"public.json").write_text(json.dumps({**public.json, "server_time":float(public.headers["X-Server-Time"])}), encoding="utf-8")
             (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
+            (destination/"history.json").write_text(json.dumps(client.get('/history-state').json), encoding='utf-8')
         finally:
             runtime.store.close()
 
@@ -9066,6 +9500,76 @@ with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {
         server.run()
     finally:
         server.close()
+```
+
+## tests/test_admin_controls.py
+
+```python
+"""Exercise account/log controls in addition to the existing race/boss suites."""
+import copy
+import re
+import unittest
+
+import test_app
+
+
+class AdminControlTests(unittest.TestCase):
+    setUp = test_app.AppTests.setUp
+    action = test_app.AppTests.action
+
+    def test_account_add_password_reset_removal_and_logout(self):
+        password = 'new-private-test-password'
+        self.assertEqual(self.action('add_account', username='helper', new_password=password, confirm_password=password).status_code, 303)
+        helper = self.app.test_client()
+        csrf = re.search('name="csrf" value="([^"]+)"', helper.get('/admin').text).group(1)
+        self.assertEqual(helper.post('/admin', data={'csrf':csrf, 'username':'helper', 'password':password}).status_code, 303)
+        for tab in ('overview','race','players','boss','settings'):
+            response = helper.get('/admin?tab='+tab)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('CONTROL CENTER', response.text)
+        self.assertEqual(helper.get('/admin/recovery-backup').status_code, 403)
+        self.assertEqual(self.action('reset_password', username='helper', new_password=password+'2', confirm_password=password+'2').status_code, 303)
+        self.assertEqual(helper.get('/admin/status').status_code, 401)
+        self.assertEqual(self.action('remove_account', username='helper').status_code, 303)
+        self.assertNotIn('helper', self.r.admin['users'])
+        self.assertEqual(self.client.post('/admin/logout', data={'csrf':'test-token'}).status_code, 303)
+        self.assertEqual(self.client.get('/admin/status').status_code, 401)
+
+    def test_ban_unban_and_clear_logs(self):
+        visitor = self.app.test_client()
+        visitor.environ_base['REMOTE_ADDR'] = '192.0.2.23'
+        self.assertEqual(self.action('ban_ip', ip='192.0.2.23').status_code, 303)
+        self.assertEqual(visitor.get('/history').status_code, 403)
+        self.assertEqual(self.action('unban_ip', ip='192.0.2.23').status_code, 303)
+        self.assertEqual(visitor.get('/history').status_code, 200)
+        for action in ('clear_access', 'clear_audit'):
+            self.assertEqual(self.action(action).status_code, 303)
+        self.assertEqual([entry['action'] for entry in self.r.admin['audit_log']], ['clear_audit'])
+
+    def test_admin_cannot_block_own_forwarded_address_on_app_platform(self):
+        self.r.config.proxy = True
+        response = self.client.post('/admin/action', data={
+            'csrf':'test-token', 'action':'ban_ip', 'ip':'192.0.2.51',
+            'tab':'settings', 'revision':self.r.revision},
+            headers={'DO-Connecting-IP':'192.0.2.51'})
+        self.assertEqual(response.status_code, 422)
+        self.assertNotIn('192.0.2.51', self.r.admin['banned_ips'])
+        self.assertIn('cannot block the address', response.text)
+
+    def test_every_general_admin_write_needs_session_and_csrf(self):
+        before = copy.deepcopy(self.r.admin)
+        guest = self.app.test_client()
+        for action in ('refresh','save_race','override','add_account','remove_account','reset_password','password','preview_restore','restore','ban_ip','unban_ip','clear_audit','clear_access'):
+            with self.subTest(action=action):
+                response = guest.post('/admin/action', data={'action':action}, headers={'Accept':'application/json'})
+                self.assertEqual(response.status_code, 401)
+                response = self.client.post('/admin/action', data={'action':action}, headers={'Accept':'application/json'})
+                self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.r.admin, before)
+
+
+if __name__ == '__main__':
+    unittest.main()
 ```
 
 ## tests/test_app.py
@@ -9154,7 +9658,7 @@ class AppTests(unittest.TestCase):
         response=c.post("/admin",data={"csrf":csrf,"username":"GINGRSNAPS","password":PASSWORD},follow_redirects=True)
         self.assertEqual(response.status_code,200)
         self.assertIn("CONTROL CENTER",response.text)
-        for tab in ("overview","race","players","settings"):
+        for tab in ("overview","race","players","boss","settings"):
             p=c.get('/admin?tab='+tab)
             self.assertEqual(p.status_code,200)
             self.assertIn('aria-label="Administration"',p.text)
@@ -9675,14 +10179,17 @@ class AppTests(unittest.TestCase):
                     wait_for_wager('$200.00')
                     self.assertEqual(self.r.shuffle['error'], '')
                     self.assertEqual(self.r.jobs['shuffle']['http_status'], 200)
-                    self.assertEqual(fixture['windows'][1][0], eastern_epoch(form['start_et']))
+                    # The independent history worker may interleave completed-
+                    # week requests. Verify this live window, not request order.
+                    new_start = eastern_epoch(form['start_et'])
+                    self.assertTrue(any(window[0] == new_start for window in fixture['windows']))
                     # No manual request: the next scheduled cycle must publish.
                     fixture['amount'] = '375'
                     wait_for_wager('$375.00')
                     admin = self.client.get('/admin/status?tab=players').json
                     self.assertEqual(admin['participants'][0]['wager'], '$375.00')
                     self.assertEqual(admin['participants'][0]['username'], 'AlphaMember')
-                    self.assertGreaterEqual(len(fixture['windows']), 3)
+                    self.assertGreaterEqual(sum(window[0] == new_start for window in fixture['windows']), 2)
                 finally:
                     release.set()
                     self.r.stop()
@@ -10685,13 +11192,13 @@ test("older polls cannot reverse boss damage", async () => {
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp - p.value.state.hp,
+    p.value.state.hp,
   );
   p.respond(async () => response(old));
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp - p.value.state.hp,
+    p.value.state.hp,
   );
   p.close();
 });
@@ -10817,14 +11324,14 @@ test("same-raid updates cannot refill health even with a newer version or clock"
     await p.advance(5000);
     assert.equal(
       p.w.document.querySelector("#bossHealthBar").value,
-      p.value.state.max_hp - hp,
+      hp,
     );
     assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   }
   p.close();
 });
 
-test("defeat progress stays at 100 percent until a different raid starts", async () => {
+test("health bar stays empty after victory until a different raid starts", async () => {
   const p = page();
   await flush();
   p.value.state.hp = 0;
@@ -10834,7 +11341,7 @@ test("defeat progress stays at 100 percent until a different raid starts", async
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp,
+    0,
   );
   p.value.state.hp = p.value.state.max_hp;
   p.value.state.total_damage = 0;
@@ -10843,12 +11350,12 @@ test("defeat progress stays at 100 percent until a different raid starts", async
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp,
+    0,
   );
   p.value.state.raid_id = "new-host-started-raid";
   p.value.state.server_time += 10;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
+  assert.equal(p.w.document.querySelector("#bossHealthBar").value, p.value.state.max_hp);
   p.close();
 });
 
@@ -10867,7 +11374,7 @@ test("explicit host health revisions update the current raid without losing dama
   p.value.state.health_revision = 1;
   await p.advance(5000);
   const bar = p.w.document.querySelector("#bossHealthBar");
-  assert.equal(bar.value, p.value.state.max_hp - p.value.state.hp);
+  assert.equal(bar.value, p.value.state.hp);
   assert.equal(bar.max, p.value.state.max_hp);
   assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   const saved = bar.value;
@@ -12180,12 +12687,16 @@ test('conditional public updates reuse the cached body and take a fresh server c
 });
 
 test('homepage invitation follows boss health and paused or completed status',async()=>{
-  const p=page('public');await flush();p.feed.boss.hp=1200000;p.feed.boss.status='paused';p.feed.boss.raiders=37;
+  const p=page('public');await flush();
+  assert.equal(p.window.document.querySelector('#inviteHealth').value,p.feed.boss.max_hp);
+  p.feed.boss.hp=765432;p.feed.boss.status='paused';p.feed.boss.raiders=37;
   await p.advance(60000);
   assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/pause|View/i);
   assert.match(p.window.document.querySelector('#inviteProgress').textContent,/37/);
+  assert.equal(p.window.document.querySelector('#inviteHealth').value,765432);
   p.feed.boss.hp=0;p.feed.boss.status='victory';await p.advance(60000);
-  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);p.close();
+  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);
+  assert.equal(p.window.document.querySelector('#inviteHealth').value,0);p.close();
 });
 
 test('homepage victory uses the configured boss name safely',async()=>{
@@ -12205,6 +12716,160 @@ test('source success and last content change have separate labels',async()=>{
   const value=p.window.document.getElementById('shuffleFreshness').textContent;
   assert.match(value,/Last successful check:/);assert.match(value,/Content last changed:/);
   assert.ok(p.window.document.getElementById('shuffleProgress'));p.close();
+});
+```
+
+## tests/test_history_frontend.cjs
+
+```javascript
+/* Optional development tests; Node/jsdom are not runtime dependencies. */
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { JSDOM } = require("jsdom");
+const root = path.resolve(__dirname, "..");
+const fixture = process.env.DOM_FIXTURES || path.join(root, ".test-fixtures");
+const flush = async () => {
+  for (let n = 0; n < 5; n++) await new Promise((r) => setImmediate(r));
+};
+function page() {
+  const dom = new JSDOM(
+    fs.readFileSync(path.join(fixture, "history.html"), "utf8"),
+    { url: "https://example.test/history", runScripts: "outside-only" },
+  );
+  const w = dom.window,
+    timers = new Map(),
+    calls = [];
+  const value = JSON.parse(
+    fs.readFileSync(path.join(fixture, "history.json"), "utf8"),
+  );
+  let now = 0,
+    serial = 0,
+    fail = false;
+  Object.defineProperty(w.document, "hidden", {
+    value: false,
+    configurable: true,
+  });
+  w.setTimeout = (fn, delay) => {
+    const id = ++serial;
+    timers.set(id, { fn, at: now + delay });
+    return id;
+  };
+  w.clearTimeout = (id) => timers.delete(id);
+  w.fetch = async (url) => {
+    calls.push({ url, now });
+    if (fail) throw Error("offline");
+    return {
+      ok: true,
+      headers: new Map([["content-type", "application/json"]]),
+      json: async () => structuredClone(value),
+    };
+  };
+  w.eval(fs.readFileSync(path.join(root, "static/app.js"), "utf8"));
+  w.eval(fs.readFileSync(path.join(root, "static/history.js"), "utf8"));
+  return {
+    w,
+    value,
+    calls,
+    fail(v) {
+      fail = v;
+    },
+    async advance(ms) {
+      now += ms;
+      for (const [id, t] of [...timers])
+        if (t.at <= now) {
+          timers.delete(id);
+          t.fn();
+        }
+      await flush();
+    },
+    close() {
+      dom.window.close();
+    },
+  };
+}
+test("history renders 25 masked rows, four native links and the active navigation tab", async () => {
+  const p = page();
+  await flush();
+  const d = p.w.document;
+  assert.equal(d.querySelectorAll("#historyRows tr").length, 25);
+  assert.equal(d.querySelectorAll("#historyWeeks a").length, 4);
+  assert.equal(
+    d.querySelectorAll('nav[aria-label="Main navigation"] [aria-current]')
+      .length,
+    1,
+  );
+  for (const a of d.querySelectorAll("#historyWeeks a"))
+    assert.match(a.href, /\/history\?week=\d{4}-\d{2}-\d{2}$/);
+  assert.ok(!d.body.textContent.includes("ExamplePlayer"));
+  assert.equal(d.querySelectorAll("#historyRows img").length, 0);
+  const ids = [...d.querySelectorAll("[id]")].map((x) => x.id);
+  assert.equal(new Set(ids).size, ids.length);
+  p.close();
+});
+test("history polls every minute, pauses hidden tabs and reconnects without erasing results", async () => {
+  const p = page();
+  await flush();
+  await p.advance(60000);
+  await p.advance(60000);
+  assert.deepEqual(
+    p.calls.map((c) => c.now),
+    [0, 60000, 120000],
+  );
+  const before = p.w.document.getElementById("historyRows").textContent;
+  p.fail(true);
+  await p.advance(60000);
+  assert.equal(p.w.document.getElementById("historyNetwork").hidden, false);
+  assert.equal(p.w.document.getElementById("historyRows").textContent, before);
+  Object.defineProperty(p.w.document, "hidden", {
+    value: true,
+    configurable: true,
+  });
+  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
+  await p.advance(180000);
+  assert.equal(p.calls.length, 4);
+  p.fail(false);
+  Object.defineProperty(p.w.document, "hidden", {
+    value: false,
+    configurable: true,
+  });
+  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
+  await flush();
+  assert.equal(p.calls.length, 5);
+  assert.equal(p.w.document.getElementById("historyNetwork").hidden, true);
+  p.close();
+});
+test("updates use text nodes and preserve table nodes when the results did not change", async () => {
+  const p = page();
+  await flush();
+  const d = p.w.document;
+  const first = d.querySelector("#historyRows tr");
+  await p.advance(60000);
+  assert.strictEqual(d.querySelector("#historyRows tr"), first);
+  p.value.selected.rows[0].username = "<img src=x onerror=alert(1)>";
+  await p.advance(60000);
+  assert.equal(d.querySelector("#historyRows img"), null);
+  assert.match(d.querySelector("#historyRows").textContent, /<img/);
+  p.close();
+});
+test("weekly rollover rebuilds four links and follows the selected period", async () => {
+  const p = page();
+  await flush();
+  const week = structuredClone(p.value.weeks[0]);
+  week.id = "2030-01-01";
+  week.label = "New week";
+  p.value.weeks = [week, ...p.value.weeks.slice(0, 3)];
+  p.value.selected = week;
+  await p.advance(60000);
+  assert.equal(p.w.document.querySelectorAll("#historyWeeks a").length, 4);
+  assert.equal(
+    p.w.document.querySelector("#historyWeeks [aria-current]").dataset.week,
+    "2030-01-01",
+  );
+  await p.advance(60000);
+  assert.match(p.calls.at(-1).url, /week=2030-01-01/);
+  p.close();
 });
 ```
 
@@ -12984,6 +13649,199 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
+## tests/test_weekly_history.py
+
+```python
+"""Calendar, public privacy and persistence tests; never contacts live accounts."""
+import copy
+from datetime import datetime
+import json
+import re
+import time
+import unittest
+from unittest.mock import patch
+
+import test_app
+from integrations import ProviderError
+from race_support import EASTERN
+from storage import Conflict
+from wager_backend import create_app
+from weekly_history import WeeklyHistory, clean_history, completed_weeks
+
+
+def stamp(value):
+    return int(datetime.fromisoformat(value).replace(tzinfo=EASTERN).timestamp())
+
+
+class WeeklyHistoryTests(unittest.TestCase):
+    setUp = test_app.AppTests.setUp
+    action = test_app.AppTests.action
+    schedule = test_app.AppTests.schedule
+    form = test_app.AppTests.form
+
+    def fill(self, now=None, count=30):
+        rows = [test_app.player('HistoryPlayer%03d' % n, str(1000-n)) for n in range(count)]
+        with patch.object(self.r.providers, 'shuffle', return_value=rows) as provider:
+            self.r.history.check(now)
+        return provider
+
+    def test_tuesday_exact_cutoff_and_four_contiguous_completed_weeks(self):
+        before = completed_weeks(stamp('2026-10-06T17:59:59'))
+        after = completed_weeks(stamp('2026-10-06T18:00:00'))
+        self.assertEqual(before[0]['id'], '2026-09-29')
+        self.assertEqual(after[0]['id'], '2026-10-06')
+        self.assertEqual(len(after), 4)
+        for n, week in enumerate(after):
+            for field in ('start_time', 'end_time'):
+                local = datetime.fromtimestamp(week[field], EASTERN)
+                self.assertEqual((local.weekday(), local.hour, local.minute), (1, 18, 0))
+            if n:
+                self.assertEqual(week['end_time'], after[n-1]['start_time'])
+
+    def test_dst_weeks_follow_eastern_wall_time_not_168_fixed_hours(self):
+        for end, hours in [('2026-03-10T18:00', 167), ('2026-11-03T18:00', 169)]:
+            week = completed_weeks(stamp(end))[0]
+            self.assertEqual(week['end_time']-week['start_time'], hours*3600)
+
+    def test_top_25_and_all_public_responses_mask_names_before_delivery(self):
+        provider = self.fill()
+        self.assertEqual(provider.call_count, 4)
+        for call, week in zip(provider.call_args_list, completed_weeks()):
+            self.assertEqual(call.args[0]['start_time'], week['start_time'])
+            self.assertEqual(call.args[0]['end_time'], week['end_time'])
+        guest = self.app.test_client()
+        for url in ('/history', '/history-state'):
+            response = guest.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn('HistoryPlayer', response.text)
+            self.assertNotIn('shuffle_api_key', response.text)
+            self.assertNotIn('raw_wager', response.text)
+            self.assertIn('Hi******', response.text)
+        value = guest.get('/history-state').json
+        self.assertEqual(len(value['weeks']), 4)
+        for week in value['weeks']:
+            self.assertEqual(len(week['rows']), 25)
+            self.assertEqual(week['count'], 30)
+            self.assertEqual([row['rank'] for row in week['rows']], list(range(1, 26)))
+            self.assertEqual(week['rows'][0]['wager'], '$1,000.00')
+            self.assertEqual(week['rows'][-1]['wager'], '$976.00')
+
+    def test_views_and_fresh_cache_never_call_provider(self):
+        self.fill()
+        with patch.object(self.r.providers, 'shuffle', side_effect=AssertionError('Must use cache')):
+            self.r.history.check()
+            weeks = completed_weeks()
+            for week in weeks:
+                response = self.client.get('/history?week='+week['id'])
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('data-selected-week="'+week['id']+'"', response.text)
+                self.assertEqual(self.client.get('/history-state?week='+week['id']).json['selected']['id'], week['id'])
+            self.assertEqual(self.client.get('/history-state?week=bad').json['selected']['id'], weeks[0]['id'])
+
+    def test_rollover_retains_only_last_four_weeks_and_automatically_loads_newest(self):
+        now = stamp('2026-10-06T17:59:59')
+        self.fill(now)
+        with patch.object(self.r.providers, 'shuffle', return_value=[test_app.player()]):
+            self.r.history.check(now+1)
+        self.assertEqual({w['id'] for w in self.r.store.live('weekly_history')['weeks']},
+                         {w['id'] for w in completed_weeks(now+1)})
+        self.assertEqual(self.r.history.public(now=now+1)['selected']['rows'][0]['username'], 'Al******')
+
+    def test_archived_settings_apply_only_to_the_matching_week(self):
+        week = completed_weeks()[0]
+        admin = copy.deepcopy(self.r.admin)
+        old = copy.deepcopy(admin['site_settings'])
+        old.update(start_time=week['start_time'], end_time=week['end_time'])
+        old['prizes']['1'] = '321'
+        admin['race_history'].append(dict(site_settings=old, overrides={'HistoryPlayer000':'5000'}))
+        admin['overrides'] = {'HistoryPlayer001':'99999'}
+        admin['site_settings']['prizes']['1'] = '9999'
+        self.r.commit(admin, self.r.revision)
+        self.fill()
+        value = self.r.history.public()
+        self.assertEqual(value['weeks'][0]['rows'][0]['wager'], '$5,000.00')
+        self.assertEqual(value['weeks'][0]['rows'][0]['prize'], '$321.00')
+        self.assertEqual(value['weeks'][0]['rows'][24]['prize'], '$0.00')
+        self.assertFalse(value['weeks'][1]['prizes_known'])
+        self.assertEqual(value['weeks'][1]['rows'][0]['wager'], '$1,000.00')
+        self.assertEqual(value['weeks'][1]['rows'][0]['prize'], '—')
+
+    def test_failure_retains_results_and_respects_provider_retry(self):
+        now = int(time.time())
+        self.fill(now)
+        before = self.r.history.public(now=now)['selected']['rows']
+        later = now+86400
+        with patch.object(self.r.providers, 'shuffle', side_effect=ProviderError('secret upstream details', status=429, retry_after=180)) as provider:
+            self.assertEqual(self.r.history.check(later), 180)
+            self.assertEqual(provider.call_count, 1)
+        value = self.r.history.public(now=later)
+        self.assertEqual(value['selected']['rows'], before)
+        self.assertEqual(value['selected']['status'], 'delayed')
+        self.assertNotIn('secret upstream details', json.dumps(value))
+        self.assertEqual(self.r.store.live('weekly_history')['weeks'][0]['retry_at'], later+180)
+
+    def test_missing_and_successfully_empty_are_distinct(self):
+        self.assertEqual(self.r.history.public()['selected']['status'], 'loading')
+        self.assertIsNone(self.r.history.public()['selected']['count'])
+        self.fill(count=0)
+        value = self.r.history.public()['selected']
+        self.assertEqual(value['status'], 'ready')
+        self.assertEqual(value['count'], 0)
+
+    def test_history_save_survives_restart_and_full_private_recovery(self):
+        self.fill()
+        before = self.r.history.public()
+        reloaded = WeeklyHistory(self.r.config, self.r.store, self.r.providers)
+        self.assertEqual(reloaded.public()['weeks'], before['weeks'])
+        response = self.client.get('/admin/recovery-backup')
+        self.assertEqual(len(response.json['weekly_history']['weeks']), 4)
+        target = self.root/'fresh'
+        (target/'private').mkdir(parents=True)
+        (target/'private/recovery.seed.json').write_bytes(response.data)
+        restored = create_app(target, testing=True)
+        runtime = restored.extensions['runtime']
+        try:
+            self.assertEqual(runtime.history.public()['weeks'], before['weeks'])
+            self.assertNotIn('weekly_history', runtime.admin)
+        finally:
+            runtime.store.close()
+
+    def test_configuration_change_during_fetch_cannot_publish_old_results(self):
+        def changed(site):
+            admin = copy.deepcopy(self.r.admin)
+            admin['site_settings']['campaign_code_filter'] = 'other'
+            self.r.commit(admin, self.r.revision)
+            return [test_app.player()]
+        with patch.object(self.r.providers, 'shuffle', side_effect=changed):
+            with self.assertRaises(Conflict):
+                self.r.history.check()
+        self.assertEqual(self.r.history.public()['selected']['rows'], [])
+
+    def test_invalid_recovery_cache_rejected(self):
+        self.fill()
+        saved = self.r.store.live('weekly_history')
+        saved['weeks'][0]['rows'][0]['weighted_wager'] = 'NaN'
+        with self.assertRaises(ValueError):
+            clean_history(saved)
+
+    def test_homepage_bar_server_rendered_full_partial_and_empty(self):
+        for hp in (2400000, 765432, 0):
+            admin = self.client.get('/admin/boss/status').json
+            response = self.client.post('/admin/boss/action', data={
+                'csrf':'test-token', 'action':'remaining_health', 'raid_id':admin['state']['raid_id'],
+                'health_revision':admin['state']['health_revision'],
+                'health':str(hp), 'confirm_health':'yes'})
+            self.assertEqual(response.status_code, 303)
+            page = self.client.get('/').text
+            progress = re.search(r'<progress id="inviteHealth"[^>]*>', page).group()
+            self.assertIn('value="'+str(hp)+'"', progress)
+            self.assertIn('max="2400000"', progress)
+
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
 ## wager_backend.py
 
 ```python
@@ -13089,7 +13947,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -13154,7 +14012,7 @@ def create_app(root=None, testing=False):
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -13193,6 +14051,16 @@ def create_app(root=None, testing=False):
     @app.get("/")
     def index():
         return render_template("index.html", data=public_snapshot())
+
+    @app.get('/history')
+    def public_history():
+        # This request reads a small saved snapshot; it never calls Shuffle.
+        return render_template('history.html', data=runtime.public(),
+                               history=runtime.history.public(request.args.get('week')))
+
+    @app.get('/history-state')
+    def history_state():
+        return jsonify(release=RELEASE, **runtime.history.public(request.args.get('week')))
 
     def public_snapshot():
         value = runtime.public()
@@ -13585,6 +14453,7 @@ def create_app(root=None, testing=False):
             value = copy.deepcopy(runtime.admin)
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
             value.update(boss.recovery())
+            value['weekly_history'] = runtime.store.live('weekly_history')
             marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
             value["recovery_export"] = marker
             runtime.store.checkpoint(marker)
@@ -13778,7 +14647,7 @@ def create_app(root=None, testing=False):
                 reason, detail = "before-restore", "Backup restored. Accounts preserved; a private recovery copy was saved."
             elif action_name in {"ban_ip", "unban_ip"}:
                 ip = str(ipaddress.ip_address(request.form.get("ip", "")))
-                if action_name == "ban_ip" and ip == request.remote_addr:
+                if action_name == "ban_ip" and ip == g.client_ip:
                     raise ValueError("You cannot block the address you are using.")
                 candidate["banned_ips"] = sorted(set(candidate["banned_ips"]) | {ip}) if action_name == "ban_ip" else [x for x in candidate["banned_ips"] if x != ip]
             elif action_name == "clear_audit":
@@ -13857,11 +14726,220 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
+## weekly_history.py
+
+```python
+"""Four completed Eastern-time weeks, cached in the existing JSON save.
+
+Only the automatic worker contacts Shuffle. Page views read the cache, so traffic
+cannot multiply provider requests. Unknown historical prizes are never invented.
+"""
+import copy
+from datetime import datetime, timedelta
+import logging
+import threading
+import time
+
+from integrations import ProviderError
+from race import normalize, rank, token
+from race_support import EASTERN, clean_overrides, decimal_amount, fmt_et, money
+
+LOG = logging.getLogger('redhunllef')
+
+
+def completed_weeks(now=None):
+    """Use calendar weeks, not fixed seconds: DST weeks can be 167/169 hours."""
+    local = datetime.fromtimestamp(time.time() if now is None else now, EASTERN)
+    end = local.replace(hour=18, minute=0, second=0, microsecond=0)
+    end -= timedelta(days=(end.weekday() - 1) % 7)
+    if end > local:
+        end -= timedelta(days=7)
+    result = []
+    for _ in range(4):
+        start = end - timedelta(days=7)
+        result.append(dict(id=end.strftime('%Y-%m-%d'), start_time=int(start.timestamp()),
+                           end_time=int(end.timestamp()), label=start.strftime('%b %d') + ' – ' + end.strftime('%b %d, %Y'),
+                           start_et=fmt_et(start.timestamp()), end_et=fmt_et(end.timestamp())))
+        end = start
+    return result
+
+
+def clean_history(value):
+    """Validate the optional cache when importing a private recovery file."""
+    if value is None:
+        return dict(version=1, weeks=[])
+    if not isinstance(value, dict) or value.get('version') != 1 or not isinstance(value.get('weeks'), list) or len(value['weeks']) > 4:
+        raise ValueError('Invalid weekly race history cache.')
+    result, seen = [], set()
+    for row in value['weeks']:
+        if not isinstance(row, dict):
+            raise ValueError('Invalid weekly race history entry.')
+        for key in ('start_time', 'end_time', 'updated_at', 'attempt_at', 'retry_at', 'count'):
+            if type(row.get(key)) is not int or not 0 <= row[key] <= 10**12:
+                raise ValueError('Invalid weekly race history counter.')
+        expected = completed_weeks(row['end_time'])[0]
+        if row['start_time'] != expected['start_time'] or row['end_time'] != expected['end_time'] or row.get('id') != expected['id'] or row['id'] in seen:
+            raise ValueError('History must contain distinct Tuesday 6 PM Eastern weeks.')
+        seen.add(row['id'])
+        if not isinstance(row.get('scope'), str) or len(row['scope']) != 20:
+            raise ValueError('Invalid history configuration reference.')
+        for key in ('error', 'warning'):
+            if not isinstance(row.get(key), str) or len(row[key]) > 500:
+                raise ValueError('Invalid history status.')
+        rows = row.get('rows')
+        if not isinstance(rows, list) or len(rows) > 25 or row['count'] < len(rows):
+            raise ValueError('Invalid historical leaderboard.')
+        for n, player in enumerate(rows, 1):
+            if (not isinstance(player, dict) or player.get('rank') != n or
+                    not isinstance(player.get('username'), str) or not 1 <= len(player['username']) <= 64):
+                raise ValueError('Invalid historical player.')
+            decimal_amount(player.get('weighted_wager'))
+        prizes = row.get('prizes')
+        if prizes is not None:
+            if not isinstance(prizes, dict) or set(prizes) != {str(n) for n in range(1, 16)}:
+                raise ValueError('Invalid historical prizes.')
+            for amount in prizes.values():
+                decimal_amount(amount)
+        result.append(copy.deepcopy(row))
+    return dict(version=1, weeks=result)
+
+
+class WeeklyHistory:
+    def __init__(self, config, store, providers):
+        self.config, self.store, self.providers = config, store, providers
+        self.stop_event, self.thread = threading.Event(), None
+        self.lock = threading.RLock()
+        self.check_lock = threading.Lock()
+        clean_history(store.live('weekly_history'))
+
+    def context(self, week, admin):
+        # Use the latest saved settings for this exact period. Today's prize
+        # pool or current-race overrides must never leak into an earlier week.
+        candidates = [admin, *reversed(admin.get('race_history', []))]
+        match = next((item for item in candidates if
+            item['site_settings']['start_time'] == week['start_time'] and
+            item['site_settings']['end_time'] == week['end_time']), None)
+        site = copy.deepcopy((match or admin)['site_settings'])
+        site.update(start_time=week['start_time'], end_time=week['end_time'])
+        overrides = clean_overrides(match.get('overrides', {})) if match else {}
+        prizes = copy.deepcopy(site['prizes']) if match else None
+        scope = token([site['campaign_code_filter'], self.config.endpoint,
+                       self.config.aggregation, self.config.raw_fallback,
+                       self.config.credentials['shuffle_api_key'], overrides, prizes])
+        return site, overrides, prizes, scope
+
+    def public(self, selected=None, now=None):
+        now = int(time.time() if now is None else now)
+        _, admin = self.store.admin()
+        saved = {row['id']: row for row in clean_history(self.store.live('weekly_history'))['weeks']}
+        weeks = []
+        for period in completed_weeks(now):
+            _, _, _, scope = self.context(period, admin)
+            row = saved.get(period['id'], {})
+            if row.get('scope') != scope:
+                row = {}
+            checked = row.get('updated_at', 0)
+            status = 'delayed' if row.get('error') else 'partial' if row.get('warning') else 'ready' if checked else 'loading'
+            message = ('Shuffle history is temporarily unavailable. Saved results remain visible; retrying automatically.' if row.get('error') else
+                       row.get('warning') or ('No qualifying wagers were returned for this week.' if checked and not row.get('rows') else
+                       'Loading this completed week from Shuffle…' if not checked else ''))
+            weeks.append({**period, 'status':status, 'message':message,
+                'updated_at':checked, 'updated_et':fmt_et(checked) if checked else 'Awaiting first result',
+                'count':row.get('count') if checked else None,
+                'prizes_known':checked > 0 and row.get('prizes') is not None,
+                'rows':[dict(rank=p['rank'], username=p['username'][:2] + '******',
+                             wager=money(p['weighted_wager']),
+                             prize=money(row['prizes'].get(str(p['rank']), '0')) if row.get('prizes') is not None else '—')
+                        for p in row.get('rows', [])]})
+        chosen = next((week for week in weeks if week['id'] == selected), weeks[0])
+        return dict(weeks=weeks, selected=chosen, server_time=now, interval=60)
+
+    def check(self, now=None):
+        """Backfill up to four weeks; retain successes through provider errors."""
+        if not self.check_lock.acquire(blocking=False):
+            return 60
+        try:
+            return self._check(int(time.time() if now is None else now))
+        finally:
+            self.check_lock.release()
+
+    def _check(self, now):
+        revision, admin = self.store.admin()
+        periods = completed_weeks(now)
+        saved = clean_history(self.store.live('weekly_history'))
+        cache = {row['id']: row for row in saved['weeks'] if row['id'] in {p['id'] for p in periods}}
+        if len(cache) != len(saved['weeks']):
+            self.store.publish('weekly_history', dict(version=1, weeks=list(cache.values())), revision)
+        for period in periods:
+            if self.stop_event.is_set():
+                break
+            site, overrides, prizes, scope = self.context(period, admin)
+            previous = cache.get(period['id'], {})
+            if previous.get('scope') != scope:
+                previous = {}
+            # Newly closed weeks recheck hourly for settlement corrections;
+            # older completed weeks recheck daily. No API call per page view.
+            refresh = 3600 if now - period['end_time'] < 86400 else 86400
+            if previous.get('retry_at', 0) > now or (previous.get('updated_at') and
+                    not previous.get('error') and now - previous['updated_at'] < refresh):
+                continue
+            record = {**period, 'scope':scope, 'updated_at':0, 'attempt_at':now,
+                      'retry_at':0, 'count':0, 'rows':[], 'prizes':prizes,
+                      'error':'', 'warning':'', **previous}
+            record['attempt_at'] = now
+            pause = 0
+            try:
+                incoming = normalize(self.providers.shuffle(site), site, self.config.raw_fallback)
+                rows, _, count = rank(incoming['source'], overrides, self.config.aggregation, 25)
+                record.update(rows=[dict(rank=p['rank'], username=p['username'], weighted_wager=p['weighted_wager']) for p in rows],
+                              count=count, prizes=prizes, updated_at=now, error='', retry_at=0,
+                              warning=incoming['warning'][:500])
+                LOG.info('HISTORY Saved %s to %s; %s qualifying players.', period['start_et'], period['end_et'], count)
+            except (ProviderError, ValueError) as exc:
+                pause = max(60, min(86400, getattr(exc, 'retry_after', 0)))
+                if getattr(exc, 'status', None) in (401, 403):
+                    pause = max(pause, 900)
+                record.update(error='Provider check failed; retry pending.', retry_at=now + pause)
+                LOG.warning('HISTORY Week ending %s unavailable (%s). Previous result retained.', period['id'], type(exc).__name__)
+            cache[period['id']] = record
+            self.store.publish('weekly_history', clean_history(dict(version=1, weeks=list(cache.values()))), revision)
+            # A throttle/access/outage failure stops this batch, preventing four
+            # immediate rejected requests against the same affiliate service.
+            if pause:
+                return pause
+        return 60
+
+    def loop(self):
+        try:
+            while not self.stop_event.is_set():
+                try:
+                    delay = self.check()
+                except Exception as exc:
+                    LOG.warning('HISTORY Check interrupted (%s); retrying in 60s.', type(exc).__name__)
+                    delay = 60
+                if self.stop_event.wait(delay):
+                    break
+        finally:
+            self.providers.close()
+
+    def start(self):
+        with self.lock:
+            if self.stop_event.is_set() or (self.thread and self.thread.is_alive()):
+                return
+            self.thread = threading.Thread(target=self.loop, daemon=True, name='weekly-history')
+            self.thread.start()
+
+    def stop(self):
+        self.stop_event.set()
+        if self.thread:
+            self.thread.join(timeout=1)
+```
+
 ## MANIFEST.json
 
 ```json
 {
-  "release": "2026.09.29-username-save",
+  "release": "2026.10.03-weekly-history",
   "packaging": "complete",
   "entry_point": "python wager_backend.py",
   "storage": "local JSON (automatic)",
@@ -13879,7 +14957,8 @@ if __name__ == "__main__":
     "runtime",
     "storage",
     "store_schema",
-    "wager_backend"
+    "wager_backend",
+    "weekly_history"
   ],
   "source_files": {
     ".env.example": {
@@ -13895,24 +14974,24 @@ if __name__ == "__main__":
       "sha256": "b0c7255d064a0109a93e4082b580da57d58cf26d1cde4b85d953d59a9d5a88ad"
     },
     "CHANGES.md": {
-      "bytes": 4400,
-      "sha256": "0ab51fa35df2a3239f725c246141be021efb356afb41b3dcfefaa95e6e3ac9b7"
+      "bytes": 5523,
+      "sha256": "834ac98a4f9397ecebfe09037be59657313adb3500944a712d370ba9c499b833"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 5812,
-      "sha256": "c2bd196acc6a4c0bcb30d73a858333b01ce7f1fc8878f9ea01c80c2340c8a4a8"
+      "bytes": 6469,
+      "sha256": "e19ed0057a5eabe2987726e4d9e10d849b3b5bbe912344c5b89cd37663e91554"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 19931,
-      "sha256": "8c4a8eaadc14fd4c8b993da215b3990e3d7718c15ccfcd031feeb3670ee880b6"
+      "bytes": 23574,
+      "sha256": "1edc3e63c9abed6b05a514a3eef9fddc5874d8e229ffab81d4f57e78d9665fe8"
     },
     "START_HERE.md": {
-      "bytes": 2931,
-      "sha256": "2b970512faa77d208861472f26dcecf892aa56ed60ae312850b033039ea02fca"
+      "bytes": 3432,
+      "sha256": "c6d94eac57d0b3b7fc0d151ff51b38b4c04f93cc6643f4869ba1b0a56a72bebe"
     },
     "abuse_guard.py": {
       "bytes": 2063,
@@ -13939,8 +15018,8 @@ if __name__ == "__main__":
       "sha256": "8eee0a96219866030d0b6a2b83d73a1fd01dcfbacd697e1238fbf26d6a7c9d40"
     },
     "config.py": {
-      "bytes": 5327,
-      "sha256": "d91f73c050c399ff6d474e62c8cab76219948c73e3c2e32727f5999f66b349f3"
+      "bytes": 5328,
+      "sha256": "6b73ac30fd071fec052200126276cf176ca8d5a27b91e50d1ac5a6ab76feb9c7"
     },
     "docs/COMMUNITY_BOSS.md": {
       "bytes": 4535,
@@ -13951,8 +15030,8 @@ if __name__ == "__main__":
       "sha256": "0acf9ed9d50e9701a7877d6b8447fab8c16d90dea1b5a837d2b5c5cc5e69cbd7"
     },
     "docs/VALIDATION.md": {
-      "bytes": 3960,
-      "sha256": "f3f8abf16f88af2254b3f01e2f06e0366635108466bd7f59519f79edd3f1fc2c"
+      "bytes": 4893,
+      "sha256": "21558e55ce30b9b2f64f7bb149a99fd9f38811515d1cbc2ecc27182dfd4910e5"
     },
     "integrations.py": {
       "bytes": 7041,
@@ -13983,24 +15062,32 @@ if __name__ == "__main__":
       "sha256": "4c1a45a322ba363062403c67632144a14742dfa8d2d4df090620a13da7d9d13d"
     },
     "runtime.py": {
-      "bytes": 18063,
-      "sha256": "903164f37004ce0d886e316f09dda4f338ff142d415abf85826218d6d4175532"
+      "bytes": 18231,
+      "sha256": "5923e5e49b13720a124d032d030a5901c49d641eb5c8c27b30a06461c94df36b"
     },
     "runtime.txt": {
       "bytes": 15,
       "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
     },
     "static/app.js": {
-      "bytes": 26945,
-      "sha256": "d435568ba340273c9eada95c051017f41243765575e80f05dce0491818ef20d7"
+      "bytes": 26934,
+      "sha256": "aa268e13e3d9eeb0d06819ae5dec61802d5b7bb4f8053c6ee989f19f65d693ff"
     },
     "static/boss.css": {
       "bytes": 22172,
       "sha256": "48902dc3cbada39b92b6b4cff8bfb319437302c094aff9cfc2253a82760486fc"
     },
     "static/boss.js": {
-      "bytes": 39563,
-      "sha256": "0867b453b51bd0487434e9cb1cc678740a395fab905cc227e518d195a791031d"
+      "bytes": 39548,
+      "sha256": "3d7474f94287e5541b42817bf4407530e76845ff4e43ed10568f027772ae23a3"
+    },
+    "static/history.css": {
+      "bytes": 2096,
+      "sha256": "40197db28d6dbefde9c1e095a487c08603ce2b4a1a4732c238f3d9a741f468e1"
+    },
+    "static/history.js": {
+      "bytes": 5402,
+      "sha256": "d23c44dde770fe3660c06590ff71ae4c8fcab323ffd1553223635528a2939927"
     },
     "static/redlogo.ico": {
       "bytes": 4286,
@@ -14011,24 +15098,24 @@ if __name__ == "__main__":
       "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
     },
     "static/style.css": {
-      "bytes": 30033,
-      "sha256": "e4819b9fed73309a9012580f1c24fa310ea87f7d8f96d96fd09c03ffdb349845"
+      "bytes": 30200,
+      "sha256": "1fa08a7c56129e0c0c7d18df8a354dc58fda6cfc2eace5f1a0bc3aca475b2e50"
     },
     "storage.py": {
-      "bytes": 13758,
-      "sha256": "025b24cba32af09d0891ae68bb93f6267f71166cf82fb32fe6f0afdc43ecb813"
+      "bytes": 13898,
+      "sha256": "84999f8c8d006cf0f22ab5b0663694d4b4584c9e41c0dd6c3603babd85490913"
     },
     "store_schema.py": {
-      "bytes": 4551,
-      "sha256": "b178eaa121bdf4dca84fc1daf5845bebaa04049c9e4302653f577bbb7a4bea98"
+      "bytes": 4699,
+      "sha256": "5ccf9a649f92afff624e572203a1dfd940435dc6e1248ed3e0768887aeb5fec2"
     },
     "templates/admin.html": {
       "bytes": 5061,
       "sha256": "fe0a2bae07c842ca2d084c96e91616c1e5aae80d32c0c34c796335a8a2c97f9e"
     },
     "templates/admin_boss.html": {
-      "bytes": 11045,
-      "sha256": "7a2bc09f5b6eff45a15ac7e1357055039e5e1c8b87e324f57f624c29df625ad2"
+      "bytes": 11027,
+      "sha256": "d0e6c64e1b2823253fa3cb6e1733b5a92aaf8415134fe20274b0106fd919e831"
     },
     "templates/admin_overview.html": {
       "bytes": 1785,
@@ -14047,12 +15134,12 @@ if __name__ == "__main__":
       "sha256": "eac3e3a11afe3a41e8f25c6b138a9f33ace38e782759407a90ca5ce493ae0aa0"
     },
     "templates/base.html": {
-      "bytes": 2158,
-      "sha256": "9d2172b68923fe1fe0787811556246e56fda5cf71e3d59fbb64e2217bc4ecbae"
+      "bytes": 2262,
+      "sha256": "fb875e624c492e735766854a8818b53ff1778671bb7d6e71e7ee0ab28bfffc07"
     },
     "templates/boss.html": {
-      "bytes": 10402,
-      "sha256": "a4a4f9b8f3c6c4c6717a4a859ca613807b4c682f9ffda3c1f4f6e778ba72fd1d"
+      "bytes": 10384,
+      "sha256": "2a2abbbf8e57702feb885622c0f58336b21158ad12129466d63ecfa9ad839c87"
     },
     "templates/change_review.html": {
       "bytes": 690,
@@ -14062,13 +15149,17 @@ if __name__ == "__main__":
       "bytes": 515,
       "sha256": "8c02ec7296f011932263817c387f5126d62238d1d7714bd57d64cb51917474be"
     },
+    "templates/history.html": {
+      "bytes": 3566,
+      "sha256": "b6817bc0f2d95f662105669a08e2fdf61d071c99dc5c80cab304fc6d55415935"
+    },
     "templates/icons.html": {
       "bytes": 687,
       "sha256": "7d99dc9ee58e6f0827b2a3583cb028477ae304b078f3b1311e766594f189ce3c"
     },
     "templates/index.html": {
-      "bytes": 5352,
-      "sha256": "35e7678d07f0db18b36c26ec6c9240a204cf9012b42852bdbd03c9bbda53c263"
+      "bytes": 5334,
+      "sha256": "9feea3fbe33f7d0efb78aa4d76547241ceac3eb18f07e4a794f24d2b4e756132"
     },
     "templates/login.html": {
       "bytes": 1292,
@@ -14087,16 +15178,20 @@ if __name__ == "__main__":
       "sha256": "c18c562cf375863cdc2b73e7221e18cdf6c3afd432783690389efc1d0bf4b9cd"
     },
     "tests/render_fixtures.py": {
-      "bytes": 3264,
-      "sha256": "aa767480ff5952bd49ddcd5ca84b734ea89d33b8def2957c407c6ba2cad5179e"
+      "bytes": 3526,
+      "sha256": "b282160927619434512c3c54aa109616a70d332fd57d902715efc28790db861e"
     },
     "tests/serve_game_fixture.py": {
       "bytes": 759,
       "sha256": "1ddbd387a1d7fa5092076f8827b62f71b1799517e5c80fb4d233fca9e8f28a8b"
     },
+    "tests/test_admin_controls.py": {
+      "bytes": 3699,
+      "sha256": "5741b100c23a4e380c767293a1cb9b56ada1afb680b748ec23cc7a15ce02bc4e"
+    },
     "tests/test_app.py": {
-      "bytes": 41139,
-      "sha256": "da032a0e70ec5bc238adde670312e45439fe03839b33384e50d61f22fd72aa62"
+      "bytes": 41409,
+      "sha256": "b19c1aeccadf0f5e4d92055a652cc45d1aa9a667da54dd653ce49b87fdab89f2"
     },
     "tests/test_boss.py": {
       "bytes": 16673,
@@ -14107,8 +15202,8 @@ if __name__ == "__main__":
       "sha256": "0135081f79b247dd4c9e8a582e948715f2ea9a854aeb1adcba1cf49707e6e59a"
     },
     "tests/test_boss_frontend.cjs": {
-      "bytes": 33195,
-      "sha256": "9662742be50b98df0ebd34bdd706a5440ce9775fc0d2a33668879b8823dae2db"
+      "bytes": 33084,
+      "sha256": "57b11b95e26cc455a8557a9d66939a918a07d72e0a1b982178cd52c8e1278a5d"
     },
     "tests/test_comfort_update.py": {
       "bytes": 14098,
@@ -14119,8 +15214,12 @@ if __name__ == "__main__":
       "sha256": "b25c22cc7af7056b6a218c1d1d8b91ab58084067767e8138f3b4dd3c5c18a31c"
     },
     "tests/test_frontend.cjs": {
-      "bytes": 16897,
-      "sha256": "9c586be46edbac59571842f55b16adb604173c0d5537f079924adaf369d051da"
+      "bytes": 17143,
+      "sha256": "079e01567469b5baa66581a9359d46f2b7186361ec08fc5c3046099085be9bfa"
+    },
+    "tests/test_history_frontend.cjs": {
+      "bytes": 4934,
+      "sha256": "50ea245d416cc5a2a281c9f303751271f4a9ab4c66d254512d9fbd78356f7aa8"
     },
     "tests/test_player_access.py": {
       "bytes": 8195,
@@ -14138,9 +15237,17 @@ if __name__ == "__main__":
       "bytes": 8152,
       "sha256": "d5146dff2ea6d3950bf31d3f983d5adf755a96665671ed1ed00b9a440ab103d4"
     },
+    "tests/test_weekly_history.py": {
+      "bytes": 9372,
+      "sha256": "89aefa1d11d545a0e1568deda5052d6d5c48fad327624f1ca3bbb175e548bcc6"
+    },
     "wager_backend.py": {
-      "bytes": 49890,
-      "sha256": "f05fca24819c54b23bc7816bffe94cd81142a6bba380a22e343a37a9fe3ea829"
+      "bytes": 50430,
+      "sha256": "03133ddebbd56cbd14285b321d86613f93710476f77098d14992fd687f4a6dbc"
+    },
+    "weekly_history.py": {
+      "bytes": 10998,
+      "sha256": "f834f2d134238e79bc65271391b68b6cdbea44940548145dc032b02ad4e1c6b3"
     }
   }
 }

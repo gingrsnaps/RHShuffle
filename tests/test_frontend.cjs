@@ -243,12 +243,16 @@ test('conditional public updates reuse the cached body and take a fresh server c
 });
 
 test('homepage invitation follows boss health and paused or completed status',async()=>{
-  const p=page('public');await flush();p.feed.boss.hp=1200000;p.feed.boss.status='paused';p.feed.boss.raiders=37;
+  const p=page('public');await flush();
+  assert.equal(p.window.document.querySelector('#inviteHealth').value,p.feed.boss.max_hp);
+  p.feed.boss.hp=765432;p.feed.boss.status='paused';p.feed.boss.raiders=37;
   await p.advance(60000);
   assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/pause|View/i);
   assert.match(p.window.document.querySelector('#inviteProgress').textContent,/37/);
+  assert.equal(p.window.document.querySelector('#inviteHealth').value,765432);
   p.feed.boss.hp=0;p.feed.boss.status='victory';await p.advance(60000);
-  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);p.close();
+  assert.match(p.window.document.querySelector('#inviteButtonLabel').textContent,/victory/i);
+  assert.equal(p.window.document.querySelector('#inviteHealth').value,0);p.close();
 });
 
 test('homepage victory uses the configured boss name safely',async()=>{

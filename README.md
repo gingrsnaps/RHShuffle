@@ -1,9 +1,60 @@
 # RedHunllef
 
-Release **2026.09.29-username-save**. This is the complete configured application.
+Release **2026.10.03-weekly-history**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
+
+## This update: health bars and weekly history
+
+The homepage uses a different health bar from the arena. The earlier patch changed
+the arena/admin templates but missed `templates/index.html` and `static/app.js`.
+This release corrects both initial HTML and automatic homepage updates: **full HP
+means a full bar; zero HP means an empty bar**. The separate percentage-defeated
+label in the arena still increases from 0% to 100%.
+
+Choose **History** in the public navigation, or open `/history`:
+
+- Four most recently **completed** weeks, newest first. Each runs from Tuesday
+  at **6:00 PM America/New_York** to the following Tuesday at that same local time.
+  Daylight saving changes are included; a calendar week can be 167 or 169 hours.
+  The in-progress week stays on the current leaderboard.
+- Each week shows the **top 25 qualifying weighted-wager players**. Names are
+  censored on the server in both HTML and JSON, using the existing first-two-letters
+  masking convention. Browsers never receive full historical usernames.
+- Four native week links work without JavaScript. With JavaScript, the page reads
+  the shared cache automatically every 60 seconds, pauses while hidden, and catches
+  up when visible. Switching weeks does not trigger an affiliate API request.
+- One background thread inside `wager_backend.py` loads the four date ranges using
+  the existing Shuffle affiliate endpoint and credentials. It notices a newly
+  completed week within 60 seconds, subject to provider delays. The newest closed
+  week is rechecked hourly during its first day; older weeks are rechecked daily
+  for corrections. Live race/Kick checks remain automatic every 60 seconds.
+- Saved settings and overrides for an exact historical window determine its
+  campaign and recorded prizes. When no matching settings exist, history queries
+  the current campaign for that date range, applies no current-race overrides, and
+  shows prizes as `—`. It never substitutes today's prize pool for an old week.
+  The existing 15 paid places are unchanged; places 16–25 receive no prize when a
+  matching schedule is known. Recorded prizes do not assert payment was made.
+- The cache uses the existing JSON save and is included in the Superadmin's full
+  **Private recovery file**. No SQL or additional process is needed. Failed checks
+  retain saved results and show a delayed status. Missing results are not presented
+  as a confirmed zero-player week.
+
+Historical retrieval uses the same date-window API contract as the live race.
+Actual historical availability depends on Shuffle retaining and returning those
+periods for your affiliate account. This release was tested with synthetic data;
+it does not claim that the live account's historical responses were verified.
+
+Admin regression coverage includes all five dashboard tabs, native login/logout,
+race preview/publication, automatic/manual refresh, overrides, Code Red Top 100,
+CSV export, accounts/passwords, backups/restore, logs/IP controls, and boss
+name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to use
+the actual trusted visitor IP on App Platform instead of the proxy socket address.
+
+After updating, restart the app and reload the homepage. `/healthz` should report
+**2026.10.03-weekly-history**. Asset versions change automatically, so the new
+scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
 
@@ -28,7 +79,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.09.29-username-save**. If it shows something else, the old application is
+**2026.10.03-weekly-history**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -119,7 +170,7 @@ filesystem. Changes made after that download will not be in that recovery file.
 ## Fresh installation
 
 Extract the entire `redhunllef-rebuilt/` folder, open a terminal in it, and use the
-two commands above. Visit `http://localhost:8080`, `/play`, and `/admin`.
+two commands above. Visit `http://localhost:8080`, `/history`, `/play`, and `/admin`.
 
 The original supplied Superadmin is **gingrsnaps / enok2121**. The bundled original
 account hashes and Shuffle/Kick configuration are preserved. Existing saved
@@ -220,7 +271,7 @@ to you and administrators; other visitors see a raider alias.
 | Default damage | 100 base, 150 weakness, +100 burst every tenth hit. Admin-editable. |
 | Weakness | Random stable draw every 10 minutes, shared by all players. Repeats are valid. |
 | Health | Never regenerates automatically. Confirmed damage stays saved. |
-| Progress bar | 0% to 100% defeated, based on remaining/max HP. |
+| Health bar | Full to empty on the homepage, game and admin views; the separate defeated counter rises from 0% to 100%. |
 | Input re-arm | Mouse pointer must leave the attack button; keyboard must release its activation key; touch taps work on release. |
 | Red rally | 15 distinct raiders in a rolling 10-minute window; cosmetic arena lighting lasts until a new raid. |
 | Achievements | Existing eight badges and progress display retained; achievement history carries across raids. |
@@ -314,13 +365,15 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-Validation covers 141 backend tests and 61 DOM/HTTP interface checks. Coverage includes
+Validation covers 157 backend tests and 65 DOM/HTTP interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
 validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
 cooldowns, migration, atomic-write failures and simultaneous writers. New regression
 checks include 100 concurrent players sharing one proxy, absent IP headers, changing
 addresses, names retained after restart, expired page sessions, native form saves,
 duplicate-name isolation, visible save failures and delayed browser responses.
+Weekly-history tests cover all four ranges, DST, Top 25 masking, cached reads,
+historical prizes, retry preservation, recovery and automatic navigation updates.
 The HTTP interface test loads both shipped scripts and uses a real Waitress server
 and cookie jar; the username endpoint is not mocked. It saves a name, reloads the
 page, lands an attack and checks a second independent player with the same label.

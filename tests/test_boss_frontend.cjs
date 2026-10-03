@@ -195,13 +195,13 @@ test("older polls cannot reverse boss damage", async () => {
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp - p.value.state.hp,
+    p.value.state.hp,
   );
   p.respond(async () => response(old));
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp - p.value.state.hp,
+    p.value.state.hp,
   );
   p.close();
 });
@@ -327,14 +327,14 @@ test("same-raid updates cannot refill health even with a newer version or clock"
     await p.advance(5000);
     assert.equal(
       p.w.document.querySelector("#bossHealthBar").value,
-      p.value.state.max_hp - hp,
+      hp,
     );
     assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   }
   p.close();
 });
 
-test("defeat progress stays at 100 percent until a different raid starts", async () => {
+test("health bar stays empty after victory until a different raid starts", async () => {
   const p = page();
   await flush();
   p.value.state.hp = 0;
@@ -344,7 +344,7 @@ test("defeat progress stays at 100 percent until a different raid starts", async
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp,
+    0,
   );
   p.value.state.hp = p.value.state.max_hp;
   p.value.state.total_damage = 0;
@@ -353,12 +353,12 @@ test("defeat progress stays at 100 percent until a different raid starts", async
   await p.advance(5000);
   assert.equal(
     p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.max_hp,
+    0,
   );
   p.value.state.raid_id = "new-host-started-raid";
   p.value.state.server_time += 10;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, 0);
+  assert.equal(p.w.document.querySelector("#bossHealthBar").value, p.value.state.max_hp);
   p.close();
 });
 
@@ -377,7 +377,7 @@ test("explicit host health revisions update the current raid without losing dama
   p.value.state.health_revision = 1;
   await p.advance(5000);
   const bar = p.w.document.querySelector("#bossHealthBar");
-  assert.equal(bar.value, p.value.state.max_hp - p.value.state.hp);
+  assert.equal(bar.value, p.value.state.hp);
   assert.equal(bar.max, p.value.state.max_hp);
   assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
   const saved = bar.value;

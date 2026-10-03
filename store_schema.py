@@ -4,6 +4,7 @@ import copy
 import secrets
 import time
 from race_support import STORE_VERSION, canonical_site, clean_overrides, clean_snapshots, integer, race_key, validate_site
+from weekly_history import clean_history
 
 
 def upgrade_store(value, defaults, health_defaults):
@@ -12,6 +13,8 @@ def upgrade_store(value, defaults, health_defaults):
         raise ValueError("The admin store must contain a JSON object.")
     original = copy.deepcopy(value)
     store = copy.deepcopy(value)
+    if 'weekly_history' in store:
+        store['weekly_history'] = clean_history(store['weekly_history'])
     version = integer(store.get("version"))
     if version > STORE_VERSION:
         raise RuntimeError("This admin store belongs to a newer application version.")

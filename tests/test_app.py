@@ -81,7 +81,7 @@ class AppTests(unittest.TestCase):
         response=c.post("/admin",data={"csrf":csrf,"username":"GINGRSNAPS","password":PASSWORD},follow_redirects=True)
         self.assertEqual(response.status_code,200)
         self.assertIn("CONTROL CENTER",response.text)
-        for tab in ("overview","race","players","settings"):
+        for tab in ("overview","race","players","boss","settings"):
             p=c.get('/admin?tab='+tab)
             self.assertEqual(p.status_code,200)
             self.assertIn('aria-label="Administration"',p.text)
@@ -602,14 +602,17 @@ class AppTests(unittest.TestCase):
                     wait_for_wager('$200.00')
                     self.assertEqual(self.r.shuffle['error'], '')
                     self.assertEqual(self.r.jobs['shuffle']['http_status'], 200)
-                    self.assertEqual(fixture['windows'][1][0], eastern_epoch(form['start_et']))
+                    # The independent history worker may interleave completed-
+                    # week requests. Verify this live window, not request order.
+                    new_start = eastern_epoch(form['start_et'])
+                    self.assertTrue(any(window[0] == new_start for window in fixture['windows']))
                     # No manual request: the next scheduled cycle must publish.
                     fixture['amount'] = '375'
                     wait_for_wager('$375.00')
                     admin = self.client.get('/admin/status?tab=players').json
                     self.assertEqual(admin['participants'][0]['wager'], '$375.00')
                     self.assertEqual(admin['participants'][0]['username'], 'AlphaMember')
-                    self.assertGreaterEqual(len(fixture['windows']), 3)
+                    self.assertGreaterEqual(sum(window[0] == new_start for window in fixture['windows']), 2)
                 finally:
                     release.set()
                     self.r.stop()

@@ -1,6 +1,6 @@
 # Complete file structure
 
-Release **2026.09.29-username-save**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.10.03-weekly-history**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -34,6 +34,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `static/app.js` | Public/admin race interface and source refresh controls. |
 | `static/boss.css` | Responsive arena, game controls and boss admin styling. |
 | `static/boss.js` | Game/admin interface, recovery UI, previews and automatic polls. |
+| `static/history.css` | Responsive red completed-week cards and table. |
+| `static/history.js` | Automatic cached-history reads, native week navigation and safe rendering. |
 | `static/redlogo.ico` | Original favicon; unchanged. |
 | `static/redlogo.png` | Original PNG logo; unchanged. |
 | `static/style.css` | Shared responsive red website/admin styling. |
@@ -49,6 +51,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `templates/boss.html` | Rendered page or shared template. |
 | `templates/change_review.html` | Rendered page or shared template. |
 | `templates/error.html` | Rendered page or shared template. |
+| `templates/history.html` | Rendered page or shared template. |
 | `templates/icons.html` | Rendered page or shared template. |
 | `templates/index.html` | Rendered page or shared template. |
 | `templates/login.html` | Rendered page or shared template. |
@@ -57,6 +60,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |
+| `tests/test_admin_controls.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_app.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_boss_admin.py` | Developer test/fixture support; not needed to launch the website. |
@@ -64,11 +68,14 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_history_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_username_http.cjs` | Both shipped scripts against real HTTP and a cookie jar; no mocked username save. |
 | `tests/test_username_save.py` | Native saves, expired page sessions, browser ownership, recovery, and admin isolation. |
+| `tests/test_weekly_history.py` | Developer test/fixture support; not needed to launch the website. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
+| `weekly_history.py` | Automatic four-week Tuesday 6 PM Eastern history with a masked public Top 25. |
 
 The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
 

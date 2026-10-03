@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Race History · RedHunllef{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='history.css', v=asset_version) }}">{% endblock %}
+{% block content %}
+{% set week = history.selected %}
+<main id="main" class="shell history-page" data-selected-week="{{ week.id }}">
+  <header class="history-heading">
+    <div><p class="eyebrow">THE LAST FOUR WEEKS</p><h1>Race history<span class="accent">.</span></h1>
+    <p class="lead">The community's top 25. Every Tuesday at 6 PM Eastern, a new week closes.</p></div>
+    <a class="button" href="/#leaderboard">Current leaderboard <span aria-hidden="true">↗</span></a>
+  </header>
+  <nav id="historyWeeks" class="history-weeks" aria-label="Completed weeks">
+    {% for item in history.weeks %}<a href="{{ url_for('public_history', week=item.id) }}" data-week="{{ item.id }}" {% if item.id==week.id %}aria-current="page"{% endif %}>
+      <span class="eyebrow">{{ 'LATEST COMPLETED' if loop.first else 'WEEK ' ~ loop.index }}</span><strong>{{ item.label }}</strong><small>Tuesday → Tuesday</small>
+    </a>{% endfor %}
+  </nav>
+  <section class="panel history-results" aria-labelledby="historyTitle">
+    <div class="history-result-heading"><div><p class="eyebrow">TOP 25 · USERNAMES PROTECTED</p><h2 id="historyTitle">{{ week.label }}</h2></div><span id="historyStatus" class="badge">{{ {'ready':'Results available','partial':'Partial results','delayed':'Update delayed','loading':'Loading results'}[week.status] }}</span></div>
+    <p class="muted history-window" id="historyWindow">{{ week.start_et }} → {{ week.end_et }}</p>
+    <p id="historyMessage" class="notice" role="status" {% if not week.message %}hidden{% endif %}>{{ week.message }}</p>
+    <p id="historyNetwork" class="notice warning" role="status" hidden></p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Historical top 25 leaderboard">
+      <table><thead><tr><th scope="col">Place</th><th scope="col">Player</th><th scope="col" class="number">Weighted wager</th><th scope="col" class="number">Recorded prize</th></tr></thead>
+      <tbody id="historyRows">{% for row in week.rows %}<tr><td class="rank">{{ '%02d'|format(row.rank) }}</td><td><strong>{{ row.username }}</strong></td><td class="number">{{ row.wager }}</td><td class="number accent">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="4" class="empty">{{ 'No qualifying wagers returned for this week.' if week.status=='ready' else 'Results are not available yet. This page checks automatically.' }}</td></tr>{% endfor %}</tbody></table>
+    </div>
+    <div class="history-meta"><span id="historyCount">{{ week.count ~ ' qualifying players · showing up to 25' if week.count is not none else 'Waiting for the first result' }}</span><span id="historyChecked">Last checked: {{ week.updated_et }}</span></div>
+    <p id="historyPrizeNote" class="muted small">{{ 'Prizes use this week’s saved race settings; only the top 15 places are paid.' if week.prizes_known else 'No matching prize schedule was saved for this week. Prizes are shown as —.' }}</p>
+  </section>
+  <div class="leaderboard-foot"><span>Tuesday 6 PM → Tuesday 6 PM Eastern · daylight saving time included</span><span>Page updates every 60 seconds</span></div>
+  <noscript><p class="notice">Select any week above. Reload to see the latest saved results.</p></noscript>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='history.js', v=asset_version) }}" defer></script>{% endblock %}

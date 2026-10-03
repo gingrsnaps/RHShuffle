@@ -582,7 +582,7 @@
         const bar = id("inviteHealth");
         if (bar) {
           bar.max = b.max_hp;
-          bar.value = b.max_hp - b.hp;
+          bar.value = b.hp;
         }
       }
       text(

@@ -292,6 +292,7 @@ p {
 .header-inner {
   min-height: 78px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
@@ -1058,6 +1059,9 @@ details[open] > summary .expand-icon {
   }
   .header-inner {
     min-height: 68px;
+    gap: 12px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
   .brand {
     font-size: 0.75rem;
@@ -1073,9 +1077,12 @@ details[open] > summary .expand-icon {
   .site-header nav {
     gap: 12px;
     font-size: 0.72rem;
+    flex: 1 0 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
   .site-header nav > a:first-child {
-    display: none;
+    display: inline-flex;
   }
   .site-header .button {
     padding: 8px 11px;

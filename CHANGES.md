@@ -1,4 +1,21 @@
-# Changes — 2026.09.29-username-save
+# Changes — 2026.10.03-weekly-history
+
+- Fixed the separately rendered homepage boss HP bar in HTML and live JavaScript.
+  Full HP is full; victory is empty. Included the existing arena/admin bar fixes.
+- Added History navigation, a responsive public page and a cached read-only API.
+  Four completed Tuesday 6 PM Eastern weeks, including DST changes, show Top 25
+  weighted wagers with server-masked usernames.
+- Backfill runs automatically inside the sole launcher. Cache reads do not contact
+  Shuffle; retries retain saved results and honor provider backoff.
+- Reuse exact archived race settings/overrides/prizes where present. Unknown
+  historical prizes remain unknown; no current prize-pool substitution.
+- Include weekly history in the existing full private recovery export/import.
+- Fixed admin self-block protection when using DigitalOcean's visitor IP header.
+- Added calendar/privacy/cache/recovery/HP tests and expanded account/log/IP/admin
+  permission checks. Existing admin and multiplayer regression suites are retained.
+- No new runtime dependencies, database, extra launcher, or hit quotas.
+
+## Previous release — 2026.09.29-username-save
 
 - Reproduced and fixed a rejected name save when the page session expired while
   the signed player cookie remained valid. Game CSRF is now bound to that player.

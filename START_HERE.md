@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.09.29-username-save** — complete configured package.
+Release **2026.10.03-weekly-history** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -14,6 +14,7 @@ No database service, SQL setup, account-creation command or extra worker is need
 The app creates `data/state.json` and imports an existing previous local save.
 
 - Website: `/`
+- Public history: `/history` — four completed Tuesday 6 PM Eastern weeks; masked Top 25.
 - Community boss: `/play`
 - Admin: `/admin`
 - Original supplied Superadmin: **gingrsnaps / enok2121**. Existing accounts/passwords win.
@@ -54,4 +55,10 @@ This release also repairs the username form itself: page-session expiry no longe
 blocks a valid player, Save has a native server fallback, and stale name reservations
 cannot lock out a new browser. Name reuse does not recover another player's stats.
 After restarting, reload `/play` and confirm `/healthz` reports
-`2026.09.29-username-save`. Keep your current cookies and save files.
+`2026.10.03-weekly-history`. Keep your current cookies and save files.
+
+The homepage, arena and admin HP bars now drain from full to empty. History fills
+automatically from Shuffle date-range requests and retains confirmed results in
+the existing JSON save. Public history names are masked before delivery. Its page
+checks every 60 seconds; completed source periods are rechecked hourly/daily. Saved
+historical prizes appear only when settings for that exact week are available.

@@ -22,6 +22,7 @@ from race import empty
 from boss import validate_boss
 from boss_avatar import validate_avatar
 from presentation import valid_marker
+from weekly_history import clean_history
 
 LOG = logging.getLogger("redhunllef")
 
@@ -156,6 +157,7 @@ class Store:
                         pw_hash=generate_password_hash(self.config.bootstrap_password), auth_version=1)},
                         secret_key=secrets.token_hex(32), site_settings=self.config.site)
                 admin, _ = upgrade_store(legacy, self.config.site, {})
+                weekly = clean_history(admin.pop('weekly_history', None))
                 game = admin.pop("community_boss", None)
                 game = validate_boss(game) if game is not None else None
                 avatar = validate_avatar(admin.pop("community_boss_avatar", None))
@@ -171,7 +173,7 @@ class Store:
                              count=len(snapshots["last_top15"]), warning="Only the saved Top 15 is available until Shuffle responds." if snapshots["last_top15"] else "")
                 saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
                                         raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
-                value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved},
+                value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved, "weekly_history":weekly},
                              boss=game, avatar=avatar, checkpoint=marker, recoveries=[])
                 self.backup_in(value, "before-rebuild-import", {"admin": legacy, "source": source})
                 LOG.info("MIGRATION Imported %s; original accounts, hashes and dates retained.", source)

@@ -1,4 +1,4 @@
-"""One runtime, two independent minute jobs, and atomic published snapshots."""
+"""One runtime, independent live jobs, and cached completed-week history."""
 import copy
 from decimal import Decimal
 import logging
@@ -11,6 +11,7 @@ from integrations import Providers, ProviderError
 from storage import Store, StoreError, Conflict
 from race import calculate, empty, freshness, normalize, phase, rank, token
 from race_support import fmt_et, money, race_key
+from weekly_history import WeeklyHistory
 
 LOG = logging.getLogger("redhunllef")
 
@@ -18,6 +19,7 @@ LOG = logging.getLogger("redhunllef")
 class Runtime:
     def __init__(self, config):
         self.config, self.store, self.providers = config, Store(config), Providers(config)
+        self.history = WeeklyHistory(config, self.store, self.providers)
         self.lock, self.stop_event = threading.RLock(), threading.Event()
         self.revision, self.admin = self.store.admin()
         self.shuffle = self.store.live("shuffle") or empty(self.admin["site_settings"])
@@ -302,9 +304,11 @@ class Runtime:
                     LOG.warning("%s Restarted a stopped automatic worker.", name.upper())
         if initial:
             LOG.info("LIVE Automatic Shuffle and Kick checks started; cadence=%ss.", INTERVAL)
+        self.history.start()
 
     def stop(self):
         self.stop_event.set()
+        self.history.stop()
         for event in self.events.values():
             event.set()
         for thread in self.threads.values():
