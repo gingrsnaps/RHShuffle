@@ -1,3 +1,19 @@
+# Changes — 2026.10.03-community-gui
+
+- Homepage defeat progress now fills 0% → 100%, while arena/admin HP still drains.
+- Dedicated anonymous five-second boss snapshots; source checks remain 60 seconds.
+- Reject stale boss snapshots and distinguish explicit host heals/new raids.
+- Compact hero/countdown, larger avatar, legible percentage, one boss CTA and
+  restrained red styling. Confirmed-hit animation respects reduced motion.
+- Three clear mobile section links, a native history selector and week navigation.
+- Server-confirmed admin receipts near controls; failed enhanced forms retain
+  drafts and uploads. Existing authentication, CSRF and confirmation gates remain.
+- Added real Chromium screenshot/layout checks with red-pixel assertions for
+  0/25/75/100 percent progress at desktop/mobile widths and live admin-form tests.
+- Single launcher, JSON saves, credentials/accounts and unlimited hits preserved.
+
+## Previous release
+
 # Changes — 2026.10.03-weekly-history
 
 - Fixed the separately rendered homepage boss HP bar in HTML and live JavaScript.

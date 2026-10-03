@@ -1,23 +1,27 @@
-# Validation — 2026.10.03-weekly-history
+# Validation — 2026.10.03-community-gui
 
-**157 backend tests** validated across the full run and targeted HTTP reruns.
-The full run passed 155; two localhost transport tests required permission to open
-local test sockets. Those were rerun with that access. The date-publication test
-now distinguishes live-window calls from interleaved weekly-history requests.
-**65 DOM/HTTP interface checks** passed together, including a real Waitress server
-and cookie jar. The deployed app still has no Node dependency.
+**162 backend tests passed in a single full run.**
+**68 DOM/HTTP interface checks passed together.**
+**Native Chromium visual and interaction checks passed** at 1440px desktop, 390px
+mobile and 320px narrow widths. Eleven screenshots cover eight homepage progress
+states, two History layouts and admin feedback. Pixel checks measure the actual
+red fill at 0%, 25%, 75%, and 100%, not just the HTML value.
 
-This release adds tests for Tuesday 6 PM cutoffs, four contiguous completed weeks,
-167/169-hour DST weeks, exact provider date ranges, a censored Top 25, cache-only
-page reads, rollover pruning, archived overrides/prizes, unknown-prize handling,
-empty versus unavailable results, retry delays, stale-revision refusal, private
-recovery, initial/full/partial/zero homepage HP, 60-second history polling, tab
-visibility, reconnect and safe DOM text rendering.
+This release verifies anonymous five-second boss summaries without provider calls
+or player cookies, stale minute-feed rejection, explicit host heals and new raids,
+confirmed progress values, error retention, server-created admin receipts, precise
+accepted settings, failed-write rollback, and draft retention. The real browser
+also submits a boss settings change, verifies the nearby receipt, then submits a
+stale form and confirms the typed name remains intact.
 
-Expanded admin checks cover all five tabs, account creation/reset/removal, logout,
-ban/unban, clearing logs, self-block prevention behind App Platform ingress, and
-session/CSRF rejection for every general admin write. The existing race, backup,
-CSV, avatar format, boss settings and admin permissions suites also run.
+History coverage includes Tuesday 6 PM cutoffs, 167/169-hour DST weeks, Top 25
+masking, cache-only page reads, rollover, archived overrides/prizes, retry delays,
+recovery, native mobile selection and previous/next navigation.
+
+Admin coverage includes all five tabs, login/logout, account creation/reset/removal,
+ban/unban, clearing logs, self-block prevention behind App Platform ingress, every
+general write's session/CSRF requirements, race settings and publication, CSV,
+backups/restore, image formats, boss edits and private leaderboards.
 
 New coverage includes both shipped browser scripts talking to a real Waitress
 server through a cookie jar: save after page-session loss, reload, attack, a second
@@ -48,9 +52,9 @@ No remote checkpoint feature or external SQL service was added; #10 was excluded
 Validation uses synthetic provider responses and disposable local saves. It did
 not contact the live Shuffle/Kick accounts or deploy to DigitalOcean. This Linux
 workspace ran Python 3.12; Windows/Python 3.14 was not executed natively. An encoding
-regression test simulates the earlier Windows text-decoding failure. Browser checks
-use rendered templates in jsdom, including the real HTTP integration; native Chromium was unavailable, so no new native
-visual-rendering claim is made.
+regression test simulates the earlier Windows text-decoding failure. Browser checks use both jsdom/real HTTP integration and native Chromium. Screenshots
+and geometry/pixel assertions use synthetic data. Their fixtures are disposable
+and never run against the deployed app.
 
 The extracted ZIP startup checks and package integrity results are recorded during
 packaging. The code is shipped with its tests for repeatable verification.

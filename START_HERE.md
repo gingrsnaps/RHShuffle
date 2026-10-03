@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.10.03-weekly-history** — complete configured package.
+Release **2026.10.03-community-gui** — complete configured package.
 
 Install dependencies once, then run the sole launcher:
 
@@ -55,9 +55,10 @@ This release also repairs the username form itself: page-session expiry no longe
 blocks a valid player, Save has a native server fallback, and stale name reservations
 cannot lock out a new browser. Name reuse does not recover another player's stats.
 After restarting, reload `/play` and confirm `/healthz` reports
-`2026.10.03-weekly-history`. Keep your current cookies and save files.
+`2026.10.03-community-gui`. Keep your current cookies and save files.
 
-The homepage, arena and admin HP bars now drain from full to empty. History fills
+The homepage now fills from 0% to 100% defeated and checks saved boss state every
+5 seconds. Arena/admin remaining-HP bars still drain from full to empty. History fills
 automatically from Shuffle date-range requests and retains confirmed results in
 the existing JSON save. Public history names are masked before delivery. Its page
 checks every 60 seconds; completed source periods are rechecked hourly/daily. Saved

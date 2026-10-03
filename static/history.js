@@ -61,6 +61,29 @@
         ?.focus({ preventScroll: true });
     }
     selected = week.id;
+    const select = id("historyWeekSelect");
+    const incomingIds = value.weeks.map((w) => w.id).join();
+    if ([...select.options].map((o) => o.value).join() !== incomingIds) {
+      const draft = select.value;
+      select.replaceChildren(
+        ...value.weeks.map((w) => new Option(w.label, w.id)),
+      );
+      select.value = value.weeks.some((w) => w.id === draft) ? draft : selected;
+    }
+    const position = value.weeks.findIndex((w) => w.id === selected);
+    for (const [name, target] of [
+      ["historyPrevious", value.weeks[position + 1]],
+      ["historyNext", value.weeks[position - 1]],
+    ]) {
+      const link = id(name);
+      if (target) {
+        link.href = "/history?week=" + encodeURIComponent(target.id);
+        link.removeAttribute("aria-disabled");
+      } else {
+        link.removeAttribute("href");
+        link.setAttribute("aria-disabled", "true");
+      }
+    }
     for (const link of navigation.querySelectorAll("a")) {
       if (link.dataset.week === selected)
         link.setAttribute("aria-current", "page");

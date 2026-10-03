@@ -56,18 +56,31 @@
     }
   });
   let dirty = false;
+  const dirtyForms = new Set();
   document.querySelectorAll("[data-dirty]").forEach((form) => {
     const initial = new URLSearchParams(new FormData(form)).toString();
     const update = () => {
-      dirty = new URLSearchParams(new FormData(form)).toString() !== initial;
+      if (new URLSearchParams(new FormData(form)).toString() !== initial)
+        dirtyForms.add(form);
+      else dirtyForms.delete(form);
+      dirty = dirtyForms.size > 0;
       text(id("saveLabel"), dirty ? "Unsaved changes" : "All changes saved");
     };
     form.addEventListener("input", update);
     form.addEventListener("change", update);
     form.addEventListener("reset", () => setTimeout(update, 0));
-    form.addEventListener("submit", () => {
-      dirty = false;
+    form.addEventListener("submit", (event) => {
+      queueMicrotask(() => {
+        if (!event.defaultPrevented) {
+          dirtyForms.delete(form);
+          dirty = dirtyForms.size > 0;
+        }
+      });
     });
+  });
+  document.addEventListener("admin:saved", (event) => {
+    dirtyForms.delete(event.detail.form);
+    dirty = dirtyForms.size > 0;
   });
   window.addEventListener("beforeunload", (event) => {
     if (dirty) {
@@ -550,41 +563,12 @@
         text(node.querySelector("[data-wager]"), row?.wager || "$0.00");
         text(node.querySelector("[data-prize]"), currency(site.prizes[n]));
       });
-      if (value.boss) {
-        const b = value.boss;
-        text(id("inviteBossName"), b.name || "Crimson Hunllef");
-        const avatar = id("inviteAvatar");
-        if (avatar && b.avatar_url) {
-          if (avatar.getAttribute("src") !== b.avatar_url)
-            avatar.src = b.avatar_url;
-          avatar.classList.toggle("custom-avatar", Boolean(b.avatar_custom));
-        }
-        text(
-          id("inviteTitle"),
-          b.status === "victory"
-            ? `The crew conquered ${b.name || "Crimson Hunllef"}.`
-            : b.status === "paused"
-              ? "The raid is taking a breather."
-              : "Red needs a raid party.",
+      if (value.boss)
+        document.dispatchEvent(
+          new CustomEvent("boss:summary", {
+            detail: { boss: value.boss, server_time: value.server_time },
+          }),
         );
-        text(
-          id("inviteProgress"),
-          `${Number(b.hp).toLocaleString()} HP left · ${b.raiders} raiders united`,
-        );
-        text(
-          id("inviteButtonLabel"),
-          b.status === "victory"
-            ? "View the victory"
-            : b.status === "paused"
-              ? "View the raid"
-              : "Join the boss fight",
-        );
-        const bar = id("inviteHealth");
-        if (bar) {
-          bar.max = b.max_hp;
-          bar.value = b.hp;
-        }
-      }
       text(
         id("streamStatus"),
         !value.stream?.available

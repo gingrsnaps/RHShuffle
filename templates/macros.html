@@ -7,3 +7,6 @@
 {% macro player_rows(rows, tab='players') -%}
 {% for row in rows %}<tr data-player="{{ row.username }}"><td class="rank">{{ '%02d'|format(row.rank) if row.rank else '—' }}</td><td><div class="name-cell"><strong>{{ row.username }}</strong><button type="button" class="copy-button js-only" data-copy="{{ row.username }}" aria-label="Copy {{ row.username }}">⧉</button></div>{% if row.source == 'override' %}<span class="tag">Adjusted</span>{% endif %}</td><td class="number accent">{{ row.wager }}</td><td class="number">{{ row.original_weighted_str }}</td><td class="number">{{ row.raw_wager_str }}</td><td><a class="text-link" href="{{ url_for('login',tab='players',edit=row.username) }}#override">Edit</a></td></tr>{% else %}<tr><td colspan="6" class="empty">No matching qualifying wagers. Check the race dates and connection status.</td></tr>{% endfor %}
 {%- endmacro %}
+{% macro action_feedback(target) -%}
+{% if admin_receipt and admin_receipt.target==target %}<p id="feedback-{{ target }}" class="notice success form-feedback saved-receipt" role="status" tabindex="-1"><strong>Saved.</strong> {{ admin_receipt.message }} <small>{{ fmt_et(admin_receipt.at) }}</small></p>{% endif %}
+{%- endmacro %}

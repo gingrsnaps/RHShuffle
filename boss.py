@@ -379,7 +379,7 @@ class CommunityBoss:
             self._load()
             state = self.state
             status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
-            return dict(raid_id=state["id"], hp=state["hp"], max_hp=state["max_hp"],
+            return dict(raid_id=state["id"], created_at=state['created_at'], hp=state["hp"], max_hp=state["max_hp"],
                         name=combat_settings(state.get('settings'))['name'],
                         status=status, raiders=len(state["players"]), total_attacks=state["total_attacks"],
                         total_damage=state["total_damage"], version=state["version"],

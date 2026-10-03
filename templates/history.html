@@ -14,6 +14,14 @@
       <span class="eyebrow">{{ 'LATEST COMPLETED' if loop.first else 'WEEK ' ~ loop.index }}</span><strong>{{ item.label }}</strong><small>Tuesday → Tuesday</small>
     </a>{% endfor %}
   </nav>
+  <form action="/history" method="get" class="history-picker" aria-label="Choose a completed week">
+    <label for="historyWeekSelect">Completed week · Eastern Time</label>
+    <div class="history-picker-row"><select id="historyWeekSelect" name="week">{% for item in history.weeks %}<option value="{{ item.id }}" {% if item.id==week.id %}selected{% endif %}>{{ item.label }}</option>{% endfor %}</select><button class="button" type="submit">View</button></div>
+    <div class="history-step-links">{% set ns=namespace(index=0) %}{% for item in history.weeks %}{% if item.id==week.id %}{% set ns.index=loop.index0 %}{% endif %}{% endfor %}
+      <a id="historyPrevious" class="button small" {% if ns.index<3 %}href="/history?week={{ history.weeks[ns.index+1].id }}"{% else %}aria-disabled="true"{% endif %}>← Previous week</a>
+      <a id="historyNext" class="button small" {% if ns.index>0 %}href="/history?week={{ history.weeks[ns.index-1].id }}"{% else %}aria-disabled="true"{% endif %}>Next week →</a>
+    </div>
+  </form>
   <section class="panel history-results" aria-labelledby="historyTitle">
     <div class="history-result-heading"><div><p class="eyebrow">TOP 25 · USERNAMES PROTECTED</p><h2 id="historyTitle">{{ week.label }}</h2></div><span id="historyStatus" class="badge">{{ {'ready':'Results available','partial':'Partial results','delayed':'Update delayed','loading':'Loading results'}[week.status] }}</span></div>
     <p class="muted history-window" id="historyWindow">{{ week.start_et }} → {{ week.end_et }}</p>

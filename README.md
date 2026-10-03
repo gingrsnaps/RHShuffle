@@ -1,17 +1,45 @@
 # RedHunllef
 
-Release **2026.10.03-weekly-history**. This is the complete configured application.
+Release **2026.10.03-community-gui**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## This update: health bars and weekly history
+## This update: clearer progress and a more compact interface
 
-The homepage uses a different health bar from the arena. The earlier patch changed
-the arena/admin templates but missed `templates/index.html` and `static/app.js`.
-This release corrects both initial HTML and automatic homepage updates: **full HP
-means a full bar; zero HP means an empty bar**. The separate percentage-defeated
-label in the arena still increases from 0% to 100%.
+The homepage now shows **percent defeated**, increasing from **0% to 100%**.
+Its bar fills as damage is confirmed. The arena and admin **remaining HP** bars
+still drain from full to empty. These are intentionally different measurements:
+`defeated = (maximum HP - remaining HP) / maximum HP * 100`.
+
+- Homepage boss updates read `/boss-summary` every **5 seconds**. This anonymous
+  endpoint only reads the existing save; it does not contact Shuffle/Kick or create
+  player cookies. The 60-second wager/Kick checks are unchanged.
+- Older minute-feed responses cannot reverse newer boss progress. Explicit admin
+  health edits and new raids are recognized separately. Failed requests keep the
+  last confirmed progress visible and show a retry message.
+- A larger avatar, prominent defeated percentage, quieter remaining-HP text, and
+  one action button clarify the boss card. Confirmed hits briefly highlight the
+  border; reduced-motion preferences disable that animation.
+- A compact hero/countdown brings the leaderboard closer to the top. Charcoal
+  surfaces, restrained red borders and consistent primary actions retain the brand.
+- Mobile navigation keeps Leaderboard, History and Boss fight together with 44px
+  tap targets. Mobile History uses a native week selector and Previous/Next links.
+  Its Top 25 remains censored and its Eastern-time boundaries are unchanged.
+- Successful admin changes display a server-confirmed receipt beside the related
+  control, including accepted values for boss settings, HP and wager overrides.
+  Enhanced forms keep drafts/files on rejected saves and identify the failed action.
+  Race review and backup preview retain their native confirmation flows. No password
+  is placed in a receipt. Uncertain requests are never automatically resubmitted.
+- Optional Chromium visual checks capture desktop/mobile screens, check actual red
+  pixels at 0%, 25%, 75%, and 100%, verify narrow layouts, and exercise admin saves
+  and rejected-draft preservation through the real web interface.
+
+All accounts, integration credentials, original logos, race settings and game
+rules are preserved. Continue using **`python wager_backend.py`** as the sole
+launcher. There are no new Python runtime dependencies or database services.
+
+## Four completed weeks of public history
 
 Choose **History** in the public navigation, or open `/history`:
 
@@ -53,7 +81,7 @@ name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to
 the actual trusted visitor IP on App Platform instead of the proxy socket address.
 
 After updating, restart the app and reload the homepage. `/healthz` should report
-**2026.10.03-weekly-history**. Asset versions change automatically, so the new
+**2026.10.03-community-gui**. Asset versions change automatically, so the new
 scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
@@ -79,7 +107,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.10.03-weekly-history**. If it shows something else, the old application is
+**2026.10.03-community-gui**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -271,7 +299,7 @@ to you and administrators; other visitors see a raider alias.
 | Default damage | 100 base, 150 weakness, +100 burst every tenth hit. Admin-editable. |
 | Weakness | Random stable draw every 10 minutes, shared by all players. Repeats are valid. |
 | Health | Never regenerates automatically. Confirmed damage stays saved. |
-| Health bar | Full to empty on the homepage, game and admin views; the separate defeated counter rises from 0% to 100%. |
+| Progress / HP bars | Homepage defeat progress fills 0% → 100%; arena/admin remaining HP drains full → empty. |
 | Input re-arm | Mouse pointer must leave the attack button; keyboard must release its activation key; touch taps work on release. |
 | Red rally | 15 distinct raiders in a rolling 10-minute window; cosmetic arena lighting lasts until a new raid. |
 | Achievements | Existing eight badges and progress display retained; achievement history carries across raids. |
@@ -365,7 +393,7 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-Validation covers 157 backend tests and 65 DOM/HTTP interface checks. Coverage includes
+Validation covers 162 backend tests and 68 DOM/HTTP interface checks. Coverage includes
 source refresh behavior, actual launcher startup, login, authorization, image
 validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
 cooldowns, migration, atomic-write failures and simultaneous writers. New regression
@@ -379,8 +407,8 @@ and cookie jar; the username endpoint is not mocked. It saves a name, reloads th
 page, lands an attack and checks a second independent player with the same label.
 
 No live Shuffle/Kick request or DigitalOcean deployment was performed during these
-checks. Provider tests use synthetic responses; native browser visual rendering was
-unavailable in the test environment. See `docs/VALIDATION.md` for the scope.
+checks. Provider tests use synthetic responses. Native Chromium visual checks now
+cover desktop, 390px mobile and 320px narrow screens. See `docs/VALIDATION.md`.
 
 Developer checks (not required to run the website):
 
@@ -394,3 +422,15 @@ npm --prefix tests test
 The HTTP interface test runs `python` by default. If your test environment uses a
 different interpreter, set `RH_TEST_PYTHON` to that interpreter's executable path.
 Node is used only by developer tests; it is not a deployment dependency.
+
+Optional real-browser visual checks (development only):
+
+```bash
+npm --prefix tests exec -- playwright install chromium
+npm --prefix tests run test:visual
+```
+
+Set `RH_BROWSER_EXECUTABLE` only when using an existing Chromium executable.
+The checks launch a disposable localhost fixture with fake data and write screenshots
+inside `.visual-checks/`. They do not access the live accounts or reset real saves.
+No Node/Chromium setup is needed on DigitalOcean to run the website.

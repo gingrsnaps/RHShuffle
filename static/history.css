@@ -1,4 +1,46 @@
 /* History shares the site's red palette and works without JavaScript. */
+.history-picker {
+  display: none;
+}
+.history-picker-row,
+.history-step-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.history-picker-row select {
+  flex: 1;
+  min-width: 0;
+}
+.history-step-links {
+  justify-content: space-between;
+}
+.history-step-links [aria-disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (max-width: 700px) {
+  .history-page .history-results table {
+    min-width: 0;
+  }
+  .history-page .history-results th {
+    white-space: normal;
+    font-size: 0.6rem;
+    letter-spacing: 0.01em;
+    padding: 10px 4px;
+  }
+  .history-page .history-results td {
+    font-size: 0.72rem;
+    padding: 12px 4px;
+  }
+  .history-page .history-weeks {
+    display: none;
+  }
+  .history-page .history-picker {
+    display: block;
+    margin: 0 0 24px;
+  }
+}
 .history-page {
   padding-top: 52px;
   padding-bottom: 30px;

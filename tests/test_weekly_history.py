@@ -170,7 +170,7 @@ class WeeklyHistoryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             clean_history(saved)
 
-    def test_homepage_bar_server_rendered_full_partial_and_empty(self):
+    def test_homepage_defeat_progress_server_rendered_zero_partial_and_full(self):
         for hp in (2400000, 765432, 0):
             admin = self.client.get('/admin/boss/status').json
             response = self.client.post('/admin/boss/action', data={
@@ -180,8 +180,8 @@ class WeeklyHistoryTests(unittest.TestCase):
             self.assertEqual(response.status_code, 303)
             page = self.client.get('/').text
             progress = re.search(r'<progress id="inviteHealth"[^>]*>', page).group()
-            self.assertIn('value="'+str(hp)+'"', progress)
-            self.assertIn('max="2400000"', progress)
+            self.assertAlmostEqual(float(re.search(r'value="([^"]+)"', progress).group(1)), (2400000-hp)/2400000*100)
+            self.assertIn('max="100"', progress)
 
 
 if __name__ == '__main__':

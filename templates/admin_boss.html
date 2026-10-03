@@ -16,10 +16,10 @@
     {% else %}<li class="muted">No hits yet.</li>{% endfor %}
   </ol>
 </section>
-{% if user %}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
+{% if user %}{{ action_feedback('bossControls') }}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
 <div class="boss-settings-grid">
   <section class="boss-setting" aria-labelledby="avatarHeading">
-    <h3 id="avatarHeading">Boss avatar</h3>
+    <h3 id="avatarHeading">Boss avatar</h3>{{ action_feedback('avatarHeading') }}
     <img class="boss-avatar-preview{% if boss_data.avatar_custom %} custom-avatar{% endif %}"
          data-boss-avatar src="{{ boss_data.avatar_url }}" alt="Current boss avatar" width="128" height="128">
     <form method="post" action="/admin/boss/action" enctype="multipart/form-data" class="stack">
@@ -40,7 +40,7 @@
     </form>
   </section>
   <section class="boss-setting" aria-labelledby="healthHeading">
-    <h3 id="healthHeading">Current raid health</h3>
+    <h3 id="healthHeading">Current raid health</h3>{{ action_feedback('healthHeading') }}
     <form method="post" action="/admin/boss/action" class="stack" id="bossHealthForm">
       <input type="hidden" name="csrf" value="{{ csrf() }}">
       <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
@@ -69,7 +69,7 @@
     </form>
   </section>
   <section class="boss-setting boss-identity-setting" aria-labelledby="bossSettingsHeading">
-    <h3 id="bossSettingsHeading">Boss name &amp; damage</h3>
+    <h3 id="bossSettingsHeading">Boss name &amp; damage</h3>{{ action_feedback('bossSettingsHeading') }}
     <form method="post" action="/admin/boss/action" class="stack" id="bossSettingsForm">
       <input type="hidden" name="csrf" value="{{ csrf() }}">
       <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
@@ -91,7 +91,7 @@
   </section>
 </div>
 <p class="muted small">Player access uses a signed browser cookie. Shared networks can play together without approvals. Each player has a 30-second cooldown. Names survive refreshes, IP changes and new raids; recovery codes restore lost cookies.</p>
-<details class="nested"><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, current raid totals and cooldowns. Names and achievement progress carry forward. Your avatar, boss name and damage settings stay.</p><form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div id="raidPresets" class="preset-row" aria-label="Health presets for the next raid"></div><p id="presetBasis" class="muted small"></p><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
+<details class="nested" {% if admin_receipt and admin_receipt.target=='bossRestart' %}open{% endif %}><summary>Start a new raid <span aria-hidden="true">+</span></summary><p class="muted small">Archives this raid and resets damage, current raid totals and cooldowns. Names and achievement progress carry forward. Your avatar, boss name and damage settings stay.</p>{{ action_feedback('bossRestart') }}<form method="post" action="/admin/boss/action" class="boss-restart" data-confirm="Archive the current raid and start a new one? Current progress will become a past-raid summary."><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><input type="hidden" name="action" value="restart"><div id="raidPresets" class="preset-row" aria-label="Health presets for the next raid"></div><p id="presetBasis" class="muted small"></p><div class="field"><label for="bossHealthInput">New boss health</label><input id="bossHealthInput" name="health" type="number" min="{{ boss_data.rules.min_hp }}" max="{{ boss_data.rules.max_hp }}" step="1" value="{{ boss_data.rules.default_hp }}" required></div><label class="boss-confirm"><input type="checkbox" name="confirm_restart" value="yes" required> End this raid and begin a new one.</label><button class="button danger" type="submit">Start new raid</button></form></details>{% endif %}
 <details class="nested"><summary>Boss admin history <span aria-hidden="true">+</span></summary>
 <p class="muted small">Last 100 saved actions. Player hits are tracked separately.</p><ol id="bossAdminHistory" class="combat-list audit-list"></ol></details>
 <details class="nested"><summary>Request activity <span aria-hidden="true">+</span></summary>

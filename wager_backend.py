@@ -100,7 +100,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -165,7 +165,7 @@ def create_app(root=None, testing=False):
         if getattr(g, "new_guest", None):
             response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+        if request.path not in {"/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -210,6 +210,11 @@ def create_app(root=None, testing=False):
         # This request reads a small saved snapshot; it never calls Shuffle.
         return render_template('history.html', data=runtime.public(),
                                history=runtime.history.public(request.args.get('week')))
+
+    @app.get('/boss-summary')
+    def public_boss_summary():
+        # Anonymous local snapshot: never contacts a provider or creates a player.
+        return jsonify(boss=boss.summary(), server_time=time.time(), release=RELEASE)
 
     @app.get('/history-state')
     def history_state():
@@ -458,6 +463,8 @@ def create_app(root=None, testing=False):
 
     def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200,
                      change_review=None, review_token=None, recovery_review=None):
+        if status >= 400 and wants_json():
+            return json_error(' '.join((errors or {}).values()) or 'This change could not be saved.', status)
         tab = tab or request.args.get("tab", "overview")
         if tab not in TABS:
             tab = "overview"
@@ -469,13 +476,30 @@ def create_app(root=None, testing=False):
         form.update({"prize_"+k: v for k, v in form["prizes"].items()})
         if draft:
             form.update(draft)
+        receipt = session.pop('admin_receipt', None) if request.method == 'GET' else None
+        if receipt and (receipt.get('user') != g.user or receipt.get('tab') != tab or time.time()-receipt.get('at', 0) > 120):
+            receipt = None
         return render_template("admin.html", data=values, tab=tab, form=form, errors=errors or {},
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
                                boss_data=boss_admin_view() if tab == "boss" else None,
                                change_review=change_review, review_token=review_token,
-                               recovery_review=recovery_review), status
+                               recovery_review=recovery_review, admin_receipt=receipt), status
+
+    def admin_saved(message, tab, target):
+        """A receipt is created only after the state commit succeeds.
+
+        JSON writes redirect once to the native page; invalid writes stay in the
+        original form so the browser can retain drafts and selected upload files.
+        Never save passwords or form bodies in a receipt or log.
+        """
+        session['admin_receipt'] = dict(message=message, user=g.user, tab=tab,
+                                        target=target, at=int(time.time()))
+        destination = url_for('login', tab=tab, _anchor='feedback-'+target)
+        if wants_json():
+            return jsonify(ok=True, message=message, redirect=destination, release=RELEASE)
+        return redirect(destination, 303)
 
     @app.post("/admin/boss/action")
     @protected
@@ -511,15 +535,22 @@ def create_app(root=None, testing=False):
             else:
                 boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
                              health_revision=int(request.form.get('health_revision', '-1')) if action in {'health', 'remaining_health'} else None, actor=g.user)
-            flash({'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
+            message = {'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
                    'health':'Maximum HP updated. Saved damage and cooldowns were kept.',
                    'remaining_health':'Remaining HP updated. Saved damage and cooldowns were kept.',
                    'household':'Shared connection allowance saved. Each approved player keeps a 30-second cooldown.',
                    'release_player':'Connection released. The original browser retains its name and achievements.',
                    'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
-                   'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action])
+                   'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action]
+            saved = boss.summary()
+            if action in {'health', 'remaining_health', 'restart'}:
+                message += f" Remaining HP: {saved['hp']:,}; maximum HP: {saved['max_hp']:,}."
+            elif action == 'settings':
+                message += f" Name: {values['name']}; base: {values['damage']:,}; weakness: {values['weak_damage']:,}; burst: {values['burst_bonus']:,}."
             LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
-            return redirect(url_for("login", tab="boss"), 303)
+            target = {'avatar':'avatarHeading', 'avatar_reset':'avatarHeading', 'health':'healthHeading',
+                      'remaining_health':'healthHeading', 'settings':'bossSettingsHeading', 'restart':'bossRestart'}.get(action, 'bossControls')
+            return admin_saved(message, 'boss', target)
         except ValueError as exc:
             return render_admin("boss", errors={"boss":str(exc)}, status=422)
 
@@ -741,7 +772,7 @@ def create_app(root=None, testing=False):
                 else:
                     candidate["overrides"].pop(name, None)
                 snapshot = calculate(runtime.shuffle, candidate, config)
-                detail = "Override saved. Original weighted and raw values are retained."
+                detail = f"Override saved for {name}: {money(candidate['overrides'][name])}." if amount else f"Override removed for {name}; source weighting restored."
             elif action_name in {"add_account", "remove_account", "reset_password", "password"}:
                 if action_name != "password" and not g.superadmin:
                     abort(403)
@@ -767,7 +798,7 @@ def create_app(root=None, testing=False):
                     record.update(pw_hash=generate_password_hash(password), auth_version=record.get("auth_version", 1) + 1)
                     candidate["users"][canonical] = record
                     reason = "before-password-change" if action_name != "add_account" else None
-                detail = "Account updated. Removed or reset accounts lose their previous sessions."
+                detail = f"Account updated: {name}. Removed or reset accounts lose their previous sessions."
             elif action_name == "preview_restore":
                 upload = request.files.get("backup")
                 if not upload:
@@ -824,8 +855,12 @@ def create_app(root=None, testing=False):
                 LOG.info("RACE Published revision %s: %s -> %s; fresh provider checks queued.", runtime.revision,
                          fmt_et(candidate["site_settings"]["start_time"]), fmt_et(candidate["site_settings"]["end_time"]))
             LOG.info("ADMIN %s completed.", action_name)
-            flash(detail)
-            return redirect(url_for("login", tab=tab), 303)
+            if action_name == 'save_race':
+                detail = f"Race saved: {candidate['site_settings']['race_title']}. {fmt_et(site['start_time'])} → {fmt_et(site['end_time'])}. Fresh source check queued."
+            target = {'save_race':'raceForm', 'override':'override', 'password':'accountSecurity',
+                      'add_account':'accounts', 'remove_account':'accounts', 'reset_password':'accounts',
+                      'restore':'backups'}.get(action_name, 'accessControls')
+            return admin_saved(detail, tab if tab in TABS else 'overview', target)
         except (ValueError, Conflict) as exc:
             return render_admin(tab, dict(request.form) if tab == "race" else None,
                                 errors={"form":str(exc)}, status=409 if isinstance(exc, Conflict) else 422)
