@@ -296,6 +296,16 @@ def create_app(root=None, testing=False):
         profile = boss.status(identity, g.client_ip)['you']
         return gaming.view(identity, profile['display_name'] if profile['identity_ready'] else '', client_ip=g.client_ip)
 
+    def gaming_player_name():
+        # A saved boss profile alone does not bypass Gaming's community-name step.
+        wallet = gaming_wallet()
+        if wallet.get('play_blocked'):
+            issue = wallet['play_blocked']
+            raise GamingError(issue['message'], issue['code'], 409)
+        if wallet['needs_profile']:
+            raise GamingError('Save your community name on Gaming before playing.', 'community_name_required', 409)
+        return wallet['name']
+
     @app.get('/gaming')
     def gaming_home():
         return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
@@ -323,8 +333,7 @@ def create_app(root=None, testing=False):
         # Reset only the signed player's wallet, with the same CSRF/IP rules as bets.
         require_player_csrf()
         try:
-            profile = boss.status(guest(), g.client_ip)['you']
-            result = gaming.refresh_balance(guest(), profile['display_name'] if profile['identity_ready'] else '',
+            result = gaming.refresh_balance(guest(), gaming_player_name(),
                                              request.get_json(silent=True), client_ip=g.client_ip)
             return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
@@ -336,9 +345,14 @@ def create_app(root=None, testing=False):
         body = request.get_json(silent=True)
         if not isinstance(body, dict): return json_error('Enter a valid player name.', 422)
         try:
-            boss.register(guest(), g.client_ip, None, body.get('username'))
-            return jsonify(ok=True, wallet=gaming_wallet(), player_csrf=player_csrf(), release=RELEASE)
-        except (BossError, GamingError) as exc:
+            # Diagnose a conflicting/missing IP before changing the saved name.
+            issue = gaming_wallet().get('play_blocked')
+            if issue:
+                raise GamingError(issue['message'], issue['code'], 409)
+            profile = boss.register(guest(), g.client_ip, None, body.get('username'))['you']
+            wallet = gaming.confirm_community_name(guest(), profile['display_name'], client_ip=g.client_ip)
+            return jsonify(ok=True, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_name'))
 
     @app.post('/gaming/api/bet')
@@ -348,8 +362,7 @@ def create_app(root=None, testing=False):
         if not isinstance(body, dict) or body.get('rules_version') not in SUPPORTED_VERSIONS:
             return json_error('Reload to use the current game rules.', 409, 'release_mismatch')
         try:
-            profile = boss.status(guest(), g.client_ip)['you']
-            result = gaming.bet(guest(), profile['display_name'] if profile['identity_ready'] else '', body, client_ip=g.client_ip)
+            result = gaming.bet(guest(), gaming_player_name(), body, client_ip=g.client_ip)
             return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_bet'))
@@ -359,8 +372,7 @@ def create_app(root=None, testing=False):
         require_player_csrf()
         body = request.get_json(silent=True)
         try:
-            profile = boss.status(guest(), g.client_ip)['you']
-            result = gaming.blackjack_action(guest(), profile['display_name'] if profile['identity_ready'] else '',
+            result = gaming.blackjack_action(guest(), gaming_player_name(),
                                              body, client_ip=g.client_ip)
             return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
@@ -383,6 +395,27 @@ def create_app(root=None, testing=False):
         response = jsonify(ok=True, **gaming.leaders(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
         response.set_etag(token(response.get_json()))
         return response.make_conditional(request)
+
+    @app.post('/admin/gaming/grant')
+    @protected
+    def admin_gaming_grant():
+        require_csrf()
+        body = request.get_json(silent=True) if request.is_json else request.form
+        try:
+            result = gaming.grant_everyone(body.get('request_id') if body else None, g.user)
+            message = (f"{'Already granted' if result['duplicate'] else 'Granted'} +100,000 RedPoints "
+                       f"to {result['players']:,} Gaming {'wallet' if result['players'] == 1 else 'wallets'}. Game winnings and records are unchanged.")
+            if not result['players']:
+                message = 'No Gaming wallets exist yet. Players receive 100,000 when they save their community name.'
+            if wants_json():
+                return jsonify(ok=True, **gaming.leaders(), grant=result, message=message,
+                               next_request_id=secrets.token_hex(16), release=RELEASE)
+            flash(message)
+            return redirect(url_for('admin_gaming_page', _anchor='gamingFunding'), 303)
+        except ValueError as exc:
+            if wants_json():
+                return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_grant'))
+            return render_admin('gaming', errors={'gaming':str(exc)}, status=getattr(exc, 'status', 422))
 
     @app.get("/play")
     def play():
@@ -593,7 +626,8 @@ def create_app(root=None, testing=False):
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
                                boss_data=boss_admin_view() if tab == "boss" else None,
                                change_review=change_review, review_token=review_token,
-                               recovery_review=recovery_review, admin_receipt=receipt), status
+                               recovery_review=recovery_review, admin_receipt=receipt,
+                               gaming_grant_id=secrets.token_hex(16)), status
 
     def admin_saved(message, tab, target):
         """A receipt is created only after the state commit succeeds.

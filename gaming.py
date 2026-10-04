@@ -21,6 +21,7 @@ MAX_NUMBER = 2**53-1
 MAX_PLAYERS = 10000
 RECEIPTS = 30
 MAX_IP_BINDINGS = MAX_PLAYERS * 4
+MAX_GRANTS = 100
 
 
 class GamingError(ValueError):
@@ -74,6 +75,8 @@ def validate_gaming(value):
             raise ValueError('Invalid RedPoints player.')
         if not isinstance(player.get('name'), str) or not 1 <= len(player['name']) <= 64:
             raise ValueError('Invalid RedPoints display name.')
+        if type(player.get('community_name_confirmed', False)) is not bool:
+            raise ValueError('Invalid community-name confirmation.')
         if not isinstance(player.get('season'), str) or not re.fullmatch(r'\d{1,12}', player['season']):
             raise ValueError('Invalid RedPoints season.')
         if not isinstance(player.get('server_seed'), str) or not re.fullmatch(r'[a-f0-9]{64}', player['server_seed']):
@@ -131,6 +134,20 @@ def validate_gaming(value):
                 seen.add(receipt['request_id'])
             except (KeyError, TypeError, ValueError):
                 raise ValueError('A saved RedPoints receipt failed verification.') from None
+    grants = value.get('admin_grants', [])
+    if not isinstance(grants, list) or len(grants) > MAX_GRANTS:
+        raise ValueError('Invalid RedPoints grant history.')
+    grant_ids = set()
+    for grant in grants:
+        if (not isinstance(grant, dict) or not isinstance(grant.get('request_id'), str) or
+                not re.fullmatch(r'[a-f0-9]{32}', grant['request_id']) or grant['request_id'] in grant_ids or
+                not isinstance(grant.get('actor'), str) or not 1 <= len(grant['actor']) <= 64 or
+                type(grant.get('amount')) is not int or grant['amount'] != START_POINTS or
+                type(grant.get('players')) is not int or not 0 <= grant['players'] <= MAX_PLAYERS or
+                type(grant.get('at')) is not int or not 0 <= grant['at'] <= MAX_NUMBER or
+                not isinstance(grant.get('season'), str) or not re.fullmatch(r'\d{1,12}', grant['season'])):
+            raise ValueError('Invalid RedPoints grant record.')
+        grant_ids.add(grant['request_id'])
     guard = value.get('ip_guard')
     if guard is not None:
         if (not isinstance(guard, dict) or guard.get('version') != 1 or
@@ -173,6 +190,15 @@ class Gaming:
             players[key] = dict(name=name, season=current['id'], balance=START_POINTS, stats=fresh_stats(),
                                 nonce=0, version=1, server_seed=secrets.token_hex(32), receipts=[], last_bet_at=0)
         player = players[key]
+        self._rollover(player, current)
+        if player['name'] != name:
+            player['name'] = name
+            player['version'] += 1
+        return player, current
+
+    @staticmethod
+    def _rollover(player, current):
+        """Reuse the same weekly accounting for player visits and bulk grants."""
         if int(player['season']) > int(current['id']):
             raise GamingError('The server clock moved backwards. The saved wallet is protected.', 'clock', 409)
         if player['season'] != current['id']:
@@ -180,13 +206,9 @@ class Gaming:
                 receipt = player['blackjack']
                 receipt['actions'].append('stand')
                 receipt['ending'] = 'weekly_reset'
-                self._settle(player, receipt, outcome(player['server_seed'], receipt))
+                Gaming._settle(player, receipt, outcome(player['server_seed'], receipt))
             player.update(season=current['id'], balance=START_POINTS, balance_adjustment=0,
                           stats=fresh_stats(), version=player['version']+1)
-        if player['name'] != name:
-            player['name'] = name
-            player['version'] += 1
-        return player, current
 
     @staticmethod
     def _ip_issue(data, key, address, current):
@@ -238,7 +260,8 @@ class Gaming:
         return dict(season=current, name=player['name'], balance=player['balance'], nonce=player['nonce'],
                     version=player['version'], commitment=commitment(player['server_seed']),
                     stats=copy.deepcopy(player['stats']), receipts=copy.deepcopy(player['receipts']),
-                    needs_profile=False, rules_version=VERSION, ip_bound=issue is None, play_blocked=issue,
+                    needs_profile=not player.get('community_name_confirmed', False),
+                    rules_version=VERSION, ip_bound=issue is None, play_blocked=issue,
                     blackjack=Gaming._hand_view(player))
 
     def view(self, identity, name, now=None, *, client_ip=None):
@@ -247,7 +270,7 @@ class Gaming:
         key = player_key(identity)
         def preview(issue):
             return dict(season=current, balance=0 if issue else START_POINTS, name=name or '', nonce=0, version=0,
-                        commitment='', stats=fresh_stats(), receipts=[], needs_profile=not bool(name),
+                        commitment='', stats=fresh_stats(), receipts=[], needs_profile=True,
                         rules_version=VERSION, ip_bound=False, play_blocked=issue, blackjack=None)
         # Routine five-second reads neither copy the complete community save nor
         # rewrite it. IP claims and wallet creation share the same transaction.
@@ -272,6 +295,65 @@ class Gaming:
             if not issue:
                 self._claim_ip(conn['gaming'], key, client_ip, current)
             return self._view(player, current, issue)
+
+    def confirm_community_name(self, identity, name, now=None, *, client_ip=None):
+        """Activate the shared wallet once, retaining wins, receipts and its owner.
+
+        Existing boss names are suggestions until confirmed on Gaming. Older
+        empty wallets receive the starting allowance here; re-saving a confirmed
+        name does not grant more points or erase larger balances/admin credits.
+        """
+        from boss_progress import username
+        name = username(name)
+        now = time.time() if now is None else now
+        with self.store.connection(transaction=True) as conn:
+            player, current = self._player(conn, identity, name, now)
+            self._claim_ip(conn['gaming'], player_key(identity), client_ip, current)
+            if not player.get('community_name_confirmed', False):
+                extra = max(0, START_POINTS - player['balance'])
+                adjustment = player.get('balance_adjustment', 0) + extra
+                if abs(adjustment) > MAX_NUMBER or player['version'] >= MAX_NUMBER:
+                    raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
+                player.update(community_name_confirmed=True, balance=player['balance']+extra,
+                              balance_adjustment=adjustment, version=player['version']+1)
+            return self._view(player, current)
+
+    def grant_everyone(self, request_id, actor, now=None):
+        """Add 100k per saved wallet in one atomic write; retries cannot double it.
+
+        HTTP authentication/CSRF is enforced by the admin route. Credits are
+        separate from game profit, so Top 5 and fairness receipts stay accurate.
+        """
+        if (not isinstance(request_id, str) or not re.fullmatch(r'[a-f0-9]{32}', request_id) or
+                not isinstance(actor, str) or not 1 <= len(actor) <= 64):
+            raise GamingError('Reload the admin panel before granting points.', 'invalid_grant', 422)
+        now = time.time() if now is None else now
+        current = season(now)
+        with self.store.connection(transaction=True) as conn:
+            if conn.get('gaming') is None:
+                conn['gaming'] = dict(version=1, players={})
+            data = conn['gaming']
+            history = data.setdefault('admin_grants', [])
+            prior = next((item for item in history if item['request_id'] == request_id), None)
+            if prior:
+                return dict(duplicate=True, **copy.deepcopy(prior))
+            for player in data['players'].values():
+                self._rollover(player, current)
+                adjustment = player.get('balance_adjustment', 0) + START_POINTS
+                # Reserve room for a possible Blackjack double/return as well.
+                hand = player.get('blackjack')
+                room = 4 * hand['wager'] if hand else 0
+                if (player['balance'] + START_POINTS + room > MAX_NUMBER or
+                        abs(adjustment) > MAX_NUMBER or player['version'] >= MAX_NUMBER):
+                    raise GamingError('A wallet reached the numeric limit. No points were granted.', 'capacity', 409)
+                player.update(balance=player['balance']+START_POINTS, balance_adjustment=adjustment,
+                              version=player['version']+1)
+            record = dict(request_id=request_id, actor=actor, amount=START_POINTS,
+                          players=len(data['players']), at=int(now), season=current['id'])
+            data['admin_grants'] = [record] + history[:MAX_GRANTS-1]
+        LOG.info('GAMING Admin %r granted +%s RedPoints to %s wallets; game winnings unchanged.',
+                 actor, START_POINTS, record['players'])
+        return dict(duplicate=False, **record)
 
     def refresh_balance(self, identity, name, body, now=None, *, client_ip=None):
         """Reset available points on a browser refresh; preserve all game records.
@@ -441,6 +523,8 @@ class Gaming:
                 result[game] = rows[:5]
             return dict(season=current, games=result, counts=counts, completed_rounds=sum(c['rounds'] for c in counts.values()),
                         revision=sum(p['version'] for p in active.values()), player_count=len(active),
+                        confirmed_players=sum(bool(p.get('community_name_confirmed')) for p in active.values()),
+                        last_grant=copy.deepcopy((data.get('admin_grants') or [None])[0]),
                         ip_count=sum(map(len, networks.values())), active_hands=sum(bool(p.get('blackjack')) for p in active.values()))
 
     def recovery(self):

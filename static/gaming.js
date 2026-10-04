@@ -110,6 +110,9 @@
     if (!verifierReady || rules.version !== RedFair.VERSION)
       return "Game rules changed or did not load. Reload this page to continue.";
     if (!wallet) return "Loading your balance…";
+    if (wallet.play_blocked) return wallet.play_blocked.message;
+    if (wallet.needs_profile)
+      return "Save your community name above to activate your RedPoints and play.";
     if (wallet.blackjack) {
       if (wallet.play_blocked) return wallet.play_blocked.message;
       if (pendingAction && !wallet.play_blocked) return "";
@@ -119,9 +122,6 @@
     }
     // Recovering an existing receipt remains possible without another debit.
     if (pending && !wallet.needs_profile) return "";
-    if (wallet.play_blocked) return wallet.play_blocked.message;
-    if (wallet.needs_profile)
-      return "Save your player name above to start playing.";
     if (wallet.balance < 1)
       return "Refresh this page to restore 100,000 RedPoints, or wait for the weekly reset.";
     if (game === "keno" && !selections.size)
@@ -129,7 +129,7 @@
     return "";
   }
   function controls() {
-    const disabled = locked();
+    const disabled = locked() || Boolean(wallet?.needs_profile);
     root
       .querySelectorAll(
         "#betForm input, #betForm select, #betForm button, [data-keno], #clientSeed, #diceBoardChance",
@@ -141,7 +141,7 @@
     if (id("betButton")) {
       // Only a real in-flight request disables the button. Other blocked
       // states stay clickable so players can see why and how to recover.
-      id("betButton").disabled = busy;
+      id("betButton").disabled = busy || Boolean(wallet?.needs_profile);
       id("betButton").setAttribute(
         "aria-disabled",
         String(busy || Boolean(playBlock())),
@@ -149,6 +149,8 @@
       id("betButton").setAttribute("aria-busy", String(busy));
       id("betButton").textContent = busy
         ? refreshing ? "Restoring 100,000 points…" : "Checking your round…"
+        : wallet?.needs_profile
+          ? "Save your community name first"
         : pendingAction
           ? "Recover your move"
           : wallet?.blackjack
@@ -188,6 +190,7 @@
         fatal ||
         !secure ||
         !verifierReady ||
+        Boolean(wallet?.needs_profile) ||
         !wallet?.blackjack ||
         Boolean(pendingAction) ||
         Boolean(wallet?.play_blocked) ||
@@ -199,7 +202,7 @@
         : "Recover pending result";
       id("retryBet").hidden =
         !pending || Boolean(wallet?.blackjack && !pendingAction);
-      id("retryBet").disabled = busy || fatal || !secure || !verifierReady;
+      id("retryBet").disabled = busy || fatal || !secure || !verifierReady || Boolean(wallet?.needs_profile);
     }
   }
   function renderWallet(next) {
@@ -224,11 +227,17 @@
     if (id("blackjackResume"))
       id("blackjackResume").hidden = !next.blackjack || game === "blackjack";
     renderBlackjack(next.blackjack);
-    id("pointsBalance").textContent = number(next.balance);
+    // A not-yet-activated allowance is labelled explicitly. An IP conflict is
+    // an access problem, not a real zero balance and never another user's wallet.
+    const unclaimed = next.needs_profile && !next.play_blocked;
+    id("pointsBalance").textContent = next.play_blocked && next.needs_profile
+      ? "—" : number(unclaimed ? Math.max(100000, next.balance) : next.balance);
+    id("pointsLabel").textContent = unclaimed ? "YOUR STARTING REDPOINTS" : "YOUR REDPOINTS";
     if (id("redWager")) id("redWager").max = String(next.balance);
-    id("pointsReset").textContent = "100,000 on refresh · Weekly reset " + next.season.end_et;
-    id("gamingProfile").hidden =
-      !next.needs_profile || Boolean(next.play_blocked);
+    id("pointsReset").textContent = unclaimed
+      ? "Save your community name to activate this balance."
+      : "100,000 on refresh · Weekly reset " + next.season.end_et;
+    id("gamingProfile").hidden = !next.needs_profile;
     if (id("gamingNetworkNotice")) {
       id("gamingNetworkNotice").hidden = !next.play_blocked;
       id("gamingNetworkReason").textContent = next.play_blocked?.message || "";
