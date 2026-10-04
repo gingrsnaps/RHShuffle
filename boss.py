@@ -97,6 +97,13 @@ def validate_boss(value):
             raise ValueError("The community boss recovery has an invalid identifier.")
     _integer(value.get("version"), 1)
     _integer(value.get("health_revision", 0))
+    change = value.get('health_change')
+    if change is not None:
+        if not isinstance(change, dict):
+            raise ValueError('Invalid boss health notice.')
+        _timestamp(change.get('at'))
+        _integer(change.get('max_hp'), 1, MAX_HP)
+        _integer(change.get('hp'), 0, change['max_hp'])
     _integer(value.get('settings_revision', 0))
     combat_settings(value.get('settings'))  # Older raids inherit the original defaults.
     maximum = _integer(value.get("max_hp"), 1, MAX_HP)
@@ -142,6 +149,8 @@ def validate_boss(value):
     for hit in recent:
         if not isinstance(hit, dict) or not re.fullmatch(r"Raider [A-F0-9]{8}", str(hit.get("name", ""))) or not isinstance(hit.get("style"), str) or hit["style"] not in STYLES:
             raise ValueError("The community boss recovery has an invalid recent hit.")
+        if 'public_name' in hit and (not isinstance(hit['public_name'], str) or not re.fullmatch(r'.{1,2}\*{6}', hit['public_name'])):
+            raise ValueError('Invalid masked recent player name.')
         _integer(hit.get("damage"), 0, MAX_HIT)
         _integer(hit.get("at"))
     for entry in history:
@@ -378,12 +387,19 @@ class CommunityBoss:
         with self.lock:
             self._load()
             state = self.state
+            recent = state['recent'][0] if state['recent'] else None
+            # Only a masked display name and committed damage leave this method.
+            # Actor names, profile IDs, recovery keys and admin audit stay private.
+            latest = (dict(name=str(recent.get('public_name') or recent['name'])[:2] + '******',
+                           damage=recent['damage'], at=recent['at']) if recent else None)
+            change = state.get('health_change')
             status = "victory" if state["hp"] == 0 else "paused" if state["paused"] else "active" if state["started_at"] else "waiting"
             return dict(raid_id=state["id"], created_at=state['created_at'], hp=state["hp"], max_hp=state["max_hp"],
                         name=combat_settings(state.get('settings'))['name'],
                         status=status, raiders=len(state["players"]), total_attacks=state["total_attacks"],
                         total_damage=state["total_damage"], version=state["version"],
-                        health_revision=state.get("health_revision", 0), avatar_url=self.avatar_url(), avatar_custom=bool(self.avatar_document))
+                        health_revision=state.get("health_revision", 0), avatar_url=self.avatar_url(), avatar_custom=bool(self.avatar_document),
+                        latest_hit=latest, health_change={k:change[k] for k in ('at', 'hp', 'max_hp')} if change else None)
 
     def avatar_url(self):
         return '/play/avatar/' + self.avatar_document['sha256'] + '.png' if self.avatar_document else '/static/redlogo.png'
@@ -489,7 +505,8 @@ class CommunityBoss:
                 state.update(hp=state["hp"] - damage, total_damage=total_damage,
                              total_attacks=state["total_attacks"] + 1, version=state["version"] + 1,
                              started_at=state["started_at"] or int(now))
-                state["recent"] = [dict(name=_name(pk), **hit)] + state["recent"][:11]
+                public_name = state.get('profiles', {}).get(pk, {}).get('name', _name(pk))[:2] + '******'
+                state["recent"] = [dict(name=_name(pk), public_name=public_name, **hit)] + state["recent"][:11]
                 record_activity(state, pk, damage, now)
                 if not state["hp"]:
                     state["finished_at"] = int(now)
@@ -550,7 +567,8 @@ class CommunityBoss:
                     # separates health adjustments from permanent contributions.
                     state.update(max_hp=maximum, hp=remaining, version=state['version'] + 1,
                                  health_adjustment=remaining - maximum + state['total_damage'],
-                                 health_revision=state.get('health_revision', 0) + 1)
+                                 health_revision=state.get('health_revision', 0) + 1,
+                                 health_change=dict(at=int(time.time()), hp=remaining, max_hp=maximum))
                     state['finished_at'] = (state['finished_at'] or int(time.time())) if state['hp'] == 0 else 0
                 elif action == "restart":
                     self.store.backup_in(conn, "before-boss-restart", {"community_boss": state})

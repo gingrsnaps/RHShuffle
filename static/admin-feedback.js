@@ -17,7 +17,11 @@
   for (const form of document.querySelectorAll('form[method="post"]')) {
     const endpoint = form.getAttribute("action");
     if (
-      !["/admin/action", "/admin/boss/action"].includes(endpoint) ||
+      ![
+        "/admin/action",
+        "/admin/boss/action",
+        "/admin/history/refresh",
+      ].includes(endpoint) ||
       form.hasAttribute("data-refresh")
     )
       continue;

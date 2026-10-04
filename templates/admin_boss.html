@@ -17,6 +17,17 @@
   </ol>
 </section>
 {% if user %}{{ action_feedback('bossControls') }}<div class="button-row"><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="pause">Pause attacks</button></form><form method="post" action="/admin/boss/action"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}"><button class="button" type="submit" name="action" value="resume">Resume attacks</button></form>{% if superadmin %}<a class="button" href="/admin/recovery-backup">Save private recovery checkpoint</a>{% endif %}</div>
+<details class="boss-home-preview" open><summary>Homepage appearance preview</summary>
+<p class="small muted">Preview the name and selected image before saving. Name and avatar each have their own Save button below. Health shows the current saved raid.</p>
+<div class="play-invite panel" aria-label="Draft homepage card">
+<img id="bossPreviewAvatar" src="{{ boss_data.avatar_url }}" class="{% if boss_data.avatar_custom %}custom-avatar{% endif %}" alt="Boss appearance preview" width="72" height="72">
+<div><p class="eyebrow" id="bossPreviewName">{{ boss_data.name }}</p><h3 id="bossPreviewTitle">Take your next shot.</h3>
+<div class="invite-progress-label"><label for="bossPreviewHealth" class="small">Boss health</label><strong id="bossPreviewPercent">{{ '%.2f'|format((boss_data.max_hp-boss_data.hp)/boss_data.max_hp*100) }}% defeated</strong></div>
+<progress id="bossPreviewHealth" class="health-bar" value="{{ boss_data.hp }}" max="{{ boss_data.max_hp }}" aria-label="Preview of remaining boss health"></progress>
+<p class="small muted" id="bossPreviewRemaining">{{ '{:,}'.format(boss_data.hp) }} HP left</p></div>
+<span class="button primary" aria-hidden="true">Join the fight →</span></div>
+<p id="bossPreviewMessage" class="small muted" role="status">Showing saved appearance.</p>
+</details>
 <div class="boss-settings-grid">
   <section class="boss-setting" aria-labelledby="avatarHeading">
     <h3 id="avatarHeading">Boss avatar</h3>{{ action_feedback('avatarHeading') }}

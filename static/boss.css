@@ -1214,3 +1214,33 @@
     transition: none;
   }
 }
+
+/* Preview stays inside the authenticated editor and never submits a draft. */
+.boss-home-preview {
+  margin: 18px 0;
+}
+.boss-home-preview > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 0;
+}
+.boss-home-preview .play-invite {
+  margin: 10px 0;
+}
+.boss-home-preview h3 {
+  margin: 5px 0 10px;
+}
+.boss-home-preview .health-bar {
+  height: 10px;
+  margin: 8px 0 5px;
+}
+#bossPreviewPercent {
+  color: #fff2f3;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .boss-home-preview .button {
+    display: none;
+  }
+}

@@ -321,7 +321,12 @@
       nameInput.value = state.you.display_name || "";
     identityView();
     rally();
-    if (admin) adminTools();
+    if (admin) {
+      adminTools();
+      document.dispatchEvent(
+        new CustomEvent("boss:admin-state", { detail: state }),
+      );
+    }
     if (admin)
       rows(
         "adminBossLeaders",

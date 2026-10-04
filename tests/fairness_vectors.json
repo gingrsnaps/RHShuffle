@@ -1,0 +1,1764 @@
+[
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000001",
+    "commitment": "ec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000064",
+    "nonce": 0,
+    "wager": 1,
+    "game": "dice",
+    "options": {
+      "chance": 1,
+      "side": "under"
+    },
+    "request_id": "reference-0",
+    "result": {
+      "roll": 852,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000002",
+    "commitment": "9267d3dbed802941483f1afa2a6bc68de5f653128aca9bf1461c5d0a3ad36ed2",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000065",
+    "nonce": 1,
+    "wager": 100,
+    "game": "dice",
+    "options": {
+      "chance": 1,
+      "side": "over"
+    },
+    "request_id": "reference-1",
+    "result": {
+      "roll": 6003,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -100
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000003",
+    "commitment": "d9147961436944f43cd99d28b2bbddbf452ef872b30c8279e255e7daafc7f946",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000066",
+    "nonce": 2,
+    "wager": 9999,
+    "game": "dice",
+    "options": {
+      "chance": 5,
+      "side": "under"
+    },
+    "request_id": "reference-2",
+    "result": {
+      "roll": 7742,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -9999
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000004",
+    "commitment": "e38990d0c7fc009880a9c07c23842e886c6bbdc964ce6bdd5817ad357335ee6f",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000067",
+    "nonce": 3,
+    "wager": 1,
+    "game": "dice",
+    "options": {
+      "chance": 5,
+      "side": "over"
+    },
+    "request_id": "reference-3",
+    "result": {
+      "roll": 8741,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000005",
+    "commitment": "96de8fc8c256fa1e1556d41af431cace7dca68707c78dd88c3acab8b17164c47",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000068",
+    "nonce": 4,
+    "wager": 100,
+    "game": "dice",
+    "options": {
+      "chance": 50,
+      "side": "under"
+    },
+    "request_id": "reference-4",
+    "result": {
+      "roll": 2862,
+      "won": true,
+      "payout": 198
+    },
+    "payout": 198,
+    "net": 98
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000006",
+    "commitment": "d1ec675902ef1633427ca360b290b0b3045a0d9058ddb5e648b4c3c3224c5c68",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000069",
+    "nonce": 5,
+    "wager": 9999,
+    "game": "dice",
+    "options": {
+      "chance": 50,
+      "side": "over"
+    },
+    "request_id": "reference-5",
+    "result": {
+      "roll": 9351,
+      "won": true,
+      "payout": 19798
+    },
+    "payout": 19798,
+    "net": 9799
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000007",
+    "commitment": "48428bdb7ddd829410d6bbb924fdeb3a3d7e88c2577bffae073b990c6f061d08",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000006a",
+    "nonce": 6,
+    "wager": 1,
+    "game": "dice",
+    "options": {
+      "chance": 95,
+      "side": "under"
+    },
+    "request_id": "reference-6",
+    "result": {
+      "roll": 9995,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000008",
+    "commitment": "38df1c1f64a24a77b23393bca50dff872e31edc4f3b5aa3b90ad0b82f4f089b6",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000006b",
+    "nonce": 7,
+    "wager": 100,
+    "game": "dice",
+    "options": {
+      "chance": 95,
+      "side": "over"
+    },
+    "request_id": "reference-7",
+    "result": {
+      "roll": 5606,
+      "won": true,
+      "payout": 104
+    },
+    "payout": 104,
+    "net": 4
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000009",
+    "commitment": "887bf140ce0b6a497ed8db5c7498a45454f0b2bd644b0313f7a82acc084d0027",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000006c",
+    "nonce": 8,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-8",
+    "result": {
+      "drawn": [
+        26,
+        21,
+        1,
+        12,
+        35,
+        4,
+        11,
+        34,
+        8,
+        10
+      ],
+      "hits": 1,
+      "multiplier": 39600,
+      "payout": 39596
+    },
+    "payout": 39596,
+    "net": 29597
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000a",
+    "commitment": "81b04ae4944e1704a65bc3a57b6fc3b06a6b923e3c558d611f6a854b5539ec13",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000006d",
+    "nonce": 9,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-9",
+    "result": {
+      "drawn": [
+        25,
+        33,
+        28,
+        24,
+        12,
+        19,
+        30,
+        7,
+        8,
+        17
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000b",
+    "commitment": "c09322c415a5ac9ffb1a6cde7e927f480cc1d8afaf22b39a47797966c08e9c4b",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000006e",
+    "nonce": 10,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-10",
+    "result": {
+      "drawn": [
+        39,
+        1,
+        19,
+        16,
+        14,
+        13,
+        24,
+        12,
+        18,
+        22
+      ],
+      "hits": 1,
+      "multiplier": 39600,
+      "payout": 396
+    },
+    "payout": 396,
+    "net": 296
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000c",
+    "commitment": "a82872b96246dac512ddf0515f5da862a92ecebebcb92537b6e3e73199694c45",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000006f",
+    "nonce": 11,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-11",
+    "result": {
+      "drawn": [
+        4,
+        39,
+        38,
+        15,
+        11,
+        14,
+        26,
+        13,
+        25,
+        20
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -9999
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000d",
+    "commitment": "2a3f128306951f1ded174b8803ee1f0df0c6404bbe92682be21fd84accf5d540",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000070",
+    "nonce": 12,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-12",
+    "result": {
+      "drawn": [
+        38,
+        3,
+        23,
+        14,
+        6,
+        26,
+        12,
+        9,
+        35,
+        16
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000e",
+    "commitment": "e14f5be83831f7fefa669d5a84daaa56ec01477dafc6701a83f243bc2228bb11",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000071",
+    "nonce": 13,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-13",
+    "result": {
+      "drawn": [
+        38,
+        2,
+        17,
+        31,
+        13,
+        35,
+        29,
+        37,
+        10,
+        28
+      ],
+      "hits": 1,
+      "multiplier": 1274,
+      "payout": 12
+    },
+    "payout": 12,
+    "net": -88
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000f",
+    "commitment": "3ba2581d53fbf070be34b6d6a2382faf1b8e76a3ade45b31c0c7c90ea289874e",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000072",
+    "nonce": 14,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-14",
+    "result": {
+      "drawn": [
+        16,
+        9,
+        14,
+        22,
+        35,
+        17,
+        19,
+        30,
+        29,
+        25
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -9999
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000010",
+    "commitment": "a3ecde0c1d9daa6b7a949c87a1af7963c69cb2c412fb3086c495f14630c17b7b",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000073",
+    "nonce": 15,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-15",
+    "result": {
+      "drawn": [
+        2,
+        12,
+        40,
+        32,
+        27,
+        30,
+        24,
+        14,
+        18,
+        20
+      ],
+      "hits": 1,
+      "multiplier": 2742,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000011",
+    "commitment": "99fdc3a44c06c65a307ea38acda009243287ccbbdb2b0ce423a25bb9b525d7f2",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000074",
+    "nonce": 16,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-16",
+    "result": {
+      "drawn": [
+        21,
+        34,
+        23,
+        5,
+        26,
+        11,
+        28,
+        40,
+        14,
+        15
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -100
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000012",
+    "commitment": "c03eee8aa25e1b9fd36a28c6d3321bd0d0534a72034c40fcd9d75c70a610037e",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000075",
+    "nonce": 17,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-17",
+    "result": {
+      "drawn": [
+        1,
+        15,
+        26,
+        25,
+        8,
+        34,
+        32,
+        7,
+        39,
+        35
+      ],
+      "hits": 1,
+      "multiplier": 5850,
+      "payout": 5849
+    },
+    "payout": 5849,
+    "net": -4150
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000013",
+    "commitment": "d3b2f026768fb94e95a4848cf669d1f120a6c73cd795450e52de6bddcadd883c",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000076",
+    "nonce": 18,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-18",
+    "result": {
+      "drawn": [
+        17,
+        6,
+        21,
+        16,
+        7,
+        5,
+        34,
+        22,
+        37,
+        8
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000014",
+    "commitment": "4d68bf921d7fcf9f99a27e28f59b875c234193f9c330403dcf29f1872be57ccd",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000077",
+    "nonce": 19,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-19",
+    "result": {
+      "drawn": [
+        33,
+        32,
+        34,
+        5,
+        17,
+        11,
+        15,
+        2,
+        8,
+        40
+      ],
+      "hits": 1,
+      "multiplier": 65,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -100
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000015",
+    "commitment": "4290a8e5d23d8147282ec48c2c0ee8edcf541e2aa9b1264f792746c36eb17841",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000078",
+    "nonce": 20,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-20",
+    "result": {
+      "drawn": [
+        26,
+        23,
+        37,
+        8,
+        25,
+        3,
+        29,
+        28,
+        39,
+        20
+      ],
+      "hits": 1,
+      "multiplier": 4118,
+      "payout": 4117
+    },
+    "payout": 4117,
+    "net": -5882
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000016",
+    "commitment": "3953a4e918f9b33a3ed6d8675b1fa3090fee373a32bb59f00b00dc678d143041",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000079",
+    "nonce": 21,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-21",
+    "result": {
+      "drawn": [
+        38,
+        16,
+        17,
+        5,
+        37,
+        1,
+        11,
+        10,
+        13,
+        34
+      ],
+      "hits": 2,
+      "multiplier": 11334,
+      "payout": 1
+    },
+    "payout": 1,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000017",
+    "commitment": "4303ef0796bae63d9f52f7bf61ae2d37b57889452f2ad07bba769d90d354fe37",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000007a",
+    "nonce": 22,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-22",
+    "result": {
+      "drawn": [
+        26,
+        32,
+        13,
+        35,
+        39,
+        3,
+        36,
+        31,
+        25,
+        33
+      ],
+      "hits": 1,
+      "multiplier": 24,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -100
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000018",
+    "commitment": "ac6e83f1e79a8a779646460bf6d26bfc08be3b7ad2fd3b265b094fd42b8843fa",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000007b",
+    "nonce": 23,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-23",
+    "result": {
+      "drawn": [
+        7,
+        1,
+        18,
+        35,
+        3,
+        12,
+        37,
+        30,
+        27,
+        9
+      ],
+      "hits": 2,
+      "multiplier": 12257,
+      "payout": 12255
+    },
+    "payout": 12255,
+    "net": 2256
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000019",
+    "commitment": "9380f4d9453d4b61778811d8355c429827d164b5d03019ff0b1265fc52b8332c",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000007c",
+    "nonce": 24,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-24",
+    "result": {
+      "drawn": [
+        20,
+        18,
+        21,
+        33,
+        40,
+        1,
+        13,
+        15,
+        25,
+        19
+      ],
+      "hits": 1,
+      "multiplier": 426,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001a",
+    "commitment": "0eac71efb3323eaf788a5334df213c4335748273f501afaeb4274b351125a17c",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000007d",
+    "nonce": 25,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-25",
+    "result": {
+      "drawn": [
+        38,
+        23,
+        30,
+        21,
+        29,
+        8,
+        24,
+        5,
+        26,
+        4
+      ],
+      "hits": 2,
+      "multiplier": 1442,
+      "payout": 14
+    },
+    "payout": 14,
+    "net": -86
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001b",
+    "commitment": "06cde6cffab5316fb4f92f31b1b65e4bf89b4f435097e0f35d5cef09dfabbf47",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000007e",
+    "nonce": 26,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-26",
+    "result": {
+      "drawn": [
+        19,
+        28,
+        29,
+        14,
+        6,
+        35,
+        15,
+        30,
+        9,
+        36
+      ],
+      "hits": 1,
+      "multiplier": 2372,
+      "payout": 2371
+    },
+    "payout": 2371,
+    "net": -7628
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001c",
+    "commitment": "ae2c63f9eff394b28d4a87520bd92dadac321b2806c1edd784a5ccbf08fd25ee",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000007f",
+    "nonce": 27,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-27",
+    "result": {
+      "drawn": [
+        12,
+        22,
+        18,
+        4,
+        31,
+        30,
+        36,
+        28,
+        8,
+        6
+      ],
+      "hits": 2,
+      "multiplier": 4406,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001d",
+    "commitment": "71b0a2d864b04cf24fc99d2ccd806bba5f0fef35c0aa7d432af96383944d4327",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000080",
+    "nonce": 28,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-28",
+    "result": {
+      "drawn": [
+        40,
+        30,
+        25,
+        32,
+        26,
+        7,
+        38,
+        31,
+        14,
+        20
+      ],
+      "hits": 1,
+      "multiplier": 5,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -100
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001e",
+    "commitment": "4e99747a3d41fe8318c4419b7b688741d8ef7096368129e14894ddbdac31795e",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000081",
+    "nonce": 29,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-29",
+    "result": {
+      "drawn": [
+        39,
+        38,
+        33,
+        14,
+        3,
+        36,
+        40,
+        23,
+        5,
+        20
+      ],
+      "hits": 2,
+      "multiplier": 7570,
+      "payout": 7569
+    },
+    "payout": 7569,
+    "net": -2430
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001f",
+    "commitment": "3b9c3a9ec9b9ea8f5b66ffdfc9e157f48f183a5b2b21b17ece0e9ceec4a7c9e0",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000082",
+    "nonce": 30,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-30",
+    "result": {
+      "drawn": [
+        10,
+        30,
+        26,
+        18,
+        7,
+        6,
+        27,
+        33,
+        22,
+        5
+      ],
+      "hits": 3,
+      "multiplier": 15141,
+      "payout": 1
+    },
+    "payout": 1,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000020",
+    "commitment": "9633190bf775667487569d0f5e7adfebc899e55ab9d62aaabe9f8754a3fa9c20",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000083",
+    "nonce": 31,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-31",
+    "result": {
+      "drawn": [
+        8,
+        1,
+        32,
+        40,
+        3,
+        17,
+        10,
+        25,
+        4,
+        2
+      ],
+      "hits": 5,
+      "multiplier": 244081,
+      "payout": 2440
+    },
+    "payout": 2440,
+    "net": 2340
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000021",
+    "commitment": "e3872ccfe29e8ddfc6fe1dca36f1acc5707d9bf3ce979ed15365bb735137a767",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000084",
+    "nonce": 32,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-32",
+    "result": {
+      "drawn": [
+        36,
+        28,
+        24,
+        18,
+        15,
+        5,
+        38,
+        6,
+        17,
+        4
+      ],
+      "hits": 3,
+      "multiplier": 13913,
+      "payout": 13911
+    },
+    "payout": 13911,
+    "net": 3912
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000022",
+    "commitment": "46f3ce0180a8791e8c622020c2bbdf688405a3e3cf9a8061309dc71fcaa4b7ac",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000085",
+    "nonce": 33,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-33",
+    "result": {
+      "drawn": [
+        16,
+        13,
+        30,
+        4,
+        32,
+        7,
+        37,
+        26,
+        3,
+        15
+      ],
+      "hits": 3,
+      "multiplier": 10691,
+      "payout": 1
+    },
+    "payout": 1,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000023",
+    "commitment": "7fcf17c37d3415fbe6dbab0f0fd197d0328b5720e438b13546449179f5ab3e6c",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000086",
+    "nonce": 34,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-34",
+    "result": {
+      "drawn": [
+        4,
+        36,
+        6,
+        31,
+        27,
+        24,
+        5,
+        13,
+        12,
+        30
+      ],
+      "hits": 3,
+      "multiplier": 3994,
+      "payout": 39
+    },
+    "payout": 39,
+    "net": -61
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000024",
+    "commitment": "fa282a9c595eea43e942f1678efbff1f4b821a6b27aef7df0ae71b9de53fc8ce",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000087",
+    "nonce": 35,
+    "wager": 9999,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "low"
+    },
+    "request_id": "reference-35",
+    "result": {
+      "drawn": [
+        29,
+        31,
+        17,
+        34,
+        32,
+        8,
+        35,
+        11,
+        16,
+        38
+      ],
+      "hits": 1,
+      "multiplier": 1287,
+      "payout": 1286
+    },
+    "payout": 1286,
+    "net": -8713
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000025",
+    "commitment": "ec5ec87d286f6b476b516f52e0e554925b0d990a27130e676354d801ecc39429",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000088",
+    "nonce": 36,
+    "wager": 1,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "medium"
+    },
+    "request_id": "reference-36",
+    "result": {
+      "drawn": [
+        26,
+        15,
+        32,
+        30,
+        28,
+        8,
+        9,
+        1,
+        2,
+        37
+      ],
+      "hits": 4,
+      "multiplier": 24630,
+      "payout": 2
+    },
+    "payout": 2,
+    "net": 1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000026",
+    "commitment": "4f3b739ea87efe9836ba4eb45954118152ed2e0500db02b8cc70ed216734a084",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000089",
+    "nonce": 37,
+    "wager": 100,
+    "game": "keno",
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "high"
+    },
+    "request_id": "reference-37",
+    "result": {
+      "drawn": [
+        31,
+        10,
+        1,
+        34,
+        37,
+        18,
+        21,
+        14,
+        16,
+        4
+      ],
+      "hits": 3,
+      "multiplier": 2456,
+      "payout": 24
+    },
+    "payout": 24,
+    "net": -76
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000027",
+    "commitment": "62da635f399f5c1e36370cd28c1648a94125652b48e7bdb93f240203688a5345",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000008a",
+    "nonce": 38,
+    "wager": 9999,
+    "game": "plinko",
+    "options": {
+      "rows": 8,
+      "risk": "low"
+    },
+    "request_id": "reference-38",
+    "result": {
+      "path": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1
+      ],
+      "slot": 5,
+      "multiplier": 5241,
+      "payout": 5240
+    },
+    "payout": 5240,
+    "net": -4759
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000028",
+    "commitment": "1391854aca800961b604acd16f59e5ec4fd025a2fb0eb9ae166976bc2d42cb3c",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000008b",
+    "nonce": 39,
+    "wager": 1,
+    "game": "plinko",
+    "options": {
+      "rows": 8,
+      "risk": "medium"
+    },
+    "request_id": "reference-39",
+    "result": {
+      "path": [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "slot": 5,
+      "multiplier": 925,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000029",
+    "commitment": "8b3680742cf524ec3552ca3db84735a40c96538fe641634e1a261bbc5416db78",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000008c",
+    "nonce": 40,
+    "wager": 100,
+    "game": "plinko",
+    "options": {
+      "rows": 8,
+      "risk": "high"
+    },
+    "request_id": "reference-40",
+    "result": {
+      "path": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "slot": 2,
+      "multiplier": 4323,
+      "payout": 43
+    },
+    "payout": 43,
+    "net": -57
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002a",
+    "commitment": "0a28e9ffef0073f9a6a674cf57ee77307f38f0f1bebb087888d9011ed0eeefdf",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000008d",
+    "nonce": 41,
+    "wager": 9999,
+    "game": "plinko",
+    "options": {
+      "rows": 12,
+      "risk": "low"
+    },
+    "request_id": "reference-41",
+    "result": {
+      "path": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "slot": 4,
+      "multiplier": 13068,
+      "payout": 13066
+    },
+    "payout": 13066,
+    "net": 3067
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002b",
+    "commitment": "7607861a685a66edb41f818ca921d9ebbbe4897b892cdcef24d41f989c43f7eb",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000008e",
+    "nonce": 42,
+    "wager": 1,
+    "game": "plinko",
+    "options": {
+      "rows": 12,
+      "risk": "medium"
+    },
+    "request_id": "reference-42",
+    "result": {
+      "path": [
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1
+      ],
+      "slot": 8,
+      "multiplier": 6216,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002c",
+    "commitment": "e2375957ad31a202ce6190cd9b5f133c3a1ee02e116d7c0c2aad6d39cd7ffc3f",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "0000000000000000000000000000008f",
+    "nonce": 43,
+    "wager": 100,
+    "game": "plinko",
+    "options": {
+      "rows": 12,
+      "risk": "high"
+    },
+    "request_id": "reference-43",
+    "result": {
+      "path": [
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "slot": 10,
+      "multiplier": 116800,
+      "payout": 1168
+    },
+    "payout": 1168,
+    "net": 1068
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002d",
+    "commitment": "f66e7487deb9b520bba6729c749b7f6931656ccd58e0e756768e190874d32709",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000090",
+    "nonce": 44,
+    "wager": 9999,
+    "game": "plinko",
+    "options": {
+      "rows": 16,
+      "risk": "low"
+    },
+    "request_id": "reference-44",
+    "result": {
+      "path": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1
+      ],
+      "slot": 8,
+      "multiplier": 300,
+      "payout": 299
+    },
+    "payout": 299,
+    "net": -9700
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002e",
+    "commitment": "fbf8b876daf777ac39279b7a0000c34f4f8c161d93242d88a73a3c87b544bbaf",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000091",
+    "nonce": 45,
+    "wager": 1,
+    "game": "plinko",
+    "options": {
+      "rows": 16,
+      "risk": "medium"
+    },
+    "request_id": "reference-45",
+    "result": {
+      "path": [
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "slot": 10,
+      "multiplier": 3447,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -1
+  },
+  {
+    "rules_version": "redpoints-v1",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002f",
+    "commitment": "c8bd03c1d9e18e8aaf6c909fa1bcb269062c932cd284fb4db7aed323699e4bdd",
+    "season": "1790719200",
+    "client_seed": "reference.seed-1",
+    "client_salt": "00000000000000000000000000000092",
+    "nonce": 46,
+    "wager": 100,
+    "game": "plinko",
+    "options": {
+      "rows": 16,
+      "risk": "high"
+    },
+    "request_id": "reference-46",
+    "result": {
+      "path": [
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1
+      ],
+      "slot": 9,
+      "multiplier": 2,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -100
+  }
+]

@@ -505,6 +505,70 @@
         );
       }
       progress(value);
+      if (value.gaming) {
+        text(
+          id("gamingAdminReset"),
+          `Balances and rankings reset ${value.gaming.season.end_et}. Shared starting balance: 100,000 RedPoints per player. Browser profiles are self-reported, not verified Shuffle accounts.`,
+        );
+        for (const [game, leaders] of Object.entries(value.gaming.games)) {
+          const list = id("gamingLeaders-" + game);
+          if (!list) continue;
+          list.replaceChildren(
+            ...(leaders.length
+              ? leaders.map((row, index) => {
+                  const item = document.createElement("li");
+                  for (const [tag, content] of [
+                    ["strong", `${index + 1}. ${row.name}`],
+                    [
+                      "b",
+                      `${row.net > 0 ? "+" : ""}${row.net.toLocaleString()} net RP`,
+                    ],
+                    [
+                      "small",
+                      `${row.paid.toLocaleString()} returned · ${row.wagered.toLocaleString()} wagered · ${row.bets} rounds`,
+                    ],
+                    ["small", `Player ${row.player_tag}`],
+                  ]) {
+                    const node = document.createElement(tag);
+                    node.textContent = content;
+                    item.append(node);
+                  }
+                  return item;
+                })
+              : [
+                  Object.assign(document.createElement("li"), {
+                    textContent: "No completed rounds this week.",
+                  }),
+                ]),
+          );
+        }
+      }
+      const historyDiagnostics = id("historyDiagnostics");
+      if (historyDiagnostics && value.history?.weeks) {
+        historyDiagnostics.replaceChildren(
+          ...value.history.weeks.map((week) => {
+            const article = document.createElement("article");
+            for (const [tag, content] of [
+              ["strong", week.label],
+              [
+                "p",
+                (week.message || "Results confirmed.") +
+                  (week.http_status ? ` HTTP ${week.http_status}.` : ""),
+              ],
+              [
+                "small",
+                `Last result: ${date(week.updated_at)}` +
+                  (week.retry_at ? ` · Retry: ${date(week.retry_at)}` : ""),
+              ],
+            ]) {
+              const node = document.createElement(tag);
+              node.textContent = content;
+              article.append(node);
+            }
+            return article;
+          }),
+        );
+      }
       updateTable(id("participantsBody"), value.participants || []);
       if (id("codeRed")?.open && value.red)
         updateTable(id("redBody"), value.red, true);

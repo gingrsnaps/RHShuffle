@@ -63,7 +63,7 @@ function page() {
     },
   };
 }
-test("homepage counts up at 0, 25, 75 and 100 percent from confirmed HP", async () => {
+test("homepage bar drains while the defeated counter rises", async () => {
   const p = page();
   await flush();
   for (const percent of [0, 25, 75, 100]) {
@@ -73,7 +73,14 @@ test("homepage counts up at 0, 25, 75 and 100 percent from confirmed HP", async 
     p.feed.boss.total_attacks++;
     p.feed.boss.status = percent === 100 ? "victory" : "active";
     await p.advance(5000);
-    assert.equal(p.w.document.querySelector("#inviteHealth").value, percent);
+    assert.equal(
+      p.w.document.querySelector("#inviteHealth").value,
+      p.feed.boss.hp,
+    );
+    assert.equal(
+      p.w.document.querySelector("#inviteHealth").max,
+      p.feed.boss.max_hp,
+    );
     assert.equal(
       p.w.document.querySelector("#invitePercent").textContent,
       percent.toFixed(2) + "% defeated",
@@ -123,12 +130,18 @@ test("a delayed minute poll cannot reverse damage; explicit admin heals can", as
   p.w.document.dispatchEvent(
     new p.w.CustomEvent("boss:summary", { detail: old }),
   );
-  assert.equal(p.w.document.querySelector("#inviteHealth").value, 75);
+  assert.equal(
+    p.w.document.querySelector("#inviteHealth").value,
+    p.feed.boss.max_hp / 4,
+  );
   p.feed.boss.health_revision++;
   p.feed.boss.version++;
   p.feed.boss.hp = p.feed.boss.max_hp;
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#inviteHealth").value, 0);
+  assert.equal(
+    p.w.document.querySelector("#inviteHealth").value,
+    p.feed.boss.max_hp,
+  );
   p.close();
 });
 test("new raid starts at zero and retired raid responses cannot return", async () => {
@@ -145,7 +158,10 @@ test("new raid starts at zero and retired raid responses cannot return", async (
   p.w.document.dispatchEvent(
     new p.w.CustomEvent("boss:summary", { detail: old }),
   );
-  assert.equal(p.w.document.querySelector("#inviteHealth").value, 0);
+  assert.equal(
+    p.w.document.querySelector("#inviteHealth").value,
+    p.feed.boss.max_hp,
+  );
   p.close();
 });
 test("connection failure retains confirmed progress and hostile boss names stay text", async () => {
@@ -163,7 +179,7 @@ test("connection failure retains confirmed progress and hostile boss names stay 
   );
   p.fail(true);
   await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#inviteHealth").value, 100);
+  assert.equal(p.w.document.querySelector("#inviteHealth").value, 0);
   assert.equal(p.w.document.querySelector("#inviteError").hidden, false);
   p.close();
 });

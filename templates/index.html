@@ -8,9 +8,11 @@
 <img id="inviteAvatar" src="{{ data.boss.avatar_url }}" class="{% if data.boss.avatar_custom %}custom-avatar{% endif %}" alt="" width="72" height="72">
 <div class="invite-copy"><p class="eyebrow"><span id="inviteBossName">{{ data.boss.name }}</span> <span class="invite-kind">· COMMUNITY BOSS</span></p><h2 id="inviteTitle">{{ 'The crew conquered ' ~ data.boss.name ~ '.' if data.boss.status=='victory' else 'The raid is taking a breather.' if data.boss.status=='paused' else 'Take your next shot.' }}</h2>
 {% set defeated = (data.boss.max_hp - data.boss.hp) / data.boss.max_hp * 100 %}
-<div class="invite-progress-label"><strong id="invitePercent">{{ '%.2f'|format(defeated) }}% defeated</strong><small id="inviteChecked" class="muted">Updates every 5 seconds</small></div>
-<progress id="inviteHealth" max="100" value="{{ defeated }}" aria-label="Boss defeated progress"></progress>
-<p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p>
+<div class="invite-progress-label"><label for="inviteHealth" class="small">Boss health</label><strong id="invitePercent">{{ '%.2f'|format(defeated) }}% defeated</strong></div>
+<progress id="inviteHealth" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Boss health remaining"></progress>
+<div class="invite-meta"><p id="inviteProgress">{{ '{:,}'.format(data.boss.hp) }} HP left · {{ data.boss.raiders }} raiders united</p><small id="inviteChecked" class="muted">Confirmed on page load · checks every 5s</small></div>
+<p id="inviteHealthNotice" class="small invite-health-notice" role="status" hidden></p>
+<details class="invite-activity"><summary>Latest community hit</summary><p id="inviteLatestHit" class="small muted">{% if data.boss.latest_hit %}{{ data.boss.latest_hit.name }} dealt {{ '{:,}'.format(data.boss.latest_hit.damage) }} damage.{% else %}No hits in this raid yet.{% endif %}</p></details>
 <p id="inviteError" class="small warning" role="status" hidden></p></div>
 <a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Join the boss fight' }}</span> <span aria-hidden="true">→</span></a>
 </section>

@@ -60,3 +60,17 @@ class GuiUpdateTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertIn('Confirm', response.json['error'])
         self.assertEqual(self.client.get('/admin/boss/status').json['state']['hp'], state['hp'])
+
+    def test_masked_latest_hit_and_health_notice_never_expose_admin_identity(self):
+        player=self.app.test_client();opening=player.get('/play/api/state').json
+        token=opening['player_csrf']
+        player.post('/play/api/profile',json={'username':'VisibleToAdminsOnly','raid_id':opening['state']['raid_id']},headers={'X-CSRF-Token':token})
+        response=player.post('/play/api/attack',json={'raid_id':opening['state']['raid_id'],'request_id':'test-latest-hit','style':'blade'},headers={'X-CSRF-Token':token})
+        self.assertEqual(response.status_code,200)
+        boss=self.app.extensions['boss'];current=boss.summary()
+        boss.control('remaining_health',current['raid_id'],current['max_hp'],health_revision=current['health_revision'],actor='SecretAdmin')
+        public=self.app.test_client().get('/boss-summary')
+        self.assertEqual(public.json['boss']['latest_hit']['name'],'Vi******')
+        self.assertIsNotNone(public.json['boss']['health_change'])
+        self.assertNotIn('VisibleToAdminsOnly',public.text)
+        self.assertNotIn('SecretAdmin',public.text)

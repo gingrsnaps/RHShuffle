@@ -98,7 +98,10 @@
       "historyCount",
       week.count === null
         ? "Waiting for the first result"
-        : week.count + " qualifying players · showing up to 25",
+        : week.count +
+            (week.origin === "snapshot"
+              ? " saved places · final top 25 awaiting confirmation"
+              : " qualifying players · showing up to 25"),
     );
     text("historyChecked", "Last checked: " + week.updated_et);
     text(

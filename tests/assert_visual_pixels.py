@@ -15,5 +15,6 @@ for case in json.loads((folder/'progress-measurements.json').read_text(encoding=
         r, g, b = image.getpixel((x, middle))
         red += r > 100 and r > g*1.4
     actual = red/width*100
-    assert abs(actual-case['percent']) < 2, (case['file'], actual, case['percent'])
-print('Eight desktop/mobile progress screenshots match 0%, 25%, 75%, 100% red fill.')
+    expected = 100-case['percent']  # Label is defeated; red fill is HP remaining.
+    assert abs(actual-expected) < 2, (case['file'], actual, expected)
+print('Eight desktop/mobile screenshots match decreasing HP fill: 100%, 75%, 25%, 0%.')

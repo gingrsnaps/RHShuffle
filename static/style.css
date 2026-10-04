@@ -2029,8 +2029,12 @@ details[open] > summary .expand-icon {
 
 /* Keep the first competitor in view on phones, with the full table readable. */
 @media (max-width: 700px) {
-  .header-inner { position: relative; }
-  .brand { max-width: calc(100% - 120px); }
+  .header-inner {
+    position: relative;
+  }
+  .brand {
+    max-width: calc(100% - 120px);
+  }
   .hero .race-clock p {
     margin: 6px 0;
   }
@@ -2049,5 +2053,169 @@ details[open] > summary .expand-icon {
   }
   .podium-name {
     margin-top: 12px;
+  }
+}
+
+/* Small factual updates stay secondary to the health bar and play button. */
+.invite-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.invite-activity {
+  margin-top: 5px;
+  font-size: 0.75rem;
+}
+.invite-activity summary {
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px 0;
+}
+.invite-activity p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.invite-health-notice {
+  margin: 7px 0;
+  color: #ffd5ac;
+}
+.history-diagnostics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.history-diagnostics article {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.history-diagnostics p {
+  font-size: 0.82rem;
+  margin: 6px 0;
+}
+.history-diagnostics small {
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .history-diagnostics {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Every configured public link remains visible at every viewport width. */
+.site-header nav > a.section-nav,
+.site-header nav .community-nav:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.site-header nav {
+  flex-wrap: wrap;
+}
+@media (max-width: 900px) {
+  .site-header .header-inner {
+    flex-wrap: wrap;
+  }
+  .site-header .brand {
+    max-width: 100%;
+  }
+  .site-header .header-inner nav {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 5px 12px;
+  }
+  .site-header .header-inner nav > a {
+    position: static;
+    flex: 0 1 auto;
+    min-height: 44px;
+    padding: 8px;
+    font-size: 0.78rem;
+  }
+  .site-header .header-inner nav > .button {
+    position: static;
+    min-height: 44px;
+  }
+  .tabs {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}
+@media (max-width: 480px) {
+  .site-header .header-inner nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+  }
+  .site-header .header-inner nav > a {
+    justify-content: center;
+    text-align: center;
+    padding: 6px 3px;
+    white-space: normal;
+  }
+  .site-header .header-inner nav > .button {
+    padding: 6px 3px;
+    font-size: 0.72rem;
+  }
+  .site-header .header-inner nav > form {
+    justify-self: center;
+  }
+}
+
+/* Keep the leaderboard close on phones even with every navigation link shown. */
+@media (max-width: 700px) {
+  .hero {
+    padding: 12px 0;
+    gap: 10px;
+  }
+  .hero .lead {
+    font-size: 0.82rem;
+    margin: 4px 0;
+  }
+  .hero-links {
+    margin-top: 10px;
+  }
+  .race-clock {
+    padding: 14px;
+  }
+  .race-clock .clock {
+    font-size: 1.4rem;
+  }
+  .race-clock #raceWindow {
+    font-size: 0.66rem;
+  }
+  .clock-footer {
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+  .play-invite {
+    padding: 14px;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .invite-progress-label {
+    gap: 6px;
+  }
+  .invite-progress-label label {
+    font-size: 0.67rem;
+  }
+  #invitePercent {
+    font-size: 1.03rem;
+  }
+  .invite-health-notice {
+    font-size: 0.69rem;
+    line-height: 1.4;
+    margin: 5px 0;
+  }
+  .invite-activity {
+    margin-top: 2px;
+  }
+  .invite-activity summary {
+    padding: 2px 0;
   }
 }

@@ -170,7 +170,7 @@ class WeeklyHistoryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             clean_history(saved)
 
-    def test_homepage_defeat_progress_server_rendered_zero_partial_and_full(self):
+    def test_homepage_health_server_rendered_full_partial_and_empty(self):
         for hp in (2400000, 765432, 0):
             admin = self.client.get('/admin/boss/status').json
             response = self.client.post('/admin/boss/action', data={
@@ -180,8 +180,70 @@ class WeeklyHistoryTests(unittest.TestCase):
             self.assertEqual(response.status_code, 303)
             page = self.client.get('/').text
             progress = re.search(r'<progress id="inviteHealth"[^>]*>', page).group()
-            self.assertAlmostEqual(float(re.search(r'value="([^"]+)"', progress).group(1)), (2400000-hp)/2400000*100)
-            self.assertIn('max="100"', progress)
+            self.assertEqual(int(re.search(r'value="([^"]+)"', progress).group(1)), hp)
+            self.assertIn('max="2400000"', progress)
+
+
+class HistoryRecoveryTests(unittest.TestCase):
+    setUp = test_app.AppTests.setUp
+
+    def test_one_bad_window_does_not_starve_other_weeks(self):
+        first=completed_weeks()[0]['end_time']
+        def source(site):
+            if site['end_time']==first: raise ProviderError('do not disclose',status=400)
+            return [test_app.player()]
+        with patch.object(self.r.providers,'shuffle',side_effect=source) as provider:
+            self.r.history.check()
+        self.assertEqual(provider.call_count,4)
+        weeks=self.r.history.public()['weeks']
+        self.assertEqual(weeks[0]['status'],'delayed')
+        self.assertTrue(all(w['status']=='ready' for w in weeks[1:]))
+        private=self.client.get('/admin/diagnostics').json['history']
+        self.assertEqual(private['weeks'][0]['http_status'],400)
+        self.assertIn('date range',private['weeks'][0]['message'])
+        self.assertNotIn('do not disclose',json.dumps(private))
+
+    def test_global_access_error_explains_all_four_weeks_without_four_rejections(self):
+        with patch.object(self.r.providers,'shuffle',side_effect=ProviderError('secret',status=403)) as provider:
+            self.r.history.check()
+        self.assertEqual(provider.call_count,1)
+        self.assertTrue(all(w['status']=='delayed' and 'attention' in w['message'] for w in self.r.history.public()['weeks']))
+        with patch.object(self.r.providers,'shuffle') as provider:
+            self.r.history.request_refresh();self.r.history.check()
+        provider.assert_not_called()
+
+    def test_admin_history_refresh_is_authenticated_csrf_protected_and_queued(self):
+        guest=self.app.test_client()
+        self.assertEqual(guest.post('/admin/history/refresh',headers={'Accept':'application/json'}).status_code,401)
+        self.assertEqual(self.client.post('/admin/history/refresh').status_code,400)
+        with patch.object(self.r.providers,'shuffle',side_effect=AssertionError('Must not block web request')):
+            response=self.client.post('/admin/history/refresh',data={'csrf':'test-token'},headers={'Accept':'application/json'})
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(self.r.history.force)
+        self.assertIn('queued',response.json['message'])
+
+    def test_exact_archived_snapshot_rescued_and_labelled_provisional(self):
+        period=completed_weeks()[0];admin=copy.deepcopy(self.r.admin)
+        site={**admin['site_settings'],'start_time':period['start_time'],'end_time':period['end_time']}
+        from race_support import race_key
+        admin['race_history'].append(dict(site_settings=site,overrides={},leaderboard_snapshots=dict(race_key=race_key(site),updated_at=period['end_time']-10,
+            last_top15=[dict(rank=1,username='PreviousWinner',weighted_wager='500')],prev_top15=[])))
+        self.r.commit(admin,self.r.revision)
+        with patch.object(self.r.providers,'shuffle',side_effect=ProviderError('offline',kind='connection')):
+            self.r.history.check()
+        result=self.r.history.public()['selected']
+        self.assertEqual(result['rows'][0]['username'],'Pr******')
+        self.assertEqual(result['rows'][0]['wager'],'$500.00')
+        self.assertEqual(result['origin'],'snapshot')
+        self.assertEqual(result['status'],'delayed')
+        self.assertIn('Showing saved',result['message'])
+        self.assertIn('provisional',result['message'])
+
+    def test_timeout_attempts_every_week_and_keeps_next_retry_information(self):
+        with patch.object(self.r.providers,'shuffle',side_effect=ProviderError('timeout',kind='timeout')) as provider:
+            self.r.history.check()
+        self.assertEqual(provider.call_count,4)
+        self.assertTrue(all(w['retry_at']>0 for w in self.r.history.public()['weeks']))
 
 
 if __name__ == '__main__':

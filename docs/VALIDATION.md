@@ -1,60 +1,114 @@
-# Validation — 2026.10.03-community-gui
+# Validation — 2026.10.04-redpoints
 
-**162 backend tests passed in a single full run.**
-**68 DOM/HTTP interface checks passed together.**
-**Native Chromium visual and interaction checks passed** at 1440px desktop, 390px
-mobile and 320px narrow widths. Eleven screenshots cover eight homepage progress
-states, two History layouts and admin feedback. Pixel checks measure the actual
-red fill at 0%, 25%, 75%, and 100%, not just the HTML value.
+## Results
 
-This release verifies anonymous five-second boss summaries without provider calls
-or player cookies, stale minute-feed rejection, explicit host heals and new raids,
-confirmed progress values, error retention, server-created admin receipts, precise
-accepted settings, failed-write rollback, and draft retention. The real browser
-also submits a boss settings change, verifies the nearby receipt, then submits a
-stale form and confirms the typed name remains intact.
-
-History coverage includes Tuesday 6 PM cutoffs, 167/169-hour DST weeks, Top 25
-masking, cache-only page reads, rollover, archived overrides/prizes, retry delays,
-recovery, native mobile selection and previous/next navigation.
-
-Admin coverage includes all five tabs, login/logout, account creation/reset/removal,
-ban/unban, clearing logs, self-block prevention behind App Platform ingress, every
-general write's session/CSRF requirements, race settings and publication, CSV,
-backups/restore, image formats, boss edits and private leaderboards.
-
-New coverage includes both shipped browser scripts talking to a real Waitress
-server through a cookie jar: save after page-session loss, reload, attack, a second
-player with the same name, and a real native form POST without JavaScript. Server
-tests also cover cold restart, invalid cookie/CSRF rejection, preservation of drafts,
-admin token separation, a raid restart during name entry and recovery-token rotation.
-The real HTTP transport does not stub the username endpoint or its JSON responses.
-
-| Area | Verified behavior |
+| Check | Result |
 | --- | --- |
-| JSON saves | Fresh startup, retained accounts, cold restart, corrupt-file refusal, failed atomic replacement rollback, two simultaneous store instances retaining every hit. |
-| Names | Retained after IP/header changes, refresh, application restart and new raid. Cookie is not silently replaced on reload. Recovery can share a network with another active player. |
-| Isolation | One browser flooding rejected registrations does not stop other browsers on the same IP. Duplicate labels stay independent and cannot claim another player. |
-| Migration | Previous SQLite accounts/revision/live snapshot/raid imported exactly; old file unchanged; no SQLite created on a fresh install. |
-| Recovery codes | Authenticated owner issuance, CSRF rejection, forgery and replaced-code rejection, digest-only storage, original alias/hits/badges/receipt/cooldown retained. |
-| Community access | 100 concurrent browser identities register and attack through one proxy IP, then each attacks again after 30 seconds. No approvals. Same-identity simultaneous clicks still allow only one hit. |
-| Unlimited hits | Repeated eligible hits accepted beyond previous daily counts; rejected-request throttle does not block an eligible hit. Existing week-long gameplay/achievement tests pass. |
-| Rally/estimates | Distinct rolling-window players, repeat-player deduplication, window expiry, next-raid reset, cosmetic unlock, no automatic HP/damage changes. |
-| Admin edits | Private persistent actor/before/after history, existing avatar/name/HP/damage permissions and stale revision checks. |
-| Interface | Identity collapse/edit, safe code recovery, remembered style, rally display, exact previews, presets without submission, private history clearing on expiry, saved names winning over stale polls, and attack controls pausing during profile writes. |
-| Status | Five-second boss polling, 60-second provider polling, distinct source success/change timestamps, dynamic boss victory name, ETag reuse and reconnect behavior. |
-| Existing features | Native login, race date publication, provider envelopes, safe failure responses, Code Red Top 100, public masking, uploads and recovery export. |
+| Complete backend regression suite | **182 tests passed**, Python 3.12/Linux, including original race/admin/boss coverage and new Gaming/history/preview tests. |
+| DOM and actual-HTTP interface suite | **70 checks passed** with Node, jsdom and a disposable Waitress server. |
+| Independent fairness implementation | **47 synthetic reference receipts** match in Python and browser JavaScript; tampered returns and wrong commitments fail verification. |
+| Native Chromium | All three real wager flows, shared balances, duplicate request handling, reload persistence, admin rankings and local receipt verification passed. |
+| Responsive layouts | 1440 px desktop, 390 px mobile and 320 px narrow layout checks passed. All seven configured public header links are visible on mobile. |
+| HP-bar pixels | Actual red fill verified at 100%, 75%, 25% and 0% remaining on desktop/mobile; defeated text moves oppositely. |
+| Screenshots | 20 captured screens across home, history, Gaming, all three games and admin. Selected previews are included in docs. |
 
-The original provider configuration, account seed, PNG and ICO are preserved byte
-for byte. The badge calculation function is preserved unchanged; #1 was excluded.
-No remote checkpoint feature or external SQL service was added; #10 was excluded.
+## New backend coverage
 
-Validation uses synthetic provider responses and disposable local saves. It did
-not contact the live Shuffle/Kick accounts or deploy to DigitalOcean. This Linux
-workspace ran Python 3.12; Windows/Python 3.14 was not executed natively. An encoding
-regression test simulates the earlier Windows text-decoding failure. Browser checks use both jsdom/real HTTP integration and native Chromium. Screenshots
-and geometry/pixel assertions use synthetic data. Their fixtures are disposable
-and never run against the deployed app.
+- One allowance shared across Dice, Keno and Plinko; no refill on refresh, name
+  edits, recovery or a restart with the same state file.
+- Exact Tuesday 6 PM Eastern rollover, including a 169-hour autumn DST week;
+  weekly counters reset while nonces and saved proof receipts remain continuous.
+- Five concurrent submissions of the same wager commit only once. Duplicate
+  responses preserve the original receipt and do not debit again. Stale nonces
+  cannot spend a commitment already used by another tab.
+- Whole-point input validation, configured wager bounds, altered commitments and
+  nonce rejection, player CSRF isolation and private seed suppression.
+- Disk-write failure rolls back balance, seed, nonce and receipt together.
+- Private Top 5 limits and descending net-winnings order for each game; unrelated
+  public pages never contain those full submitted names.
+- Full recovery retains wallet, seed, nonce, receipt and signed player identity;
+  inconsistent balances are rejected instead of silently imported.
+- 100 independent Gaming profiles receive separate allowances. Existing boss
+  tests additionally register/attack concurrently through the same proxy.
+- ETag 304 wallet polling and a changed ETag after settlement. Idle polls do not
+  mark recovery stale, but a saved wager does.
+- Probability tables cover every Keno pick count and Plinko row/risk setting;
+  exact expected table return is bounded and Plinko payouts are symmetric.
+- One failed completed date range does not starve the other three. Shared access
+  failures defer all weeks visibly, without issuing four rejected requests.
+- Exact saved race snapshots are rescued as masked provisional places while the
+  provider is unavailable. They are not relabeled as final standings.
+- Admin history refresh requires current authentication and CSRF, queues work,
+  never calls the provider inside the web request, and honors retry times.
+- Latest-hit names are masked in the homepage summary; health edits are described
+  without exposing admin identity. Native preview checks exercise local name/avatar
+  drafts without submitting them.
 
-The extracted ZIP startup checks and package integrity results are recorded during
-packaging. The code is shipped with its tests for repeatable verification.
+## Retained coverage
+
+The existing suite exercises the sole launcher through real HTTP; native admin
+login and dashboard tabs; races, date previews/publication, manual source refresh,
+weighted wagers, Code Red Top 100, masking, CSV, overrides, accounts and passwords;
+recovery, admin-only image uploads and boss edits; unlimited hits, 30-second
+cooldowns, no regeneration, random weakness and eight badges; stale-response
+rejection, signed profile recovery, saved usernames, per-browser throttles,
+multiple players behind one proxy, UTF-8 startup, JSON transactions and legacy
+read-only import. Rejected saves retain drafts and do not report false success.
+
+Admin requests retain session/role checks, stale revisions and CSRF requirements.
+The native browser saves boss settings, verifies a confirmed receipt, then sends
+a stale form and confirms the typed draft remains. Gaming's full-name tables are
+inspected after actual local wager submissions.
+
+## Evidence and limits
+
+Tests run against temporary local saves and synthetic provider responses. They
+never reset deployed data or submit real Shuffle wagers. The 47 published seed
+vectors are intentionally public synthetic values, not active player seeds.
+There is no statistical claim that 47 examples alone prove all random outcomes;
+exact probability/formula checks and independent implementations provide the
+separate algorithm checks.
+
+**The live Shuffle historical requests from this workspace timed out, without an
+HTTP status.** The code fixes a reproduced queue-starvation bug and verifies
+successful backfill/failure handling using controlled provider responses. It does
+not claim that the live account returned four completed weeks. No Kick live check
+or DigitalOcean deployment was performed for this update. Use the new authenticated
+history diagnostics after deployment to identify remaining upstream failures.
+
+These checks are not a throughput benchmark, penetration test or independent
+fairness certification. The Linux test environment did not run Windows/Python 3.14
+natively; the earlier encoding failure is covered by a simulated default-encoding
+test. The declared hosted runtime remains Python 3.13.12.
+
+The original private settings, original account seed, PNG and ICO are compared
+byte for byte during packaging. The existing badge calculation function is also
+compared with the prior version. The ZIP includes every local import and excludes
+runtime state, test fixtures, caches and test dependencies. The exact extracted
+package receives a separate startup/import/recovery/Gaming smoke check before
+release; its results are recorded in the package manifest.
+
+The previews use synthetic player names, points, dates, health and provider data.
+They illustrate the shipped interface, not a live-account result. On App Platform,
+local-only files remain ephemeral; the recovery export is a manual checkpoint,
+not a promise of uninterrupted persistence during container replacement.
+
+## Repeat locally (developer checks only)
+
+```bash
+python -m unittest discover -s tests -v
+python tests/render_fixtures.py .test-fixtures
+npm --prefix tests install --ignore-scripts
+npm --prefix tests test
+```
+
+Native browser checks:
+
+```bash
+npm --prefix tests exec -- playwright install chromium
+npm --prefix tests run test:visual
+```
+
+Set `RH_TEST_PYTHON` or `RH_BROWSER_EXECUTABLE` only if the tools are installed at
+nondefault paths. The website itself requires no Node/Chromium setup. Its only
+run command is `python wager_backend.py`.

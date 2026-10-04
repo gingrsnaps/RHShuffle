@@ -58,8 +58,10 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
           .filter({ hasText: percent.toFixed(2) + "% defeated" })
           .waitFor();
         assert.equal(
-          await page.locator("#inviteHealth").evaluate((el) => el.value),
-          percent,
+          await page
+            .locator("#inviteHealth")
+            .evaluate((el) => (el.value / el.max) * 100),
+          100 - percent,
         );
         const geometry = await page.evaluate(() => ({
           width: document.documentElement.scrollWidth,
@@ -72,17 +74,48 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
           ),
         }));
         assert.ok(geometry.width <= width, "Homepage overflows " + size);
-        assert.ok(
-          geometry.leaderboard < height,
-          "Leaderboard heading must be visible on first screen",
-        );
+        if (geometry.leaderboard >= height) {
+          await page.screenshot({
+            path: path.join(output, "layout-failure-" + size + ".png"),
+            fullPage: true,
+          });
+          const blocks = await page.evaluate(() =>
+            Object.fromEntries(
+              [".site-header", ".hero", ".play-invite"].map((q) => [
+                q,
+                document.querySelector(q).getBoundingClientRect().toJSON(),
+              ]),
+            ),
+          );
+          throw Error(
+            "Leaderboard below first screen: " +
+              JSON.stringify({ size, ...geometry, blocks }),
+          );
+        }
         if (size === "mobile")
           assert.ok(
             geometry.nav.every((h) => h >= 44),
             "Mobile navigation tap targets",
           );
-        const bar = await page.locator('#inviteHealth').boundingBox();
-        measurements.push({file:`home-${size}-${percent}.png`,bar,percent});
+        for (const href of [
+          "/#leaderboard",
+          "/history",
+          "/play",
+          "/gaming",
+          "https://botrix.live/k/redhunllef/shop",
+          "https://example.test/community",
+        ]) {
+          assert.ok(
+            await page.locator(`.site-header a[href="${href}"]`).isVisible(),
+            `Missing navigation: ${href}`,
+          );
+        }
+        const bar = await page.locator("#inviteHealth").boundingBox();
+        measurements.push({
+          file: `home-${size}-${percent}.png`,
+          bar,
+          percent,
+        });
         await page.screenshot({
           path: path.join(output, `home-${size}-${percent}.png`),
           fullPage: true,
@@ -142,6 +175,16 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
     await page.waitForURL(/tab=|\/admin$/);
     await page.goto(base + "/admin?tab=boss");
     await page.locator("#bossNameInput").fill("Ruby Guardian");
+    assert.equal(
+      await page.locator("#bossPreviewName").textContent(),
+      "Ruby Guardian",
+    );
+    await page
+      .locator("#bossAvatarFile")
+      .setInputFiles(path.join(__dirname, "..", "static", "redlogo.png"));
+    await page.waitForFunction(() =>
+      document.getElementById("bossPreviewAvatar").src.startsWith("data:"),
+    );
     await page.locator("#bossBaseDamage").fill("234");
     await page.locator('#bossSettingsForm button[type="submit"]').click();
     await page.locator("#feedback-bossSettingsHeading").waitFor();
@@ -169,16 +212,134 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
       fullPage: true,
       animations: "disabled",
     });
+    const games = await context.newPage();
+    games.on("pageerror", (error) => errors.push(error.message));
+    await games.goto(base + "/gaming");
+    await games.locator("#gamingUsername").fill("BrowserRedPlayer");
+    await games.locator("#gamingNameForm button").click();
+    await games.locator("#gamingIdentity").waitFor();
+    assert.equal(
+      await games.locator("#pointsBalance").textContent(),
+      "100,000",
+    );
+    let balance = 100000,
+      lastReceipt;
+    for (const game of ["dice", "keno", "plinko"]) {
+      await context.request.post(base + "/__fixture__/advance");
+      await games.goto(base + "/gaming/" + game);
+      await games.locator("#redWager").fill("125");
+      if (game === "keno")
+        for (const n of [1, 5, 15])
+          await games.locator(`[data-keno="${n}"]`).click();
+      const reply = games.waitForResponse(
+        (r) =>
+          r.url().endsWith("/gaming/api/bet") &&
+          r.request().method() === "POST",
+      );
+      await games.locator("#betButton").click();
+      const response = await reply;
+      assert.equal(response.status(), 200);
+      const value = await response.json();
+      lastReceipt = value.receipt;
+      balance += lastReceipt.net;
+      await games
+        .locator("#betProof")
+        .filter({ hasText: "Verified in your browser" })
+        .waitFor();
+      assert.equal(
+        await games.locator("#pointsBalance").textContent(),
+        balance.toLocaleString("en-US"),
+      );
+      const repeat = await context.request.post(base + "/gaming/api/bet", {
+        data: response.request().postDataJSON(),
+        headers: {
+          "X-CSRF-Token": await games
+            .locator(".gaming-page")
+            .getAttribute("data-csrf"),
+        },
+      });
+      const duplicated = await repeat.json();
+      assert.equal(duplicated.duplicate, true);
+      assert.equal(duplicated.wallet.balance, balance);
+      for (const [size, width, height] of [
+        ["desktop", 1440, 1000],
+        ["mobile", 390, 844],
+      ]) {
+        await games.setViewportSize({ width, height });
+        assert.ok(
+          await games.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          game + " overflows " + size,
+        );
+        if (game === "keno" && size === "mobile") {
+          assert.ok(
+            (await games.locator('[data-keno="1"]').boundingBox()).height >= 44,
+          );
+        }
+        await games.evaluate(() => {
+          scrollTo({ top: 0, behavior: "instant" });
+          document.activeElement?.blur();
+        });
+        await games.screenshot({
+          path: path.join(output, game + "-" + size + ".png"),
+          fullPage: true,
+          animations: "disabled",
+        });
+      }
+      await games.reload();
+      assert.equal(
+        await games.locator("#pointsBalance").textContent(),
+        balance.toLocaleString("en-US"),
+      );
+    }
+    await games.goto(base + "/gaming");
+    await games.screenshot({
+      path: path.join(output, "gaming-mobile.png"),
+      fullPage: true,
+    });
+    await games.setViewportSize({ width: 1440, height: 1000 });
+    await games.screenshot({
+      path: path.join(output, "gaming-desktop.png"),
+      fullPage: true,
+    });
+    await games.goto(base + "/gaming/fairness");
+    await games.locator("#verifyReceipt").fill(JSON.stringify(lastReceipt));
+    await games.locator("#verifyCommitment").fill(lastReceipt.commitment);
+    await games.locator("#receiptVerifier button").click();
+    await games
+      .locator("#verifyResult")
+      .filter({ hasText: "Verified 1 receipt" })
+      .waitFor();
+    await games.goto(base + "/admin?tab=gaming");
+    for (const game of ["dice", "keno", "plinko"])
+      assert.match(
+        await games.locator("#gamingLeaders-" + game).textContent(),
+        /BrowserRedPlayer/,
+      );
+    await games.screenshot({
+      path: path.join(output, "admin-gaming.png"),
+      fullPage: true,
+    });
     assert.deepEqual(errors, []);
-    fs.writeFileSync(path.join(output,'progress-measurements.json'),JSON.stringify(measurements));
-    const pixels = spawnSync(process.env.RH_TEST_PYTHON || 'python',[path.join(__dirname,'assert_visual_pixels.py'),output],{encoding:'utf8'});
-    assert.equal(pixels.status,0,pixels.stderr || pixels.stdout);
+    fs.writeFileSync(
+      path.join(output, "progress-measurements.json"),
+      JSON.stringify(measurements),
+    );
+    const pixels = spawnSync(
+      process.env.RH_TEST_PYTHON || "python",
+      [path.join(__dirname, "assert_visual_pixels.py"), output],
+      { encoding: "utf8" },
+    );
+    assert.equal(pixels.status, 0, pixels.stderr || pixels.stdout);
     console.log(
       JSON.stringify({
         passed: true,
         progress_states: [0, 25, 75, 100],
         viewports: [1440, 390, 320],
-        screenshots: 11,
+        screenshots: 20,
+        games_verified: ["dice", "keno", "plinko"],
+        duplicate_wagers_preserved: true,
         admin_save_and_draft_preservation: true,
         output,
       }),

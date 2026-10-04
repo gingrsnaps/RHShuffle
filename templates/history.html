@@ -31,7 +31,7 @@
       <table><thead><tr><th scope="col">Place</th><th scope="col">Player</th><th scope="col" class="number">Weighted wager</th><th scope="col" class="number">Recorded prize</th></tr></thead>
       <tbody id="historyRows">{% for row in week.rows %}<tr><td class="rank">{{ '%02d'|format(row.rank) }}</td><td><strong>{{ row.username }}</strong></td><td class="number">{{ row.wager }}</td><td class="number accent">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="4" class="empty">{{ 'No qualifying wagers returned for this week.' if week.status=='ready' else 'Results are not available yet. This page checks automatically.' }}</td></tr>{% endfor %}</tbody></table>
     </div>
-    <div class="history-meta"><span id="historyCount">{{ week.count ~ ' qualifying players · showing up to 25' if week.count is not none else 'Waiting for the first result' }}</span><span id="historyChecked">Last checked: {{ week.updated_et }}</span></div>
+    <div class="history-meta"><span id="historyCount">{{ week.count ~ (' saved places · final top 25 awaiting confirmation' if week.origin == 'snapshot' else ' qualifying players · showing up to 25') if week.count is not none else 'Waiting for the first result' }}</span><span id="historyChecked">Last checked: {{ week.updated_et }}</span></div>
     <p id="historyPrizeNote" class="muted small">{{ 'Prizes use this week’s saved race settings; only the top 15 places are paid.' if week.prizes_known else 'No matching prize schedule was saved for this week. Prizes are shown as —.' }}</p>
   </section>
   <div class="leaderboard-foot"><span>Tuesday 6 PM → Tuesday 6 PM Eastern · daylight saving time included</span><span>Page updates every 60 seconds</span></div>
