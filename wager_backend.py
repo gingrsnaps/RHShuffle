@@ -377,6 +377,16 @@ def create_app(root=None, testing=False):
         except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_move'))
 
+    @app.post('/gaming/api/poker/action')
+    def gaming_poker_action():
+        require_player_csrf()
+        try:
+            result = gaming.poker_action(guest(), gaming_player_name(),
+                                         request.get_json(silent=True), client_ip=g.client_ip)
+            return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
+            return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_move'))
+
     @app.get('/gaming/api/receipts')
     def gaming_receipts():
         # Owner's revealed receipts only. Active server seeds never leave storage.

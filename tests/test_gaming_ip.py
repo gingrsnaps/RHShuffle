@@ -274,8 +274,8 @@ class GamingIPTests(unittest.TestCase):
                     game.blackjack_action(who,name,dict(round_id=hand['round_id'],step=0,action='stand',action_id='count-stand'),now,client_ip=ip)
         saved=self.client.get('/admin/gaming/status').json
         self.assertEqual(saved['completed_rounds'],28)
-        for item in saved['games']:
+        for item in ('dice','keno','plinko','blackjack'):
             self.assertEqual(len(saved['games'][item]),5)
             self.assertEqual(saved['counts'][item],dict(players=7,rounds=7))
             self.assertTrue(all(row['ips'] and row['bets']==1 for row in saved['games'][item]))
-        self.assertIn('arcade2',saved['release'])
+        self.assertIn('arcade3',saved['release'])

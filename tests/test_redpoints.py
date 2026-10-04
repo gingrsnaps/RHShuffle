@@ -31,7 +31,7 @@ class RedPointsTests(unittest.TestCase):
         return client,response.json
 
     def body(self, wallet, game='dice', **values):
-        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='medium'),'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6)}[game]
+        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='medium'),'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6),'limbo':dict(target=200),'coinflip':dict(side='heads'),'poker':dict(variant='jacks_or_better')}[game]
         return dict(rules_version=VERSION, game=game, request_id='test-bet-'+str(wallet['nonce']), season=wallet['season']['id'],
                     nonce=wallet['nonce'], commitment=wallet['commitment'], client_seed='player-chosen-seed',
                     client_salt='0123456789abcdef'*2,wager=100,options=options,**values)
@@ -40,6 +40,10 @@ class RedPointsTests(unittest.TestCase):
         if response.json.get('receipt') is None and response.json.get('wallet', {}).get('blackjack'):
             hand=response.json['wallet']['blackjack']
             response=client.post('/gaming/api/blackjack/action', json=dict(round_id=hand['round_id'], step=hand['step'], action='stand', action_id='finish-test-hand'), headers={'X-CSRF-Token':csrf})
+            self.assertEqual(response.status_code,200,response.text)
+        if response.json.get('receipt') is None and response.json.get('wallet', {}).get('poker'):
+            hand=response.json['wallet']['poker']
+            response=client.post('/gaming/api/poker/action', json=dict(round_id=hand['round_id'],holds=[0,1,2,3,4],action_id='finish-poker-hand'), headers={'X-CSRF-Token':csrf})
             self.assertEqual(response.status_code,200,response.text)
         return response
 
@@ -131,6 +135,9 @@ class RedPointsTests(unittest.TestCase):
                 if item=='blackjack' and not result['receipt']:
                     hand=result['wallet']['blackjack']
                     game.blackjack_action('private'+str(n),'PrivatePlayer'+str(n),dict(round_id=hand['round_id'],step=hand['step'],action='stand',action_id='top-five-stand'),now+index*2,client_ip='198.51.100.'+str(n+1))
+                elif item=='poker' and not result['receipt']:
+                    hand=result['wallet']['poker']
+                    game.poker_action('private'+str(n),'PrivatePlayer'+str(n),dict(round_id=hand['round_id'],holds=[0,1,2,3,4],action_id='top-five-draw'),now+index*2,client_ip='198.51.100.'+str(n+1))
         value=self.client.get('/admin/gaming/status').json
         for item in GAMES:
             rows=value['games'][item]

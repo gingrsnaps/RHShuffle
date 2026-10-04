@@ -21,7 +21,12 @@
     polling = false,
     feedback = "";
   let selections = new Set(),
-    walletEtag = "";
+    pokerHolds = new Set(),
+    pokerRound = "",
+    walletEtag = "",
+    limboFrame = null,
+    limboTimeout = null,
+    coinAnimation = null;
   const betLabel = id("betButton")?.textContent || "Play";
   const betForm = id("betForm");
   if (betForm) {
@@ -69,7 +74,7 @@
   };
   try {
     pending = JSON.parse(sessionStorage.getItem("rh.gaming.pending"));
-    pendingAction = JSON.parse(sessionStorage.getItem("rh.blackjack.action"));
+    pendingAction = JSON.parse(sessionStorage.getItem("rh.gaming.action") || sessionStorage.getItem("rh.blackjack.action"));
   } catch {}
   function remember(value) {
     pending = value;
@@ -113,9 +118,12 @@
     if (wallet.play_blocked) return wallet.play_blocked.message;
     if (wallet.needs_profile)
       return "Save your community name above to activate your RedPoints and play.";
-    if (wallet.blackjack) {
+    if (wallet.blackjack || wallet.poker) {
       if (wallet.play_blocked) return wallet.play_blocked.message;
       if (pendingAction && !wallet.play_blocked) return "";
+      if (wallet.poker) return game === "poker"
+        ? "Choose the cards to hold, then draw once."
+        : "Continue your saved Poker hand before starting another game.";
       return game === "blackjack"
         ? "Use Hit, Stand or Double to finish this hand."
         : "Continue your saved Blackjack hand before starting another game.";
@@ -124,6 +132,7 @@
     if (pending && !wallet.needs_profile) return "";
     if (wallet.balance < 1)
       return "Refresh this page to restore 100,000 RedPoints, or wait for the weekly reset.";
+    if (game === "limbo" && limboProblem()) return limboProblem();
     if (game === "keno" && !selections.size)
       return "Pick 1–10 numbers to play.";
     return "";
@@ -153,7 +162,7 @@
           ? "Save your community name first"
         : pendingAction
           ? "Recover your move"
-          : wallet?.blackjack
+          : (wallet?.blackjack || wallet?.poker)
             ? "Hand in progress"
             : pending
               ? "Recover previous round"
@@ -177,7 +186,7 @@
         id("betStatus").classList.toggle(
           "is-error",
           Boolean(
-            !busy && (feedback || playBlock() || (!pending && wagerProblem())),
+            !busy && (feedback || (!(wallet?.blackjack || wallet?.poker) && playBlock()) || (!pending && wagerProblem())),
           ),
         );
       }
@@ -196,12 +205,19 @@
         Boolean(wallet?.play_blocked) ||
         (button.dataset.blackjack === "double" && !wallet.blackjack.can_double);
     });
+    const pokerLocked = busy || fatal || !secure || !verifierReady ||
+      !wallet?.poker || Boolean(wallet?.needs_profile) || Boolean(pendingAction);
+    root.querySelectorAll("[data-poker-hold],#pokerDraw,#pokerHoldAll,#pokerClear").forEach(button => {
+      button.disabled = pokerLocked;
+    });
+    if (id("pokerDraw")) id("pokerDraw").textContent = busy ? "Saving draw…" :
+      pokerHolds.size === 5 ? "Keep all · finish hand" : `Draw ${5-pokerHolds.size} card${pokerHolds.size === 4 ? "" : "s"}`;
     if (id("retryBet")) {
       id("retryBet").textContent = pendingAction
         ? "Recover your move"
         : "Recover pending result";
       id("retryBet").hidden =
-        !pending || Boolean(wallet?.blackjack && !pendingAction);
+        !pending || Boolean((wallet?.blackjack || wallet?.poker) && !pendingAction);
       id("retryBet").disabled = busy || fatal || !secure || !verifierReady || Boolean(wallet?.needs_profile);
     }
   }
@@ -226,6 +242,17 @@
     if (next.blackjack && !pending) remember(next.blackjack.bet);
     if (id("blackjackResume"))
       id("blackjackResume").hidden = !next.blackjack || game === "blackjack";
+    if (next.poker) {
+      if (pending?.request_id === next.poker.round_id && pending.initial_cards &&
+          RedFair.canonical(pending.initial_cards) !== RedFair.canonical(next.poker.initial)) {
+        fatal = true;
+        throw Error("The saved initial Poker cards changed. Keep your receipt and reload before playing.");
+      }
+      if (!pending || pending.request_id === next.poker.round_id)
+        remember({ ...(pending || next.poker.bet), initial_cards: [...next.poker.initial] });
+    }
+    if (id("pokerResume")) id("pokerResume").hidden = !next.poker || game === "poker";
+    renderPoker(next.poker);
     renderBlackjack(next.blackjack);
     // The signed player owns this balance. Connection metadata never blocks play.
     // Label the allowance until the player confirms their community name.
@@ -361,20 +388,21 @@
       clearTimeout(timeout);
     }
   }
-  const opt = () =>
-    game === "blackjack"
-      ? { decks: 6 }
-      : game === "dice"
-        ? { chance: Number(id("diceChance").value), side: id("diceSide").value }
-        : game === "keno"
-          ? {
-              picks: [...selections].sort((a, b) => a - b),
-              risk: root.querySelector('[name="risk"]:checked').value,
-            }
-          : {
-              rows: Number(id("plinkoRows").value),
-              risk: root.querySelector('[name="risk"]:checked').value,
-            };
+  function opt() {
+    if (game === "blackjack") return { decks: 6 };
+    if (game === "poker") return { variant: "jacks_or_better" };
+    if (game === "limbo") return { target: Math.round(Number(id("limboTarget").value)*100) };
+    if (game === "coinflip") return { side: root.querySelector('[name="coinSide"]:checked').value };
+    if (game === "dice") return { chance: Number(id("diceChance").value), side: id("diceSide").value };
+    if (game === "keno") return { picks: [...selections].sort((a,b) => a-b), risk: root.querySelector('[name="risk"]:checked').value };
+    return { rows: Number(id("plinkoRows").value), risk: root.querySelector('[name="risk"]:checked').value };
+  }
+  function limboProblem() {
+    const value = Number(id("limboTarget")?.value);
+    return !Number.isFinite(value) || value < 1.01 || value > 1000000 ||
+      Math.abs(value*100-Math.round(value*100)) > 0.000001
+      ? "Use a target from 1.01× to 1,000,000× with at most two decimals." : "";
+  }
   const multiple = (units) =>
     (units / 10000).toLocaleString("en-US", { maximumFractionDigits: 4 }) + "×";
   function clearResult() {
@@ -391,6 +419,20 @@
       id("diceRoll").textContent = "—";
       id("diceRollLabel").textContent = "Your next roll";
       id("diceMarker").hidden = true;
+    }
+    if (id("limboResult")) {
+      cancelAnimationFrame(limboFrame);
+      clearTimeout(limboTimeout);
+      id("limboResult").textContent = "1.00×";
+      id("limboResult").closest(".limbo-stage").classList.remove("is-win");
+      id("limboTrail").style.transform = "scaleX(0)";
+      id("limboStatus").textContent = "Set your target, then play.";
+    }
+    if (id("redCoin")) {
+      coinAnimation?.cancel();
+      id("redCoin").style.transform = "rotateY(0deg)";
+      id("redCoin").setAttribute("aria-label", "Ready to flip");
+      id("coinStatus").textContent = "Make your call.";
     }
     if (id("plinkoResult"))
       id("plinkoResult").textContent =
@@ -441,6 +483,40 @@
     if (game === "blackjack") {
       id("payoutDescription").textContent =
         "Natural Blackjack: 3:2 profit (2.5× returned). Normal win: 2×. Push: stake returned. Bust or loss: 0. Whole-point rounding applies. Odds depend on your decisions; no fixed RTP is claimed.";
+      return;
+    }
+    if (game === "limbo") {
+      const invalid = limboProblem();
+      if (invalid) {
+        id("payoutDescription").textContent = invalid;
+        id("limboPayout").textContent = "Choose a valid target";
+        id("limboChance").textContent = "—";
+        return;
+      }
+      const wins = 99n*4294967296n/BigInt(options.target);
+      const chance = (Number(wins)*100/4294967296).toLocaleString("en-US", {maximumFractionDigits:7});
+      const target = (options.target/100).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+      id("limboChance").textContent = `${chance}% win chance`;
+      id("limboPayout").textContent = `${number(amount*BigInt(options.target)/100n)} points returned on a win`;
+      id("limboTargetLabel").textContent = `Your target · ${target}×`;
+      id("payoutDescription").textContent = `Reach ${target}× or higher to win. Win chance: ${chance}%. Expected return is at most 99% before whole-point rounding.`;
+      return;
+    }
+    if (game === "coinflip") {
+      id("coinPayout").textContent = `${number(amount*198n/100n)} points returned on a win`;
+      id("payoutDescription").textContent = "Heads and Tails each have a 50% chance. A correct pick returns 1.98× your wager; a wrong pick returns 0. Expected return is 99% before whole-point rounding.";
+      return;
+    }
+    if (game === "poker") {
+      id("payoutDescription").textContent = "Single-player Video Poker. Hold any cards and draw once from the remaining deck. No discarded card can return. These are total returns, including your stake. Strategy affects returns; no fixed player RTP is claimed.";
+      id("payoutTable").classList.add("poker-paytable");
+      id("payoutTable").replaceChildren(...Object.entries(rules.poker.paytable).sort((a,b) => b[1]-a[1]).map(([hand, multiplier]) => {
+        const cell = document.createElement("div");cell.dataset.hand = hand;
+        for (const [tag, text] of [["small", rules.poker.labels[hand]], ["strong", `${multiplier}×`], ["small", `${number(amount*BigInt(multiplier))} returned`]]) {
+          const node = document.createElement(tag);node.textContent = text;cell.append(node);
+        }
+        return cell;
+      }));
       return;
     }
     const size = game === "keno" ? Math.max(1, selections.size) : options.rows,
@@ -780,6 +856,12 @@
       });
       id("gameResult").textContent =
         `${r.hits} matched · ${points(receipt.net)} RedPoints net · ${number(receipt.payout)} returned`;
+    } else if (game === "limbo") {
+      animateLimbo(r);
+    } else if (game === "coinflip") {
+      animateCoin(r);
+    } else if (game === "poker") {
+      renderPoker({ ...r, round_id: receipt.request_id, wager: receipt.wager });
     } else if (game === "blackjack") {
       renderBlackjack({
         ...r,
@@ -812,6 +894,17 @@
       "wager",
       "options",
     ];
+    if (body.game === "poker" && pendingAction?.game === "poker" &&
+        pendingAction.round_id === receipt.request_id && receipt.ending !== "weekly_reset" &&
+        RedFair.canonical(receipt.holds) !== RedFair.canonical(pendingAction.holds)) {
+      fatal = true;
+      throw Error("Poker hold verification failed. Keep your receipt for review.");
+    }
+    if (body.game === "poker" && body.initial_cards &&
+        RedFair.canonical(body.initial_cards) !== RedFair.canonical(receipt.result?.initial)) {
+      fatal = true;
+      throw Error("Poker initial-card verification failed. Keep your receipt for review.");
+    }
     let timeout;
     const verified = await Promise.race([
       RedFair.verify(receipt, body.commitment),
@@ -872,7 +965,7 @@
     try {
       const result = await api("/gaming/api/bet", body),
         receipt = result.receipt;
-      if (!receipt && result.wallet?.blackjack) {
+      if (!receipt && (result.wallet?.blackjack || result.wallet?.poker)) {
         renderWallet(result.wallet);
         message();
         return;
@@ -905,10 +998,104 @@
     pendingAction = value;
     try {
       value
-        ? sessionStorage.setItem("rh.blackjack.action", JSON.stringify(value))
-        : sessionStorage.removeItem("rh.blackjack.action");
+        ? sessionStorage.setItem("rh.gaming.action", JSON.stringify(value))
+        : sessionStorage.removeItem("rh.gaming.action");
+      sessionStorage.removeItem("rh.blackjack.action");
     } catch {}
   }
+  function animateLimbo(result) {
+    cancelAnimationFrame(limboFrame);
+    clearTimeout(limboTimeout);
+    const display = id("limboResult"), started = performance.now();
+    const multiplier = result.multiplier/100;
+    display.closest(".limbo-stage").classList.toggle("is-win", result.won);
+    id("limboStatus").textContent = result.won ? "Target reached." : "Below your target.";
+    function paint(value, progress) {
+      display.textContent = value.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2})+"×";
+      id("limboTrail").style.transform = `scaleX(${progress})`;
+    }
+    const finish = () => { cancelAnimationFrame(limboFrame);clearTimeout(limboTimeout);paint(multiplier,1); };
+    if (document.hidden || matchMedia("(prefers-reduced-motion: reduce)").matches) return finish();
+    function frame(now) {
+      const progress = Math.min(1,(now-started)/850);
+      paint(Math.exp(Math.log(multiplier)*(1-(1-progress)**3)),progress);
+      if (progress < 1) limboFrame = requestAnimationFrame(frame);
+      else finish();
+    }
+    limboFrame = requestAnimationFrame(frame);
+    limboTimeout = setTimeout(finish,1000); // Hidden tabs must still reach the exact result.
+  }
+  function animateCoin(result) {
+    const coin = id("redCoin"), face = result.side === "heads" ? 0 : 180;
+    coinAnimation?.cancel();
+    coin.style.transform = `rotateY(${face}deg)`;
+    coin.setAttribute("aria-label", result.side === "heads" ? "Heads" : "Tails");
+    id("coinStatus").textContent = `${result.side === "heads" ? "Heads" : "Tails"} · ${result.won ? "Correct call" : "Other side this time"}`;
+    if (!document.hidden && !matchMedia("(prefers-reduced-motion: reduce)").matches && coin.animate)
+      coinAnimation = coin.animate([{transform:"rotateY(0deg) translateY(0)"},
+        {transform:`rotateY(${540+face/2}deg) translateY(-20px)`,offset:.5},
+        {transform:`rotateY(${1080+face}deg) translateY(0)`}], {duration:1000,easing:"cubic-bezier(.18,.72,.26,1)"});
+  }
+  function renderPoker(hand) {
+    if (!id("pokerCards") || !hand) return;
+    if (pokerRound !== hand.round_id) {
+      pokerRound = hand.round_id;
+      const saved = pending?.request_id === hand.round_id ? pending.poker_holds : [];
+      pokerHolds = new Set(Array.isArray(saved) ? saved.filter(n => Number.isInteger(n) && n >= 0 && n < 5) : []);
+    }
+    if (hand.ended) pokerHolds = new Set(hand.holds);
+    const row = id("pokerCards");
+    hand.cards.forEach((card, index) => {
+      let button = row.children[index];
+      if (button?.dataset.card !== String(card) || button?.dataset.round !== hand.round_id) {
+        const rank = card % 13+1, suit = Math.floor(card/13);
+        const label = ["","A","2","3","4","5","6","7","8","9","10","J","Q","K"][rank];
+        const node = document.createElement("button");node.type = "button";
+        node.className = "poker-card"+(suit === 1 || suit === 3 ? " is-red" : "");
+        node.dataset.pokerHold = String(index);node.dataset.card = String(card);node.dataset.round = hand.round_id;
+        node.setAttribute("aria-label",`${label} of ${["spades","hearts","clubs","diamonds"][suit]}; toggle hold`);
+        const value = document.createElement("b");value.textContent = label+["♠","♥","♣","♦"][suit];
+        node.append(value,document.createElement("small"));
+        node.addEventListener("click",() => {
+          if (node.disabled || !wallet?.poker || busy || pendingAction) return;
+          pokerHolds.has(index) ? pokerHolds.delete(index) : pokerHolds.add(index);
+          savePokerHolds();
+        });
+        button ? button.replaceWith(node) : row.append(node);
+        button = node;
+        if (!matchMedia("(prefers-reduced-motion: reduce)").matches && node.animate)
+          node.animate([{opacity:.3,transform:"translateY(7px)"},{opacity:1,transform:"translateY(0)"}], {duration:230,delay:index*35});
+      }
+      button.setAttribute("aria-pressed",String(pokerHolds.has(index)));
+      button.querySelector("small").textContent = pokerHolds.has(index) ? "HELD" : hand.ended ? "DRAWN" : "TAP TO HOLD";
+    });
+    id("pokerStatus").textContent = hand.ended
+      ? `${rules.poker.labels[hand.category]} · ${hand.multiplier}× returned`
+      : `${pokerHolds.size} held · ${5-pokerHolds.size} to draw. Tap any card to change your holds.`;
+    if (!hand.ended) {
+      id("gameResult").textContent = "Choose your holds, then draw.";
+      id("betProof").textContent = "Hand saved · seed stays hidden until the draw is complete";
+    }
+    root.querySelectorAll("[data-hand]").forEach(cell => cell.classList.toggle("is-hit",Boolean(hand.ended && cell.dataset.hand === hand.category)));
+    controls();
+  }
+  function savePokerHolds() {
+    if (pending) remember({ ...pending, poker_holds: [...pokerHolds].sort((a,b) => a-b) });
+    renderPoker(wallet.poker);
+  }
+  id("pokerHoldAll")?.addEventListener("click", () => { pokerHolds = new Set([0,1,2,3,4]);savePokerHolds(); });
+  id("pokerClear")?.addEventListener("click", () => { pokerHolds.clear();savePokerHolds(); });
+  id("pokerDraw")?.addEventListener("click", () => {
+    if (busy || fatal || !secure || !verifierReady || pendingAction || !wallet?.poker) return;
+    const body = { game:"poker",round_id:wallet.poker.round_id,holds:[...pokerHolds].sort((a,b) => a-b),action_id:randomHex() };
+    rememberAction(body);
+    void submitAction(body);
+  });
+  root.querySelectorAll("[data-limbo-target]").forEach(button => button.addEventListener("click", () => {
+    if (locked()) return;
+    id("limboTarget").value = Number(button.dataset.limboTarget).toFixed(2);
+    settingsChanged();
+  }));
   function renderBlackjack(hand) {
     if (!id("blackjackPlayer")) return;
     if (!hand) return;
@@ -985,9 +1172,14 @@
     message();
     controls();
     try {
-      const result = await api("/gaming/api/blackjack/action", body);
+      const pokerMove = body.game === "poker";
+      const result = await api(pokerMove ? "/gaming/api/poker/action" : "/gaming/api/blackjack/action", body);
       if (result.receipt) {
-        await verifyReceipt(result.receipt, pending || wallet.blackjack.bet);
+        if (pokerMove && RedFair.canonical(result.receipt.holds) !== RedFair.canonical(body.holds)) {
+          fatal = true;
+          throw Error("Poker hold verification failed. Your receipt is retained for review.");
+        }
+        await verifyReceipt(result.receipt, pending || wallet.blackjack?.bet || wallet.poker.bet);
         remember(null);
         rememberAction(null);
         renderWallet(result.wallet);
@@ -1157,7 +1349,7 @@
     }
   });
   root
-    .querySelectorAll("#redWager,#diceChance,#diceSide,#plinkoRows,[name=risk]")
+    .querySelectorAll("#redWager,#diceChance,#diceSide,#plinkoRows,#limboTarget,[name=risk],[name=coinSide]")
     .forEach((el) => {
       el.addEventListener("input", settingsChanged);
       el.addEventListener("change", settingsChanged);
@@ -1227,7 +1419,7 @@
   renderWallet(JSON.parse(root.dataset.wallet));
   remember(pending);
   payout();
-  if (pending && !wallet.blackjack)
+  if (pending && !wallet.blackjack && !wallet.poker)
     message(
       "An earlier wager needs confirmation. Recover its result before placing another.",
     );

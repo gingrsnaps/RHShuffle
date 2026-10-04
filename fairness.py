@@ -12,10 +12,11 @@ import json
 from math import comb
 import re
 
-VERSION = 'redpoints-v2'
+VERSION = 'redpoints-v3'
+PREVIOUS_VERSION = 'redpoints-v2'
 LEGACY_VERSION = 'redpoints-v1'
-SUPPORTED_VERSIONS = (LEGACY_VERSION, VERSION)
-GAMES = ('dice', 'keno', 'plinko', 'blackjack')
+SUPPORTED_VERSIONS = (LEGACY_VERSION, PREVIOUS_VERSION, VERSION)
+GAMES = ('dice', 'keno', 'plinko', 'blackjack', 'limbo', 'coinflip', 'poker')
 RISKS = ('low', 'medium', 'high')
 SCALE = 10000
 
@@ -57,6 +58,19 @@ def options_for(game, value):
         if type(value.get('decks')) is not int or value['decks'] != 6:
             raise ValueError('Blackjack uses six decks.')
         return dict(decks=6)
+    if game == 'limbo':
+        target = value.get('target')
+        if type(target) is not int or not 101 <= target <= 100_000_000:
+            raise ValueError('Choose a Limbo target from 1.01x to 1,000,000.00x, in 0.01 steps.')
+        return dict(target=target)  # Hundredths, never binary floating-point money.
+    if game == 'coinflip':
+        if value.get('side') not in ('heads', 'tails'):
+            raise ValueError('Choose Heads or Tails.')
+        return dict(side=value['side'])
+    if game == 'poker':
+        if value.get('variant') != 'jacks_or_better':
+            raise ValueError('Poker uses the published Jacks or Better paytable.')
+        return dict(variant='jacks_or_better')
     risk = value.get('risk')
     if risk not in RISKS:
         raise ValueError('Choose Low, Medium, or High risk.')
@@ -68,7 +82,7 @@ def options_for(game, value):
         return dict(picks=sorted(picks), risk=risk)
     if game == 'plinko' and type(value.get('rows')) is int and value['rows'] in {8, 12, 16}:
         return dict(risk=risk, rows=value['rows'])
-    raise ValueError('Choose Dice, Keno, or Plinko with valid settings.')
+    raise ValueError('Choose a game with valid settings.')
 
 
 @lru_cache(maxsize=128)
@@ -80,7 +94,7 @@ def table(game, size, risk, version=VERSION):
     """
     if version not in SUPPORTED_VERSIONS:
         raise ValueError('Unknown game rules version.')
-    if game == 'plinko' and version == VERSION:
+    if game == 'plinko' and version != LEGACY_VERSION:
         return PLINKO_TABLES[size][risk]
     power = dict(low=2, medium=4, high=7)[risk]
     if game == 'keno':
@@ -107,10 +121,24 @@ def table_info(game, size, risk):
 
 @lru_cache(maxsize=1)
 def rules():
+    from poker import PAYTABLE, LABELS
     return dict(version=VERSION, scale=SCALE, games=list(GAMES), min_wager=1, max_wager=None,
                 dice_rtp_percent='99.0000',
+                limbo=dict(min_target=101, max_target=100_000_000, scale=100, outcomes=2**32),
+                coinflip=dict(multiplier=19800, win_probability=0.5),
+                poker=dict(variant='jacks_or_better', paytable=PAYTABLE, labels=LABELS),
                 keno={str(k):{risk:table_info('keno', k, risk) for risk in RISKS} for k in range(1,11)},
                 plinko={str(k):{risk:table_info('plinko', k, risk) for risk in RISKS} for k in (8,12,16)})
+
+
+def max_payout(game, wager, opt):
+    """Exact upper bound used before reserving a stake or granting more funds."""
+    if game == 'blackjack': return wager*4
+    if game == 'poker': return wager*800
+    if game == 'limbo': return wager*opt['target']//100
+    if game == 'coinflip': return wager*198//100
+    if game == 'dice': return wager*99//opt['chance']
+    return wager*max(table(game, len(opt['picks']) if game == 'keno' else opt['rows'], opt['risk']))//SCALE
 
 
 class Draw:
@@ -138,7 +166,23 @@ class Draw:
 
 def outcome(seed, receipt):
     game, opt, wager = receipt['game'], options_for(receipt['game'], receipt['options']), receipt['wager']
+    version = receipt.get('rules_version', VERSION)
+    if game in ('limbo', 'coinflip', 'poker') and version != VERSION:
+        raise ValueError('This game requires redpoints-v3.')
     draw = Draw(seed, {**receipt, 'options':opt})
+    if game == 'limbo':
+        roll = draw.below(2**32)
+        multiplier = max(100, 99*2**32//(2**32-roll))
+        won = multiplier >= opt['target']
+        return dict(roll=roll, multiplier=multiplier, won=won,
+                    payout=wager*opt['target']//100 if won else 0)
+    if game == 'coinflip':
+        side = ('heads', 'tails')[draw.below(2)]
+        won = side == opt['side']
+        return dict(side=side, won=won, multiplier=19800, payout=wager*198//100 if won else 0)
+    if game == 'poker':
+        from poker import replay
+        return replay(draw, wager, receipt.get('holds'))
     if game == 'dice':
         roll = draw.below(10000)
         win = roll < opt['chance']*100 if opt['side']=='under' else roll >= 10000-opt['chance']*100
@@ -155,8 +199,8 @@ def outcome(seed, receipt):
         units = table(game, len(opt['picks']), opt['risk'], receipt.get('rules_version', VERSION))[hits]
         return dict(drawn=drawn, hits=hits, multiplier=units, payout=wager*units//SCALE)
     if game == 'blackjack':
-        if receipt.get('rules_version') != VERSION:
-            raise ValueError('Blackjack requires current rules.')
+        if version not in (PREVIOUS_VERSION, VERSION):
+            raise ValueError('Blackjack requires redpoints-v2 or later.')
         from blackjack import replay
         return replay(draw, wager, receipt.get('actions', []))
     path = [draw.below(2) for _ in range(opt['rows'])]
@@ -165,7 +209,7 @@ def outcome(seed, receipt):
     return dict(path=path, slot=slot, multiplier=units, payout=wager*units//SCALE)
 
 
-def verify(receipt, expected_commitment=None):
+def _verify(receipt, expected_commitment=None):
     """Offline verifier. Compare against the commitment retained before betting."""
     if (not isinstance(receipt, dict) or receipt.get('rules_version') not in SUPPORTED_VERSIONS or
         any(type(receipt.get(k)) is not int or abs(receipt[k]) > 2**53-1 for k in ('nonce', 'wager', 'payout', 'net')) or
@@ -182,7 +226,15 @@ def verify(receipt, expected_commitment=None):
     if expected_commitment is not None and expected_commitment != receipt['commitment']:
         return False
     result = outcome(receipt['server_seed'], receipt)
-    if receipt['game'] == 'blackjack' and not result['ended']:
+    if receipt['game'] in ('blackjack', 'poker') and not result['ended']:
         return False
     stake = result['total_wager'] if receipt['game'] == 'blackjack' else receipt['wager']
     return result == receipt['result'] and receipt['payout'] == result['payout'] and receipt['net'] == result['payout']-stake
+
+
+def verify(receipt, expected_commitment=None):
+    """Reject malformed/unverifiable receipts without crashing the verifier."""
+    try:
+        return _verify(receipt, expected_commitment)
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False

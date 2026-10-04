@@ -5,7 +5,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.04-redpoints-arcade2-shared-connections"
+RELEASE = "2026.10.04-redpoints-arcade3-seven-games"
 INTERVAL = 60
 
 

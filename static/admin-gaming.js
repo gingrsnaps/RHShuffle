@@ -24,7 +24,7 @@
     id("gamingAdminReset").textContent =
       `Balances and rankings reset ${data.season.end_et}. Each signed player has a separate wallet. Shared connections are allowed.`;
     id("gamingAdminSummary").textContent =
-      `Wallets: ${fmt(data.player_count)} · Names confirmed: ${fmt(data.confirmed_players || 0)} · Completed rounds: ${fmt(data.completed_rounds)} · Linked IPs: ${fmt(data.ip_count)} · Active Blackjack hands: ${fmt(data.active_hands)}`;
+      `Wallets: ${fmt(data.player_count)} · Names confirmed: ${fmt(data.confirmed_players || 0)} · Completed rounds: ${fmt(data.completed_rounds)} · Linked IPs: ${fmt(data.ip_count)} · Active card hands: ${fmt(data.active_hands)}`;
     const grant = data.last_grant;
     id("gamingLastGrant").textContent = grant
       ? `Last grant: ${grant.actor} · +${fmt(grant.amount)} each · ${fmt(grant.players)} ${grant.players === 1 ? "wallet" : "wallets"} · ${new Date(grant.at * 1000).toLocaleString()}`

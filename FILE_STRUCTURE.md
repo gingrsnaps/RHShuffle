@@ -1,6 +1,6 @@
 # Complete file structure
 
-Release **2026.10.04-redpoints-arcade2**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.10.04-redpoints-arcade3-seven-games**. This describes the full application. The update ZIP uses paths relative to your existing project root; it contains changed/new files only.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -15,6 +15,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `UPDATE.md` | Cumulative gaming patch instructions and verification. |
 | `abuse_guard.py` | Per-browser rejected-request throttles and temporary admin flags. |
 | `app.yaml` | Single-service DigitalOcean App Platform template. |
+| `poker.py` | Five-card draw engine and Jacks or Better paytable; imported by the main launcher. |
 | `blackjack.py` | Pure six-deck RedPoints Blackjack replay and hand scoring. |
 | `boss.py` | Independent signed-browser players, multiplayer rules, recovery and admin controls. |
 | `boss_avatar.py` | Image validation, resizing and safe PNG avatar storage. |
@@ -87,7 +88,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_blackjack.py` | Deterministic Blackjack rules and payout checks. |
 | `tests/test_gaming_ip.py` | IP binding, private rankings and actual total counts. |
 | `tests/test_admin_gaming_frontend.cjs` | Private rankings rendering, release mismatch and expired-session checks. |
-| `tests/serve_admin_gaming_fixture.py` | Disposable four-game fixture for native browser or DOM checks. |
+| `tests/serve_admin_gaming_fixture.py` | Disposable seven-game fixture for native browser or DOM checks. |
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |
@@ -118,3 +119,19 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
 
 Removed: the optional PostgreSQL dependency file and PostgreSQL tests. No external database/backup service is required.
+
+
+## Seven-game update
+
+- `poker.py` — standard-deck draw and Jacks or Better classification/paytable.
+  Imported automatically by the single `wager_backend.py` launcher.
+- `fairness.py` — versioned v1/v2/v3 outcomes for seven RedPoints games.
+- `gaming.py` — shared wallets, reserved Blackjack/Poker hands, receipts and rankings.
+- `static/fairness.js` — independent browser verification of all three versions.
+- `templates/gaming.html`, `static/gaming.js`, `static/gaming.css` — seven game pages
+  and dashboard, including Limbo, Coinflip and Poker.
+- `tests/test_extra_games.py` and `tests/fairness_v3_vectors.json` — new rule,
+  accounting, migration and cross-language verification cases.
+
+The update ZIP contains changed/new files only. Retain the other application
+files and both `data/` and `private/` from your existing installation.

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const vectors = [
   ...require("./fairness_vectors.json"),
   ...require("./fairness_v2_vectors.json"),
+  ...require("./fairness_v3_vectors.json"),
 ];
 const fair = require("../static/fairness.js");
 test("independent browser verifier reproduces every published Python reference receipt", async () => {
@@ -33,7 +34,7 @@ test("v2 edge payouts and doubled Blackjack stake are verified exactly", async (
   assert.equal(Math.max(...fair.table("plinko", 16, "high")), 10000000);
   const edge = vectors.find(
     (r) =>
-      r.rules_version === fair.VERSION &&
+      r.rules_version === "redpoints-v2" &&
       r.game === "plinko" &&
       r.result.multiplier === 10000000,
   );

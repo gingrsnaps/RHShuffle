@@ -1,11 +1,38 @@
 # RedHunllef
 
-Release **2026.10.04-redpoints-arcade2-shared-connections**. This patch updates the existing application; keep its supporting files and private configuration.
+Release **2026.10.04-redpoints-arcade3-seven-games**. This patch updates the existing application; keep its supporting files and private configuration.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## This update: shared connections and automatic playable balances
+## This update: Limbo, Coinflip and Poker
+
+Three new RedPoints games join the existing arcade. They use the same community
+name, wallet, private admin tracking and independent fairness verifier.
+
+- **Limbo:** choose a target from 1.01× to 1,000,000×. Reach it or higher to win.
+  The page shows the win chance and exact returned points for your chosen wager.
+- **Coinflip:** Heads or Tails, each with a 50% chance. A win returns 1.98× the
+  wager, rounded down to whole points. The animated coin matches the saved result.
+- **Poker:** single-player five-card draw Video Poker, **9/6 Jacks or Better**.
+  Deal, tap any cards to hold, then draw once. A royal flush returns **800×** at
+  every wager size. Held cards and unfinished hands survive a reload.
+- Seven private **Top 5** lists show actual net winnings. New games start with
+  zero statistics; existing profiles and historical results are retained.
+- New bets use **redpoints-v3**. Earlier v1/v2 receipts remain verifiable, and
+  an unfinished v2 Blackjack hand completes with its original seed and rules.
+- Poker never reveals its seed or undealt cards before Draw. The browser checks
+  the remembered initial cards, selected holds, deck replay and final payout.
+  A lost response can recover the saved result without another debit or payout.
+- Red artwork, responsive layouts, keyboard controls and reduced-motion support
+  match the rest of Gaming. No new services or dependencies are required.
+
+The only command to start the website remains `python wager_backend.py`.
+Copy **all** files in `Gaming_Seven_Games_Update.zip`, including the new `poker.py`,
+into the matching locations in your existing project. Keep your `data/`, `private/`
+and configuration, restart the launcher, and reload Gaming.
+
+## Retained: shared connections and automatic playable balances
 
 The old one-wallet-per-IP rule could block an entire household, VPN or community
 behind a proxy. Gaming now identifies each player by their signed browser cookie
@@ -21,26 +48,29 @@ place and remain admin-only. No accounts, names or game results are merged.
 - Tuesday at 6 PM Eastern still starts a new weekly balance and standings.
 - **Admin → Gaming → Give everyone +100,000 RedPoints** adds points to all existing
   wallets without altering winnings. Repeating the same request cannot grant twice.
-- Name confirmation, unfinished Blackjack hands, fairness seeds, receipt history
+- Name confirmation, unfinished card hands, fairness seeds, receipt history
   and per-game standings survive page refreshes and restarts within the same week.
 - An admin grant, another tab or restart during a reload no longer requires another
   manual reload: the browser retries one stale-wallet response with current data.
 
-Apply all files from `Gaming_100k_Refresh_Update.zip` to your existing project,
+Apply all files from `Gaming_Seven_Games_Update.zip` to your existing project,
 restart the same launcher, then reload Gaming. Do not delete `data/` or `private/`.
 No new dependencies, database, account-creation command or launch script is needed.
 
-## Four RedPoints games and visible admin rankings
+## Seven RedPoints games and visible admin rankings
 
 | Page | What it does |
 | --- | --- |
-| `/gaming` | Dashboard for Dice, Keno, Plinko and RedPoints-only Blackjack, shared balance, weekly results and recent receipts. |
+| `/gaming` | Dashboard for all seven RedPoints games, shared balance, weekly results and recent receipts. |
 | `/gaming/dice` | Choose a 1–95% win chance and roll under/over the target. |
 | `/gaming/keno` | Pick 1–10 of 40 numbers, draw 10, choose Low/Medium/High risk. |
 | `/gaming/plinko` | Choose 8/12/16 rows and Low/Medium/High risk; watch the verified path. |
 | `/gaming/blackjack` | RedPoints-only six-deck Blackjack: Hit, Stand and Double; saved hands and verifiable receipts. |
+| `/gaming/limbo` | Choose a target multiplier; reach it to win at that target. |
+| `/gaming/coinflip` | Pick Heads or Tails; 50% win chance and 1.98× total return on a win. |
+| `/gaming/poker` | Five-card draw Video Poker with holds, one draw and the published Jacks or Better paytable. |
 | `/gaming/fairness` | Published rules, exact seed format and a browser-only receipt verifier. |
-| `/admin/gaming` or `/admin?tab=gaming` | Four private Top 5 lists; full names, shared player IDs, linked IPs, actual net winnings, stakes, returns and counts. |
+| `/admin/gaming` or `/admin?tab=gaming` | Seven private Top 5 lists; full names, shared player IDs, linked IPs, actual net winnings, stakes, returns and counts. |
 | `/history` | Four completed Tuesday-to-Tuesday weeks, public Top 25 masked before delivery. |
 
 The public header keeps **Leaderboard, History, Boss fight, Gaming, Points Shop,
@@ -51,7 +81,7 @@ https://botrix.live/k/redhunllef/shop. Its balance is separate from RedPoints.
 ### One shared RedPoints wallet
 
 Each confirmed player starts with **100,000 RedPoints total**, shared across
-all four games. Each browser player has a separate wallet, even on the same IP.
+all seven games. Each browser player has a separate wallet, even on the same IP.
 Page refreshes restore that player's balance to 100,000. Server restarts restore
 all saved wallets to 100,000. Names, seeds, receipts, unfinished hands and winnings
 are preserved. The weekly reset clears per-game standings at the next **Tuesday,
@@ -74,7 +104,7 @@ the same fixed boundary as public history; editing the race form does not reset 
 - Private rankings sort **net winnings = points returned − points wagered**,
   then total returned points, then a stable short profile tag. Losses remain visible
   and do not masquerade as profit. Only players who played that game appear.
-  Both Admin Overview and Gaming include all four Top 5 lists. A dedicated local
+  Both Admin Overview and Gaming include all seven Top 5 lists. A dedicated local
   poll refreshes them every five seconds, with a manual refresh button. Shuffle
   and Kick keep their separate 60-second refresh. Player/round counts cover all
   players, not just the displayed five. Rankings are cleared from the visible
@@ -93,7 +123,7 @@ after settlement. Independent browser code verifies the previous commitment,
 submitted inputs, result and payout before reporting “Verified.”
 
 Keep downloaded receipts and the commitment seen before playing. The dashboard
-retains the latest 30 receipts per profile across all four games and weekly
+retains the latest 30 receipts per profile across all seven games and weekly
 resets. An older standalone receipt proves internal consistency, not publication
 time unless you separately kept its earlier commitment. The independent verifier
 can also run offline with `python tools/verify_redpoints.py receipts.json`; this is
@@ -107,14 +137,14 @@ archive does not include this fix until these files are applied over it.
 
 After applying all included code/templates/static files and restarting, open
 **`/admin/gaming`**. Its installed-release label must show
-**2026.10.04-redpoints-arcade2-shared-connections**. The header also includes **Gaming top 5**.
+**2026.10.04-redpoints-arcade3-seven-games**. The header also includes **Gaming top 5**.
 If the panels are empty, check the displayed player/round counts and weekly reset.
 Only completed RedPoints rounds on this server create those records. Shuffle
 wagers and boss attacks are separate. Never invent entries to fill five places.
 Restore the latest private recovery backup if a redeployment replaced local data;
 this update cannot reconstruct results that were never saved or backed up.
 
-### Game controls and Blackjack
+### Game controls and card hands
 
 - Plinko follows the verified left/right path with a single animation loop and
   parabolic peg bounces; multiple balls can animate together. High risk with
@@ -132,7 +162,10 @@ this update cannot reconstruct results that were never saved or backed up.
   on reload, and settles each move/hand only once. At the weekly boundary an
   unfinished hand automatically stands under the old week before the new balance.
   Double counts the full doubled stake in both the ledger and admin rankings.
-- Current fairness rules are `redpoints-v2`. Earlier `redpoints-v1` receipts remain
+- Poker reserves one stake and allows one hold/draw decision. Replacements come
+  from the remaining 47 cards; discards cannot return. Pending Poker hands keep all
+  five initial cards at the weekly cutoff, settle under that week, then reset.
+- Current fairness rules are `redpoints-v3`. Earlier `redpoints-v1` and `redpoints-v2` receipts remain
   verifiable; updating keeps seeds, profiles and old receipts. The startup rule restores available points to 100,000.
 
 ### Homepage and boss refinements
@@ -217,7 +250,7 @@ name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to
 the actual trusted visitor IP on App Platform instead of the proxy socket address.
 
 After updating, restart the app and reload the homepage. `/healthz` should report
-**2026.10.04-redpoints-arcade2-shared-connections**. Asset versions change automatically, so the new
+**2026.10.04-redpoints-arcade3-seven-games**. Asset versions change automatically, so the new
 scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
@@ -243,7 +276,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.10.04-redpoints-arcade2-shared-connections**. If it shows something else, the old application is
+**2026.10.04-redpoints-arcade3-seven-games**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -519,28 +552,30 @@ created, not proof that someone saved it externally.
 
 ## File structure and complete code
 
-See `FILE_STRUCTURE.md` for every shipped file and its purpose.
-`FULL_CODE_BLOCKS.md` contains every application text file in its own full code
-block; the ZIP contains those ready-to-use files plus the original logos.
+`Gaming_Seven_Games_Update.zip` contains only the changed/new files for the
+existing project, including this README, the rules document and regression tests.
+`Gaming_Seven_Games_Code_Blocks.md` contains each included text file in a full
+code block. Keep every other existing file, supporting module and original logo.
+The new root module `poker.py` is loaded by `wager_backend.py`; do not run it separately.
+See `FILE_STRUCTURE.md` for the application layout.
 
-The previous optional `requirements-postgres.txt` and `tests/test_postgres.py`
-are removed. An old `manage_admin.py` is not needed by this release. Keep the old
-local save as a rollback copy and keep every current root support module.
+An old `manage_admin.py` is not required. There is no SQL/database dependency.
+Keep your existing local state and latest private recovery backup when updating.
 
 ## Verification
 
-Validation results and limits are in [docs/VALIDATION.md](docs/VALIDATION.md).
-Coverage includes the existing admin/race/boss features, 100 independent player
-profiles, atomic wagers, replay prevention, shared balances, weekly/DST resets,
-recovery and seed privacy. The independent JavaScript verifier matches 47 earlier
-and 86 v2 reference receipts. This revision passed 37 targeted Python tests and
-six JavaScript tests. Native Chromium checked all four admin lists, real Plinko
-settlement/landing, Blackjack reload/settlement, Dice dragging, Keno quick picks
-and shared-IP protection. See the validation document for exact scope and limits.
+The targeted Python checks cover all seven games, atomic balances, seed privacy,
+shared connections, admin rankings, Poker draws/retries, reload/restart funding,
+weekly rollover and old v2 Blackjack-hand migration. Browser and Python verifiers
+agree on all 47 v1, 86 v2 and 112 v3 reference receipts, including large wagers.
+Poker classification was also checked across all **2,598,960** five-card hands
+against the exact category totals.
 
-The application was not deployed to DigitalOcean. The original live Shuffle check
-timed out here; automatic history success is verified with synthetic responses,
-not asserted for the live account. No real player save is used by developer tests.
+Native Chromium played and verified all seven games, checked mobile widths,
+retained Poker holds through polling/reload, recovered a draw after a simulated
+lost response, and confirmed all seven admin lists. Game outcome animations
+matched the saved results. These checks use synthetic players and seeds; this
+update was not deployed to your DigitalOcean service and did not call live providers.
 
 Developer checks (not required to run the website):
 

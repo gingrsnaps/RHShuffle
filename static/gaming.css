@@ -875,3 +875,64 @@
     animation: none;
   }
 }
+/* Extra games share the same spacing, red palette and native controls. */
+.limbo-art { flex-direction:column; gap:14px; }
+.limbo-art span { font-size:2.6rem; font-weight:900; letter-spacing:-.06em; color:#ff7186; }
+.limbo-art i { width:65%; height:3px; background:linear-gradient(90deg,transparent,#ff4967); transform:rotate(-12deg); }
+.coinflip-art span { display:grid; place-items:center; width:88px; height:88px; border-radius:50%; border:6px double #ff7f8f; background:#991632; color:#fff0f1; font-size:3rem; font-weight:900; box-shadow:0 12px 30px #90032644; }
+.limbo-stage,.coin-stage { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:345px; padding:24px 10px; text-align:center; background:radial-gradient(ellipse at 50% 55%,#be224b22,transparent 68%); }
+.limbo-multiplier { color:#ff7186; font-size:clamp(2.7rem,7vw,5rem); font-weight:900; line-height:1.2; letter-spacing:-.06em; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; max-width:100%; }
+.limbo-stage.is-win .limbo-multiplier { color:#79e7b3; }
+.limbo-trail { width:80%; max-width:390px; height:5px; border-radius:9px; background:#ffffff0d; overflow:hidden; margin:18px 0; }
+.limbo-trail span { display:block; width:100%; height:100%; background:linear-gradient(90deg,#97102e,#ff6a84); transform-origin:left; transform:scaleX(0); }
+.limbo-targets { margin-top:10px; }
+.coin-space { width:170px; height:190px; display:grid; place-items:center; perspective:800px; }
+.red-coin { width:140px; height:140px; position:relative; transform-style:preserve-3d; }
+.coin-face { position:absolute; inset:0; border:7px double #ff99a9; border-radius:50%; background:radial-gradient(circle at 35% 25%,#dc3556,#780a29); display:flex; flex-direction:column; align-items:center; justify-content:center; backface-visibility:hidden; color:#fff4f6; box-shadow:0 12px 34px #c0193838; }
+.coin-face b { font-size:3.1rem; line-height:1.15; }
+.coin-face small { font-size:.7rem; letter-spacing:.2em; font-weight:800; }
+.coin-tails { transform:rotateY(180deg); background:radial-gradient(circle at 35% 25%,#a32c4b,#461325); }
+.coin-options { display:flex; gap:8px; }
+.coin-options label { flex:1; }
+.poker-table { padding:18px; border:1px solid #ffffff0d; border-radius:20px; background:radial-gradient(ellipse at top,#42192888,#160e16); }
+.poker-table h2 { font-size:1.4rem; margin:0; }
+.poker-cards { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:22px 0; }
+.poker-card { position:relative; width:100%; min-width:0; min-height:125px; padding:12px 5px; border:2px solid #eadde1; border-radius:12px; background:#fff8f5; color:#1c1620; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; box-shadow:0 5px 15px #0003; transform:none; cursor:pointer; transition:border-color .15s,box-shadow .15s; }
+.poker-card:hover { transform:none; background:#fff; }
+.poker-card:focus-visible { outline:3px solid #ff5878; outline-offset:4px; }
+.poker-card b { font-size:clamp(1.1rem,3vw,2rem); line-height:1.2; }
+.poker-card small { font-size:.6rem; letter-spacing:.05em; font-weight:900; color:#685763; }
+.poker-card.is-red { color:#c42142; }
+.poker-card[aria-pressed="true"] { border-color:#fc3157; box-shadow:0 0 0 2px #fc315744,0 5px 15px #0003; }
+.poker-card[aria-pressed="true"] small { color:#c42142; }
+.poker-card.is-back { color:#ff8b9e; background:repeating-linear-gradient(35deg,#53152a,#53152a 6px,#441322 6px,#441322 12px); border-color:#863049; font-size:2rem; }
+.poker-card:disabled { opacity:1; cursor:default; }
+.poker-actions { align-items:center; flex-wrap:wrap; }
+.poker-actions #pokerDraw { margin-left:auto; }
+.poker-paytable { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:8px; }
+.poker-paytable > div { display:flex; flex-direction:column; gap:5px; padding:12px; background:#ffffff04; border:1px solid #ffffff0b; border-radius:10px; }
+.poker-paytable > div.is-hit { border-color:#ff4768; background:#ff315317; }
+.poker-paytable small { color:var(--muted,#c4b5bf); font-size:.7rem; }
+@media(max-width:600px) {
+  .poker-table { padding:12px 8px; }
+  .poker-cards { gap:5px; }
+  .poker-card { border-radius:8px; min-height:90px; padding:10px 2px; }
+  .poker-card small { font-size:.52rem; }
+  .poker-actions { gap:6px; }
+  .poker-actions .button { padding:9px; font-size:.75rem; }
+  .limbo-stage,.coin-stage { min-height:285px; }
+}
+
+/* Center new game artwork after the shared dashboard card rules. */
+.game-art.limbo-art,.game-art.coinflip-art {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.game-art.limbo-art span { position:static; font-size:2.6rem; }
+.game-art.coinflip-art span { position:static; }
+@media(min-width:681px) {
+  .game-card { display:flex; flex-direction:column; }
+  .game-card > .game-art { flex-shrink:0; }
+  .game-card > .button { margin-top:auto; text-align:center; }
+}

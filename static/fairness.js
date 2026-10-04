@@ -1,10 +1,10 @@
-/* Independent RedPoints v1/v2 verifier. Uses Web Crypto and integer arithmetic.
+/* Independent RedPoints v1/v2/v3 verifier. Uses Web Crypto and integer arithmetic.
    No API call, wallet mutation, or provider dependency is involved. */
 (() => {
   "use strict";
-  const VERSION = "redpoints-v2",
+  const VERSION = "redpoints-v3",
     SCALE = 10000n;
-  const SUPPORTED_VERSIONS = ["redpoints-v1", VERSION];
+  const SUPPORTED_VERSIONS = ["redpoints-v1", "redpoints-v2", VERSION];
   const PLINKO_TABLES = {
     8: {
       low: [56000, 21000, 11000, 10000, 5000, 10000, 11000, 21000, 56000],
@@ -66,7 +66,7 @@
   function table(game, size, risk, version = VERSION) {
     if (!SUPPORTED_VERSIONS.includes(version))
       throw Error("Unknown game rules version");
-    if (game === "plinko" && version === VERSION) {
+    if (game === "plinko" && version !== "redpoints-v1") {
       const values = PLINKO_TABLES[size]?.[risk];
       if (!values) throw Error("Unknown Plinko board");
       return [...values];
@@ -219,9 +219,70 @@
     };
   }
 
+  const POKER_PAYTABLE = {
+    royal_flush: 800, straight_flush: 50, four_of_a_kind: 25, full_house: 9,
+    flush: 6, straight: 4, three_of_a_kind: 3, two_pair: 2, jacks_or_better: 1, no_win: 0,
+  };
+  function pokerCategory(cards) {
+    if (cards.length !== 5 || new Set(cards).size !== 5 ||
+        cards.some(card => !Number.isInteger(card) || card < 0 || card >= 52))
+      throw Error("Invalid Poker cards");
+    const ranks = cards.map(card => card % 13 === 0 ? 14 : card % 13 + 1).sort((a, b) => a-b);
+    const counts = new Map();
+    for (const rank of ranks) counts.set(rank, (counts.get(rank) || 0)+1);
+    const groups = [...counts.values()].sort((a, b) => b-a).join(",");
+    const flush = new Set(cards.map(card => Math.floor(card / 13))).size === 1;
+    const straight = counts.size === 5 && (ranks[4]-ranks[0] === 4 || ranks.join(",") === "2,3,4,5,14");
+    if (flush && ranks.join(",") === "10,11,12,13,14") return "royal_flush";
+    if (flush && straight) return "straight_flush";
+    if (groups === "4,1") return "four_of_a_kind";
+    if (groups === "3,2") return "full_house";
+    if (flush) return "flush";
+    if (straight) return "straight";
+    if (groups === "3,1,1") return "three_of_a_kind";
+    if (groups === "2,2,1") return "two_pair";
+    if (groups === "2,1,1,1" && [...counts].some(([rank, count]) => rank >= 11 && count === 2))
+      return "jacks_or_better";
+    return "no_win";
+  }
+  function validHolds(holds) {
+    return Array.isArray(holds) && holds.length <= 5 &&
+      holds.every((n, i) => Number.isInteger(n) && n >= 0 && n < 5 && (!i || holds[i-1] < n));
+  }
+  async function pokerOutcome(pick, wager, holds) {
+    const deck = Array.from({ length: 52 }, (_, i) => i);
+    let cursor = 0;
+    async function card() {
+      const other = cursor + await pick(52-cursor);
+      [deck[cursor], deck[other]] = [deck[other], deck[cursor]];
+      return deck[cursor++];
+    }
+    const initial = [];
+    for (let i = 0; i < 5; i++) initial.push(await card());
+    if (holds == null) return { ended: false, initial, cards: [...initial], holds: null, category: "playing", multiplier: 0, payout: 0 };
+    if (!validHolds(holds)) throw Error("Invalid held cards");
+    const cards = [];
+    for (let i = 0; i < 5; i++) cards.push(holds.includes(i) ? initial[i] : await card());
+    const category = pokerCategory(cards), multiplier = POKER_PAYTABLE[category];
+    return { ended: true, initial, cards, holds, category, multiplier, payout: Number(BigInt(wager)*BigInt(multiplier)) };
+  }
+
   async function outcome(seed, r) {
     const pick = await draw(seed, r),
       o = r.options;
+    if (["limbo", "coinflip", "poker"].includes(r.game) && r.rules_version !== VERSION)
+      throw Error("This game requires redpoints-v3");
+    if (r.game === "limbo") {
+      const roll = await pick(4294967296);
+      const multiplier = Math.max(100, Number(99n*4294967296n/(4294967296n-BigInt(roll))));
+      const won = multiplier >= o.target;
+      return { roll, multiplier, won, payout: won ? Number(BigInt(r.wager)*BigInt(o.target)/100n) : 0 };
+    }
+    if (r.game === "coinflip") {
+      const side = ["heads", "tails"][await pick(2)], won = side === o.side;
+      return { side, won, multiplier: 19800, payout: won ? Number(BigInt(r.wager)*198n/100n) : 0 };
+    }
+    if (r.game === "poker") return pokerOutcome(pick, r.wager, r.holds);
     if (r.game === "dice") {
       const roll = await pick(10000),
         won =
@@ -257,8 +318,8 @@
       };
     }
     if (r.game === "blackjack") {
-      if (r.rules_version !== VERSION)
-        throw Error("Blackjack requires current rules");
+      if (!["redpoints-v2", VERSION].includes(r.rules_version))
+        throw Error("Blackjack requires redpoints-v2 or later");
       return blackjackOutcome(pick, r.wager, r.actions || []);
     }
     if (r.game !== "plinko") throw Error("Unknown game");
@@ -275,7 +336,7 @@
       payout: Number((BigInt(r.wager) * BigInt(multiplier)) / SCALE),
     };
   }
-  async function verify(r, expectedCommitment) {
+  async function verifyReceipt(r, expectedCommitment) {
     if (
       !r ||
       !SUPPORTED_VERSIONS.includes(r.rules_version) ||
@@ -297,6 +358,9 @@
       keno: ["picks", "risk"],
       plinko: ["risk", "rows"],
       blackjack: ["decks"],
+      limbo: ["target"],
+      coinflip: ["side"],
+      poker: ["variant"],
     }[r.game];
     if (!keys || canonical(Object.keys(o).sort()) !== canonical(keys))
       return false;
@@ -311,10 +375,17 @@
     } else if (r.game === "blackjack") {
       if (
         o.decks !== 6 ||
-        r.rules_version !== VERSION ||
+        !["redpoints-v2", VERSION].includes(r.rules_version) ||
         !Array.isArray(r.actions)
       )
         return false;
+    } else if (r.game === "limbo") {
+      if (r.rules_version !== VERSION || !Number.isInteger(o.target) || o.target < 101 || o.target > 100000000)
+        return false;
+    } else if (r.game === "coinflip") {
+      if (r.rules_version !== VERSION || !["heads", "tails"].includes(o.side)) return false;
+    } else if (r.game === "poker") {
+      if (r.rules_version !== VERSION || o.variant !== "jacks_or_better" || !validHolds(r.holds)) return false;
     } else {
       if (!["low", "medium", "high"].includes(o.risk)) return false;
       if (r.game === "plinko") {
@@ -343,16 +414,21 @@
     return (
       canonical(result) === canonical(r.result) &&
       r.payout === result.payout &&
-      (r.game !== "blackjack" || result.ended) &&
+      (!["blackjack", "poker"].includes(r.game) || result.ended) &&
       r.net ===
         result.payout - (r.game === "blackjack" ? result.total_wager : r.wager)
     );
+  }
+  async function verify(r, expectedCommitment) {
+    try { return await verifyReceipt(r, expectedCommitment); }
+    catch { return false; }
   }
   globalThis.RedFair = {
     VERSION,
     SUPPORTED_VERSIONS,
     canonical,
     table,
+    pokerCategory,
     outcome,
     verify,
   };
