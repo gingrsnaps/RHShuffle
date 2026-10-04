@@ -318,6 +318,18 @@ def create_app(root=None, testing=False):
         response.set_etag(token(value))
         return response.make_conditional(request)
 
+    @app.post('/gaming/api/refresh')
+    def gaming_refresh():
+        # Reset only the signed player's wallet, with the same CSRF/IP rules as bets.
+        require_player_csrf()
+        try:
+            profile = boss.status(guest(), g.client_ip)['you']
+            result = gaming.refresh_balance(guest(), profile['display_name'] if profile['identity_ready'] else '',
+                                             request.get_json(silent=True), client_ip=g.client_ip)
+            return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
+            return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_refresh'))
+
     @app.post('/gaming/api/profile')
     def gaming_profile():
         require_player_csrf()

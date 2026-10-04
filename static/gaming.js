@@ -13,6 +13,7 @@
   let wallet,
     csrf = root.dataset.csrf,
     busy = false,
+    refreshing = false,
     fatal = false,
     pending = null,
     pendingAction = null,
@@ -122,7 +123,7 @@
     if (wallet.needs_profile)
       return "Save your player name above to start playing.";
     if (wallet.balance < 1)
-      return "You have no RedPoints left. Your balance resets with the next race week.";
+      return "Refresh this page to restore 100,000 RedPoints, or wait for the weekly reset.";
     if (game === "keno" && !selections.size)
       return "Pick 1–10 numbers to play.";
     return "";
@@ -147,7 +148,7 @@
       );
       id("betButton").setAttribute("aria-busy", String(busy));
       id("betButton").textContent = busy
-        ? "Checking your round…"
+        ? refreshing ? "Restoring 100,000 points…" : "Checking your round…"
         : pendingAction
           ? "Recover your move"
           : wallet?.blackjack
@@ -155,7 +156,9 @@
             : pending
               ? "Recover previous round"
               : betLabel;
-      let reason = busy ? "Saving and verifying your round…" : playBlock();
+      let reason = busy
+        ? refreshing ? "Restoring your balance; game records are kept." : "Saving and verifying your round…"
+        : playBlock();
       if (!reason)
         reason =
           feedback ||
@@ -223,7 +226,7 @@
     renderBlackjack(next.blackjack);
     id("pointsBalance").textContent = number(next.balance);
     if (id("redWager")) id("redWager").max = String(next.balance);
-    id("pointsReset").textContent = "Resets " + next.season.end_et;
+    id("pointsReset").textContent = "100,000 on refresh · Weekly reset " + next.season.end_et;
     id("gamingProfile").hidden =
       !next.needs_profile || Boolean(next.play_blocked);
     if (id("gamingNetworkNotice")) {
@@ -1221,6 +1224,34 @@
       "An earlier wager needs confirmation. Recover its result before placing another.",
     );
   if (!secure) message(secureMessage);
-  void recoverSavedRound(wallet);
-  poll();
+  async function start() {
+    // Recover an uncertain wager before resetting points. Its receipt and any
+    // active Blackjack hand must survive a browser reload unchanged.
+    await recoverSavedRound(wallet);
+    const navigation = globalThis.performance?.getEntriesByType?.("navigation")?.[0];
+    const reloaded = navigation?.type === "reload" ||
+      (!navigation && globalThis.performance?.navigation?.type === 1);
+    // Link navigation and automatic wallet polls must not refill the balance.
+    if (reloaded && secure && !fatal && !wallet.needs_profile && !wallet.play_blocked) {
+      busy = refreshing = true;
+      controls();
+      try {
+        const result = await api("/gaming/api/refresh", {
+          season: wallet.season.id,
+          version: wallet.version,
+        });
+        renderWallet(result.wallet);
+        walletEtag = "";
+      } catch (error) {
+        message(error.name === "AbortError"
+          ? "The refresh response timed out. Checking the saved balance; reload to try again."
+          : error.message);
+      } finally {
+        busy = refreshing = false;
+        controls();
+      }
+    }
+    poll();
+  }
+  void start();
 })();

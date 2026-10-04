@@ -108,7 +108,12 @@ def validate_gaming(value):
                 reserved = pending['wager']
             except (KeyError, TypeError, ValueError):
                 raise ValueError('Invalid saved Blackjack hand.') from None
-        if player['balance'] != START_POINTS + sum(s['net'] for s in player['stats'].values()) - reserved:
+        # Refresh grants belong to the wallet, never to game winnings/rankings.
+        # Older saves have no adjustment and retain their original accounting.
+        adjustment = player.get('balance_adjustment', 0)
+        if type(adjustment) is not int or abs(adjustment) > MAX_NUMBER:
+            raise ValueError('Invalid RedPoints refresh adjustment.')
+        if player['balance'] != START_POINTS + adjustment + sum(s['net'] for s in player['stats'].values()) - reserved:
             raise ValueError('RedPoints wallet does not balance.')
         receipts = player.get('receipts')
         if not isinstance(receipts, list) or len(receipts) > RECEIPTS:
@@ -176,7 +181,8 @@ class Gaming:
                 receipt['actions'].append('stand')
                 receipt['ending'] = 'weekly_reset'
                 self._settle(player, receipt, outcome(player['server_seed'], receipt))
-            player.update(season=current['id'], balance=START_POINTS, stats=fresh_stats(), version=player['version']+1)
+            player.update(season=current['id'], balance=START_POINTS, balance_adjustment=0,
+                          stats=fresh_stats(), version=player['version']+1)
         if player['name'] != name:
             player['name'] = name
             player['version'] += 1
@@ -267,6 +273,36 @@ class Gaming:
                 self._claim_ip(conn['gaming'], key, client_ip, current)
             return self._view(player, current, issue)
 
+    def refresh_balance(self, identity, name, body, now=None, *, client_ip=None):
+        """Reset available points on a browser refresh; preserve all game records.
+
+        Reads and automatic polls never call this method. The version check makes
+        retries harmless and prevents a stale page from overwriting a newer bet.
+        An unfinished Blackjack stake stays reserved; its hand/seed are untouched.
+        """
+        if not name:
+            raise GamingError('Save your player name before refreshing points.', 'username_required', 409)
+        if (not isinstance(body, dict) or type(body.get('version')) is not int or
+                not 0 <= body['version'] <= MAX_NUMBER or not isinstance(body.get('season'), str) or
+                not re.fullmatch(r'\d{1,12}', body['season'])):
+            raise GamingError('Reload the page to refresh your RedPoints.')
+        now = time.time() if now is None else now
+        with self.store.connection(transaction=True) as conn:
+            player, current = self._player(conn, identity, name, now)
+            self._claim_ip(conn['gaming'], player_key(identity), client_ip, current)
+            if body['season'] != current['id']:
+                # The weekly rollover already supplies the new allowance.
+                return dict(ok=True, wallet=self._view(player, current))
+            if body['version'] != player['version']:
+                raise GamingError('Your balance changed in another request. Reload to refresh the latest wallet.',
+                                  'stale_wallet', 409)
+            adjustment = player.get('balance_adjustment', 0) + START_POINTS - player['balance']
+            if abs(adjustment) > MAX_NUMBER or player['version'] >= MAX_NUMBER:
+                raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
+            player.update(balance=START_POINTS, balance_adjustment=adjustment, version=player['version']+1)
+            LOG.info('GAMING browser refresh restored %s RedPoints; game records retained.', START_POINTS)
+            return dict(ok=True, wallet=self._view(player, current))
+
     def bet(self, identity, name, body, now=None, *, client_ip=None):
         if not name:
             raise GamingError('Save your player name before playing.', 'username_required', 409)
@@ -309,7 +345,7 @@ class Gaming:
             if nonce != player['nonce'] or body.get('commitment') != commitment(player['server_seed']):
                 raise GamingError('Another tab used this seed. Refresh your balance and fairness details.', 'stale_seed', 409)
             if wager > player['balance']:
-                raise GamingError('Not enough RedPoints. Lower the wager or wait for the next race reset.', 'balance', 409)
+                raise GamingError('Not enough RedPoints. Lower the wager or refresh the page for 100,000 RedPoints.', 'balance', 409)
             largest = (wager*4 if game=='blackjack' else wager*99//opt['chance'] if game=='dice' else
                        wager*max(table(game, len(opt['picks']) if game=='keno' else opt['rows'], opt['risk']))//10000)
             stats = player['stats'][game]
