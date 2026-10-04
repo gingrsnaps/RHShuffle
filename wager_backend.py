@@ -40,7 +40,7 @@ from race_support import (DEFAULT_PRIZES, WEIGHTING_RULES, TEXT_LIMITS, URL_FIEL
                           local_input, money, money_input, race_key, validate_site)
 from runtime import Runtime
 from storage import Conflict, StoreError
-from fairness import GAMES, VERSION as FAIRNESS_VERSION, rules as gaming_rules
+from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
 
 LOG = logging.getLogger("redhunllef")
@@ -294,7 +294,7 @@ def create_app(root=None, testing=False):
     def gaming_wallet():
         identity = guest()
         profile = boss.status(identity, g.client_ip)['you']
-        return gaming.view(identity, profile['display_name'] if profile['identity_ready'] else '')
+        return gaming.view(identity, profile['display_name'] if profile['identity_ready'] else '', client_ip=g.client_ip)
 
     @app.get('/gaming')
     def gaming_home():
@@ -333,14 +333,26 @@ def create_app(root=None, testing=False):
     def gaming_bet():
         require_player_csrf()
         body = request.get_json(silent=True)
-        if not isinstance(body, dict) or body.get('rules_version') != FAIRNESS_VERSION:
+        if not isinstance(body, dict) or body.get('rules_version') not in SUPPORTED_VERSIONS:
             return json_error('Reload to use the current game rules.', 409, 'release_mismatch')
         try:
             profile = boss.status(guest(), g.client_ip)['you']
-            result = gaming.bet(guest(), profile['display_name'] if profile['identity_ready'] else '', body)
+            result = gaming.bet(guest(), profile['display_name'] if profile['identity_ready'] else '', body, client_ip=g.client_ip)
             return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_bet'))
+
+    @app.post('/gaming/api/blackjack/action')
+    def gaming_blackjack_action():
+        require_player_csrf()
+        body = request.get_json(silent=True)
+        try:
+            profile = boss.status(guest(), g.client_ip)['you']
+            result = gaming.blackjack_action(guest(), profile['display_name'] if profile['identity_ready'] else '',
+                                             body, client_ip=g.client_ip)
+            return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
+            return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_move'))
 
     @app.get('/gaming/api/receipts')
     def gaming_receipts():
@@ -348,10 +360,17 @@ def create_app(root=None, testing=False):
         return Response(json.dumps(gaming_wallet()['receipts'], indent=2), mimetype='application/json',
                         headers={'Content-Disposition':'attachment; filename=redpoints-receipts.json'})
 
+    @app.get('/admin/gaming')
+    @protected
+    def admin_gaming_page():
+        return render_admin('gaming')
+
     @app.get('/admin/gaming/status')
     @protected
     def admin_gaming_status():
-        return jsonify(ok=True, **gaming.leaders())
+        response = jsonify(ok=True, **gaming.leaders(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
+        response.set_etag(token(response.get_json()))
+        return response.make_conditional(request)
 
     @app.get("/play")
     def play():

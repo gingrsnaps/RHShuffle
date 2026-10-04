@@ -1,6 +1,6 @@
 # Complete file structure
 
-Release **2026.10.04-redpoints**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.10.04-redpoints-arcade2**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -12,8 +12,10 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `Procfile` | Runs python wager_backend.py. |
 | `README.md` | Complete update, operation, recovery and DigitalOcean instructions. |
 | `START_HERE.md` | Short installation and launch instructions. |
+| `UPDATE.md` | Cumulative gaming patch instructions and verification. |
 | `abuse_guard.py` | Per-browser rejected-request throttles and temporary admin flags. |
 | `app.yaml` | Single-service DigitalOcean App Platform template. |
+| `blackjack.py` | Pure six-deck RedPoints Blackjack replay and hand scoring. |
 | `boss.py` | Independent signed-browser players, multiplayer rules, recovery and admin controls. |
 | `boss_avatar.py` | Image validation, resizing and safe PNG avatar storage. |
 | `boss_extras.py` | Cosmetic rally, pace estimates and private boss admin history. |
@@ -21,6 +23,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `config.py` | Configuration, original provider keys, save locations and release. |
 | `docs/COMMUNITY_BOSS.md` | Current mechanics, permissions, identity and storage behavior. |
 | `docs/COMMUNITY_UPDATE.md` | Implementation notes for approved suggestions 2–9. |
+| `docs/ADMIN_GAMING.png` | Four private leaderboards with synthetic players/IPs. |
+| `docs/BLACKJACK_DESKTOP.png` | Verified RedPoints Blackjack hand with synthetic results. |
 | `docs/GAMING_DESKTOP.png` | Native Chromium Gaming dashboard preview with synthetic data. |
 | `docs/GAMING_MOBILE.png` | Native Chromium mobile Gaming preview with all configured header links. |
 | `docs/PLINKO_DESKTOP.png` | Native Chromium Plinko preview with verified synthetic results. |
@@ -45,7 +49,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `static/boss.css` | Responsive arena, game controls and boss admin styling. |
 | `static/boss.js` | Game/admin interface, recovery UI, previews and automatic polls. |
 | `static/fairness.js` | Independent browser HMAC/rejection sampling, payout math and receipt verification. |
-| `static/gaming.css` | Responsive red Gaming dashboard, Dice/Keno/Plinko boards and controls. |
+| `static/admin-gaming.js` | Private five-second rankings, actual counts, IP details and session-expiry cleanup. |
+| `static/gaming.css` | Responsive red Gaming dashboard, Dice/Keno/Plinko/Blackjack boards and controls. |
 | `static/gaming.js` | Game controls, conditional wallet polls, safe settlement and local receipt checks. |
 | `static/history.css` | Responsive red completed-week cards and table. |
 | `static/history.js` | Automatic cached-history reads, native week navigation and safe rendering. |
@@ -78,6 +83,11 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/assert_visual_pixels.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/fairness_vectors.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/generate_fairness_vectors.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/fairness_v2_vectors.json` | 86 synthetic version-two receipt fixtures. |
+| `tests/test_blackjack.py` | Deterministic Blackjack rules and payout checks. |
+| `tests/test_gaming_ip.py` | IP binding, private rankings and actual total counts. |
+| `tests/test_admin_gaming_frontend.cjs` | Private rankings rendering, release mismatch and expired-session checks. |
+| `tests/serve_admin_gaming_fixture.py` | Disposable four-game fixture for native browser or DOM checks. |
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |

@@ -1,20 +1,21 @@
 # RedHunllef
 
-Release **2026.10.04-redpoints**. This is the complete configured application.
+Release **2026.10.04-redpoints-arcade2**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## This update: Gaming, complete mobile navigation and history recovery
+## This update: four RedPoints games and visible admin rankings
 
 | Page | What it does |
 | --- | --- |
-| `/gaming` | Dashboard for Dice, Keno and Plinko, shared balance, weekly results and recent receipts. |
+| `/gaming` | Dashboard for Dice, Keno, Plinko and RedPoints-only Blackjack, shared balance, weekly results and recent receipts. |
 | `/gaming/dice` | Choose a 1–95% win chance and roll under/over the target. |
 | `/gaming/keno` | Pick 1–10 of 40 numbers, draw 10, choose Low/Medium/High risk. |
 | `/gaming/plinko` | Choose 8/12/16 rows and Low/Medium/High risk; watch the verified path. |
+| `/gaming/blackjack` | RedPoints-only six-deck Blackjack: Hit, Stand and Double; saved hands and verifiable receipts. |
 | `/gaming/fairness` | Published rules, exact seed format and a browser-only receipt verifier. |
-| `/admin?tab=gaming` | Private Top 5 per game, full submitted names, net winnings and total returns. |
+| `/admin/gaming` or `/admin?tab=gaming` | Four private Top 5 lists; full names, shared player IDs, linked IPs, actual net winnings, stakes, returns and counts. |
 | `/history` | Four completed Tuesday-to-Tuesday weeks, public Top 25 masked before delivery. |
 
 The public header keeps **Leaderboard, History, Boss fight, Gaming, Points Shop,
@@ -24,8 +25,8 @@ https://botrix.live/k/redhunllef/shop. Its balance is separate from RedPoints.
 
 ### One shared RedPoints wallet
 
-Each named browser profile starts with **100,000 RedPoints total**, shared across
-all three games. It is saved after every settled wager. Refreshing, switching
+Each named player starts with **100,000 RedPoints total**, shared across
+all four games. One wallet may play per public IP each race week. It is saved after every settled wager. Refreshing, switching
 games, changing a name or restarting the process with the same save does not grant
 more points. The allowance and per-game standings reset at the next **Tuesday,
 6:00 PM America/New_York** boundary, with daylight saving handled automatically.
@@ -34,18 +35,26 @@ race form, campaign or prizes does not reset wallets. The next reset is displaye
 
 - Play-only points: no purchase, cash value, withdrawal or conversion to Shuffle or
   Botrix balances. These games do not add to the real Shuffle wager leaderboard.
-- Wagers are whole points, **1–10,000 per round**, with one second between rounds.
-  There is no daily/weekly count limit. A zero balance waits for the weekly reset.
+- Wagers are positive whole points within the available balance and exact-integer
+  safety range. There is no fixed stake cap, timed delay, or daily/weekly count limit. A zero balance waits for the weekly reset.
 - The existing persistent boss player cookie owns the wallet. A saved boss name
   works in Gaming; saving a Gaming name also saves that same boss profile.
   The existing private player recovery code restores this identity and its wallet.
 - A display name is self-reported, not proof of a Shuffle account or unique person.
-  A different browser without a recovery code is a separate profile. Shared IPs
-  do not block the community. Changing only the display name never merges wallets.
+  A new browser on an already-used IP must restore the original player with its
+  recovery code; an IP alone cannot authenticate access to an existing wallet.
+  People sharing a public IP cannot create independent gaming wallets that week.
+  Changing a name never merges wallets or grants more points. The original signed
+  player can move to an unclaimed connection and retain their wallet. All four
+  games use these same bindings, and admins can see their canonical IP addresses.
 - Private rankings sort **net winnings = points returned − points wagered**,
   then total returned points, then a stable short profile tag. Losses remain visible
   and do not masquerade as profit. Only players who played that game appear.
-  The admin overview also includes the three Top 5 lists; it refreshes with status.
+  Both Admin Overview and Gaming include all four Top 5 lists. A dedicated local
+  poll refreshes them every five seconds, with a manual refresh button. Shuffle
+  and Kick keep their separate 60-second refresh. Player/round counts cover all
+  players, not just the displayed five. Rankings are cleared from the visible
+  dashboard when the admin session expires.
 - The server settles debit, return, next seed and receipt in one atomic save.
   Repeating an uncertain request returns its original receipt without a second
   debit. Concurrent tabs cannot spend the same seed/nonce twice.
@@ -60,12 +69,48 @@ after settlement. Independent browser code verifies the previous commitment,
 submitted inputs, result and payout before reporting “Verified.”
 
 Keep downloaded receipts and the commitment seen before playing. The dashboard
-retains the latest 30 receipts per profile across all three games and weekly
+retains the latest 30 receipts per profile across all four games and weekly
 resets. An older standalone receipt proves internal consistency, not publication
 time unless you separately kept its earlier commitment. The independent verifier
 can also run offline with `python tools/verify_redpoints.py receipts.json`; this is
 an optional audit utility, never another server process. Full algorithm, payout
 math, examples and limits: [docs/REDPOINTS.md](docs/REDPOINTS.md).
+
+### Verify the installed gaming release
+
+The complete ZIP and the cumulative update ZIP now include the same gaming
+implementation. Previously, the complete ZIP lagged the newer patch; using the
+complete archive alone could leave the older three-game build installed.
+
+After applying all included code/templates/static files and restarting, open
+**`/admin/gaming`**. Its installed-release label must show
+**2026.10.04-redpoints-arcade2**. The header also includes **Gaming top 5**.
+If the panels are empty, check the displayed player/round counts and weekly reset.
+Only completed RedPoints rounds on this server create those records. Shuffle
+wagers and boss attacks are separate. Never invent entries to fill five places.
+Restore the latest private recovery backup if a redeployment replaced local data;
+this update cannot reconstruct results that were never saved or backed up.
+
+### Game controls and Blackjack
+
+- Plinko follows the verified left/right path with a single animation loop and
+  parabolic peg bounces; multiple balls can animate together. High risk with
+  **16 rows reaches 1000×** (8-row High: 29×; 12-row High: 170×).
+- Keno's **Quick pick 10** chooses ten distinct numbers. Manual picks stay 1–10.
+- The large Dice bar is draggable on mouse and touch, with matching threshold,
+  win percentage and payout. Roll Over inverts the threshold correctly.
+- Blackjack spends **RedPoints only**, with the same wallet as the other games.
+  A fresh six-deck shoe is sampled without replacement per hand. Dealer stands
+  on all 17s and checks naturals before decisions. Hit, Stand and Double on the
+  first two cards are available. Naturals pay 3:2 profit, other wins 1:1, pushes
+  return the stake. Returns round down to whole points. No splitting, insurance
+  or surrender. No fixed Blackjack RTP is advertised: decisions affect returns.
+- Blackjack reserves the stake, hides the hole card/seed until completion, resumes
+  on reload, and settles each move/hand only once. At the weekly boundary an
+  unfinished hand automatically stands under the old week before the new balance.
+  Double counts the full doubled stake in both the ledger and admin rankings.
+- Current fairness rules are `redpoints-v2`. Earlier `redpoints-v1` receipts remain
+  verifiable; updating does not erase balances, seeds, profiles or old receipts.
 
 ### Homepage and boss refinements
 
@@ -149,7 +194,7 @@ name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to
 the actual trusted visitor IP on App Platform instead of the proxy socket address.
 
 After updating, restart the app and reload the homepage. `/healthz` should report
-**2026.10.04-redpoints**. Asset versions change automatically, so the new
+**2026.10.04-redpoints-arcade2**. Asset versions change automatically, so the new
 scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
@@ -175,7 +220,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.10.04-redpoints**. If it shows something else, the old application is
+**2026.10.04-redpoints-arcade2**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -463,9 +508,11 @@ local save as a rollback copy and keep every current root support module.
 Validation results and limits are in [docs/VALIDATION.md](docs/VALIDATION.md).
 Coverage includes the existing admin/race/boss features, 100 independent player
 profiles, atomic wagers, replay prevention, shared balances, weekly/DST resets,
-recovery and seed privacy. An independent JavaScript verifier matches 47 Python
-reference receipts. Native Chromium checks all three real wager interfaces, every
-mobile header link, admin rankings and actual HP-bar pixels.
+recovery and seed privacy. The independent JavaScript verifier matches 47 earlier
+and 86 v2 reference receipts. This revision passed 37 targeted Python tests and
+six JavaScript tests. Native Chromium checked all four admin lists, real Plinko
+settlement/landing, Blackjack reload/settlement, Dice dragging, Keno quick picks
+and shared-IP protection. See the validation document for exact scope and limits.
 
 The application was not deployed to DigitalOcean. The original live Shuffle check
 timed out here; automatic history success is verified with synthetic responses,

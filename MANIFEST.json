@@ -1,10 +1,11 @@
 {
-  "release": "2026.10.04-redpoints",
+  "release": "2026.10.04-redpoints-arcade2",
   "packaging": "complete",
   "entry_point": "python wager_backend.py",
   "storage": "local JSON (automatic; ephemeral on App Platform)",
   "root_modules": [
     "abuse_guard",
+    "blackjack",
     "boss",
     "boss_avatar",
     "boss_extras",
@@ -23,19 +24,22 @@
     "weekly_history"
   ],
   "validation": {
-    "backend_tests_passed": 182,
-    "interface_tests_passed": 70,
-    "fairness_reference_receipts": 47,
-    "native_screenshots": 20,
-    "widths": [
-      1440,
-      390,
-      320
-    ],
-    "live_shuffle_history": "timeout; not confirmed",
-    "deployed": false,
-    "extracted_startup_tests_passed": 15,
-    "offline_verifier_reference_receipts": 47
+    "targeted_python_tests_passed": 37,
+    "javascript_tests_passed": 6,
+    "fairness_legacy_receipts": 47,
+    "fairness_v2_receipts": 86,
+    "native_browser": "Chromium",
+    "native_admin_games": 4,
+    "native_leaders_per_game": 5,
+    "native_all_players_per_game": 7,
+    "plinko_exact_landing": true,
+    "blackjack_resume_and_verification": true,
+    "shared_wallet_and_ip_isolation": true,
+    "dice_drag_percent": 73,
+    "keno_quick_pick": 10,
+    "browser_errors": 0,
+    "live_providers_tested": false,
+    "deployed": false
   },
   "source_files": {
     ".env.example": {
@@ -51,24 +55,28 @@
       "sha256": "d18cebf8e8516d5dc4f93971043c16f6c38ac9a6b39f6e6938172332bc148444"
     },
     "CHANGES.md": {
-      "bytes": 9090,
-      "sha256": "7efc84cdeaeace48c67d7a9859fb2e228878718d52f48dba4cd13bdac4444ab7"
+      "bytes": 9652,
+      "sha256": "a16b0ac696f2447f4af6be431ae552271b1cc5cad84b37ec25358dd348fe67ec"
     },
     "FILE_STRUCTURE.md": {
-      "bytes": 9265,
-      "sha256": "840e26aaa7419cf04952d2fd6a7478a813b9cf7787058e129c995144baeaacac"
+      "bytes": 10202,
+      "sha256": "7e2de9b1047c2f3bc144dbeacaec56646ddd932aaaf000f570d0c3ab8f3c47bd"
     },
     "Procfile": {
       "bytes": 29,
       "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
     },
     "README.md": {
-      "bytes": 30468,
-      "sha256": "af493caf6d06a1457a5c9b2d620828a5d5b801b18b29917b5a806c646a5292c0"
+      "bytes": 33892,
+      "sha256": "526207c3deaa8648be9ae79e602742e7e61247f4858e77020c776bce97a3b8a2"
     },
     "START_HERE.md": {
-      "bytes": 3725,
-      "sha256": "fefe39f4871777ec9330ebf722c675a7cc9566573c9e3cc9825968fb43218c0d"
+      "bytes": 4034,
+      "sha256": "b0225031e46449fb1af647ec35d3265e815535fa20d62d0b66dc16cadc88921f"
+    },
+    "UPDATE.md": {
+      "bytes": 9851,
+      "sha256": "3d7b6579c4aab4fbf5a3cc7a6b617488a12d98549d7f1edf5c929f05de73dfb9"
     },
     "abuse_guard.py": {
       "bytes": 2063,
@@ -77,6 +85,10 @@
     "app.yaml": {
       "bytes": 1369,
       "sha256": "1a57629c19f2f3a294691d2fd6b74d5355f4311c10201858598058093bfc878b"
+    },
+    "blackjack.py": {
+      "bytes": 2780,
+      "sha256": "3ea903b34d6329a05bb113ac591db64fbc80d59fa2875f8fae8eee08fbb8abc7"
     },
     "boss.py": {
       "bytes": 38805,
@@ -95,8 +107,16 @@
       "sha256": "8eee0a96219866030d0b6a2b83d73a1fd01dcfbacd697e1238fbf26d6a7c9d40"
     },
     "config.py": {
-      "bytes": 5323,
-      "sha256": "1bcb5682a53134837df8e02389976b2fb547310560a486fc2dda80b28bab98f9"
+      "bytes": 5331,
+      "sha256": "a17f03b9d3bffa404a4dfd760da577703598f95fa0872d108260533ec86f5e63"
+    },
+    "docs/ADMIN_GAMING.png": {
+      "bytes": 257427,
+      "sha256": "6be1cac1f1080d5763702687cfeabe76aaee76e31425387bdea1f672bab3c7a0"
+    },
+    "docs/BLACKJACK_DESKTOP.png": {
+      "bytes": 222784,
+      "sha256": "ac964be7288ea8aa9c3e242c719af41f05ac9568b8e23215e6b150707ea78573"
     },
     "docs/COMMUNITY_BOSS.md": {
       "bytes": 4535,
@@ -107,16 +127,16 @@
       "sha256": "0acf9ed9d50e9701a7877d6b8447fab8c16d90dea1b5a837d2b5c5cc5e69cbd7"
     },
     "docs/GAMING_DESKTOP.png": {
-      "bytes": 332089,
-      "sha256": "bd1cb8cee7760978e42b75ae48f5d985879add442f8474b8633209411c3dd63c"
+      "bytes": 336200,
+      "sha256": "f36507d8f35cd866d0ba6de725e51ccc3068d5f62bb299d31946cf2d38f59a30"
     },
     "docs/GAMING_MOBILE.png": {
-      "bytes": 220171,
-      "sha256": "9b412041f73f125e516616183b942e4ae1fb2fabe960ffa3d8956e8b7a441f5a"
+      "bytes": 244832,
+      "sha256": "b0cbd0fcede923eeb905ff27b47f1b6d25996d05e3ac5055eb041b504164b0ca"
     },
     "docs/PLINKO_DESKTOP.png": {
-      "bytes": 581810,
-      "sha256": "7336c0f9f91a414e909c94dc7e1ec082502f9e5ae3daed7bbd978c73c34bcc0c"
+      "bytes": 304230,
+      "sha256": "d6d73246718dcc584352911d8a493cff2f021109ceede1a6a43dc3656ed830a8"
     },
     "docs/PREVIEW_DESKTOP.png": {
       "bytes": 386833,
@@ -127,20 +147,20 @@
       "sha256": "4cbf7288fc720f6d6a8b99541d5fd91dc946919ef12738c657b328c9d75a2f4f"
     },
     "docs/REDPOINTS.md": {
-      "bytes": 14599,
-      "sha256": "74eb4e06c781e246db9360203a89980e4ca005dec1a739185138f9fd396b2fb5"
+      "bytes": 9316,
+      "sha256": "5f12f9731d47a29ee89bb858410425624161275ce0238dc325db296ed262ef3a"
     },
     "docs/VALIDATION.md": {
-      "bytes": 6772,
-      "sha256": "49d9ec0106498d1011a053d48fbafde1eb0db42d3e9a94927d671e638a9107c4"
+      "bytes": 4387,
+      "sha256": "097f232826e1e9cd383a57b29d79a8e95000cb23010589695a9a20aefe5d3d18"
     },
     "fairness.py": {
-      "bytes": 7098,
-      "sha256": "3f54d3dd9890a363b980ead54a1207019cb553e33c8e3618143522fedac9a15d"
+      "bytes": 9497,
+      "sha256": "7fd0566834cf6d41d28a3284109c1dac95b8c213c493bfd9374ada6ebc57bb89"
     },
     "gaming.py": {
-      "bytes": 12231,
-      "sha256": "96c0dc7d39024554852434a23f2b7f9d34781dc2d90209ca8a863792c048d329"
+      "bytes": 25213,
+      "sha256": "87433dc0ff927813513fb89ca0e4dc230957e294e7883d5a40817a431f5b3627"
     },
     "integrations.py": {
       "bytes": 7828,
@@ -182,9 +202,13 @@
       "bytes": 4031,
       "sha256": "9827453e5423833d1e462e24aa63a73f4590416f65b326bb1bbbd9e8fec86971"
     },
+    "static/admin-gaming.js": {
+      "bytes": 5577,
+      "sha256": "e4a54eb36df078f9fd19743f4bb87ccf708fb8e3709f73ffd78224d90d512b65"
+    },
     "static/app.js": {
-      "bytes": 28924,
-      "sha256": "8591b4204609adf0c299924aa8307856dbd149eb7e565ab118c1eb10d4f70233"
+      "bytes": 27395,
+      "sha256": "e12f9afb3a5d844fc4cd2cbdd5b117aeefd8558a0bf4c40f02449c570de0234e"
     },
     "static/boss-preview.js": {
       "bytes": 3197,
@@ -199,16 +223,16 @@
       "sha256": "d27c18eac49b3bcd9fcb44cb7bc013d1de204d43964c538d8dd61521a6ef01e6"
     },
     "static/fairness.js": {
-      "bytes": 6300,
-      "sha256": "605a58d11829d5d53e00e5b6eabe40c62b402414c9a48f144f16f7c18624bb25"
+      "bytes": 11479,
+      "sha256": "9146fa5d37504aa3d2a5e6fc8012987587c07e9f7b1359373b747f48204edc20"
     },
     "static/gaming.css": {
-      "bytes": 10757,
-      "sha256": "29f5eb1245451162c25b4ff748e565649e5eece5ce48d584a0c5458388ed07e2"
+      "bytes": 16115,
+      "sha256": "64787f0298d4f80e979abb4414e3f26e4dd89b5e359777bde410d4043a012ca1"
     },
     "static/gaming.js": {
-      "bytes": 19724,
-      "sha256": "ce4b6b98e5569d61fcc96426583b13a36ea86fc43b1bc50d835237ca8dcabdc7"
+      "bytes": 42096,
+      "sha256": "f4ff0b216dfcf6dd4db6338317a3b54b66bafc3eadc9e1f6644307ce0e098430"
     },
     "static/history.css": {
       "bytes": 2879,
@@ -247,16 +271,16 @@
       "sha256": "5ccf9a649f92afff624e572203a1dfd940435dc6e1248ed3e0768887aeb5fec2"
     },
     "templates/admin.html": {
-      "bytes": 6606,
-      "sha256": "54ac0cd3b526aa854a85f98e76cfaab25e777d0d3bf0f43e048e3b1f74722006"
+      "bytes": 6886,
+      "sha256": "98d5017b8127cf57bec191aa54991f2f96376090adfc5e03abb7b5c4eb995d0e"
     },
     "templates/admin_boss.html": {
       "bytes": 12600,
       "sha256": "9f74438fc383d80df2cf8c6a4110147a76b0181e04268a0606ba7a6e69cc8393"
     },
     "templates/admin_gaming.html": {
-      "bytes": 1239,
-      "sha256": "2da1b047b073d0e5a74a85413d7c12124794ae1d8481992415453753a93c7c2e"
+      "bytes": 3348,
+      "sha256": "0ca8854f6615aed29266630024fed5f8e067e80a50853e2d58937b1f7184f5c9"
     },
     "templates/admin_overview.html": {
       "bytes": 1819,
@@ -291,12 +315,12 @@
       "sha256": "8c02ec7296f011932263817c387f5126d62238d1d7714bd57d64cb51917474be"
     },
     "templates/gaming.html": {
-      "bytes": 9829,
-      "sha256": "c11cc96bb196854e04e7877273aa33d06837379357e4dc83768cf486fcb76021"
+      "bytes": 12232,
+      "sha256": "b605451538190bbfb210001afb14d7c4b0adcb8bf1fcf2e0d7b245fa76582b51"
     },
     "templates/gaming_fairness.html": {
-      "bytes": 6144,
-      "sha256": "aab9d6a7905ecced1bd1b3182345c2b56647366c32a527eaf242d315a575b790"
+      "bytes": 8702,
+      "sha256": "13dd3a49b3fcf005d92f3a55c465083917e53a6e2e72dee267aaa307c503104c"
     },
     "templates/history.html": {
       "bytes": 4686,
@@ -326,6 +350,10 @@
       "bytes": 854,
       "sha256": "2a6845d6d405b12f065a67bbbe2ae39afe7a398f2b165897b37d1810f4f43256"
     },
+    "tests/fairness_v2_vectors.json": {
+      "bytes": 72668,
+      "sha256": "3006777db51e721f913e2a21443ae011f21a2c65bf41394b1d90dbcba36f3f76"
+    },
     "tests/fairness_vectors.json": {
       "bytes": 36427,
       "sha256": "95767d3a4e9c22dcdc2694f8562553b01b08827aff96d61bb7f674872661345c"
@@ -342,6 +370,10 @@
       "bytes": 3526,
       "sha256": "b282160927619434512c3c54aa109616a70d332fd57d902715efc28790db861e"
     },
+    "tests/serve_admin_gaming_fixture.py": {
+      "bytes": 2830,
+      "sha256": "c6a176ad81e52adaafdbe5309d875b54f0fcf03ce456bd501ac4953183a6af3f"
+    },
     "tests/serve_game_fixture.py": {
       "bytes": 759,
       "sha256": "1ddbd387a1d7fa5092076f8827b62f71b1799517e5c80fb4d233fca9e8f28a8b"
@@ -354,9 +386,17 @@
       "bytes": 3699,
       "sha256": "5741b100c23a4e380c767293a1cb9b56ada1afb680b748ec23cc7a15ce02bc4e"
     },
+    "tests/test_admin_gaming_frontend.cjs": {
+      "bytes": 3713,
+      "sha256": "27f9cac696215de2af249053d0653d941a610ad0e8daa119749373ae9337f94b"
+    },
     "tests/test_app.py": {
       "bytes": 41409,
       "sha256": "b19c1aeccadf0f5e4d92055a652cc45d1aa9a667da54dd653ce49b87fdab89f2"
+    },
+    "tests/test_blackjack.py": {
+      "bytes": 7799,
+      "sha256": "c0f0901946c97735faeb49578ac79c6b3202dad9b27f4590e6be023c6b883b0f"
     },
     "tests/test_boss.py": {
       "bytes": 16673,
@@ -379,12 +419,16 @@
       "sha256": "b25c22cc7af7056b6a218c1d1d8b91ab58084067767e8138f3b4dd3c5c18a31c"
     },
     "tests/test_fairness_frontend.cjs": {
-      "bytes": 915,
-      "sha256": "f5167a26d2ddb7f03c12ca22494a79ff19aa237381b197aaa34c4d5df63856b5"
+      "bytes": 1707,
+      "sha256": "444275b23521cf567a96f31ba7ab93821bc34e7e35561d452e8fafbf87da57e1"
     },
     "tests/test_frontend.cjs": {
       "bytes": 15891,
       "sha256": "efd880271ba8aeab9bce8f84b2d4e1eb1ae2ac8716834930feec04dda1931ed6"
+    },
+    "tests/test_gaming_ip.py": {
+      "bytes": 10752,
+      "sha256": "ee86f75c135565ea610ed7548f8b10ce62535a138ec20778cd9eaf478bd3d103"
     },
     "tests/test_gui_update.py": {
       "bytes": 4687,
@@ -407,8 +451,8 @@
       "sha256": "28f7572c090f2912d032e8234dc42460a971f29c24811a3a93f28081d27d260c"
     },
     "tests/test_redpoints.py": {
-      "bytes": 12326,
-      "sha256": "e8c082ad5817c01509dd6076c33ac75f01b829249587a22a7cc1e5bd963e90c4"
+      "bytes": 16538,
+      "sha256": "304715f613525066568e05f4b3e31b7e70fcc67e49bf627e5efb1f54e59cc675"
     },
     "tests/test_username_http.cjs": {
       "bytes": 7689,
@@ -431,8 +475,8 @@
       "sha256": "4962ed214b2a83570e7683e18cebb42cd10126d7dc1e9aa12344d78dfef4c656"
     },
     "wager_backend.py": {
-      "bytes": 57124,
-      "sha256": "d8b2bae36fc809e0d85f47cf45ded741b01fa7e11159281e54c24490eaeada91"
+      "bytes": 58111,
+      "sha256": "6812a9040a9e1b81e6018241d2df87801fc676be9a6ce1956d270c47a67958d1"
     },
     "weekly_history.py": {
       "bytes": 19315,

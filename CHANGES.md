@@ -1,3 +1,10 @@
+# 2026.10.04-redpoints-arcade2
+
+The complete configured archive and cumulative patch are now synchronized.
+Added a direct `/admin/gaming` route, a visible Gaming top 5 header link, installed-release label, complete per-game player/round counts, clear empty-state guidance, and private-row cleanup when admin authentication expires.
+
+Includes RedPoints-only Blackjack, shared IP-linked wallets across all four games, actual net-win rankings, smooth verified Plinko paths, 16-row High 1000× payouts, Keno Quick pick 10, and synchronized draggable Dice controls.
+
 # Changes — 2026.10.04-redpoints
 
 - Added Gaming dashboard plus separate Dice, Keno and Plinko pages using native

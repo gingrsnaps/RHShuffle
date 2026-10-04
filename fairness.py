@@ -1,4 +1,4 @@
-"""RedPoints v1: deterministic games and exact, published payout calculations.
+"""Versioned RedPoints: deterministic games and exact, published payout calculations.
 
 No HTTP, player records or mutable state live here. A one-time server seed is
 committed before each bet and revealed with its receipt. The browser verifier
@@ -12,10 +12,33 @@ import json
 from math import comb
 import re
 
-VERSION = 'redpoints-v1'
-GAMES = ('dice', 'keno', 'plinko')
+VERSION = 'redpoints-v2'
+LEGACY_VERSION = 'redpoints-v1'
+SUPPORTED_VERSIONS = (LEGACY_VERSION, VERSION)
+GAMES = ('dice', 'keno', 'plinko', 'blackjack')
 RISKS = ('low', 'medium', 'high')
 SCALE = 10000
+
+# Fixed, symmetric v2 Plinko paytables, stored as exact 1/10,000 units.
+# The highest edge multiplier is 1000x on the 16-row High board.
+# v1 tables remain available below to verify all earlier receipts.
+PLINKO_TABLES = {
+    8: {
+        'low': (56000, 21000, 11000, 10000, 5000, 10000, 11000, 21000, 56000),
+        'medium': (130000, 30000, 13000, 7000, 4000, 7000, 13000, 30000, 130000),
+        'high': (290000, 40000, 15000, 3000, 2000, 3000, 15000, 40000, 290000),
+    },
+    12: {
+        'low': (100000, 30000, 16000, 14000, 11000, 10000, 5000, 10000, 11000, 14000, 16000, 30000, 100000),
+        'medium': (330000, 110000, 40000, 20000, 11000, 6000, 3000, 6000, 11000, 20000, 40000, 110000, 330000),
+        'high': (1700000, 240000, 81000, 20000, 7000, 2000, 2000, 2000, 7000, 20000, 81000, 240000, 1700000),
+    },
+    16: {
+        'low': (160000, 90000, 20000, 14000, 14000, 12000, 11000, 10000, 5000, 10000, 11000, 12000, 14000, 14000, 20000, 90000, 160000),
+        'medium': (1100000, 410000, 100000, 50000, 30000, 15000, 10000, 5000, 3000, 5000, 10000, 15000, 30000, 50000, 100000, 410000, 1100000),
+        'high': (10000000, 1300000, 260000, 90000, 40000, 20000, 2000, 2000, 2000, 2000, 2000, 20000, 40000, 90000, 260000, 1300000, 10000000),
+    },
+}
 
 
 def commitment(seed):
@@ -30,6 +53,10 @@ def options_for(game, value):
         if type(chance) is not int or not 1 <= chance <= 95 or side not in {'under', 'over'}:
             raise ValueError('Choose a win chance from 1 to 95 and Roll under or Roll over.')
         return dict(chance=chance, side=side)
+    if game == 'blackjack':
+        if type(value.get('decks')) is not int or value['decks'] != 6:
+            raise ValueError('Blackjack uses six decks.')
+        return dict(decks=6)
     risk = value.get('risk')
     if risk not in RISKS:
         raise ValueError('Choose Low, Medium, or High risk.')
@@ -44,13 +71,17 @@ def options_for(game, value):
     raise ValueError('Choose Dice, Keno, or Plinko with valid settings.')
 
 
-@lru_cache(maxsize=64)
-def table(game, size, risk):
-    """Scale transparent risk weights to 99% RTP, then round DOWN to 4dp.
+@lru_cache(maxsize=128)
+def table(game, size, risk, version=VERSION):
+    """Return exact units for the selected version's published paytable.
 
-    Rounding cannot increase the stated return. Whole-point payout rounding can
-    reduce it further for very small wagers; the UI shows that explicitly.
+    V2 Plinko uses fixed tables. Keno and legacy Plinko scale probability
+    weights toward 99%; all final payouts round down to whole points.
     """
+    if version not in SUPPORTED_VERSIONS:
+        raise ValueError('Unknown game rules version.')
+    if game == 'plinko' and version == VERSION:
+        return PLINKO_TABLES[size][risk]
     power = dict(low=2, medium=4, high=7)[risk]
     if game == 'keno':
         probabilities = [Fraction(comb(size, h)*comb(40-size, 10-h), comb(40, 10)) for h in range(size+1)]
@@ -85,7 +116,10 @@ def rules():
 class Draw:
     def __init__(self, seed, receipt):
         self.key = bytes.fromhex(seed)
-        self.context = [VERSION, receipt['season'], receipt['game'], receipt['client_seed'],
+        version = receipt.get('rules_version', VERSION)
+        if version not in SUPPORTED_VERSIONS:
+            raise ValueError('Unknown game rules version.')
+        self.context = [version, receipt['season'], receipt['game'], receipt['client_seed'],
                         receipt['client_salt'], receipt['nonce'], receipt['wager'], receipt['options']]
         self.block, self.buffer = 0, b''
 
@@ -118,17 +152,22 @@ def outcome(seed, receipt):
             numbers[i], numbers[j] = numbers[j], numbers[i]
             drawn.append(numbers[i])
         hits = len(set(drawn) & set(opt['picks']))
-        units = table(game, len(opt['picks']), opt['risk'])[hits]
+        units = table(game, len(opt['picks']), opt['risk'], receipt.get('rules_version', VERSION))[hits]
         return dict(drawn=drawn, hits=hits, multiplier=units, payout=wager*units//SCALE)
+    if game == 'blackjack':
+        if receipt.get('rules_version') != VERSION:
+            raise ValueError('Blackjack requires current rules.')
+        from blackjack import replay
+        return replay(draw, wager, receipt.get('actions', []))
     path = [draw.below(2) for _ in range(opt['rows'])]
     slot = sum(path)
-    units = table(game, opt['rows'], opt['risk'])[slot]
+    units = table(game, opt['rows'], opt['risk'], receipt.get('rules_version', VERSION))[slot]
     return dict(path=path, slot=slot, multiplier=units, payout=wager*units//SCALE)
 
 
 def verify(receipt, expected_commitment=None):
     """Offline verifier. Compare against the commitment retained before betting."""
-    if (not isinstance(receipt, dict) or receipt.get('rules_version') != VERSION or
+    if (not isinstance(receipt, dict) or receipt.get('rules_version') not in SUPPORTED_VERSIONS or
         any(type(receipt.get(k)) is not int or abs(receipt[k]) > 2**53-1 for k in ('nonce', 'wager', 'payout', 'net')) or
         receipt['wager'] < 1 or receipt['nonce'] < 0 or
         not isinstance(receipt.get('season'), str) or not re.fullmatch(r'\d{1,12}', receipt['season']) or
@@ -143,4 +182,7 @@ def verify(receipt, expected_commitment=None):
     if expected_commitment is not None and expected_commitment != receipt['commitment']:
         return False
     result = outcome(receipt['server_seed'], receipt)
-    return result == receipt['result'] and receipt['payout'] == result['payout'] and receipt['net'] == result['payout']-receipt['wager']
+    if receipt['game'] == 'blackjack' and not result['ended']:
+        return False
+    stake = result['total_wager'] if receipt['game'] == 'blackjack' else receipt['wager']
+    return result == receipt['result'] and receipt['payout'] == result['payout'] and receipt['net'] == result['payout']-stake

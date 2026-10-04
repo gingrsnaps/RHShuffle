@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.10.04-redpoints** — complete configured package.
+Release **2026.10.04-redpoints-arcade2** — complete configured package.
 
 Install dependencies once, then run only the existing launcher:
 
@@ -9,7 +9,7 @@ python -m pip install -r requirements.txt
 python wager_backend.py
 ```
 
-Keep all 17 root Python modules, templates and static files together. They are
+Keep all root Python modules, templates and static files together. They are
 imports, not separate launch commands. No database server, Node build, account
 creation utility or extra worker is needed.
 
@@ -19,21 +19,25 @@ creation utility or extra worker is needed.
 | Completed-week history | `/history` |
 | Community boss | `/play` |
 | Gaming dashboard | `/gaming` |
-| Dice / Keno / Plinko | `/gaming/dice`, `/gaming/keno`, `/gaming/plinko` |
+| Dice / Keno / Plinko / RedPoints Blackjack | `/gaming/dice`, `/gaming/keno`, `/gaming/plinko`, `/gaming/blackjack` |
 | Fairness / local receipt verifier | `/gaming/fairness` |
-| Admin / private game Top 5 lists | `/admin`, `/admin?tab=gaming` |
+| Admin / private game Top 5 lists | `/admin`, `/admin/gaming`, `/admin?tab=gaming` |
 | Requested external Points Shop | `https://botrix.live/k/redhunllef/shop` |
 
 The original supplied Superadmin remains **gingrsnaps / enok2121** on a fresh
 install. Existing accounts and changed passwords take precedence. Original private
 provider configuration and logos are included. Keep this configured package private.
 
+Open **Gaming top 5** in the admin header. Confirm the installed label reads
+**2026.10.04-redpoints-arcade2**; this complete package now includes the latest
+Blackjack, IP-linked wallets, five-second private rankings and game controls.
+
 ## Updating an existing installation
 
 Preserve current `data/`, private files, recovery seeds, runtime settings and player
 cookies. Merge code into the matching paths; do not replace newer private seeds
 with bundled originals. There is no reason to reset the boss or clear cookies.
-Reload after restarting and check `/healthz` for **2026.10.04-redpoints**.
+Reload after restarting and check `/healthz` for **2026.10.04-redpoints-arcade2**.
 
 On a persistent Linux host the existing `data/state.json` wins. A previous local
 SQLite save is imported read-only once if no JSON exists. Corrupt saves stop
