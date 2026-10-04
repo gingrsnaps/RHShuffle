@@ -15,6 +15,7 @@
     busy = false,
     fatal = false,
     pending = null,
+    pendingAction = null,
     timer,
     polling = false,
     feedback = "";
@@ -44,7 +45,7 @@
       .join("");
   function randomBelow(size) {
     // Quick picks are selections, not outcomes. Sampling the remaining pool
-    // guarantees five distinct picks even if the RNG repeats a value.
+    // guarantees ten distinct picks even if the RNG repeats a value.
     if (!globalThis.crypto?.getRandomValues)
       throw Error(
         "Quick pick needs browser randomness. Select numbers manually.",
@@ -67,6 +68,7 @@
   };
   try {
     pending = JSON.parse(sessionStorage.getItem("rh.gaming.pending"));
+    pendingAction = JSON.parse(sessionStorage.getItem("rh.blackjack.action"));
   } catch {}
   function remember(value) {
     pending = value;
@@ -100,68 +102,100 @@
       return `Your wager exceeds your ${number(wallet.balance)} RedPoints balance. Lower it to play.`;
     return "";
   }
+  function playBlock() {
+    if (fatal)
+      return "Verification failed. Reload and review your saved receipts before playing.";
+    if (!secure) return secureMessage;
+    if (!verifierReady || rules.version !== RedFair.VERSION)
+      return "Game rules changed or did not load. Reload this page to continue.";
+    if (!wallet) return "Loading your balance…";
+    if (wallet.blackjack) {
+      if (wallet.play_blocked) return wallet.play_blocked.message;
+      if (pendingAction && !wallet.play_blocked) return "";
+      return game === "blackjack"
+        ? "Use Hit, Stand or Double to finish this hand."
+        : "Continue your saved Blackjack hand before starting another game.";
+    }
+    // Recovering an existing receipt remains possible without another debit.
+    if (pending && !wallet.needs_profile) return "";
+    if (wallet.play_blocked) return wallet.play_blocked.message;
+    if (wallet.needs_profile)
+      return "Save your player name above to start playing.";
+    if (wallet.balance < 1)
+      return "You have no RedPoints left. Your balance resets with the next race week.";
+    if (game === "keno" && !selections.size)
+      return "Pick 1–10 numbers to play.";
+    return "";
+  }
   function controls() {
     const disabled = locked();
     root
       .querySelectorAll(
-        "#betForm input, #betForm select, #betForm button, [data-keno], #clientSeed",
+        "#betForm input, #betForm select, #betForm button, [data-keno], #clientSeed, #diceBoardChance",
       )
       .forEach((el) => {
-        // Avoid repeatedly toggling the submit button during input/poll events.
         if (el.id !== "betButton" && el.disabled !== disabled)
           el.disabled = disabled;
       });
     if (id("betButton")) {
-      id("betButton").disabled =
-        busy ||
-        fatal ||
-        !secure ||
-        !verifierReady ||
-        !wallet ||
-        wallet.needs_profile ||
-        (!pending &&
-          (wallet.balance < 1 || (game === "keno" && !selections.size)));
+      // Only a real in-flight request disables the button. Other blocked
+      // states stay clickable so players can see why and how to recover.
+      id("betButton").disabled = busy;
+      id("betButton").setAttribute(
+        "aria-disabled",
+        String(busy || Boolean(playBlock())),
+      );
+      id("betButton").setAttribute("aria-busy", String(busy));
       id("betButton").textContent = busy
         ? "Checking your round…"
-        : pending
-          ? "Recover previous round"
-          : betLabel;
-      id("betButton").setAttribute("aria-busy", String(busy));
-      const reason = fatal
-        ? "Verification failed. Reload and review your saved receipts before playing."
-        : !secure
-          ? secureMessage
-          : !verifierReady
-            ? "Game files did not load. Refresh this page."
-            : !wallet
-              ? "Loading your balance…"
-              : wallet.needs_profile
-                ? "Save your player name above to start playing."
-                : busy
-                  ? "Saving and verifying your round…"
-                  : pending
-                    ? "Your previous round needs confirmation. Recover it here without a duplicate debit."
-                    : wallet.balance < 1
-                      ? "You have no RedPoints left. Your balance resets with the next race week."
-                      : feedback ||
-                        wagerProblem() ||
-                        (game === "keno" && !selections.size
-                          ? "Pick 1–10 numbers to play."
-                          : game === "plinko"
-                            ? "Drop again as soon as your round is verified, even while balls are moving."
-                            : "Ready to play.");
+        : pendingAction
+          ? "Recover your move"
+          : wallet?.blackjack
+            ? "Hand in progress"
+            : pending
+              ? "Recover previous round"
+              : betLabel;
+      let reason = busy ? "Saving and verifying your round…" : playBlock();
+      if (!reason)
+        reason =
+          feedback ||
+          (pending
+            ? "Recover the saved request here without a duplicate debit."
+            : wagerProblem());
+      if (!reason)
+        reason =
+          game === "plinko"
+            ? "You can drop again while earlier balls are moving."
+            : "Ready to play.";
       if (id("betStatus")) {
         id("betStatus").textContent = reason;
         id("betStatus").classList.toggle(
           "is-error",
-          Boolean(fatal || feedback || (!busy && !pending && wagerProblem())),
+          Boolean(
+            !busy && (feedback || playBlock() || (!pending && wagerProblem())),
+          ),
         );
       }
       if (wagerProblem()) id("redWager").setAttribute("aria-invalid", "true");
       else id("redWager").removeAttribute("aria-invalid");
     }
+    root.querySelectorAll("[data-blackjack]").forEach((button) => {
+      button.disabled =
+        busy ||
+        fatal ||
+        !secure ||
+        !verifierReady ||
+        !wallet?.blackjack ||
+        Boolean(pendingAction) ||
+        Boolean(wallet?.play_blocked) ||
+        (button.dataset.blackjack === "double" && !wallet.blackjack.can_double);
+    });
     if (id("retryBet")) {
-      id("retryBet").hidden = !pending;
+      id("retryBet").textContent = pendingAction
+        ? "Recover your move"
+        : "Recover pending result";
+      id("retryBet").hidden =
+        !pending || Boolean(wallet?.blackjack && !pendingAction);
       id("retryBet").disabled = busy || fatal || !secure || !verifierReady;
     }
   }
@@ -183,10 +217,21 @@
     if (!wallet && id("redWager")?.value === "100" && next.balance > 0)
       id("redWager").value = String(Math.min(100, next.balance));
     wallet = next;
+    if (next.blackjack && !pending) remember(next.blackjack.bet);
+    if (id("blackjackResume"))
+      id("blackjackResume").hidden = !next.blackjack || game === "blackjack";
+    renderBlackjack(next.blackjack);
     id("pointsBalance").textContent = number(next.balance);
     if (id("redWager")) id("redWager").max = String(next.balance);
     id("pointsReset").textContent = "Resets " + next.season.end_et;
-    id("gamingProfile").hidden = !next.needs_profile;
+    id("gamingProfile").hidden =
+      !next.needs_profile || Boolean(next.play_blocked);
+    if (id("gamingNetworkNotice")) {
+      id("gamingNetworkNotice").hidden = !next.play_blocked;
+      id("gamingNetworkReason").textContent = next.play_blocked?.message || "";
+      id("gamingRestore").hidden =
+        next.play_blocked?.code !== "ip_wallet_exists";
+    }
     id("gamingIdentity").hidden = next.needs_profile;
     id("gamingPlayerName").textContent = next.name;
     if (id("fairCommitment"))
@@ -216,7 +261,7 @@
             const tr = document.createElement("tr");
             for (const text of [
               receipt.game,
-              number(receipt.wager),
+              number(receipt.result?.total_wager ?? receipt.wager),
               number(receipt.payout),
               points(receipt.net),
             ]) {
@@ -306,17 +351,19 @@
     }
   }
   const opt = () =>
-    game === "dice"
-      ? { chance: Number(id("diceChance").value), side: id("diceSide").value }
-      : game === "keno"
-        ? {
-            picks: [...selections].sort((a, b) => a - b),
-            risk: root.querySelector('[name="risk"]:checked').value,
-          }
-        : {
-            rows: Number(id("plinkoRows").value),
-            risk: root.querySelector('[name="risk"]:checked').value,
-          };
+    game === "blackjack"
+      ? { decks: 6 }
+      : game === "dice"
+        ? { chance: Number(id("diceChance").value), side: id("diceSide").value }
+        : game === "keno"
+          ? {
+              picks: [...selections].sort((a, b) => a - b),
+              risk: root.querySelector('[name="risk"]:checked').value,
+            }
+          : {
+              rows: Number(id("plinkoRows").value),
+              risk: root.querySelector('[name="risk"]:checked').value,
+            };
   const multiple = (units) =>
     (units / 10000).toLocaleString("en-US", { maximumFractionDigits: 4 }) + "×";
   function clearResult() {
@@ -332,7 +379,7 @@
     if (id("diceRoll")) {
       id("diceRoll").textContent = "—";
       id("diceRollLabel").textContent = "Your next roll";
-      id("diceMarker").style.left = "50%";
+      id("diceMarker").hidden = true;
     }
     if (id("plinkoResult"))
       id("plinkoResult").textContent =
@@ -355,6 +402,20 @@
       Number.isSafeInteger(wager) && wager > 0 ? BigInt(wager) : 0n;
     if (game === "dice") {
       id("diceChanceLabel").textContent = options.chance + "%";
+      const threshold =
+        options.side === "under" ? options.chance : 100 - options.chance;
+      if (id("diceBoardChance")) {
+        id("diceBoardChance").value = String(threshold);
+        id("diceBoardChance").setAttribute(
+          "aria-valuetext",
+          `${options.chance}% win chance; threshold ${threshold}`,
+        );
+        id("diceBoardChanceLabel").textContent =
+          `${options.chance}% win chance`;
+        const track = id("diceBoardChance").closest(".dice-track");
+        track.style.setProperty("--dice-threshold", threshold + "%");
+        track.classList.toggle("is-over", options.side === "over");
+      }
       id("diceTarget").textContent =
         options.side === "under"
           ? `Roll below ${options.chance.toFixed(2)}`
@@ -364,6 +425,11 @@
         " points returned on a win";
       id("payoutDescription").textContent =
         `${options.chance}% win chance · ${(99 / options.chance).toFixed(4)}× return · 99% expected return before whole-point rounding.`;
+      return;
+    }
+    if (game === "blackjack") {
+      id("payoutDescription").textContent =
+        "Natural Blackjack: 3:2 profit (2.5× returned). Normal win: 2×. Push: stake returned. Bust or loss: 0. Whole-point rounding applies. Odds depend on your decisions; no fixed RTP is claimed.";
       return;
     }
     const size = game === "keno" ? Math.max(1, selections.size) : options.rows,
@@ -687,7 +753,10 @@
       id("diceRollLabel").textContent = r.won
         ? "Target matched"
         : "Outside your target";
-      id("diceMarker").style.left = r.roll / 100 + "%";
+      id("diceMarker").hidden = false;
+      id("diceMarker").textContent = (r.roll / 100).toFixed(2);
+      id("diceMarker").style.left =
+        `calc(${r.roll / 100}% + ${12 - (24 * r.roll) / 10000}px)`;
     } else if (game === "keno") {
       root.querySelectorAll("[data-keno]").forEach((el) => {
         const n = Number(el.dataset.keno),
@@ -700,9 +769,20 @@
       });
       id("gameResult").textContent =
         `${r.hits} matched · ${points(receipt.net)} RedPoints net · ${number(receipt.payout)} returned`;
+    } else if (game === "blackjack") {
+      renderBlackjack({
+        ...r,
+        nonce: receipt.nonce,
+        round_id: receipt.request_id,
+      });
     } else {
       const rows = receipt.options.rows,
-        values = rules.plinko[String(rows)][receipt.options.risk].multipliers;
+        values = RedFair.table(
+          "plinko",
+          rows,
+          receipt.options.risk,
+          receipt.rules_version,
+        );
       // Keep the verified outcome visible even if animation is unavailable.
       id("plinkoResult").textContent =
         `Slot ${r.slot} · ${multiple(r.multiplier)} · path ${r.path.map((n) => (n ? "R" : "L")).join(" ")}`;
@@ -711,6 +791,7 @@
   }
   async function verifyReceipt(receipt, body) {
     const fields = [
+      "rules_version",
       "request_id",
       "season",
       "game",
@@ -720,12 +801,27 @@
       "wager",
       "options",
     ];
+    let timeout;
+    const verified = await Promise.race([
+      RedFair.verify(receipt, body.commitment),
+      new Promise((_, reject) => {
+        timeout = setTimeout(
+          () =>
+            reject(
+              Error(
+                "Verification timed out. Recover this round before playing again.",
+              ),
+            ),
+          10000,
+        );
+      }),
+    ]).finally(() => clearTimeout(timeout));
     if (
       !fields.every(
         (key) =>
           RedFair.canonical(receipt[key]) === RedFair.canonical(body[key]),
       ) ||
-      !(await RedFair.verify(receipt, body.commitment))
+      !verified
     ) {
       fatal = true;
       throw Error(
@@ -747,6 +843,7 @@
       // commitment before clearing a lost-response marker. Never debit again.
       await verifyReceipt(receipt, body);
       remember(null);
+      rememberAction(null);
       message();
       showReceipt(receipt);
     } catch (error) {
@@ -764,8 +861,14 @@
     try {
       const result = await api("/gaming/api/bet", body),
         receipt = result.receipt;
+      if (!receipt && result.wallet?.blackjack) {
+        renderWallet(result.wallet);
+        message();
+        return;
+      }
       await verifyReceipt(receipt, body);
       remember(null);
+      rememberAction(null);
       renderWallet(result.wallet);
       // Rendering is independent of the transaction lock. A verified drop
       // may keep animating while the next wager is submitted.
@@ -787,19 +890,162 @@
       controls();
     }
   }
+  function rememberAction(value) {
+    pendingAction = value;
+    try {
+      value
+        ? sessionStorage.setItem("rh.blackjack.action", JSON.stringify(value))
+        : sessionStorage.removeItem("rh.blackjack.action");
+    } catch {}
+  }
+  function renderBlackjack(hand) {
+    if (!id("blackjackPlayer")) return;
+    if (!hand) return;
+    for (const [target, cards] of [
+      ["blackjackPlayer", hand.player],
+      ["blackjackDealer", hand.dealer],
+    ]) {
+      const row = id(target);
+      // Retain existing card elements during balance polls and later hits.
+      cards.forEach((card, index) => {
+        const key = String(card),
+          old = row.children[index];
+        if (
+          old?.dataset.card === key &&
+          row.dataset.round === String(hand.round_id || hand.nonce)
+        )
+          return;
+        const node = document.createElement("span");
+        node.className = "playing-card";
+        node.dataset.card = key;
+        node.style.setProperty("--deal-delay", `${Math.min(index, 5) * 70}ms`);
+        if (card === null) {
+          node.classList.add("is-hidden");
+          node.textContent = "◆";
+          node.setAttribute("aria-label", "Face-down card");
+        } else {
+          const rank = (card % 13) + 1,
+            suit = Math.floor((card % 52) / 13);
+          const label = [
+            "",
+            "A",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "J",
+            "Q",
+            "K",
+          ][rank];
+          node.textContent = label + ["♠", "♥", "♣", "♦"][suit];
+          node.classList.toggle("is-red", suit === 1 || suit === 3);
+          node.setAttribute(
+            "aria-label",
+            label + " of " + ["spades", "hearts", "clubs", "diamonds"][suit],
+          );
+        }
+        old ? old.replaceWith(node) : row.append(node);
+      });
+      while (row.children.length > cards.length) row.lastElementChild.remove();
+      row.dataset.round = String(hand.round_id || hand.nonce);
+    }
+    id("blackjackPlayerTotal").textContent =
+      hand.player_total + (hand.player_soft ? " · soft" : "");
+    id("blackjackDealerTotal").textContent =
+      hand.dealer_total +
+      (hand.ended ? (hand.dealer_soft ? " · soft" : "") : " shown");
+    id("blackjackStatus").textContent = hand.ended
+      ? {
+          blackjack: "Blackjack!",
+          win: "You win.",
+          push: "Push — your stake is returned.",
+          lose: "Dealer wins.",
+        }[hand.status] || "Hand complete."
+      : `${number(hand.wager)} RedPoints in play. Choose Hit, Stand${hand.can_double ? " or Double" : ""}.`;
+  }
+  async function submitAction(body) {
+    if (busy || fatal || !secure || !verifierReady) return;
+    busy = true;
+    message();
+    controls();
+    try {
+      const result = await api("/gaming/api/blackjack/action", body);
+      if (result.receipt) {
+        await verifyReceipt(result.receipt, pending || wallet.blackjack.bet);
+        remember(null);
+        rememberAction(null);
+        renderWallet(result.wallet);
+        showReceipt(result.receipt);
+      } else {
+        rememberAction(null);
+        renderWallet(result.wallet);
+      }
+    } catch (error) {
+      if (error.definitive) {
+        rememberAction(null);
+        try {
+          renderWallet((await api("/gaming/api/state")).wallet);
+        } catch {}
+      }
+      message(
+        error.name === "AbortError"
+          ? "Move response timed out. Recover your move; it will not be played twice."
+          : error.message,
+      );
+    } finally {
+      busy = false;
+      controls();
+    }
+  }
+  root.querySelectorAll("[data-blackjack]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const hand = wallet?.blackjack;
+      if (
+        !hand ||
+        busy ||
+        fatal ||
+        pendingAction ||
+        !secure ||
+        !verifierReady ||
+        wallet.play_blocked
+      )
+        return;
+      const action = button.dataset.blackjack;
+      if (action === "double" && !hand.can_double) return;
+      const body = {
+        round_id: hand.round_id,
+        step: hand.step,
+        action,
+        action_id: randomHex(),
+      };
+      rememberAction(body);
+      void submitAction(body);
+    }),
+  );
+
   id("betForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (
-      busy ||
-      fatal ||
-      !secure ||
-      !verifierReady ||
-      !wallet ||
-      wallet.needs_profile
-    )
+    if (busy) return;
+    const blocked = playBlock();
+    if (blocked) {
+      message(blocked);
+      if (wallet?.needs_profile && !wallet.play_blocked) {
+        id("gamingUsername").scrollIntoView({ block: "center" });
+        id("gamingUsername").focus({ preventScroll: true });
+      }
       return;
+    }
+    if (pendingAction) {
+      void submitAction(pendingAction);
+      return;
+    }
     if (pending) {
-      void submit(pending);
+      void (pendingAction ? submitAction(pendingAction) : submit(pending));
       return;
     }
     const options = opt();
@@ -833,7 +1079,8 @@
     void submit(body);
   });
   id("retryBet")?.addEventListener("click", () => {
-    if (pending) void submit(pending);
+    if (pending)
+      void (pendingAction ? submitAction(pendingAction) : submit(pending));
   });
   id("gamingNameForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -887,12 +1134,12 @@
     if (locked()) return;
     try {
       const pool = Array.from({ length: 40 }, (_, index) => index + 1);
-      for (let index = 0; index < 5; index++) {
+      for (let index = 0; index < 10; index++) {
         const other = index + randomBelow(pool.length - index);
         [pool[index], pool[other]] = [pool[other], pool[index]];
       }
-      // Replace the selection only after all five picks were generated.
-      selections = new Set(pool.slice(0, 5));
+      // Replace the selection only after all ten picks were generated.
+      selections = new Set(pool.slice(0, 10));
       settingsChanged();
     } catch (error) {
       message(error.message);
@@ -904,28 +1151,41 @@
       el.addEventListener("input", settingsChanged);
       el.addEventListener("change", settingsChanged);
     });
-  id("diceChance")?.addEventListener(
-    "wheel",
-    (event) => {
-      const slider = event.currentTarget;
-      if (
-        locked() ||
-        slider.disabled ||
-        event.ctrlKey ||
-        event.metaKey ||
-        !event.deltaY
-      )
-        return;
-      // Scroll only over this control; leave page scrolling and pinch zoom alone.
-      event.preventDefault();
-      const previous = slider.value;
-      if (event.deltaY < 0) slider.stepUp();
-      else slider.stepDown();
-      if (slider.value !== previous)
-        slider.dispatchEvent(new Event("input", { bubbles: true }));
-    },
-    { passive: false },
-  );
+  function boardChanceChanged() {
+    if (locked()) return;
+    const threshold = Number(id("diceBoardChance").value);
+    const chance =
+      id("diceSide").value === "under" ? threshold : 100 - threshold;
+    id("diceChance").value = String(
+      Math.max(1, Math.min(95, Math.round(chance))),
+    );
+    settingsChanged();
+  }
+  id("diceBoardChance")?.addEventListener("input", boardChanceChanged);
+  id("diceBoardChance")?.addEventListener("change", boardChanceChanged);
+  for (const name of ["diceChance", "diceBoardChance"]) {
+    id(name)?.addEventListener(
+      "wheel",
+      (event) => {
+        if (
+          locked() ||
+          event.currentTarget.disabled ||
+          event.ctrlKey ||
+          event.metaKey ||
+          !event.deltaY
+        )
+          return;
+        event.preventDefault();
+        const slider = id("diceChance"),
+          previous = slider.value;
+        if (event.deltaY < 0) slider.stepUp();
+        else slider.stepDown();
+        if (slider.value !== previous)
+          slider.dispatchEvent(new Event("input", { bubbles: true }));
+      },
+      { passive: false },
+    );
+  }
   async function poll() {
     clearTimeout(timer);
     if (document.hidden || polling) return;
@@ -956,7 +1216,7 @@
   renderWallet(JSON.parse(root.dataset.wallet));
   remember(pending);
   payout();
-  if (pending)
+  if (pending && !wallet.blackjack)
     message(
       "An earlier wager needs confirmation. Recover its result before placing another.",
     );

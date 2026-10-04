@@ -505,44 +505,7 @@
         );
       }
       progress(value);
-      if (value.gaming) {
-        text(
-          id("gamingAdminReset"),
-          `Balances and rankings reset ${value.gaming.season.end_et}. Shared starting balance: 100,000 RedPoints per player. Browser profiles are self-reported, not verified Shuffle accounts.`,
-        );
-        for (const [game, leaders] of Object.entries(value.gaming.games)) {
-          const list = id("gamingLeaders-" + game);
-          if (!list) continue;
-          list.replaceChildren(
-            ...(leaders.length
-              ? leaders.map((row, index) => {
-                  const item = document.createElement("li");
-                  for (const [tag, content] of [
-                    ["strong", `${index + 1}. ${row.name}`],
-                    [
-                      "b",
-                      `${row.net > 0 ? "+" : ""}${row.net.toLocaleString()} net RP`,
-                    ],
-                    [
-                      "small",
-                      `${row.paid.toLocaleString()} returned · ${row.wagered.toLocaleString()} wagered · ${row.bets} rounds`,
-                    ],
-                    ["small", `Player ${row.player_tag}`],
-                  ]) {
-                    const node = document.createElement(tag);
-                    node.textContent = content;
-                    item.append(node);
-                  }
-                  return item;
-                })
-              : [
-                  Object.assign(document.createElement("li"), {
-                    textContent: "No completed rounds this week.",
-                  }),
-                ]),
-          );
-        }
-      }
+      if (value.gaming) globalThis.RedGamingAdmin?.render(value.gaming);
       const historyDiagnostics = id("historyDiagnostics");
       if (historyDiagnostics && value.history?.weeks) {
         historyDiagnostics.replaceChildren(

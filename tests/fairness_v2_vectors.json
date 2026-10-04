@@ -1,0 +1,3316 @@
+[
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-dice-0",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 0,
+    "wager": 12345,
+    "options": {
+      "chance": 1,
+      "side": "under"
+    },
+    "game": "dice",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000001",
+    "commitment": "ec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5",
+    "result": {
+      "roll": 1700,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-dice-1",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 1,
+    "wager": 12345,
+    "options": {
+      "chance": 50,
+      "side": "under"
+    },
+    "game": "dice",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000002",
+    "commitment": "9267d3dbed802941483f1afa2a6bc68de5f653128aca9bf1461c5d0a3ad36ed2",
+    "result": {
+      "roll": 9777,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-dice-2",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 2,
+    "wager": 12345,
+    "options": {
+      "chance": 95,
+      "side": "under"
+    },
+    "game": "dice",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000003",
+    "commitment": "d9147961436944f43cd99d28b2bbddbf452ef872b30c8279e255e7daafc7f946",
+    "result": {
+      "roll": 7830,
+      "won": true,
+      "payout": 12864
+    },
+    "payout": 12864,
+    "net": 519
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-dice-3",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 3,
+    "wager": 12345,
+    "options": {
+      "chance": 1,
+      "side": "over"
+    },
+    "game": "dice",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000004",
+    "commitment": "e38990d0c7fc009880a9c07c23842e886c6bbdc964ce6bdd5817ad357335ee6f",
+    "result": {
+      "roll": 3101,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-dice-4",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 4,
+    "wager": 12345,
+    "options": {
+      "chance": 50,
+      "side": "over"
+    },
+    "game": "dice",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000005",
+    "commitment": "96de8fc8c256fa1e1556d41af431cace7dca68707c78dd88c3acab8b17164c47",
+    "result": {
+      "roll": 1795,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-dice-5",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 5,
+    "wager": 12345,
+    "options": {
+      "chance": 95,
+      "side": "over"
+    },
+    "game": "dice",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000006",
+    "commitment": "d1ec675902ef1633427ca360b290b0b3045a0d9058ddb5e648b4c3c3224c5c68",
+    "result": {
+      "roll": 7617,
+      "won": true,
+      "payout": 12864
+    },
+    "payout": 12864,
+    "net": 519
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-6",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 6,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000007",
+    "commitment": "48428bdb7ddd829410d6bbb924fdeb3a3d7e88c2577bffae073b990c6f061d08",
+    "result": {
+      "drawn": [
+        9,
+        27,
+        29,
+        33,
+        5,
+        25,
+        37,
+        6,
+        18,
+        23
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-7",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 7,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000008",
+    "commitment": "38df1c1f64a24a77b23393bca50dff872e31edc4f3b5aa3b90ad0b82f4f089b6",
+    "result": {
+      "drawn": [
+        37,
+        19,
+        40,
+        4,
+        13,
+        11,
+        28,
+        10,
+        20,
+        29
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-8",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 8,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000009",
+    "commitment": "887bf140ce0b6a497ed8db5c7498a45454f0b2bd644b0313f7a82acc084d0027",
+    "result": {
+      "drawn": [
+        11,
+        34,
+        38,
+        14,
+        23,
+        16,
+        20,
+        5,
+        35,
+        27
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-9",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 9,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000a",
+    "commitment": "81b04ae4944e1704a65bc3a57b6fc3b06a6b923e3c558d611f6a854b5539ec13",
+    "result": {
+      "drawn": [
+        15,
+        4,
+        19,
+        38,
+        2,
+        1,
+        40,
+        36,
+        28,
+        21
+      ],
+      "hits": 2,
+      "multiplier": 64350,
+      "payout": 79440
+    },
+    "payout": 79440,
+    "net": 67095
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-10",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 10,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000b",
+    "commitment": "c09322c415a5ac9ffb1a6cde7e927f480cc1d8afaf22b39a47797966c08e9c4b",
+    "result": {
+      "drawn": [
+        11,
+        9,
+        19,
+        6,
+        26,
+        40,
+        16,
+        8,
+        23,
+        34
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-11",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 11,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000c",
+    "commitment": "a82872b96246dac512ddf0515f5da862a92ecebebcb92537b6e3e73199694c45",
+    "result": {
+      "drawn": [
+        10,
+        4,
+        1,
+        27,
+        39,
+        25,
+        40,
+        8,
+        23,
+        36
+      ],
+      "hits": 1,
+      "multiplier": 1274,
+      "payout": 1572
+    },
+    "payout": 1572,
+    "net": -10773
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-12",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 12,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000d",
+    "commitment": "2a3f128306951f1ded174b8803ee1f0df0c6404bbe92682be21fd84accf5d540",
+    "result": {
+      "drawn": [
+        35,
+        24,
+        34,
+        9,
+        27,
+        8,
+        23,
+        29,
+        16,
+        38
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-13",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 13,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000e",
+    "commitment": "e14f5be83831f7fefa669d5a84daaa56ec01477dafc6701a83f243bc2228bb11",
+    "result": {
+      "drawn": [
+        5,
+        10,
+        8,
+        19,
+        24,
+        21,
+        32,
+        9,
+        34,
+        35
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-14",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 14,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000f",
+    "commitment": "3ba2581d53fbf070be34b6d6a2382faf1b8e76a3ade45b31c0c7c90ea289874e",
+    "result": {
+      "drawn": [
+        30,
+        17,
+        10,
+        28,
+        33,
+        37,
+        19,
+        20,
+        7,
+        31
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-15",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 15,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000010",
+    "commitment": "a3ecde0c1d9daa6b7a949c87a1af7963c69cb2c412fb3086c495f14630c17b7b",
+    "result": {
+      "drawn": [
+        21,
+        32,
+        33,
+        24,
+        1,
+        34,
+        6,
+        5,
+        15,
+        18
+      ],
+      "hits": 1,
+      "multiplier": 5850,
+      "payout": 7221
+    },
+    "payout": 7221,
+    "net": -5124
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-16",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 16,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000011",
+    "commitment": "99fdc3a44c06c65a307ea38acda009243287ccbbdb2b0ce423a25bb9b525d7f2",
+    "result": {
+      "drawn": [
+        25,
+        7,
+        17,
+        1,
+        21,
+        38,
+        27,
+        29,
+        35,
+        11
+      ],
+      "hits": 1,
+      "multiplier": 1294,
+      "payout": 1597
+    },
+    "payout": 1597,
+    "net": -10748
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-17",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 17,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000012",
+    "commitment": "c03eee8aa25e1b9fd36a28c6d3321bd0d0534a72034c40fcd9d75c70a610037e",
+    "result": {
+      "drawn": [
+        11,
+        24,
+        10,
+        28,
+        13,
+        23,
+        8,
+        1,
+        6,
+        36
+      ],
+      "hits": 1,
+      "multiplier": 65,
+      "payout": 80
+    },
+    "payout": 80,
+    "net": -12265
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-18",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 18,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000013",
+    "commitment": "d3b2f026768fb94e95a4848cf669d1f120a6c73cd795450e52de6bddcadd883c",
+    "result": {
+      "drawn": [
+        23,
+        21,
+        33,
+        4,
+        25,
+        5,
+        6,
+        37,
+        26,
+        32
+      ],
+      "hits": 2,
+      "multiplier": 16473,
+      "payout": 20335
+    },
+    "payout": 20335,
+    "net": 7990
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-19",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 19,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000014",
+    "commitment": "4d68bf921d7fcf9f99a27e28f59b875c234193f9c330403dcf29f1872be57ccd",
+    "result": {
+      "drawn": [
+        15,
+        16,
+        40,
+        28,
+        27,
+        33,
+        39,
+        12,
+        7,
+        32
+      ],
+      "hits": 0,
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-20",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 20,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000015",
+    "commitment": "4290a8e5d23d8147282ec48c2c0ee8edcf541e2aa9b1264f792746c36eb17841",
+    "result": {
+      "drawn": [
+        31,
+        5,
+        2,
+        10,
+        18,
+        34,
+        13,
+        28,
+        23,
+        27
+      ],
+      "hits": 2,
+      "multiplier": 3198,
+      "payout": 3947
+    },
+    "payout": 3947,
+    "net": -8398
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-21",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 21,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000016",
+    "commitment": "3953a4e918f9b33a3ed6d8675b1fa3090fee373a32bb59f00b00dc678d143041",
+    "result": {
+      "drawn": [
+        31,
+        38,
+        9,
+        35,
+        26,
+        10,
+        14,
+        32,
+        30,
+        5
+      ],
+      "hits": 1,
+      "multiplier": 3064,
+      "payout": 3782
+    },
+    "payout": 3782,
+    "net": -8563
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-22",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 22,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000017",
+    "commitment": "4303ef0796bae63d9f52f7bf61ae2d37b57889452f2ad07bba769d90d354fe37",
+    "result": {
+      "drawn": [
+        38,
+        30,
+        29,
+        4,
+        23,
+        37,
+        11,
+        31,
+        7,
+        17
+      ],
+      "hits": 1,
+      "multiplier": 426,
+      "payout": 525
+    },
+    "payout": 525,
+    "net": -11820
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-23",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 23,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000018",
+    "commitment": "ac6e83f1e79a8a779646460bf6d26bfc08be3b7ad2fd3b265b094fd42b8843fa",
+    "result": {
+      "drawn": [
+        35,
+        26,
+        32,
+        14,
+        36,
+        21,
+        1,
+        28,
+        15,
+        6
+      ],
+      "hits": 2,
+      "multiplier": 1442,
+      "payout": 1780
+    },
+    "payout": 1780,
+    "net": -10565
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-24",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 24,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000019",
+    "commitment": "9380f4d9453d4b61778811d8355c429827d164b5d03019ff0b1265fc52b8332c",
+    "result": {
+      "drawn": [
+        13,
+        29,
+        15,
+        20,
+        9,
+        30,
+        34,
+        12,
+        22,
+        7
+      ],
+      "hits": 1,
+      "multiplier": 2372,
+      "payout": 2928
+    },
+    "payout": 2928,
+    "net": -9417
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-25",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 25,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001a",
+    "commitment": "0eac71efb3323eaf788a5334df213c4335748273f501afaeb4274b351125a17c",
+    "result": {
+      "drawn": [
+        19,
+        27,
+        34,
+        10,
+        1,
+        7,
+        20,
+        24,
+        38,
+        23
+      ],
+      "hits": 2,
+      "multiplier": 4406,
+      "payout": 5439
+    },
+    "payout": 5439,
+    "net": -6906
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-26",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 26,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001b",
+    "commitment": "06cde6cffab5316fb4f92f31b1b65e4bf89b4f435097e0f35d5cef09dfabbf47",
+    "result": {
+      "drawn": [
+        35,
+        30,
+        10,
+        26,
+        18,
+        36,
+        37,
+        33,
+        5,
+        34
+      ],
+      "hits": 1,
+      "multiplier": 5,
+      "payout": 6
+    },
+    "payout": 6,
+    "net": -12339
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-27",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 27,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001c",
+    "commitment": "ae2c63f9eff394b28d4a87520bd92dadac321b2806c1edd784a5ccbf08fd25ee",
+    "result": {
+      "drawn": [
+        4,
+        28,
+        12,
+        21,
+        32,
+        13,
+        17,
+        34,
+        24,
+        14
+      ],
+      "hits": 1,
+      "multiplier": 1892,
+      "payout": 2335
+    },
+    "payout": 2335,
+    "net": -10010
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-28",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 28,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001d",
+    "commitment": "71b0a2d864b04cf24fc99d2ccd806bba5f0fef35c0aa7d432af96383944d4327",
+    "result": {
+      "drawn": [
+        23,
+        12,
+        10,
+        30,
+        33,
+        18,
+        37,
+        20,
+        1,
+        32
+      ],
+      "hits": 1,
+      "multiplier": 186,
+      "payout": 229
+    },
+    "payout": 229,
+    "net": -12116
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-29",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 29,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001e",
+    "commitment": "4e99747a3d41fe8318c4419b7b688741d8ef7096368129e14894ddbdac31795e",
+    "result": {
+      "drawn": [
+        4,
+        5,
+        37,
+        38,
+        22,
+        1,
+        25,
+        39,
+        29,
+        30
+      ],
+      "hits": 3,
+      "multiplier": 6832,
+      "payout": 8434
+    },
+    "payout": 8434,
+    "net": -3911
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-30",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 30,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001f",
+    "commitment": "3b9c3a9ec9b9ea8f5b66ffdfc9e157f48f183a5b2b21b17ece0e9ceec4a7c9e0",
+    "result": {
+      "drawn": [
+        28,
+        40,
+        5,
+        26,
+        29,
+        10,
+        11,
+        38,
+        39,
+        3
+      ],
+      "hits": 2,
+      "multiplier": 6183,
+      "payout": 7632
+    },
+    "payout": 7632,
+    "net": -4713
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-31",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 31,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000020",
+    "commitment": "9633190bf775667487569d0f5e7adfebc899e55ab9d62aaabe9f8754a3fa9c20",
+    "result": {
+      "drawn": [
+        18,
+        28,
+        13,
+        25,
+        39,
+        11,
+        12,
+        7,
+        1,
+        4
+      ],
+      "hits": 3,
+      "multiplier": 10691,
+      "payout": 13198
+    },
+    "payout": 13198,
+    "net": 853
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-32",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 32,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000021",
+    "commitment": "e3872ccfe29e8ddfc6fe1dca36f1acc5707d9bf3ce979ed15365bb735137a767",
+    "result": {
+      "drawn": [
+        14,
+        18,
+        1,
+        23,
+        33,
+        8,
+        25,
+        9,
+        19,
+        37
+      ],
+      "hits": 3,
+      "multiplier": 3994,
+      "payout": 4930
+    },
+    "payout": 4930,
+    "net": -7415
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-33",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 33,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "low"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000022",
+    "commitment": "46f3ce0180a8791e8c622020c2bbdf688405a3e3cf9a8061309dc71fcaa4b7ac",
+    "result": {
+      "drawn": [
+        35,
+        14,
+        7,
+        3,
+        24,
+        25,
+        13,
+        23,
+        18,
+        16
+      ],
+      "hits": 2,
+      "multiplier": 5148,
+      "payout": 6355
+    },
+    "payout": 6355,
+    "net": -5990
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-34",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 34,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "medium"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000023",
+    "commitment": "7fcf17c37d3415fbe6dbab0f0fd197d0328b5720e438b13546449179f5ab3e6c",
+    "result": {
+      "drawn": [
+        20,
+        1,
+        36,
+        22,
+        5,
+        24,
+        27,
+        28,
+        33,
+        32
+      ],
+      "hits": 2,
+      "multiplier": 1539,
+      "payout": 1899
+    },
+    "payout": 1899,
+    "net": -10446
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-keno-35",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 35,
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "high"
+    },
+    "game": "keno",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000024",
+    "commitment": "fa282a9c595eea43e942f1678efbff1f4b821a6b27aef7df0ae71b9de53fc8ce",
+    "result": {
+      "drawn": [
+        24,
+        39,
+        14,
+        34,
+        6,
+        35,
+        26,
+        31,
+        22,
+        23
+      ],
+      "hits": 1,
+      "multiplier": 1,
+      "payout": 1
+    },
+    "payout": 1,
+    "net": -12344
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-36",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 36,
+    "wager": 12345,
+    "options": {
+      "rows": 8,
+      "risk": "low"
+    },
+    "game": "plinko",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000025",
+    "commitment": "ec5ec87d286f6b476b516f52e0e554925b0d990a27130e676354d801ecc39429",
+    "result": {
+      "path": [
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "slot": 4,
+      "multiplier": 5000,
+      "payout": 6172
+    },
+    "payout": 6172,
+    "net": -6173
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-37",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 37,
+    "wager": 12345,
+    "options": {
+      "rows": 8,
+      "risk": "medium"
+    },
+    "game": "plinko",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000026",
+    "commitment": "4f3b739ea87efe9836ba4eb45954118152ed2e0500db02b8cc70ed216734a084",
+    "result": {
+      "path": [
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1
+      ],
+      "slot": 6,
+      "multiplier": 13000,
+      "payout": 16048
+    },
+    "payout": 16048,
+    "net": 3703
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-38",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 38,
+    "wager": 12345,
+    "options": {
+      "rows": 8,
+      "risk": "high"
+    },
+    "game": "plinko",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000027",
+    "commitment": "62da635f399f5c1e36370cd28c1648a94125652b48e7bdb93f240203688a5345",
+    "result": {
+      "path": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1
+      ],
+      "slot": 7,
+      "multiplier": 40000,
+      "payout": 49380
+    },
+    "payout": 49380,
+    "net": 37035
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-39",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 39,
+    "wager": 12345,
+    "options": {
+      "rows": 12,
+      "risk": "low"
+    },
+    "game": "plinko",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000028",
+    "commitment": "1391854aca800961b604acd16f59e5ec4fd025a2fb0eb9ae166976bc2d42cb3c",
+    "result": {
+      "path": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      "slot": 5,
+      "multiplier": 10000,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-40",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 40,
+    "wager": 12345,
+    "options": {
+      "rows": 12,
+      "risk": "medium"
+    },
+    "game": "plinko",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000029",
+    "commitment": "8b3680742cf524ec3552ca3db84735a40c96538fe641634e1a261bbc5416db78",
+    "result": {
+      "path": [
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "slot": 5,
+      "multiplier": 6000,
+      "payout": 7407
+    },
+    "payout": 7407,
+    "net": -4938
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-41",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 41,
+    "wager": 12345,
+    "options": {
+      "rows": 12,
+      "risk": "high"
+    },
+    "game": "plinko",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002a",
+    "commitment": "0a28e9ffef0073f9a6a674cf57ee77307f38f0f1bebb087888d9011ed0eeefdf",
+    "result": {
+      "path": [
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      "slot": 7,
+      "multiplier": 2000,
+      "payout": 2469
+    },
+    "payout": 2469,
+    "net": -9876
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-42",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 42,
+    "wager": 12345,
+    "options": {
+      "rows": 16,
+      "risk": "low"
+    },
+    "game": "plinko",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002b",
+    "commitment": "7607861a685a66edb41f818ca921d9ebbbe4897b892cdcef24d41f989c43f7eb",
+    "result": {
+      "path": [
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "slot": 9,
+      "multiplier": 10000,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-43",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 43,
+    "wager": 12345,
+    "options": {
+      "rows": 16,
+      "risk": "medium"
+    },
+    "game": "plinko",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002c",
+    "commitment": "e2375957ad31a202ce6190cd9b5f133c3a1ee02e116d7c0c2aad6d39cd7ffc3f",
+    "result": {
+      "path": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "slot": 11,
+      "multiplier": 15000,
+      "payout": 18517
+    },
+    "payout": 18517,
+    "net": 6172
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-44",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 44,
+    "wager": 12345,
+    "options": {
+      "rows": 16,
+      "risk": "high"
+    },
+    "game": "plinko",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002d",
+    "commitment": "f66e7487deb9b520bba6729c749b7f6931656ccd58e0e756768e190874d32709",
+    "result": {
+      "path": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "slot": 10,
+      "multiplier": 2000,
+      "payout": 2469
+    },
+    "payout": 2469,
+    "net": -9876
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-0",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 0,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000001",
+    "commitment": "ec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        309,
+        7,
+        139
+      ],
+      "dealer": [
+        304,
+        76
+      ],
+      "player_total": 28,
+      "dealer_total": 16,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 24690,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-1",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 1,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000002",
+    "commitment": "9267d3dbed802941483f1afa2a6bc68de5f653128aca9bf1461c5d0a3ad36ed2",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        44,
+        230,
+        178
+      ],
+      "dealer": [
+        156,
+        277
+      ],
+      "player_total": 26,
+      "dealer_total": 16,
+      "player_soft": false,
+      "dealer_soft": true,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-2",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 2,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000003",
+    "commitment": "d9147961436944f43cd99d28b2bbddbf452ef872b30c8279e255e7daafc7f946",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        54,
+        55
+      ],
+      "dealer": [
+        242,
+        251,
+        79,
+        50
+      ],
+      "player_total": 7,
+      "dealer_total": 26,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 12345,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-3",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 3,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000004",
+    "commitment": "e38990d0c7fc009880a9c07c23842e886c6bbdc964ce6bdd5817ad357335ee6f",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        177,
+        137,
+        12
+      ],
+      "dealer": [
+        232,
+        84
+      ],
+      "player_total": 27,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 24690,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-4",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 4,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000005",
+    "commitment": "96de8fc8c256fa1e1556d41af431cace7dca68707c78dd88c3acab8b17164c47",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        140,
+        99,
+        223
+      ],
+      "dealer": [
+        86,
+        11
+      ],
+      "player_total": 22,
+      "dealer_total": 19,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-5",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 5,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000006",
+    "commitment": "d1ec675902ef1633427ca360b290b0b3045a0d9058ddb5e648b4c3c3224c5c68",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        38,
+        45
+      ],
+      "dealer": [
+        148,
+        178,
+        180
+      ],
+      "player_total": 17,
+      "dealer_total": 26,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 12345,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-6",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 6,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000007",
+    "commitment": "48428bdb7ddd829410d6bbb924fdeb3a3d7e88c2577bffae073b990c6f061d08",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        109,
+        292,
+        173
+      ],
+      "dealer": [
+        155,
+        49
+      ],
+      "player_total": 18,
+      "dealer_total": 20,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 24690,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-7",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 7,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000008",
+    "commitment": "38df1c1f64a24a77b23393bca50dff872e31edc4f3b5aa3b90ad0b82f4f089b6",
+    "actions": [
+      "hit",
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        237,
+        260,
+        9
+      ],
+      "dealer": [
+        45,
+        56,
+        108
+      ],
+      "player_total": 15,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-8",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 8,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000009",
+    "commitment": "887bf140ce0b6a497ed8db5c7498a45454f0b2bd644b0313f7a82acc084d0027",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        276,
+        266
+      ],
+      "dealer": [
+        19,
+        36
+      ],
+      "player_total": 11,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-9",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 9,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000a",
+    "commitment": "81b04ae4944e1704a65bc3a57b6fc3b06a6b923e3c558d611f6a854b5539ec13",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        148,
+        93
+      ],
+      "dealer": [
+        231,
+        156
+      ],
+      "player_total": 9,
+      "dealer_total": 21,
+      "player_soft": false,
+      "dealer_soft": true,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-10",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 10,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000b",
+    "commitment": "c09322c415a5ac9ffb1a6cde7e927f480cc1d8afaf22b39a47797966c08e9c4b",
+    "actions": [
+      "hit",
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        61,
+        287,
+        65
+      ],
+      "dealer": [
+        197,
+        85,
+        252
+      ],
+      "player_total": 13,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-11",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 11,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000c",
+    "commitment": "a82872b96246dac512ddf0515f5da862a92ecebebcb92537b6e3e73199694c45",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        0,
+        43
+      ],
+      "dealer": [
+        34,
+        303,
+        157,
+        211
+      ],
+      "player_total": 16,
+      "dealer_total": 20,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-12",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 12,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000d",
+    "commitment": "2a3f128306951f1ded174b8803ee1f0df0c6404bbe92682be21fd84accf5d540",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        121,
+        91,
+        53
+      ],
+      "dealer": [
+        247,
+        143,
+        67,
+        168,
+        2
+      ],
+      "player_total": 18,
+      "dealer_total": 18,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "push",
+      "total_wager": 24690,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-13",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 13,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000e",
+    "commitment": "e14f5be83831f7fefa669d5a84daaa56ec01477dafc6701a83f243bc2228bb11",
+    "actions": [
+      "hit",
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        46,
+        275,
+        239
+      ],
+      "dealer": [
+        67,
+        79,
+        277,
+        241
+      ],
+      "player_total": 17,
+      "dealer_total": 18,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-14",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 14,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000f",
+    "commitment": "3ba2581d53fbf070be34b6d6a2382faf1b8e76a3ade45b31c0c7c90ea289874e",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        85,
+        9
+      ],
+      "dealer": [
+        182,
+        77
+      ],
+      "player_total": 18,
+      "dealer_total": 21,
+      "player_soft": false,
+      "dealer_soft": true,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-15",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 15,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000010",
+    "commitment": "a3ecde0c1d9daa6b7a949c87a1af7963c69cb2c412fb3086c495f14630c17b7b",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        247,
+        86,
+        250
+      ],
+      "dealer": [
+        67,
+        255,
+        48
+      ],
+      "player_total": 14,
+      "dealer_total": 22,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 24690,
+      "payout": 49380
+    },
+    "payout": 49380,
+    "net": 24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-16",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 16,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000011",
+    "commitment": "99fdc3a44c06c65a307ea38acda009243287ccbbdb2b0ce423a25bb9b525d7f2",
+    "actions": [
+      "hit",
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        105,
+        289,
+        11
+      ],
+      "dealer": [
+        18,
+        142,
+        191
+      ],
+      "player_total": 16,
+      "dealer_total": 26,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 12345,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-17",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 17,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000012",
+    "commitment": "c03eee8aa25e1b9fd36a28c6d3321bd0d0534a72034c40fcd9d75c70a610037e",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        248,
+        297
+      ],
+      "dealer": [
+        48,
+        294
+      ],
+      "player_total": 12,
+      "dealer_total": 19,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-18",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 18,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000013",
+    "commitment": "d3b2f026768fb94e95a4848cf669d1f120a6c73cd795450e52de6bddcadd883c",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        22,
+        305,
+        241
+      ],
+      "dealer": [
+        173,
+        214
+      ],
+      "player_total": 25,
+      "dealer_total": 12,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 24690,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-19",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 19,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000014",
+    "commitment": "4d68bf921d7fcf9f99a27e28f59b875c234193f9c330403dcf29f1872be57ccd",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        297,
+        230,
+        69
+      ],
+      "dealer": [
+        189,
+        214
+      ],
+      "player_total": 25,
+      "dealer_total": 15,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-20",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 20,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000015",
+    "commitment": "4290a8e5d23d8147282ec48c2c0ee8edcf541e2aa9b1264f792746c36eb17841",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        63,
+        299
+      ],
+      "dealer": [
+        129,
+        78
+      ],
+      "player_total": 21,
+      "dealer_total": 21,
+      "player_soft": true,
+      "dealer_soft": true,
+      "status": "push",
+      "total_wager": 12345,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-21",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 21,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000016",
+    "commitment": "3953a4e918f9b33a3ed6d8675b1fa3090fee373a32bb59f00b00dc678d143041",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        195,
+        245
+      ],
+      "dealer": [
+        114,
+        34
+      ],
+      "player_total": 21,
+      "dealer_total": 19,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "blackjack",
+      "total_wager": 12345,
+      "payout": 30862
+    },
+    "payout": 30862,
+    "net": 18517
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-22",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 22,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000017",
+    "commitment": "4303ef0796bae63d9f52f7bf61ae2d37b57889452f2ad07bba769d90d354fe37",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        309,
+        80,
+        306
+      ],
+      "dealer": [
+        48,
+        291,
+        27
+      ],
+      "player_total": 21,
+      "dealer_total": 18,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 12345,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-23",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 23,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000018",
+    "commitment": "ac6e83f1e79a8a779646460bf6d26bfc08be3b7ad2fd3b265b094fd42b8843fa",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        113,
+        27
+      ],
+      "dealer": [
+        45,
+        290,
+        151
+      ],
+      "player_total": 12,
+      "dealer_total": 21,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-24",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 24,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000019",
+    "commitment": "9380f4d9453d4b61778811d8355c429827d164b5d03019ff0b1265fc52b8332c",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        120,
+        276,
+        91
+      ],
+      "dealer": [
+        111,
+        12
+      ],
+      "player_total": 19,
+      "dealer_total": 18,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 24690,
+      "payout": 49380
+    },
+    "payout": 49380,
+    "net": 24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-25",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 25,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001a",
+    "commitment": "0eac71efb3323eaf788a5334df213c4335748273f501afaeb4274b351125a17c",
+    "actions": [
+      "hit",
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        79,
+        183,
+        15
+      ],
+      "dealer": [
+        299,
+        213
+      ],
+      "player_total": 7,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": true,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-26",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 26,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001b",
+    "commitment": "06cde6cffab5316fb4f92f31b1b65e4bf89b4f435097e0f35d5cef09dfabbf47",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        237,
+        91
+      ],
+      "dealer": [
+        180,
+        101
+      ],
+      "player_total": 15,
+      "dealer_total": 20,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-27",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 27,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001c",
+    "commitment": "ae2c63f9eff394b28d4a87520bd92dadac321b2806c1edd784a5ccbf08fd25ee",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        56,
+        287,
+        2
+      ],
+      "dealer": [
+        83,
+        189,
+        268
+      ],
+      "player_total": 10,
+      "dealer_total": 23,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 24690,
+      "payout": 49380
+    },
+    "payout": 49380,
+    "net": 24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-28",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 28,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001d",
+    "commitment": "71b0a2d864b04cf24fc99d2ccd806bba5f0fef35c0aa7d432af96383944d4327",
+    "actions": [
+      "hit",
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        247,
+        99,
+        270
+      ],
+      "dealer": [
+        84,
+        288,
+        233
+      ],
+      "player_total": 20,
+      "dealer_total": 20,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "push",
+      "total_wager": 12345,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-29",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 29,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001e",
+    "commitment": "4e99747a3d41fe8318c4419b7b688741d8ef7096368129e14894ddbdac31795e",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        195,
+        217
+      ],
+      "dealer": [
+        282,
+        183
+      ],
+      "player_total": 21,
+      "dealer_total": 12,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "blackjack",
+      "total_wager": 12345,
+      "payout": 30862
+    },
+    "payout": 30862,
+    "net": 18517
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-30",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 30,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001f",
+    "commitment": "3b9c3a9ec9b9ea8f5b66ffdfc9e157f48f183a5b2b21b17ece0e9ceec4a7c9e0",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        135,
+        205,
+        253
+      ],
+      "dealer": [
+        194,
+        114
+      ],
+      "player_total": 23,
+      "dealer_total": 20,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 24690,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-31",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 31,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000020",
+    "commitment": "9633190bf775667487569d0f5e7adfebc899e55ab9d62aaabe9f8754a3fa9c20",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        259,
+        298,
+        78
+      ],
+      "dealer": [
+        200,
+        123,
+        5
+      ],
+      "player_total": 21,
+      "dealer_total": 19,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 12345,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-32",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 32,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000021",
+    "commitment": "e3872ccfe29e8ddfc6fe1dca36f1acc5707d9bf3ce979ed15365bb735137a767",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        58,
+        91
+      ],
+      "dealer": [
+        226,
+        142,
+        131
+      ],
+      "player_total": 18,
+      "dealer_total": 18,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "push",
+      "total_wager": 12345,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-33",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 33,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000022",
+    "commitment": "46f3ce0180a8791e8c622020c2bbdf688405a3e3cf9a8061309dc71fcaa4b7ac",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        230,
+        130
+      ],
+      "dealer": [
+        300,
+        274
+      ],
+      "player_total": 21,
+      "dealer_total": 4,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "blackjack",
+      "total_wager": 12345,
+      "payout": 30862
+    },
+    "payout": 30862,
+    "net": 18517
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-34",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 34,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000023",
+    "commitment": "7fcf17c37d3415fbe6dbab0f0fd197d0328b5720e438b13546449179f5ab3e6c",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        171,
+        75,
+        151
+      ],
+      "dealer": [
+        272,
+        297
+      ],
+      "player_total": 22,
+      "dealer_total": 20,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-35",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 35,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000024",
+    "commitment": "fa282a9c595eea43e942f1678efbff1f4b821a6b27aef7df0ae71b9de53fc8ce",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        65,
+        95
+      ],
+      "dealer": [
+        295,
+        37
+      ],
+      "player_total": 16,
+      "dealer_total": 20,
+      "player_soft": true,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-36",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 36,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000025",
+    "commitment": "ec5ec87d286f6b476b516f52e0e554925b0d990a27130e676354d801ecc39429",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        138,
+        196,
+        305
+      ],
+      "dealer": [
+        46,
+        112
+      ],
+      "player_total": 18,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 24690,
+      "payout": 49380
+    },
+    "payout": 49380,
+    "net": 24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-37",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 37,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000026",
+    "commitment": "4f3b739ea87efe9836ba4eb45954118152ed2e0500db02b8cc70ed216734a084",
+    "actions": [
+      "hit"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        153,
+        217,
+        191
+      ],
+      "dealer": [
+        263,
+        161
+      ],
+      "player_total": 30,
+      "dealer_total": 10,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "lose",
+      "total_wager": 12345,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-38",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 38,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000027",
+    "commitment": "62da635f399f5c1e36370cd28c1648a94125652b48e7bdb93f240203688a5345",
+    "actions": [],
+    "result": {
+      "ended": true,
+      "player": [
+        218,
+        156
+      ],
+      "dealer": [
+        169,
+        184
+      ],
+      "player_total": 21,
+      "dealer_total": 14,
+      "player_soft": true,
+      "dealer_soft": true,
+      "status": "blackjack",
+      "total_wager": 12345,
+      "payout": 30862
+    },
+    "payout": 30862,
+    "net": 18517
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-blackjack-39",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 39,
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "game": "blackjack",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000028",
+    "commitment": "1391854aca800961b604acd16f59e5ec4fd025a2fb0eb9ae166976bc2d42cb3c",
+    "actions": [
+      "double"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        235,
+        215,
+        116
+      ],
+      "dealer": [
+        113,
+        197,
+        55
+      ],
+      "player_total": 20,
+      "dealer_total": 17,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 24690,
+      "payout": 49380
+    },
+    "payout": 49380,
+    "net": 24690
+  },
+  {
+    "rules_version": "redpoints-v2",
+    "season": "1790719200",
+    "request_id": "v2-test-plinko-100",
+    "client_seed": "published-reference",
+    "client_salt": "abababababababababababababababab",
+    "nonce": 100,
+    "wager": 12345,
+    "options": {
+      "rows": 16,
+      "risk": "high"
+    },
+    "game": "plinko",
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000010404",
+    "commitment": "7c54e1fb76679ef4950ba2377e81d907881710310354798a01665f8df28b7fad",
+    "result": {
+      "path": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "slot": 16,
+      "multiplier": 10000000,
+      "payout": 12345000
+    },
+    "payout": 12345000,
+    "net": 12332655
+  }
+]

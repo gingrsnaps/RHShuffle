@@ -1,9 +1,45 @@
-/* Independent RedPoints v1 verifier. Uses Web Crypto and integer arithmetic.
+/* Independent RedPoints v1/v2 verifier. Uses Web Crypto and integer arithmetic.
    No API call, wallet mutation, or provider dependency is involved. */
 (() => {
   "use strict";
-  const VERSION = "redpoints-v1",
+  const VERSION = "redpoints-v2",
     SCALE = 10000n;
+  const SUPPORTED_VERSIONS = ["redpoints-v1", VERSION];
+  const PLINKO_TABLES = {
+    8: {
+      low: [56000, 21000, 11000, 10000, 5000, 10000, 11000, 21000, 56000],
+      medium: [130000, 30000, 13000, 7000, 4000, 7000, 13000, 30000, 130000],
+      high: [290000, 40000, 15000, 3000, 2000, 3000, 15000, 40000, 290000],
+    },
+    12: {
+      low: [
+        100000, 30000, 16000, 14000, 11000, 10000, 5000, 10000, 11000, 14000,
+        16000, 30000, 100000,
+      ],
+      medium: [
+        330000, 110000, 40000, 20000, 11000, 6000, 3000, 6000, 11000, 20000,
+        40000, 110000, 330000,
+      ],
+      high: [
+        1700000, 240000, 81000, 20000, 7000, 2000, 2000, 2000, 7000, 20000,
+        81000, 240000, 1700000,
+      ],
+    },
+    16: {
+      low: [
+        160000, 90000, 20000, 14000, 14000, 12000, 11000, 10000, 5000, 10000,
+        11000, 12000, 14000, 14000, 20000, 90000, 160000,
+      ],
+      medium: [
+        1100000, 410000, 100000, 50000, 30000, 15000, 10000, 5000, 3000, 5000,
+        10000, 15000, 30000, 50000, 100000, 410000, 1100000,
+      ],
+      high: [
+        10000000, 1300000, 260000, 90000, 40000, 20000, 2000, 2000, 2000, 2000,
+        2000, 20000, 40000, 90000, 260000, 1300000, 10000000,
+      ],
+    },
+  };
   const hex = (bytes) =>
     [...new Uint8Array(bytes)]
       .map((n) => n.toString(16).padStart(2, "0"))
@@ -27,7 +63,14 @@
     for (let i = 1; i <= k; i++) out = (out * BigInt(n - i + 1)) / BigInt(i);
     return out;
   }
-  function table(game, size, risk) {
+  function table(game, size, risk, version = VERSION) {
+    if (!SUPPORTED_VERSIONS.includes(version))
+      throw Error("Unknown game rules version");
+    if (game === "plinko" && version === VERSION) {
+      const values = PLINKO_TABLES[size]?.[risk];
+      if (!values) throw Error("Unknown Plinko board");
+      return [...values];
+    }
     const power = { low: 2n, medium: 4n, high: 7n }[risk];
     if (!power) throw Error("Unknown risk level");
     const denom = game === "keno" ? comb(40, 10) : 2n ** BigInt(size);
@@ -60,7 +103,7 @@
       data = new Uint8Array(0),
       pos = 0;
     const context = [
-      VERSION,
+      receipt.rules_version || VERSION,
       receipt.season,
       receipt.game,
       receipt.client_seed,
@@ -91,6 +134,91 @@
       }
     };
   }
+  function handTotal(cards) {
+    const ranks = cards.map((card) => (card % 13) + 1);
+    const base = ranks.reduce((sum, rank) => sum + Math.min(rank, 10), 0);
+    const soft = ranks.includes(1) && base + 10 <= 21;
+    return [base + (soft ? 10 : 0), soft];
+  }
+  async function blackjackOutcome(pick, wager, actions) {
+    if (!Array.isArray(actions) || actions.length > 32)
+      throw Error("Invalid action history");
+    const shoe = Array.from({ length: 312 }, (_, i) => i);
+    let cursor = 0;
+    async function card() {
+      const other = cursor + (await pick(shoe.length - cursor));
+      [shoe[cursor], shoe[other]] = [shoe[other], shoe[cursor]];
+      return shoe[cursor++];
+    }
+    const player = [await card()],
+      dealer = [await card()];
+    player.push(await card());
+    dealer.push(await card());
+    let [pt] = handTotal(player),
+      [dt] = handTotal(dealer);
+    let ended = pt === 21 || dt === 21;
+    const natural = pt === 21 && dt !== 21;
+    let stake = BigInt(wager);
+    for (let index = 0; index < actions.length; index++) {
+      const action = actions[index];
+      if (ended || !["hit", "stand", "double"].includes(action))
+        throw Error("Illegal Blackjack move");
+      if (action === "double") {
+        if (index || player.length !== 2)
+          throw Error("Double requires first two cards");
+        stake = BigInt(wager) * 2n;
+      }
+      if (action === "hit" || action === "double") player.push(await card());
+      [pt] = handTotal(player);
+      ended = action === "stand" || action === "double" || pt >= 21;
+    }
+    if (
+      ended &&
+      !(player.length === 2 && (pt === 21 || dt === 21)) &&
+      pt <= 21
+    ) {
+      while (handTotal(dealer)[0] < 17) dealer.push(await card());
+    }
+    const [player_total, player_soft] = handTotal(player),
+      [dealer_total, dealer_soft] = handTotal(dealer);
+    let status = "playing",
+      payout = 0n;
+    if (ended) {
+      if (dealer.length === 2 && dealer_total === 21)
+        status = player.length === 2 && player_total === 21 ? "push" : "lose";
+      else if (natural) status = "blackjack";
+      else if (player_total > 21) status = "lose";
+      else if (dealer_total > 21 || player_total > dealer_total) status = "win";
+      else if (player_total === dealer_total) status = "push";
+      else status = "lose";
+      payout =
+        status === "blackjack"
+          ? (BigInt(wager) * 5n) / 2n
+          : status === "win"
+            ? stake * 2n
+            : status === "push"
+              ? stake
+              : 0n;
+    }
+    if (
+      payout > BigInt(Number.MAX_SAFE_INTEGER) ||
+      stake > BigInt(Number.MAX_SAFE_INTEGER)
+    )
+      throw Error("Points overflow");
+    return {
+      ended,
+      player,
+      dealer,
+      player_total,
+      dealer_total,
+      player_soft,
+      dealer_soft,
+      status,
+      total_wager: Number(stake),
+      payout: Number(payout),
+    };
+  }
+
   async function outcome(seed, r) {
     const pick = await draw(seed, r),
       o = r.options;
@@ -115,7 +243,12 @@
         drawn.push(numbers[i]);
       }
       const hits = drawn.filter((n) => o.picks.includes(n)).length,
-        multiplier = table("keno", o.picks.length, o.risk)[hits];
+        multiplier = table(
+          "keno",
+          o.picks.length,
+          o.risk,
+          r.rules_version || VERSION,
+        )[hits];
       return {
         drawn,
         hits,
@@ -123,11 +256,18 @@
         payout: Number((BigInt(r.wager) * BigInt(multiplier)) / SCALE),
       };
     }
+    if (r.game === "blackjack") {
+      if (r.rules_version !== VERSION)
+        throw Error("Blackjack requires current rules");
+      return blackjackOutcome(pick, r.wager, r.actions || []);
+    }
     if (r.game !== "plinko") throw Error("Unknown game");
     const path = [];
     for (let i = 0; i < o.rows; i++) path.push(await pick(2));
     const slot = path.reduce((a, b) => a + b, 0),
-      multiplier = table("plinko", o.rows, o.risk)[slot];
+      multiplier = table("plinko", o.rows, o.risk, r.rules_version || VERSION)[
+        slot
+      ];
     return {
       path,
       slot,
@@ -138,7 +278,7 @@
   async function verify(r, expectedCommitment) {
     if (
       !r ||
-      r.rules_version !== VERSION ||
+      !SUPPORTED_VERSIONS.includes(r.rules_version) ||
       typeof r.season !== "string" ||
       typeof r.client_seed !== "string" ||
       typeof r.client_salt !== "string" ||
@@ -156,6 +296,7 @@
       dice: ["chance", "side"],
       keno: ["picks", "risk"],
       plinko: ["risk", "rows"],
+      blackjack: ["decks"],
     }[r.game];
     if (!keys || canonical(Object.keys(o).sort()) !== canonical(keys))
       return false;
@@ -165,6 +306,13 @@
         o.chance < 1 ||
         o.chance > 95 ||
         !["under", "over"].includes(o.side)
+      )
+        return false;
+    } else if (r.game === "blackjack") {
+      if (
+        o.decks !== 6 ||
+        r.rules_version !== VERSION ||
+        !Array.isArray(r.actions)
       )
         return false;
     } else {
@@ -195,9 +343,18 @@
     return (
       canonical(result) === canonical(r.result) &&
       r.payout === result.payout &&
-      r.net === result.payout - r.wager
+      (r.game !== "blackjack" || result.ended) &&
+      r.net ===
+        result.payout - (r.game === "blackjack" ? result.total_wager : r.wager)
     );
   }
-  globalThis.RedFair = { VERSION, canonical, table, outcome, verify };
+  globalThis.RedFair = {
+    VERSION,
+    SUPPORTED_VERSIONS,
+    canonical,
+    table,
+    outcome,
+    verify,
+  };
   if (typeof module !== "undefined") module.exports = globalThis.RedFair;
 })();

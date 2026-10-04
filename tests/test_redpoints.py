@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 
 import test_app
-from fairness import GAMES, VERSION, commitment, outcome, table, verify
+from fairness import GAMES, VERSION, LEGACY_VERSION, commitment, outcome, table, verify
 from gaming import Gaming, GamingError, season, validate_gaming
 from race_support import EASTERN
 from storage import StoreError
@@ -23,16 +23,25 @@ class RedPointsTests(unittest.TestCase):
 
     def player(self, name='RedPlayer'):
         client=self.app.test_client()
+        self.next_ip = getattr(self, 'next_ip', 0) + 1
+        client.environ_base['REMOTE_ADDR'] = '198.51.100.' + str(self.next_ip)
         state=client.get('/gaming/api/state').json
         response=client.post('/gaming/api/profile', json={'username':name}, headers={'X-CSRF-Token':state['player_csrf']})
         self.assertEqual(response.status_code,200,response.text)
         return client,response.json
 
     def body(self, wallet, game='dice', **values):
-        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=[1,2,3,4,5],risk='medium'),'plinko':dict(rows=16,risk='high')}[game]
+        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='medium'),'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6)}[game]
         return dict(rules_version=VERSION, game=game, request_id='test-bet-'+str(wallet['nonce']), season=wallet['season']['id'],
                     nonce=wallet['nonce'], commitment=wallet['commitment'], client_seed='player-chosen-seed',
                     client_salt='0123456789abcdef'*2,wager=100,options=options,**values)
+
+    def finish_hand(self, client, response, csrf):
+        if response.json.get('receipt') is None and response.json.get('wallet', {}).get('blackjack'):
+            hand=response.json['wallet']['blackjack']
+            response=client.post('/gaming/api/blackjack/action', json=dict(round_id=hand['round_id'], step=hand['step'], action='stand', action_id='finish-test-hand'), headers={'X-CSRF-Token':csrf})
+            self.assertEqual(response.status_code,200,response.text)
+        return response
 
     def play(self, client, game, now):
         value=client.get('/gaming/api/state').json
@@ -40,6 +49,7 @@ class RedPointsTests(unittest.TestCase):
         with patch('gaming.time.time',return_value=now):
             response=client.post('/gaming/api/bet',json=body,headers={'X-CSRF-Token':value['player_csrf']})
         self.assertEqual(response.status_code,200,response.text)
+        response = self.finish_hand(client, response, value['player_csrf'])
         self.assertTrue(verify(response.json['receipt'],body['commitment']))
         return response.json,body
 
@@ -59,7 +69,7 @@ class RedPointsTests(unittest.TestCase):
             renamed=client.post('/gaming/api/profile',json={'username':'NewRedName'},headers={'X-CSRF-Token':state['player_csrf']})
         self.assertEqual(renamed.status_code,200,renamed.text)
         self.assertEqual(renamed.json['wallet']['balance'],expected)
-        self.assertEqual(client.get('/gaming/api/state').json['wallet']['nonce'],3)
+        self.assertEqual(client.get('/gaming/api/state').json['wallet']['nonce'],len(GAMES))
         self.assertEqual(client.get('/play/api/state').json['state']['you']['display_name'],'NewRedName')
 
     def test_duplicate_response_after_lost_reply_and_concurrent_tabs(self):
@@ -73,26 +83,26 @@ class RedPointsTests(unittest.TestCase):
         self.assertEqual(client.post('/gaming/api/bet',json=changed,headers={'X-CSRF-Token':value['player_csrf']}).status_code,409)
 
     def test_atomic_concurrent_wallet_debit(self):
-        game=self.app.extensions['gaming']; wallet=game.view('parallel','Parallel')
+        game=self.app.extensions['gaming']; wallet=game.view('parallel','Parallel', client_ip='198.51.100.1')
         body=self.body(wallet)
         with ThreadPoolExecutor(max_workers=5) as pool:
-            results=list(pool.map(lambda _:game.bet('parallel','Parallel',body),range(5)))
+            results=list(pool.map(lambda _:game.bet('parallel','Parallel',body, client_ip='198.51.100.1'),range(5)))
         self.assertEqual(sum(not result['duplicate'] for result in results),1)
-        self.assertEqual(game.view('parallel','Parallel')['nonce'],1)
+        self.assertEqual(game.view('parallel','Parallel', client_ip='198.51.100.1')['nonce'],1)
 
     def test_tuesday_reset_and_dst_without_reloading_accounts(self):
         cutoff=datetime(2026,11,3,18,tzinfo=EASTERN).timestamp()
-        game=self.app.extensions['gaming']; wallet=game.view('weekly','Weekly',cutoff-2)
+        game=self.app.extensions['gaming']; wallet=game.view('weekly','Weekly',cutoff-2, client_ip='198.51.100.1')
         self.assertEqual(wallet['season']['end_time']-wallet['season']['start_time'],169*3600)
         body=self.body(wallet)
-        bet=game.bet('weekly','Weekly',body,cutoff-2)
-        reset=game.view('weekly','Weekly',cutoff)
+        bet=game.bet('weekly','Weekly',body,cutoff-2, client_ip='198.51.100.1')
+        reset=game.view('weekly','Weekly',cutoff, client_ip='198.51.100.1')
         self.assertEqual(reset['balance'],100000)
         self.assertTrue(all(row['bets']==0 for row in reset['stats'].values()))
         self.assertEqual(reset['nonce'],1)
         self.assertEqual(reset['receipts'][0],bet['receipt'])
-        self.assertTrue(game.bet('weekly','Weekly',body,cutoff+1)['duplicate'])
-        with self.assertRaises(GamingError):game.bet('weekly','Weekly',{**body,'request_id':'a-new-id'},cutoff+2)
+        self.assertTrue(game.bet('weekly','Weekly',body,cutoff+1, client_ip='198.51.100.1')['duplicate'])
+        with self.assertRaises(GamingError):game.bet('weekly','Weekly',{**body,'request_id':'a-new-id'},cutoff+2, client_ip='198.51.100.1')
 
     def test_tampering_overdraft_and_csrf_rejected(self):
         client,value=self.player();body=self.body(value['wallet'])
@@ -107,17 +117,20 @@ class RedPointsTests(unittest.TestCase):
         self.assertEqual(client.get('/gaming/api/state').json['wallet']['nonce'],0)
 
     def test_save_failure_rolls_back_wager_and_seed(self):
-        game=self.app.extensions['gaming'];before=game.view('writer','Writer'); body=self.body(before)
+        game=self.app.extensions['gaming'];before=game.view('writer','Writer', client_ip='198.51.100.1'); body=self.body(before)
         with patch('storage.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(StoreError):game.bet('writer','Writer',body)
-        self.assertEqual(game.view('writer','Writer'),before)
+            with self.assertRaises(StoreError):game.bet('writer','Writer',body, client_ip='198.51.100.1')
+        self.assertEqual(game.view('writer','Writer', client_ip='198.51.100.1'),before)
 
     def test_top_five_for_each_game_private_and_sorted_by_net(self):
         game=self.app.extensions['gaming'];now=time.time()
         for n in range(7):
             for index,item in enumerate(GAMES):
-                wallet=game.view('private'+str(n),'PrivatePlayer'+str(n))
-                game.bet('private'+str(n),'PrivatePlayer'+str(n),self.body(wallet,item),now+index*2)
+                wallet=game.view('private'+str(n),'PrivatePlayer'+str(n), client_ip='198.51.100.'+str(n+1))
+                result=game.bet('private'+str(n),'PrivatePlayer'+str(n),self.body(wallet,item),now+index*2, client_ip='198.51.100.'+str(n+1))
+                if item=='blackjack' and not result['receipt']:
+                    hand=result['wallet']['blackjack']
+                    game.blackjack_action('private'+str(n),'PrivatePlayer'+str(n),dict(round_id=hand['round_id'],step=hand['step'],action='stand',action_id='top-five-stand'),now+index*2,client_ip='198.51.100.'+str(n+1))
         value=self.client.get('/admin/gaming/status').json
         for item in GAMES:
             rows=value['games'][item]
@@ -143,10 +156,10 @@ class RedPointsTests(unittest.TestCase):
         state=backup.json['redpoints'];next(iter(state['players'].values()))['balance']+=1
         with self.assertRaises(ValueError):validate_gaming(state)
 
-    def test_one_hundred_shared_network_players_have_independent_allowances(self):
+    def test_one_hundred_distinct_networks_can_all_play(self):
         game=self.app.extensions['gaming']
         for n in range(100):
-            wallet=game.view('shared-'+str(n),'Shared'+str(n))
+            wallet=game.view('shared-'+str(n),'Shared'+str(n), client_ip='198.51.100.'+str(n+1))
             self.assertEqual(wallet['balance'],100000)
         self.assertEqual(len(game.recovery()['players']),100)
 
@@ -190,6 +203,7 @@ class RedPointsTests(unittest.TestCase):
             response = client.post('/gaming/api/bet', json=body,
                                    headers={'X-CSRF-Token':state['player_csrf']})
             self.assertEqual(response.status_code, 200, response.text)
+            response = self.finish_hand(client, response, state['player_csrf'])
             self.assertEqual(response.json['receipt']['wager'], 100000)
             self.assertEqual(response.json['wallet']['balance'], response.json['receipt']['payout'])
             self.assertTrue(verify(response.json['receipt'], body['commitment']))
@@ -198,15 +212,15 @@ class RedPointsTests(unittest.TestCase):
     def test_consecutive_distinct_bets_need_no_clock_advance(self):
         game = self.app.extensions['gaming']
         now = time.time()
-        wallet = game.view('no-delay', 'NoDelay', now)
+        wallet = game.view('no-delay', 'NoDelay', now, client_ip='198.51.100.1')
         for nonce in range(40):
             body = {**self.body(wallet), 'wager':1}
-            result = game.bet('no-delay', 'NoDelay', body, now)
+            result = game.bet('no-delay', 'NoDelay', body, now, client_ip='198.51.100.1')
             self.assertEqual(result['receipt']['nonce'], nonce)
             self.assertEqual(result['receipt']['at'], int(now))
             self.assertFalse(result['duplicate'])
             wallet = result['wallet']
-        duplicate = game.bet('no-delay', 'NoDelay', body, now)
+        duplicate = game.bet('no-delay', 'NoDelay', body, now, client_ip='198.51.100.1')
         self.assertTrue(duplicate['duplicate'])
         self.assertEqual(duplicate['wallet']['nonce'], 40)
         validate_gaming(game.recovery())
@@ -234,7 +248,7 @@ class FairMathTests(unittest.TestCase):
         for game,sizes in [('keno',range(1,11)),('plinko',(8,12,16))]:
             for size in sizes:
                 for risk in ('low','medium','high'):
-                    values=table(game,size,risk)
+                    values=table(game,size,risk,LEGACY_VERSION)
                     probabilities=[Fraction(comb(size,i)*comb(40-size,10-i),comb(40,10)) if game=='keno' else Fraction(comb(size,i),2**size) for i in range(size+1)]
                     self.assertEqual(sum(probabilities),1)
                     rtp=sum(p*Fraction(v,10000) for p,v in zip(probabilities,values))

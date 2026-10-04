@@ -1,114 +1,68 @@
-# Validation — 2026.10.04-redpoints
+# Validation — 2026.10.04-redpoints-arcade2
 
-## Results
+These results are for the current packaging and admin-dashboard revision. Tests
+use disposable state, synthetic players and no live provider workers. None of the
+fixture balances, usernames, IPs or test admin accounts are production seed data.
 
-| Check | Result |
+| Current check | Result |
 | --- | --- |
-| Complete backend regression suite | **182 tests passed**, Python 3.12/Linux, including original race/admin/boss coverage and new Gaming/history/preview tests. |
-| DOM and actual-HTTP interface suite | **70 checks passed** with Node, jsdom and a disposable Waitress server. |
-| Independent fairness implementation | **47 synthetic reference receipts** match in Python and browser JavaScript; tampered returns and wrong commitments fail verification. |
-| Native Chromium | All three real wager flows, shared balances, duplicate request handling, reload persistence, admin rankings and local receipt verification passed. |
-| Responsive layouts | 1440 px desktop, 390 px mobile and 320 px narrow layout checks passed. All seven configured public header links are visible on mobile. |
-| HP-bar pixels | Actual red fill verified at 100%, 75%, 25% and 0% remaining on desktop/mobile; defeated text moves oppositely. |
-| Screenshots | 20 captured screens across home, history, Gaming, all three games and admin. Selected previews are included in docs. |
+| Python wallet/API tests | 17 passed in `test_redpoints.py`. |
+| Python IP/admin tests | 12 passed in `test_gaming_ip.py`, including seven players per game counted before selecting five. |
+| Python Blackjack rules | 8 passed in `test_blackjack.py`. |
+| Independent browser verifier | Three tests passed against all 47 legacy and 86 v2 reference receipts, including the 1000× Plinko edge and doubled Blackjack stakes. |
+| Admin DOM checks | Three passed: four populated lists, full counts/IPs; expired sessions clear private data and block late responses; release mismatches request reload. |
+| Native Chromium admin | Real login, direct `/admin/gaming`, installed-release label, four lists of five players, 28 completed synthetic rounds across seven players. Session-expiry cleanup passed. |
+| Native Chromium games | Plinko request, independent verification and exact slot landing; Blackjack hidden hole card, reload/resume, Stand and verified settlement; same player/balance on Dice; actual Dice dragging to 73%; Keno Quick pick 10. |
+| Shared public IP | A second browser could not claim a second wallet or read the original player's identity/results. Recovery remains required. |
+| Animation observation | Plinko's median frame interval was approximately 16–17 ms in the local browser runs. This is an observation, not a guaranteed frame rate on every device. |
+| Browser script errors | None in the exercised routes. |
 
-## New backend coverage
+The complete and cumulative update archives contain byte-identical versions of
+every shared file. The full archive includes Blackjack and its imports. Original
+private provider settings, account seed and logos are retained unchanged. Runtime
+state, caches, test dependencies and generated fixture data are excluded.
 
-- One allowance shared across Dice, Keno and Plinko; no refill on refresh, name
-  edits, recovery or a restart with the same state file.
-- Exact Tuesday 6 PM Eastern rollover, including a 169-hour autumn DST week;
-  weekly counters reset while nonces and saved proof receipts remain continuous.
-- Five concurrent submissions of the same wager commit only once. Duplicate
-  responses preserve the original receipt and do not debit again. Stale nonces
-  cannot spend a commitment already used by another tab.
-- Whole-point input validation, configured wager bounds, altered commitments and
-  nonce rejection, player CSRF isolation and private seed suppression.
-- Disk-write failure rolls back balance, seed, nonce and receipt together.
-- Private Top 5 limits and descending net-winnings order for each game; unrelated
-  public pages never contain those full submitted names.
-- Full recovery retains wallet, seed, nonce, receipt and signed player identity;
-  inconsistent balances are rejected instead of silently imported.
-- 100 independent Gaming profiles receive separate allowances. Existing boss
-  tests additionally register/attack concurrently through the same proxy.
-- ETag 304 wallet polling and a changed ETag after settlement. Idle polls do not
-  mark recovery stale, but a saved wager does.
-- Probability tables cover every Keno pick count and Plinko row/risk setting;
-  exact expected table return is bounded and Plinko payouts are symmetric.
-- One failed completed date range does not starve the other three. Shared access
-  failures defer all weeks visibly, without issuing four rejected requests.
-- Exact saved race snapshots are rescued as masked provisional places while the
-  provider is unavailable. They are not relabeled as final standings.
-- Admin history refresh requires current authentication and CSRF, queues work,
-  never calls the provider inside the web request, and honors retry times.
-- Latest-hit names are masked in the homepage summary; health edits are described
-  without exposing admin identity. Native preview checks exercise local name/avatar
-  drafts without submitting them.
+The older patch's broader 203 Python / 47 JavaScript checks and its Chromium and
+Firefox runs remain historical evidence. They were not all rerun for this
+dashboard/distribution revision. The current targeted checks exercise the changed
+paths and their wallet/game dependencies. Exact probability tables and independent
+reproduction are stronger checks than claiming random trials alone prove fairness.
 
-## Retained coverage
+## Limits
 
-The existing suite exercises the sole launcher through real HTTP; native admin
-login and dashboard tabs; races, date previews/publication, manual source refresh,
-weighted wagers, Code Red Top 100, masking, CSV, overrides, accounts and passwords;
-recovery, admin-only image uploads and boss edits; unlimited hits, 30-second
-cooldowns, no regeneration, random weakness and eight badges; stale-response
-rejection, signed profile recovery, saved usernames, per-browser throttles,
-multiple players behind one proxy, UTF-8 startup, JSON transactions and legacy
-read-only import. Rejected saves retain drafts and do not report false success.
+The user's hosted site, DigitalOcean deployment and live Shuffle/Kick responses
+were not accessed or changed. The earlier complete archive was missing the newer
+gaming changes; this is a verified distribution mismatch, not proof of which files
+are currently deployed on the user's server. The visible release marker resolves
+that ambiguity after installation.
 
-Admin requests retain session/role checks, stale revisions and CSRF requirements.
-The native browser saves boss settings, verifies a confirmed receipt, then sends
-a stale form and confirms the typed draft remains. Gaming's full-name tables are
-inspected after actual local wager submissions.
+Rankings are actual current-week settled RedPoints totals. They cannot recover
+missing historical records from an erased local save. With the requested JSON-only
+storage, App Platform container replacement can erase local files. Restore a saved
+private recovery export when moving/deploying the app. No SQL dependency was added.
 
-## Evidence and limits
+Tests ran on Linux, not native Windows/Python 3.14. The deployed runtime declaration
+is unchanged. These checks are not a penetration test, independent fairness
+certification, or a throughput benchmark.
 
-Tests run against temporary local saves and synthetic provider responses. They
-never reset deployed data or submit real Shuffle wagers. The 47 published seed
-vectors are intentionally public synthetic values, not active player seeds.
-There is no statistical claim that 47 examples alone prove all random outcomes;
-exact probability/formula checks and independent implementations provide the
-separate algorithm checks.
+## Repeat targeted checks
 
-**The live Shuffle historical requests from this workspace timed out, without an
-HTTP status.** The code fixes a reproduced queue-starvation bug and verifies
-successful backfill/failure handling using controlled provider responses. It does
-not claim that the live account returned four completed weeks. No Kick live check
-or DigitalOcean deployment was performed for this update. Use the new authenticated
-history diagnostics after deployment to identify remaining upstream failures.
-
-These checks are not a throughput benchmark, penetration test or independent
-fairness certification. The Linux test environment did not run Windows/Python 3.14
-natively; the earlier encoding failure is covered by a simulated default-encoding
-test. The declared hosted runtime remains Python 3.13.12.
-
-The original private settings, original account seed, PNG and ICO are compared
-byte for byte during packaging. The existing badge calculation function is also
-compared with the prior version. The ZIP includes every local import and excludes
-runtime state, test fixtures, caches and test dependencies. The exact extracted
-package receives a separate startup/import/recovery/Gaming smoke check before
-release; its results are recorded in the package manifest.
-
-The previews use synthetic player names, points, dates, health and provider data.
-They illustrate the shipped interface, not a live-account result. On App Platform,
-local-only files remain ephemeral; the recovery export is a manual checkpoint,
-not a promise of uninterrupted persistence during container replacement.
-
-## Repeat locally (developer checks only)
+Install the normal Python requirements first. The website only needs
+`python wager_backend.py`; the commands below are developer checks.
 
 ```bash
-python -m unittest discover -s tests -v
-python tests/render_fixtures.py .test-fixtures
+python -m unittest discover -s tests -p test_redpoints.py -v
+python -m unittest discover -s tests -p test_gaming_ip.py -v
+python -m unittest discover -s tests -p test_blackjack.py -v
 npm --prefix tests install --ignore-scripts
-npm --prefix tests test
+node --test tests/test_fairness_frontend.cjs tests/test_admin_gaming_frontend.cjs
 ```
 
-Native browser checks:
+The admin DOM test generates synthetic HTML/JSON in a temporary directory and
+removes it afterward. Set `RH_TEST_PYTHON` if Python is not available as `python3`.
+For the existing full interface suite, run
+`python tests/render_fixtures.py .test-fixtures` first, then `npm --prefix tests test`.
 
-```bash
-npm --prefix tests exec -- playwright install chromium
-npm --prefix tests run test:visual
-```
-
-Set `RH_TEST_PYTHON` or `RH_BROWSER_EXECUTABLE` only if the tools are installed at
-nondefault paths. The website itself requires no Node/Chromium setup. Its only
-run command is `python wager_backend.py`.
+Selected screenshots in `docs/` illustrate synthetic UI states. Gaming, Plinko,
+Blackjack and private-ranking previews reflect this release; homepage and boss
+previews retain the previous release's unchanged designs.
