@@ -23,6 +23,7 @@ from boss import validate_boss
 from boss_avatar import validate_avatar
 from presentation import valid_marker
 from weekly_history import clean_history
+from gaming import validate_gaming
 
 LOG = logging.getLogger("redhunllef")
 
@@ -143,6 +144,7 @@ class Store:
                 if existing.get('boss') is not None:
                     validate_boss(existing['boss'])
                 validate_avatar(existing.get('avatar'))
+                validate_gaming(existing.get('gaming'))
                 LOG.info("ACCOUNTS Existing accounts, settings and raid retained from JSON.")
                 return
             value = self._import_sqlite()
@@ -158,6 +160,7 @@ class Store:
                         secret_key=secrets.token_hex(32), site_settings=self.config.site)
                 admin, _ = upgrade_store(legacy, self.config.site, {})
                 weekly = clean_history(admin.pop('weekly_history', None))
+                redpoints = validate_gaming(admin.pop('redpoints', None))
                 game = admin.pop("community_boss", None)
                 game = validate_boss(game) if game is not None else None
                 avatar = validate_avatar(admin.pop("community_boss_avatar", None))
@@ -174,7 +177,7 @@ class Store:
                 saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
                                         raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
                 value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved, "weekly_history":weekly},
-                             boss=game, avatar=avatar, checkpoint=marker, recoveries=[])
+                             boss=game, gaming=redpoints, avatar=avatar, checkpoint=marker, recoveries=[])
                 self.backup_in(value, "before-rebuild-import", {"admin": legacy, "source": source})
                 LOG.info("MIGRATION Imported %s; original accounts, hashes and dates retained.", source)
             atomic_json(self.path, value)

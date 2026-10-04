@@ -1,65 +1,83 @@
 # Start RedHunllef
 
-Release **2026.10.03-community-gui** — complete configured package.
+Release **2026.10.04-redpoints** — complete configured package.
 
-Install dependencies once, then run the sole launcher:
+Install dependencies once, then run only the existing launcher:
 
 ```bash
 python -m pip install -r requirements.txt
 python wager_backend.py
 ```
 
-Keep all supporting Python files, templates and static files together.
-No database service, SQL setup, account-creation command or extra worker is needed.
-The app creates `data/state.json` and imports an existing previous local save.
+Keep all 17 root Python modules, templates and static files together. They are
+imports, not separate launch commands. No database server, Node build, account
+creation utility or extra worker is needed.
 
-- Website: `/`
-- Public history: `/history` — four completed Tuesday 6 PM Eastern weeks; masked Top 25.
-- Community boss: `/play`
-- Admin: `/admin`
-- Original supplied Superadmin: **gingrsnaps / enok2121**. Existing accounts/passwords win.
+| Destination | Address |
+| --- | --- |
+| Homepage / wager leaderboard | `/` |
+| Completed-week history | `/history` |
+| Community boss | `/play` |
+| Gaming dashboard | `/gaming` |
+| Dice / Keno / Plinko | `/gaming/dice`, `/gaming/keno`, `/gaming/plinko` |
+| Fairness / local receipt verifier | `/gaming/fairness` |
+| Admin / private game Top 5 lists | `/admin`, `/admin?tab=gaming` |
+| Requested external Points Shop | `https://botrix.live/k/redhunllef/shop` |
 
-When updating, preserve current `data/`, `private/`, settings and environment
-configuration. Copy the application code from this ZIP into matching paths.
-Do not replace newer private seeds with the bundled originals.
+The original supplied Superadmin remains **gingrsnaps / enok2121** on a fresh
+install. Existing accounts and changed passwords take precedence. Original private
+provider configuration and logos are included. Keep this configured package private.
 
-DigitalOcean App Platform: use the same build/run commands, port **8080**,
-health check **/healthz**, and **one instance**. Set `APP_ENV=production`,
-`TRUST_APP_PLATFORM=1`, and `SESSION_COOKIE_SECURE=always`.
-Remove stale database environment bindings. No database component is needed.
+## Updating an existing installation
 
-App Platform loses local files on redeployment/container replacement. Before
-redeploying, download **Settings → Private recovery file** as the Superadmin and
-save it as `private/recovery.seed.json` in your private repository. New changes
-after the export can be lost. No external backup integration has been added.
+Preserve current `data/`, private files, recovery seeds, runtime settings and player
+cookies. Merge code into the matching paths; do not replace newer private seeds
+with bundled originals. There is no reason to reset the boss or clear cookies.
+Reload after restarting and check `/healthz` for **2026.10.04-redpoints**.
 
-Hits are **unlimited per day and week**, with a **30-second cooldown**. The eight
-achievements and their existing display remain unchanged. Boss screens check every
-5 seconds; Shuffle/Kick check automatically every 60 seconds.
+On a persistent Linux host the existing `data/state.json` wins. A previous local
+SQLite save is imported read-only once if no JSON exists. Corrupt saves stop
+startup instead of silently resetting progress.
 
-This update fixes community access and saved usernames. Players use signed browser
-cookies; shared IPs no longer block registration or share attack cooldowns. Changing
-IP addresses and missing proxy headers no longer disable an existing player.
-**Do not reset the raid or clear cookies to install this fix.** Preserve existing
-saved data and reload the game after updating. Recovery codes restore a lost cookie.
-Cosmetic rally, next-raid presets, edit previews, boss admin history and live status
-remain available. Connection-release and household-approval controls are retired
-because those restrictions no longer apply.
-Original credentials, logos, live feeds, private Code Red list and admin-only boss
-uploads/name/HP/damage controls remain intact.
+## DigitalOcean App Platform
 
-Read `README.md` for migration/deployment details and `FULL_CODE_BLOCKS.md` for the
-complete source in individual code blocks.
+Use one Web Service, one instance, source directory containing `wager_backend.py`,
+port **8080**, health path **/healthz**. Set these runtime variables:
 
-This release also repairs the username form itself: page-session expiry no longer
-blocks a valid player, Save has a native server fallback, and stale name reservations
-cannot lock out a new browser. Name reuse does not recover another player's stats.
-After restarting, reload `/play` and confirm `/healthz` reports
-`2026.10.03-community-gui`. Keep your current cookies and save files.
+```text
+APP_ENV=production
+PORT=8080
+TRUST_APP_PLATFORM=1
+SESSION_COOKIE_SECURE=always
+```
 
-The homepage now fills from 0% to 100% defeated and checks saved boss state every
-5 seconds. Arena/admin remaining-HP bars still drain from full to empty. History fills
-automatically from Shuffle date-range requests and retains confirmed results in
-the existing JSON save. Public history names are masked before delivery. Its page
-checks every 60 seconds; completed source periods are rechecked hourly/daily. Saved
-historical prizes appear only when settings for that exact week are available.
+**Build:** `python -m pip install -r requirements.txt`
+
+**Run:** `python wager_backend.py`
+
+No database component is needed. Remove old unresolved database bindings.
+The included `app.yaml` is a template; set its private GitHub repository name.
+
+**App Platform replaces local files during redeploys/container replacement.**
+Before a planned deployment, download **Settings → Private recovery file** as the
+Superadmin and save it as `private/recovery.seed.json` in your private repository.
+A fresh container imports that checkpoint. Changes after export, or after an
+unexpected container loss, cannot be recovered without another saved copy.
+The full export now includes RedPoints, current fairness seeds and receipts.
+
+## What stays automatic
+
+- Shuffle/Kick: 60-second background source checks and public/admin status refresh.
+- Boss: five-second display checks, no regeneration, unlimited daily/weekly hits,
+  30-second server cooldown, random weakness and eight unchanged achievements.
+- Gaming: one shared 100,000-point allowance per browser profile, reset Tuesday at
+  6 PM Eastern. No refill on refresh/name changes. Five-second wallet checks.
+- History: four completed weeks, masked Top 25, independent retries and safe
+  diagnostics in Admin → Completed-week history. Saved snapshots are provisional
+  until confirmed. A live Shuffle history request timed out during validation;
+  use the new diagnostics after deployment if your provider still fails.
+
+RedPoints are play-only and separate from Botrix/Shuffle balances. Each round
+publishes a seed commitment and then reveals a verifiable receipt. Full rules and
+limits: `docs/REDPOINTS.md`. Setup/recovery: `README.md`. Complete code in separate
+blocks: `FULL_CODE_BLOCKS.md`.

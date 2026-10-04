@@ -40,9 +40,11 @@ from race_support import (DEFAULT_PRIZES, WEIGHTING_RULES, TEXT_LIMITS, URL_FIEL
                           local_input, money, money_input, race_key, validate_site)
 from runtime import Runtime
 from storage import Conflict, StoreError
+from fairness import GAMES, VERSION as FAIRNESS_VERSION, rules as gaming_rules
+from gaming import Gaming, GamingError, validate_gaming
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "race":"Race", "players":"Players", "boss":"Community boss", "settings":"Settings"}
+TABS = {"overview":"Overview", "race":"Race", "players":"Players", "boss":"Community boss", "gaming":"Gaming", "settings":"Settings"}
 
 
 def account(users, name):
@@ -70,6 +72,7 @@ def create_app(root=None, testing=False):
     app.extensions["runtime"] = runtime
     app.extensions["settings"] = config
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
+    gaming = app.extensions['gaming'] = Gaming(runtime.store)
     guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
     recovery_signer = URLSafeSerializer(app.secret_key, salt="community-boss-recovery-v1")
     abuse = app.extensions["boss_abuse"] = AbuseGuard(app.secret_key)
@@ -99,8 +102,8 @@ def create_app(root=None, testing=False):
 
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
-        return request.path.startswith("/play/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/diagnostics", "/healthz", "/readyz"
+        return request.path.startswith(("/play/api/", "/gaming/api/")) or request.accept_mimetypes.best == "application/json" or request.path in {
+            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/diagnostics", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -220,6 +223,17 @@ def create_app(root=None, testing=False):
     def history_state():
         return jsonify(release=RELEASE, **runtime.history.public(request.args.get('week')))
 
+    @app.post('/admin/history/refresh')
+    @protected
+    def refresh_history():
+        require_csrf()
+        runtime.history.request_refresh()
+        if runtime.started:
+            runtime.history.start()
+        LOG.info('HISTORY Admin queued completed-week checks; provider retry windows remain enforced.')
+        return admin_saved('History check queued. Saved results stay visible; provider retry times still apply.',
+                           'overview', 'historyConnection')
+
     def public_snapshot():
         value = runtime.public()
         value["boss"] = boss.summary()
@@ -276,6 +290,68 @@ def create_app(root=None, testing=False):
     def render_play(**values):
         return render_template('boss.html', data=runtime.public(),
                                boss_data=boss.status(guest(), g.client_ip), player_csrf=player_csrf(), **values)
+
+    def gaming_wallet():
+        identity = guest()
+        profile = boss.status(identity, g.client_ip)['you']
+        return gaming.view(identity, profile['display_name'] if profile['identity_ready'] else '')
+
+    @app.get('/gaming')
+    def gaming_home():
+        return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
+                               game=None, game_rules=gaming_rules(), player_token=player_csrf())
+
+    @app.get('/gaming/fairness')
+    def gaming_fairness():
+        return render_template('gaming_fairness.html', data=runtime.public())
+
+    @app.get('/gaming/<game>')
+    def gaming_game(game):
+        if game not in GAMES: abort(404)
+        return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
+                               game=game, game_rules=gaming_rules(), player_token=player_csrf())
+
+    @app.get('/gaming/api/state')
+    def gaming_state():
+        value = dict(ok=True, wallet=gaming_wallet(), player_csrf=player_csrf(), release=RELEASE)
+        response = jsonify(value)
+        response.set_etag(token(value))
+        return response.make_conditional(request)
+
+    @app.post('/gaming/api/profile')
+    def gaming_profile():
+        require_player_csrf()
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict): return json_error('Enter a valid player name.', 422)
+        try:
+            boss.register(guest(), g.client_ip, None, body.get('username'))
+            return jsonify(ok=True, wallet=gaming_wallet(), player_csrf=player_csrf(), release=RELEASE)
+        except (BossError, GamingError) as exc:
+            return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_name'))
+
+    @app.post('/gaming/api/bet')
+    def gaming_bet():
+        require_player_csrf()
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or body.get('rules_version') != FAIRNESS_VERSION:
+            return json_error('Reload to use the current game rules.', 409, 'release_mismatch')
+        try:
+            profile = boss.status(guest(), g.client_ip)['you']
+            result = gaming.bet(guest(), profile['display_name'] if profile['identity_ready'] else '', body)
+            return jsonify(**result, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
+            return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_bet'))
+
+    @app.get('/gaming/api/receipts')
+    def gaming_receipts():
+        # Owner's revealed receipts only. Active server seeds never leave storage.
+        return Response(json.dumps(gaming_wallet()['receipts'], indent=2), mimetype='application/json',
+                        headers={'Content-Disposition':'attachment; filename=redpoints-receipts.json'})
+
+    @app.get('/admin/gaming/status')
+    @protected
+    def admin_gaming_status():
+        return jsonify(ok=True, **gaming.leaders())
 
     @app.get("/play")
     def play():
@@ -459,7 +535,7 @@ def create_app(root=None, testing=False):
 
     def recovery_status():
         with runtime.lock:
-            return checkpoint_status(runtime.store.checkpoint(), runtime.admin, runtime.shuffle["rows"], boss.summary())
+            return checkpoint_status(runtime.store.checkpoint(), runtime.admin, runtime.shuffle["rows"], boss.summary(), gaming.recovery())
 
     def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200,
                      change_review=None, review_token=None, recovery_review=None):
@@ -469,6 +545,7 @@ def create_app(root=None, testing=False):
         if tab not in TABS:
             tab = "overview"
         values = runtime.status()
+        values['gaming'] = gaming.leaders()
         values["checkpoint"] = recovery_status() if g.superadmin else None
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
@@ -595,6 +672,7 @@ def create_app(root=None, testing=False):
     @protected
     def status():
         value = runtime.status()
+        value['gaming'] = gaming.leaders()
         value["checkpoint"] = recovery_status() if g.superadmin else None
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
@@ -608,7 +686,8 @@ def create_app(root=None, testing=False):
     @protected
     def diagnostics():
         value = runtime.status()
-        safe = dict(diagnostics=value["diagnostics"], jobs=value["jobs"], freshness=value["freshness"], generated_at=int(time.time()))
+        safe = dict(diagnostics=value["diagnostics"], jobs=value["jobs"], freshness=value["freshness"],
+                    history=value['history'], generated_at=int(time.time()))
         return Response(json.dumps(safe, indent=2), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=redhunllef-diagnostics.json"})
 
@@ -638,7 +717,8 @@ def create_app(root=None, testing=False):
             value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
             value.update(boss.recovery())
             value['weekly_history'] = runtime.store.live('weekly_history')
-            marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()))
+            value['redpoints'] = gaming.recovery()
+            marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()), value["redpoints"])
             value["recovery_export"] = marker
             runtime.store.checkpoint(marker)
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
@@ -659,11 +739,12 @@ def create_app(root=None, testing=False):
                 raise ValueError("The recovery file contains no administrator accounts.")
             game = validate_boss(value["community_boss"]) if value.get("community_boss") is not None else None
             avatar = validate_avatar(value.get('community_boss_avatar'))
+            redpoints = validate_gaming(value.get('redpoints'))
             review = dict(accounts=len(value["users"]), overrides=len(value["overrides"]),
                           history=len(value["race_history"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
                           start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
                           game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]),
-                          avatar=bool(avatar))
+                          avatar=bool(avatar), redpoints=len(redpoints['players']) if redpoints else 0)
             return render_admin("settings", recovery_review=review)
         except (ValueError, RuntimeError, UnicodeDecodeError) as exc:
             return render_admin("settings", errors={"recovery":str(exc)}, status=422)

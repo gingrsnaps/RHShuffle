@@ -11,9 +11,10 @@ import requests
 
 
 class ProviderError(RuntimeError):
-    def __init__(self, message, *, retry_after=0, status=None):
+    def __init__(self, message, *, retry_after=0, status=None, kind="unknown"):
         super().__init__(message)
         self.retry_after, self.status = retry_after, status
+        self.kind = kind
 
 
 def retry_delay(value):
@@ -32,7 +33,7 @@ class Providers:
         self.config, self.local = config, threading.local()
         self.token, self.token_until = "", 0
 
-    def request(self, method, url, service, **kwargs):
+    def request(self, method, url, service, *, read_timeout=20, **kwargs):
         self.local.http_status = None
         # Each background thread owns its session; cookies/auth do not cross.
         if not hasattr(self.local, "session"):
@@ -41,45 +42,51 @@ class Providers:
         try:
             # Redirects could leak a key in a URL or Authorization header. Only
             # the configured official endpoint is allowed to handle the request.
-            with self.local.session.request(method, url, timeout=(5, 20), allow_redirects=False, stream=True, **kwargs) as response:
+            with self.local.session.request(method, url, timeout=(5, read_timeout), allow_redirects=False, stream=True, **kwargs) as response:
                 code = response.status_code
                 self.local.http_status = code
                 if code == 429 or code >= 500:
                     raise ProviderError(f"{service} returned HTTP {code}; retrying automatically.",
-                                        retry_after=retry_delay(response.headers.get("Retry-After")), status=code)
+                                        retry_after=retry_delay(response.headers.get("Retry-After")), status=code,
+                                        kind="rate_limit" if code == 429 else "upstream")
                 if code in (401, 403):
-                    raise ProviderError(f"{service} rejected the credentials or access permissions (HTTP {code}).", status=code)
+                    raise ProviderError(f"{service} rejected the credentials or access permissions (HTTP {code}).", status=code, kind="access")
                 if not 200 <= code < 300:
                     message = "Shuffle rejected the saved race window; check its dates and affiliate configuration." if service == "Shuffle" and code == 400 else f"{service} returned HTTP {code}."
-                    raise ProviderError(message, status=code)
+                    raise ProviderError(message, status=code, kind="window" if code == 400 else "http")
                 body = bytearray()
-                deadline = time.monotonic() + 30
+                deadline = time.monotonic() + max(30, read_timeout)
                 for chunk in response.iter_content(65536):
                     body.extend(chunk)
                     if len(body) > 8 * 1024 * 1024 or time.monotonic() > deadline:
-                        raise ProviderError(f"{service} response exceeded its size or time allowance.")
+                        raise ProviderError(f"{service} response exceeded its size or time allowance.", kind="response_limit")
                 try:
                     return json.loads(body, parse_float=Decimal)
                 except (ValueError, UnicodeDecodeError):
-                    raise ProviderError(f"{service} returned invalid JSON.") from None
+                    raise ProviderError(f"{service} returned invalid JSON.", kind="format") from None
+        except requests.ConnectTimeout:
+            raise ProviderError(f"{service} connection timed out; check outbound connectivity.", kind="connect_timeout") from None
         except requests.Timeout:
-            raise ProviderError(f"{service} timed out; previous results are retained and checks continue.") from None
+            raise ProviderError(f"{service} timed out; previous results are retained and checks continue.", kind="timeout") from None
         except requests.RequestException:
-            raise ProviderError(f"{service} could not be reached; check outbound connectivity.") from None
+            raise ProviderError(f"{service} could not be reached; check outbound connectivity.", kind="connection") from None
 
     def shuffle(self, site):
         key = self.config.credentials["shuffle_api_key"]
         if not key:
-            raise ProviderError("Shuffle API key is missing. Add SHUFFLE_API_KEY and restart.")
+            raise ProviderError("Shuffle API key is missing. Add SHUFFLE_API_KEY and restart.", kind="credentials")
         start, end = site["start_time"], min(site["end_time"], int(time.time()))
         if not 0 < start < end:
-            raise ProviderError("The race does not have an active or completed date window.")
+            raise ProviderError("The race does not have an active or completed date window.", kind="window")
         data = self.request("GET", "https://affiliate.shuffle.com/" + self.config.endpoint + "/" + quote(key, safe=""),
-                            "Shuffle", params={"startTime": start, "endTime": end})
+                            "Shuffle", params={"startTime": start, "endTime": end},
+                            # Completed-week queries may take longer than a live
+                            # window. The wait stays bounded and off web threads.
+                            read_timeout=45 if site["end_time"] <= int(time.time()) else 20)
         rows = data if isinstance(data, list) else next((data[k] for k in ("data", "results", "leaderboard", "users", "items")
                     if isinstance(data, dict) and isinstance(data.get(k), list)), None)
         if rows is None or len(rows) > 10000:
-            raise ProviderError("Shuffle returned an unsupported leaderboard format or over 10,000 source records.")
+            raise ProviderError("Shuffle returned an unsupported leaderboard format or over 10,000 source records.", kind="format")
         return rows
 
     def kick(self, site):

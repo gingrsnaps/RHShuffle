@@ -1,6 +1,6 @@
 # Complete file structure
 
-Release **2026.10.03-community-gui**. The archive extracts one `redhunllef-rebuilt/` folder.
+Release **2026.10.04-redpoints**. The archive extracts one `redhunllef-rebuilt/` folder.
 Run only `python wager_backend.py`; all support modules are imported automatically.
 
 | File | Purpose |
@@ -21,9 +21,15 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `config.py` | Configuration, original provider keys, save locations and release. |
 | `docs/COMMUNITY_BOSS.md` | Current mechanics, permissions, identity and storage behavior. |
 | `docs/COMMUNITY_UPDATE.md` | Implementation notes for approved suggestions 2–9. |
+| `docs/GAMING_DESKTOP.png` | Native Chromium Gaming dashboard preview with synthetic data. |
+| `docs/GAMING_MOBILE.png` | Native Chromium mobile Gaming preview with all configured header links. |
+| `docs/PLINKO_DESKTOP.png` | Native Chromium Plinko preview with verified synthetic results. |
 | `docs/PREVIEW_DESKTOP.png` | Native Chromium desktop preview with synthetic data. |
 | `docs/PREVIEW_MOBILE.png` | Native Chromium mobile preview with synthetic data. |
+| `docs/REDPOINTS.md` | Complete game rules, fairness specification, exact payouts and storage limits. |
 | `docs/VALIDATION.md` | Test scope, results and limits. |
+| `fairness.py` | Pure deterministic game outcomes, exact payout math and offline verification. |
+| `gaming.py` | Atomic shared RedPoints wallets, weekly resets, receipts and private per-game Top 5. |
 | `integrations.py` | Shuffle and Kick HTTP clients, timeouts and provider errors. |
 | `presentation.py` | Race change previews and existing recovery-export status. |
 | `private/admin_store.seed.json` | Original supplied Superadmin/account seed; unchanged. |
@@ -34,12 +40,17 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `runtime.py` | Independent automatic 60-second Shuffle/Kick workers and published snapshots. |
 | `runtime.txt` | Python runtime declaration. |
 | `static/admin-feedback.js` | Inline save failures, draft preservation and confirmed-write navigation. |
-| `static/app.js` | Public/admin race interface and source refresh controls. |
+| `static/app.js` | Public/admin race interface, game Top 5 updates, history diagnostics and refresh controls. |
+| `static/boss-preview.js` | Admin draft homepage name/avatar preview using current confirmed HP. |
 | `static/boss.css` | Responsive arena, game controls and boss admin styling. |
 | `static/boss.js` | Game/admin interface, recovery UI, previews and automatic polls. |
+| `static/fairness.js` | Independent browser HMAC/rejection sampling, payout math and receipt verification. |
+| `static/gaming.css` | Responsive red Gaming dashboard, Dice/Keno/Plinko boards and controls. |
+| `static/gaming.js` | Game controls, conditional wallet polls, safe settlement and local receipt checks. |
 | `static/history.css` | Responsive red completed-week cards and table. |
 | `static/history.js` | Automatic cached-history reads, native week navigation and safe rendering. |
-| `static/homepage.js` | Five-second anonymous boss progress reads and stale-response protection. |
+| `static/homepage.js` | Five-second boss reads, last-confirmed age, host-edit notice and masked latest hit. |
+| `static/receipt-verifier.js` | Local-only pasted receipt verification; never sends the receipt to a server. |
 | `static/redlogo.ico` | Original favicon; unchanged. |
 | `static/redlogo.png` | Original PNG logo; unchanged. |
 | `static/style.css` | Shared responsive red website/admin styling. |
@@ -47,6 +58,7 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `store_schema.py` | Account/settings migrations and private recovery validation. |
 | `templates/admin.html` | Rendered page or shared template. |
 | `templates/admin_boss.html` | Rendered page or shared template. |
+| `templates/admin_gaming.html` | Rendered page or shared template. |
 | `templates/admin_overview.html` | Rendered page or shared template. |
 | `templates/admin_players.html` | Rendered page or shared template. |
 | `templates/admin_race.html` | Rendered page or shared template. |
@@ -55,6 +67,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `templates/boss.html` | Rendered page or shared template. |
 | `templates/change_review.html` | Rendered page or shared template. |
 | `templates/error.html` | Rendered page or shared template. |
+| `templates/gaming.html` | Rendered page or shared template. |
+| `templates/gaming_fairness.html` | Rendered page or shared template. |
 | `templates/history.html` | Rendered page or shared template. |
 | `templates/icons.html` | Rendered page or shared template. |
 | `templates/index.html` | Rendered page or shared template. |
@@ -62,6 +76,8 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `templates/macros.html` | Rendered page or shared template. |
 | `templates/recovery_panel.html` | Rendered page or shared template. |
 | `tests/assert_visual_pixels.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/fairness_vectors.json` | Developer test/fixture support; not needed to launch the website. |
+| `tests/generate_fairness_vectors.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/package.json` | Developer test/fixture support; not needed to launch the website. |
 | `tests/render_fixtures.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/serve_game_fixture.py` | Temporary local HTTP test fixture, never starts provider jobs. |
@@ -73,18 +89,21 @@ Run only `python wager_backend.py`; all support modules are imported automatical
 | `tests/test_boss_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_comfort_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_community.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_fairness_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_gui_update.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_history_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_homepage_frontend.cjs` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_player_access.py` | 100-player shared-proxy access, stable usernames, recovery and request isolation. |
 | `tests/test_raid_update.py` | Developer test/fixture support; not needed to launch the website. |
+| `tests/test_redpoints.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/test_username_http.cjs` | Both shipped scripts against real HTTP and a cookie jar; no mocked username save. |
 | `tests/test_username_save.py` | Native saves, expired page sessions, browser ownership, recovery, and admin isolation. |
 | `tests/test_weekly_history.py` | Developer test/fixture support; not needed to launch the website. |
 | `tests/visual_checks.cjs` | Developer test/fixture support; not needed to launch the website. |
+| `tools/verify_redpoints.py` | Optional offline receipt audit utility, not a web-server launcher. |
 | `wager_backend.py` | Only launch script; web routes, authentication and Waitress startup. |
-| `weekly_history.py` | Automatic four-week Tuesday 6 PM Eastern history with a masked public Top 25. |
+| `weekly_history.py` | Four completed Tuesday 6 PM Eastern weeks, masked Top 25, snapshot rescue and independent retries. |
 
 The app creates `data/state.json`, its lock file and bounded local recovery copies automatically. Runtime data, test fixtures and caches are excluded from this ZIP. Preserve your current data and private configuration when merging an update.
 

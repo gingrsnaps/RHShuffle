@@ -121,6 +121,7 @@ class Runtime:
             data["diagnostics"].update(race_state=phase(self.admin["site_settings"]),
                 campaign_filter=self.admin["site_settings"]["campaign_code_filter"], endpoint_kind=self.config.endpoint,
                 aggregation=self.config.aggregation, qualifying_players=data["count"], loaded_players=len(data["rows"]))
+            data['history'] = self.history.diagnostics()
             return data
 
     def job_status(self):

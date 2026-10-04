@@ -1,43 +1,87 @@
 # RedHunllef
 
-Release **2026.10.03-community-gui**. This is the complete configured application.
+Release **2026.10.04-redpoints**. This is the complete configured application.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## This update: clearer progress and a more compact interface
+## This update: Gaming, complete mobile navigation and history recovery
 
-The homepage now shows **percent defeated**, increasing from **0% to 100%**.
-Its bar fills as damage is confirmed. The arena and admin **remaining HP** bars
-still drain from full to empty. These are intentionally different measurements:
-`defeated = (maximum HP - remaining HP) / maximum HP * 100`.
+| Page | What it does |
+| --- | --- |
+| `/gaming` | Dashboard for Dice, Keno and Plinko, shared balance, weekly results and recent receipts. |
+| `/gaming/dice` | Choose a 1–95% win chance and roll under/over the target. |
+| `/gaming/keno` | Pick 1–10 of 40 numbers, draw 10, choose Low/Medium/High risk. |
+| `/gaming/plinko` | Choose 8/12/16 rows and Low/Medium/High risk; watch the verified path. |
+| `/gaming/fairness` | Published rules, exact seed format and a browser-only receipt verifier. |
+| `/admin?tab=gaming` | Private Top 5 per game, full submitted names, net winnings and total returns. |
+| `/history` | Four completed Tuesday-to-Tuesday weeks, public Top 25 masked before delivery. |
 
-- Homepage boss updates read `/boss-summary` every **5 seconds**. This anonymous
-  endpoint only reads the existing save; it does not contact Shuffle/Kick or create
-  player cookies. The 60-second wager/Kick checks are unchanged.
-- Older minute-feed responses cannot reverse newer boss progress. Explicit admin
-  health edits and new raids are recognized separately. Failed requests keep the
-  last confirmed progress visible and show a retry message.
-- A larger avatar, prominent defeated percentage, quieter remaining-HP text, and
-  one action button clarify the boss card. Confirmed hits briefly highlight the
-  border; reduced-motion preferences disable that animation.
-- A compact hero/countdown brings the leaderboard closer to the top. Charcoal
-  surfaces, restrained red borders and consistent primary actions retain the brand.
-- Mobile navigation keeps Leaderboard, History and Boss fight together with 44px
-  tap targets. Mobile History uses a native week selector and Previous/Next links.
-  Its Top 25 remains censored and its Eastern-time boundaries are unchanged.
-- Successful admin changes display a server-confirmed receipt beside the related
-  control, including accepted values for boss settings, HP and wager overrides.
-  Enhanced forms keep drafts/files on rejected saves and identify the failed action.
-  Race review and backup preview retain their native confirmation flows. No password
-  is placed in a receipt. Uncertain requests are never automatically resubmitted.
-- Optional Chromium visual checks capture desktop/mobile screens, check actual red
-  pixels at 0%, 25%, 75%, and 100%, verify narrow layouts, and exercise admin saves
-  and rejected-draft preservation through the real web interface.
+The public header keeps **Leaderboard, History, Boss fight, Gaming, Points Shop,
+configured Red Community, and Watch on Kick** visible on mobile. It wraps into
+rows with usable tap targets. Points Shop opens the requested external URL:
+https://botrix.live/k/redhunllef/shop. Its balance is separate from RedPoints.
 
-All accounts, integration credentials, original logos, race settings and game
-rules are preserved. Continue using **`python wager_backend.py`** as the sole
-launcher. There are no new Python runtime dependencies or database services.
+### One shared RedPoints wallet
+
+Each named browser profile starts with **100,000 RedPoints total**, shared across
+all three games. It is saved after every settled wager. Refreshing, switching
+games, changing a name or restarting the process with the same save does not grant
+more points. The allowance and per-game standings reset at the next **Tuesday,
+6:00 PM America/New_York** boundary, with daylight saving handled automatically.
+This is the same fixed weekly boundary as public history; an early edit to the
+race form, campaign or prizes does not reset wallets. The next reset is displayed.
+
+- Play-only points: no purchase, cash value, withdrawal or conversion to Shuffle or
+  Botrix balances. These games do not add to the real Shuffle wager leaderboard.
+- Wagers are whole points, **1–10,000 per round**, with one second between rounds.
+  There is no daily/weekly count limit. A zero balance waits for the weekly reset.
+- The existing persistent boss player cookie owns the wallet. A saved boss name
+  works in Gaming; saving a Gaming name also saves that same boss profile.
+  The existing private player recovery code restores this identity and its wallet.
+- A display name is self-reported, not proof of a Shuffle account or unique person.
+  A different browser without a recovery code is a separate profile. Shared IPs
+  do not block the community. Changing only the display name never merges wallets.
+- Private rankings sort **net winnings = points returned − points wagered**,
+  then total returned points, then a stable short profile tag. Losses remain visible
+  and do not masquerade as profit. Only players who played that game appear.
+  The admin overview also includes the three Top 5 lists; it refreshes with status.
+- The server settles debit, return, next seed and receipt in one atomic save.
+  Repeating an uncertain request returns its original receipt without a second
+  debit. Concurrent tabs cannot spend the same seed/nonce twice.
+
+### Verifiable outcomes
+
+Every round has a SHA-256 server-seed commitment published **before** the bet,
+a player-editable client seed, fresh random client salt generated after the
+commitment is read, and a sequential nonce. HMAC-SHA-256 plus unbiased rejection
+sampling determines the outcome. The one-time server seed is revealed immediately
+after settlement. Independent browser code verifies the previous commitment,
+submitted inputs, result and payout before reporting “Verified.”
+
+Keep downloaded receipts and the commitment seen before playing. The dashboard
+retains the latest 30 receipts per profile across all three games and weekly
+resets. An older standalone receipt proves internal consistency, not publication
+time unless you separately kept its earlier commitment. The independent verifier
+can also run offline with `python tools/verify_redpoints.py receipts.json`; this is
+an optional audit utility, never another server process. Full algorithm, payout
+math, examples and limits: [docs/REDPOINTS.md](docs/REDPOINTS.md).
+
+### Homepage and boss refinements
+
+- **Boss health** explicitly labels the bar. All HP bars drain full → empty;
+  the separate **percent defeated** label rises 0% → 100%.
+- A last-confirmed age makes the five-second boss checks visible. Failed or stale
+  replies retain confirmed health and cannot pretend to be a new successful check.
+- Explicit admin HP adjustments show a brief public notice. Recorded player damage
+  is unchanged. A new raid still has its own separate identity and progress.
+- An optional collapsed **Latest community hit** shows a masked name and damage.
+- Boss administration includes a homepage appearance preview for a draft name,
+  a local avatar file, and current health. Previewing never submits an upload or
+  changes a setting; the existing separate save controls remain authoritative.
+- Original red logos, compact leaderboard-first layout, native admin navigation,
+  inline confirmed-save receipts, draft preservation and reduced-motion behavior
+  remain intact. No new runtime dependencies or additional launch processes.
 
 ## Four completed weeks of public history
 
@@ -69,19 +113,43 @@ Choose **History** in the public navigation, or open `/history`:
   retain saved results and show a delayed status. Missing results are not presented
   as a confirmed zero-player week.
 
-Historical retrieval uses the same date-window API contract as the live race.
-Actual historical availability depends on Shuffle retaining and returning those
-periods for your affiliate account. This release was tested with synthetic data;
-it does not claim that the live account's historical responses were verified.
+### Why history could stay stuck, and what changed
 
-Admin regression coverage includes all five dashboard tabs, native login/logout,
+Previously, a failed request for the first completed week ended the whole batch.
+That same week was retried first, so the other three could remain unrequested.
+The queue now attempts each independent date range and prioritizes untried weeks.
+Shared access failures, rate limits or upstream outages defer all four together,
+with explicit retry information instead of unexplained “Loading” messages.
+
+Exact-window saved race snapshots are recovered before the next request. These
+are visibly marked **provisional saved places**, since an earlier Top 15/25
+snapshot is not necessarily the final standings. A successful historical response
+replaces them with the provider's confirmed Top 25. No results are fabricated.
+
+Open **Admin → Completed-week history** (available on each dashboard tab) for
+HTTP status, a safe failure reason, last result, next retry, and the active week.
+**Check history now** queues background checks and respects provider retry windows.
+It does not tie up the admin request or flood a rejected account. Console lines
+start with `HISTORY` and name the period and category without exposing credentials.
+Independent errors retry after 60 seconds, increasing to at most 15 minutes;
+provider Retry-After instructions can extend that wait. Completed requests have
+longer read timeouts than the live feed because historical ranges can be slower.
+
+The existing Shuffle endpoint, authentication and date parameters are unchanged.
+**Live requests from the validation environment timed out without an HTTP response.**
+The queue/retry/recovery changes were verified with controlled provider responses;
+this package does not claim that your four real historical weeks were retrieved.
+After deployment, the private diagnostics distinguish access, rate limiting,
+upstream failure, date-range rejection, malformed data and network timeouts.
+
+Admin regression coverage includes all existing dashboard tabs plus Gaming, native login/logout,
 race preview/publication, automatic/manual refresh, overrides, Code Red Top 100,
 CSV export, accounts/passwords, backups/restore, logs/IP controls, and boss
 name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to use
 the actual trusted visitor IP on App Platform instead of the proxy socket address.
 
 After updating, restart the app and reload the homepage. `/healthz` should report
-**2026.10.03-community-gui**. Asset versions change automatically, so the new
+**2026.10.04-redpoints**. Asset versions change automatically, so the new
 scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
@@ -107,7 +175,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.10.03-community-gui**. If it shows something else, the old application is
+**2026.10.04-redpoints**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -198,7 +266,7 @@ filesystem. Changes made after that download will not be in that recovery file.
 ## Fresh installation
 
 Extract the entire `redhunllef-rebuilt/` folder, open a terminal in it, and use the
-two commands above. Visit `http://localhost:8080`, `/history`, `/play`, and `/admin`.
+two commands above. Visit `http://localhost:8080`, `/history`, `/play`, `/gaming`, and `/admin`.
 
 The original supplied Superadmin is **gingrsnaps / enok2121**. The bundled original
 account hashes and Shuffle/Kick configuration are preserved. Existing saved
@@ -245,11 +313,11 @@ platform may try to resolve that binding before Python starts. This build ignore
 `DATABASE_URL` and `STORAGE_MODE`; it never connects to PostgreSQL.
 
 Keep one instance. Each App Platform instance has its own temporary filesystem,
-so multiple replicas would split the raid. A process restart that keeps the same
+so multiple replicas would split boss progress and RedPoints wallets. A process restart that keeps the same
 data folder preserves progress; a container replacement or redeployment does not.
 DigitalOcean documents this restriction in
 [Store Data in App Platform](https://docs.digitalocean.com/products/app-platform/how-to/store-data/).
-This release adds no external persistence service. The existing manual recovery
+**RedPoints cannot be guaranteed to survive container replacement with local-only storage.** This release adds no external persistence service. The existing manual recovery
 export is the available checkpoint method on App Platform. On a persistent Linux
 host, preserve the `data/` folder during code updates.
 
@@ -259,7 +327,7 @@ it unset or `0`. Arbitrary client forwarding headers are not accepted as identit
 
 ## Accounts and automatic updates
 
-`/admin` renders the login or dashboard directly. All management routes require a
+`/admin` renders the login or dashboard directly. The new Gaming tab is part of the same authenticated dashboard. All management routes require a
 current admin account, an unrevoked session, and CSRF protection for writes.
 The Superadmin manages administrator accounts and downloads full private recovery.
 Other current admins can manage boss controls and avatars, and
@@ -268,8 +336,7 @@ view full player names in the private Top 5.
 Both Shuffle and Kick are checked **automatically every 60 seconds**, by independent
 threads inside the sole launch process. There is no live-data switch or manual-only
 mode. The public leaderboard and admin provider views refresh every 60 seconds;
-a manual source refresh shows progress until the check finishes. Boss public and
-admin views refresh every **5 seconds**. Hidden browser tabs pause their own polling
+a manual source refresh shows progress until the check finishes. Boss public/admin and Gaming wallet views refresh every **5 seconds**. Wallet polls use ETags so unchanged responses have no body. Hidden browser tabs pause their own polling
 and catch up when visible; the server's source jobs continue.
 
 The original seed's race window is historical. To publish the intended window,
@@ -290,7 +357,7 @@ and `KICK_CLIENT_SECRET`.
 
 Open `/play` or the homepage boss button. Save a self-reported Community/Shuffle
 username once, then choose Blade, Bow or Magic. Your full submitted name is visible
-to you and administrators; other visitors see a raider alias.
+to you and administrators; the arena uses a raider alias and the homepage latest-hit panel uses a masked name.
 
 | Rule | Behavior |
 | --- | --- |
@@ -299,7 +366,7 @@ to you and administrators; other visitors see a raider alias.
 | Default damage | 100 base, 150 weakness, +100 burst every tenth hit. Admin-editable. |
 | Weakness | Random stable draw every 10 minutes, shared by all players. Repeats are valid. |
 | Health | Never regenerates automatically. Confirmed damage stays saved. |
-| Progress / HP bars | Homepage defeat progress fills 0% → 100%; arena/admin remaining HP drains full → empty. |
+| Progress / HP bars | All health bars drain full → empty; the separate defeated percentage rises 0% → 100%. |
 | Input re-arm | Mouse pointer must leave the attack button; keyboard must release its activation key; touch taps work on release. |
 | Red rally | 15 distinct raiders in a rolling 10-minute window; cosmetic arena lighting lasts until a new raid. |
 | Achievements | Existing eight badges and progress display retained; achievement history carries across raids. |
@@ -363,7 +430,7 @@ weekly quota.
 
 | Path | Purpose |
 | --- | --- |
-| `data/state.json` | Current accounts, race settings, live snapshots, raid, profiles, avatar and history. |
+| `data/state.json` | Current accounts, race settings, live snapshots, raid, profiles, avatar, history and RedPoints wallets/proofs. |
 | `data/state.json.lock` | Automatic process lock for file transactions. |
 | `data/recovery/` | Bounded local copies made before important admin changes; no external service. |
 | `private/recovery.seed.json` | Optional existing manual recovery export used only when no current local save exists. |
@@ -376,8 +443,8 @@ hit; safe receipt retries handle an uncertain response. Local recovery copies li
 on the same disk and do not survive loss of an App Platform container.
 
 The private recovery export includes accounts, secret, race configuration, saved
-Top 15, boss avatar, private profiles, contribution totals and boss admin history.
-It is not exposed publicly. A restored Top 15 remains a snapshot until the next
+Top 15, four-week history, boss avatar, private profiles, contribution totals, boss admin history, RedPoints balances, per-game totals, active private seeds and revealed receipts.
+It is not exposed publicly. Keep the full recovery file private: it includes active fairness seeds and account secrets. The recovery reminder now notices wallet/proof changes too. A restored Top 15 remains a snapshot until the next
 successful live source check. The recovery status records when an export was
 created, not proof that someone saved it externally.
 
@@ -393,22 +460,16 @@ local save as a rollback copy and keep every current root support module.
 
 ## Verification
 
-Validation covers 162 backend tests and 68 DOM/HTTP interface checks. Coverage includes
-source refresh behavior, actual launcher startup, login, authorization, image
-validation, nonregenerating HP, unlimited attacks, recovery-code privacy, independent
-cooldowns, migration, atomic-write failures and simultaneous writers. New regression
-checks include 100 concurrent players sharing one proxy, absent IP headers, changing
-addresses, names retained after restart, expired page sessions, native form saves,
-duplicate-name isolation, visible save failures and delayed browser responses.
-Weekly-history tests cover all four ranges, DST, Top 25 masking, cached reads,
-historical prizes, retry preservation, recovery and automatic navigation updates.
-The HTTP interface test loads both shipped scripts and uses a real Waitress server
-and cookie jar; the username endpoint is not mocked. It saves a name, reloads the
-page, lands an attack and checks a second independent player with the same label.
+Validation results and limits are in [docs/VALIDATION.md](docs/VALIDATION.md).
+Coverage includes the existing admin/race/boss features, 100 independent player
+profiles, atomic wagers, replay prevention, shared balances, weekly/DST resets,
+recovery and seed privacy. An independent JavaScript verifier matches 47 Python
+reference receipts. Native Chromium checks all three real wager interfaces, every
+mobile header link, admin rankings and actual HP-bar pixels.
 
-No live Shuffle/Kick request or DigitalOcean deployment was performed during these
-checks. Provider tests use synthetic responses. Native Chromium visual checks now
-cover desktop, 390px mobile and 320px narrow screens. See `docs/VALIDATION.md`.
+The application was not deployed to DigitalOcean. The original live Shuffle check
+timed out here; automatic history success is verified with synthetic responses,
+not asserted for the live account. No real player save is used by developer tests.
 
 Developer checks (not required to run the website):
 

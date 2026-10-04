@@ -37,10 +37,15 @@ def admin_fingerprint(admin):
         'users', 'secret_key', 'site_settings', 'overrides', 'race_history', 'banned_ips', 'audit_log')})
 
 
-def export_marker(admin, snapshot, boss, generated_at):
+def gaming_fingerprint(value):
+    return token({key: [p['version'], p['season'], p['name']] for key,p in value['players'].items()}) if value else ''
+
+
+def export_marker(admin, snapshot, boss, generated_at, gaming=None):
     return dict(generated_at=generated_at, admin_token=admin_fingerprint(admin),
                 standings_token=token(snapshot['last_top15']), raid_id=boss['id'],
-                boss_version=boss['version'], attacks=boss['total_attacks'], damage=boss['total_damage'])
+                boss_version=boss['version'], attacks=boss['total_attacks'], damage=boss['total_damage'],
+                gaming_token=gaming_fingerprint(gaming))
 
 
 def valid_marker(value):
@@ -53,11 +58,14 @@ def valid_marker(value):
     for key, length in (('admin_token', 20), ('standings_token', 20), ('raid_id', 32)):
         if not isinstance(value.get(key), str) or not re.fullmatch(r'[a-f0-9]{%d}' % length, value[key]):
             return None
-    return {key: value[key] for key in ('generated_at', 'boss_version', 'attacks', 'damage',
+    result = {key: value[key] for key in ('generated_at', 'boss_version', 'attacks', 'damage',
                                        'admin_token', 'standings_token', 'raid_id')}
+    if isinstance(value.get('gaming_token'), str) and re.fullmatch(r'[a-f0-9]{20}|', value['gaming_token']):
+        result['gaming_token'] = value['gaming_token']
+    return result
 
 
-def checkpoint_status(marker, admin, rows, boss):
+def checkpoint_status(marker, admin, rows, boss, gaming=None):
     marker = valid_marker(marker)
     if not marker:
         return dict(generated_at=0, label='No recovery export recorded', changes=True,
@@ -68,12 +76,14 @@ def checkpoint_status(marker, admin, rows, boss):
     changed = admin_fingerprint(admin) != marker.get('admin_token')
     standings = token(rows[:15]) != marker.get('standings_token')
     raid_changed = new_raid or boss['version'] != marker.get('boss_version')
+    gaming_changed = marker.get('gaming_token', '') != gaming_fingerprint(gaming)
     notes = ([f'{attacks:,} new hits · {damage:,} damage'] if attacks else [])
     if new_raid: notes.append('a different raid is active')
     elif raid_changed and not attacks: notes.append('raid controls changed')
     if changed: notes.append('account or race settings changed')
     if standings: notes.append('standings changed')
-    return dict(generated_at=marker.get('generated_at', 0), changes=changed or standings or raid_changed,
+    if gaming_changed: notes.append('RedPoints wallets or fairness receipts changed')
+    return dict(generated_at=marker.get('generated_at', 0), changes=changed or standings or raid_changed or gaming_changed,
                 label='Changes since last export' if notes else 'Checkpoint matches current progress',
                 details='; '.join(notes) or 'No new saved progress since this export.',
                 attacks=attacks, damage=damage, new_raid=new_raid)

@@ -1,3 +1,46 @@
+# Changes — 2026.10.04-redpoints
+
+- Added Gaming dashboard plus separate Dice, Keno and Plinko pages using native
+  HTML/CSS/JavaScript, existing Flask/Waitress and the original sole launcher.
+- Added one shared 100,000 RedPoints wallet per signed browser profile, persisted
+  in the existing atomic JSON save; Tuesday 6 PM Eastern reset handles DST.
+- Added per-game admin Top 5 by net winnings, full names, total returns and ties
+  resolved consistently. Public pages never receive other players' full rankings.
+- Added one-time seed commitments, editable client seed, fresh browser entropy,
+  HMAC-SHA-256 outcomes, unbiased draws, immediate seed reveal and independent
+  browser/offline verification. Published risk tables use exact integer math.
+- Atomic wager/return/proof saves, nonce checks and retained receipts prevent
+  duplicate debits and stale-tab spending. Idle wallet polls use conditional ETags.
+- Extended full private recovery and export-change reminders to cover wallets,
+  current seeds, weekly statistics and the last 30 revealed receipts per profile.
+- Kept every public header link visible on mobile; added Gaming and the requested
+  external Botrix Points Shop. No Botrix balance integration is implied.
+- Fixed completed-week starvation after a failed request; independent date errors
+  now let other weeks run. Shared provider failures defer all weeks with reasons.
+- Restored exact-window snapshots as visibly provisional places while retrying
+  final Top 25 history; added admin status, HTTP reasons and a queued retry action.
+- Added Boss health label, last-confirmed age, brief explicit-HP-edit notice,
+  optional masked latest hit and a draft homepage appearance preview for admins.
+- Kept HP bars draining, increasing defeated text, all current account/provider
+  settings, boss identity/recovery, unlimited hits and 30-second cooldown.
+- No new runtime dependency, SQL service, external backup system or launch script.
+
+Tests and operational limits are recorded in docs/VALIDATION.md. In particular,
+live history retrieval timed out in the validation environment; deployment and
+successful live account backfill are not claimed.
+
+## Previous release
+
+# Changes — 2026.10.03-health-drain
+
+- Corrected initial HTML and live homepage updates to use remaining HP for the
+  bar: full health is full, zero health is empty.
+- Kept the separate defeated percentage increasing and all five-second updates.
+- Updated the accessibility label, regression checks and visual previews to match.
+- Preserved the full GUI update, history, admin controls, credentials and saves.
+
+## Previous release
+
 # Changes — 2026.10.03-community-gui
 
 - Homepage defeat progress now fills 0% → 100%, while arena/admin HP still drains.
