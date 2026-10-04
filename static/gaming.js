@@ -7,7 +7,8 @@
   const id = (n) => document.getElementById(n),
     game = root.dataset.game,
     rules = JSON.parse(root.dataset.rules);
-  const number = (n) => Number(n).toLocaleString("en-US"),
+  const number = (n) =>
+      (typeof n === "bigint" ? n : Number(n)).toLocaleString("en-US"),
     points = (n) => (n > 0 ? "+" : "") + number(n);
   let wallet,
     csrf = root.dataset.csrf,
@@ -15,9 +16,7 @@
     fatal = false,
     pending = null,
     timer,
-    polling = false,
-    readyTimer,
-    nextBetAt = 0;
+    polling = false;
   let selections = new Set(),
     walletEtag = "";
   const betLabel = id("betButton")?.textContent || "Play";
@@ -83,23 +82,15 @@
         "#betForm input, #betForm select, #betForm button, [data-keno], #clientSeed",
       )
       .forEach((el) => (el.disabled = locked()));
-    const wait = Math.max(0, nextBetAt - performance.now());
     if (id("betButton")) {
       id("betButton").disabled =
         locked() ||
         !secure ||
         wallet?.needs_profile ||
-        wait > 0 ||
         wallet?.balance < 1 ||
         (game === "keno" && !selections.size);
-      id("betButton").textContent = busy
-        ? "Checking your round…"
-        : wait > 0
-          ? "Next round in 1s…"
-          : betLabel;
+      id("betButton").textContent = busy ? "Checking your round…" : betLabel;
     }
-    clearTimeout(readyTimer);
-    if (wait > 0) readyTimer = setTimeout(controls, Math.ceil(wait) + 10);
     if (id("retryBet")) {
       id("retryBet").hidden = !pending;
       id("retryBet").disabled = busy || !secure;
@@ -122,6 +113,7 @@
       return;
     wallet = next;
     id("pointsBalance").textContent = number(next.balance);
+    if (id("redWager")) id("redWager").max = String(next.balance);
     id("pointsReset").textContent = "Resets " + next.season.end_et;
     id("gamingProfile").hidden = !next.needs_profile;
     id("gamingIdentity").hidden = next.needs_profile;
@@ -286,6 +278,10 @@
     if (!game) return;
     const options = opt(),
       wager = Number(id("redWager").value) || 0;
+    // Large stakes can overflow Number during multiplication even when the
+    // final return is exact. Preview with the same integer math as settlement.
+    const amount =
+      Number.isSafeInteger(wager) && wager > 0 ? BigInt(wager) : 0n;
     if (game === "dice") {
       id("diceChanceLabel").textContent = options.chance + "%";
       id("diceTarget").textContent =
@@ -293,7 +289,7 @@
           ? `Roll below ${options.chance.toFixed(2)}`
           : `Roll at or above ${(100 - options.chance).toFixed(2)}`;
       id("dicePayout").textContent =
-        number(Math.floor((wager * 99) / options.chance)) +
+        number((amount * 99n) / BigInt(options.chance)) +
         " points returned on a win";
       id("payoutDescription").textContent =
         `${options.chance}% win chance · ${(99 / options.chance).toFixed(4)}× return · 99% expected return before whole-point rounding.`;
@@ -330,7 +326,7 @@
               : `Slot ${index}`,
           ],
           ["strong", multiple(value)],
-          ["small", `${number(Math.floor((wager * value) / 10000))} RP`],
+          ["small", `${number((amount * BigInt(value)) / 10000n)} RP`],
         ]) {
           const el = document.createElement(tag);
           el.textContent = text;
@@ -485,9 +481,6 @@
           "Fairness verification failed. Stop playing and download your receipts for review.",
         );
       }
-      // The server enforces a one-second interval. Keep fast Dice/Keno clicks
-      // from submitting the next round before that interval has elapsed.
-      nextBetAt = performance.now() + 1000;
       remember(null);
       renderWallet(result.wallet);
       await showReceipt(receipt);
@@ -510,13 +503,7 @@
   }
   id("betForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (
-      locked() ||
-      !secure ||
-      wallet.needs_profile ||
-      performance.now() < nextBetAt
-    )
-      return;
+    if (locked() || !secure || wallet.needs_profile) return;
     const options = opt();
     if (game === "keno" && !selections.size)
       return message("Pick at least one Keno number.");
@@ -524,14 +511,9 @@
       wager = Number(id("redWager").value);
     if (!/^[A-Za-z0-9 _.\-]{1,64}$/.test(client))
       return message("Use a valid 1–64 character client seed.");
-    if (
-      !Number.isSafeInteger(wager) ||
-      wager < 1 ||
-      wager > 10000 ||
-      wager > wallet.balance
-    )
+    if (!Number.isSafeInteger(wager) || wager < 1 || wager > wallet.balance)
       return message(
-        "Enter a whole-point wager within your balance, from 1 to 10,000.",
+        "Enter a positive whole-point wager within your RedPoints balance.",
       );
     const body = {
       rules_version: RedFair.VERSION,
@@ -576,7 +558,6 @@
       id("redWager").value = Math.max(
         1,
         Math.min(
-          10000,
           wallet.balance,
           Math.floor(
             (Number.isFinite(current) ? current : 1) *

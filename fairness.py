@@ -76,7 +76,7 @@ def table_info(game, size, risk):
 
 @lru_cache(maxsize=1)
 def rules():
-    return dict(version=VERSION, scale=SCALE, games=list(GAMES), min_wager=1, max_wager=10000,
+    return dict(version=VERSION, scale=SCALE, games=list(GAMES), min_wager=1, max_wager=None,
                 dice_rtp_percent='99.0000',
                 keno={str(k):{risk:table_info('keno', k, risk) for risk in RISKS} for k in range(1,11)},
                 plinko={str(k):{risk:table_info('plinko', k, risk) for risk in RISKS} for k in (8,12,16)})
@@ -130,7 +130,7 @@ def verify(receipt, expected_commitment=None):
     """Offline verifier. Compare against the commitment retained before betting."""
     if (not isinstance(receipt, dict) or receipt.get('rules_version') != VERSION or
         any(type(receipt.get(k)) is not int or abs(receipt[k]) > 2**53-1 for k in ('nonce', 'wager', 'payout', 'net')) or
-        not 1 <= receipt['wager'] <= 10000 or receipt['nonce'] < 0 or
+        receipt['wager'] < 1 or receipt['nonce'] < 0 or
         not isinstance(receipt.get('season'), str) or not re.fullmatch(r'\d{1,12}', receipt['season']) or
         not isinstance(receipt.get('client_seed'), str) or not re.fullmatch(r'[A-Za-z0-9 _.-]{1,64}', receipt['client_seed']) or
         not isinstance(receipt.get('client_salt'), str) or not re.fullmatch(r'[a-f0-9]{32}', receipt['client_salt']) or

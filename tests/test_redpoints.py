@@ -96,7 +96,7 @@ class RedPointsTests(unittest.TestCase):
 
     def test_tampering_overdraft_and_csrf_rejected(self):
         client,value=self.player();body=self.body(value['wallet'])
-        for values,status in [({'wager':True},422),({'wager':10001},422),({'wager':-5},422),
+        for values,status in [({'wager':True},422),({'wager':100001},409),({'wager':2**53},422),({'wager':-5},422),
                               ({'options':{'chance':100,'side':'under'}},422),({'commitment':'a'*64},409),
                               ({'nonce':9},409),({'options':{'chance':50,'side':'bad'}},422),({'client_salt':'bad'},422)]:
             response=client.post('/gaming/api/bet',json={**body,**values},headers={'X-CSRF-Token':value['player_csrf']})
@@ -182,6 +182,51 @@ class RedPointsTests(unittest.TestCase):
         after = self.client.get('/admin/status').json['checkpoint']
         self.assertTrue(after['changes'])
         self.assertIn('RedPoints wallets or fairness receipts changed', after['details'])
+
+    def test_full_balance_can_be_wagered_in_every_game(self):
+        for game in GAMES:
+            client, state = self.player('FullBalance' + game)
+            body = {**self.body(state['wallet'], game), 'wager':100000}
+            response = client.post('/gaming/api/bet', json=body,
+                                   headers={'X-CSRF-Token':state['player_csrf']})
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json['receipt']['wager'], 100000)
+            self.assertEqual(response.json['wallet']['balance'], response.json['receipt']['payout'])
+            self.assertTrue(verify(response.json['receipt'], body['commitment']))
+        validate_gaming(self.app.extensions['gaming'].recovery())
+
+    def test_consecutive_distinct_bets_need_no_clock_advance(self):
+        game = self.app.extensions['gaming']
+        now = time.time()
+        wallet = game.view('no-delay', 'NoDelay', now)
+        for nonce in range(40):
+            body = {**self.body(wallet), 'wager':1}
+            result = game.bet('no-delay', 'NoDelay', body, now)
+            self.assertEqual(result['receipt']['nonce'], nonce)
+            self.assertEqual(result['receipt']['at'], int(now))
+            self.assertFalse(result['duplicate'])
+            wallet = result['wallet']
+        duplicate = game.bet('no-delay', 'NoDelay', body, now)
+        self.assertTrue(duplicate['duplicate'])
+        self.assertEqual(duplicate['wallet']['nonce'], 40)
+        validate_gaming(game.recovery())
+
+    def test_large_wager_receipt_survives_full_recovery(self):
+        client, value = self.player()
+        body = {**self.body(value['wallet'], 'keno'), 'wager':75000}
+        result = client.post('/gaming/api/bet', json=body,
+                             headers={'X-CSRF-Token':value['player_csrf']})
+        self.assertEqual(result.status_code, 200, result.text)
+        target = self.root / 'large-wager-restore'
+        (target/'private').mkdir(parents=True)
+        (target/'private/recovery.seed.json').write_bytes(self.client.get('/admin/recovery-backup').data)
+        restored = create_app(target, testing=True)
+        self.addCleanup(restored.extensions['runtime'].store.close)
+        other = restored.test_client()
+        other.set_cookie('rh_raider', client.get_cookie('rh_raider').value)
+        wallet = other.get('/gaming/api/state').json['wallet']
+        self.assertEqual(wallet, result.json['wallet'])
+        self.assertTrue(verify(wallet['receipts'][0], body['commitment']))
 
 
 class FairMathTests(unittest.TestCase):

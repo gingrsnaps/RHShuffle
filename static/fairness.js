@@ -145,7 +145,6 @@
       ![r.nonce, r.wager, r.payout, r.net].every(Number.isSafeInteger) ||
       r.nonce < 0 ||
       r.wager < 1 ||
-      r.wager > 10000 ||
       !/^[0-9]{1,12}$/.test(r.season) ||
       !/^[a-f0-9]{32}$/.test(r.client_salt) ||
       !/^[A-Za-z0-9 _.\-]{1,64}$/.test(r.client_seed) ||

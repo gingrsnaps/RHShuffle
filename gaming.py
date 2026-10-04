@@ -83,7 +83,7 @@ def validate_gaming(value):
             try:
                 valid = (isinstance(receipt, dict) and receipt['request_id'] not in seen and
                          type(receipt['nonce']) is int and receipt['nonce'] == player['nonce']-1-index and
-                         type(receipt['wager']) is int and 1 <= receipt['wager'] <= 10000 and verify(receipt))
+                         type(receipt['wager']) is int and 1 <= receipt['wager'] <= MAX_NUMBER and verify(receipt))
                 if not valid: raise ValueError('Invalid receipt')
                 seen.add(receipt['request_id'])
             except (KeyError, TypeError, ValueError):
@@ -149,8 +149,10 @@ class Gaming:
             raise GamingError('Choose a game and provide a valid bet receipt ID.')
         opt = options_for(game, body.get('options'))
         wager, nonce = body.get('wager'), body.get('nonce')
-        if type(wager) is not int or not 1 <= wager <= 10000:
-            raise GamingError('Wager 1–10,000 whole RedPoints per round.')
+        # There is no fixed stake cap or timed delay. Keep amounts exact across
+        # Python and JavaScript; the wallet balance remains authoritative.
+        if type(wager) is not int or not 1 <= wager <= MAX_NUMBER:
+            raise GamingError('Enter a positive whole-point wager within the supported exact-integer range.')
         if type(nonce) is not int or nonce < 0:
             raise GamingError('Reload the fairness details before playing.')
         client, salt = body.get('client_seed'), body.get('client_salt')
@@ -168,13 +170,12 @@ class Gaming:
                 raise GamingError('A new wager-race week started. Refresh to use your new 100,000 RedPoints.', 'new_season', 409)
             if nonce != player['nonce'] or body.get('commitment') != commitment(player['server_seed']):
                 raise GamingError('Another tab used this seed. Refresh your balance and fairness details.', 'stale_seed', 409)
-            if now - player.get('last_bet_at', 0) < 1:
-                raise GamingError('Wait one second between rounds.', 'cooldown', 429)
             if wager > player['balance']:
                 raise GamingError('Not enough RedPoints. Lower the wager or wait for the next race reset.', 'balance', 409)
             largest = wager*99//opt['chance'] if game=='dice' else wager*max(table(game, len(opt['picks']) if game=='keno' else opt['rows'], opt['risk']))//10000
             stats = player['stats'][game]
-            if max(player['balance']+largest, stats['paid']+largest, stats['wagered']+wager, player['nonce']+1) > MAX_NUMBER:
+            if max(player['balance']-wager+largest, stats['paid']+largest, stats['wagered']+wager,
+                   player['nonce']+1, player['version']+1) > MAX_NUMBER:
                 raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
             receipt = dict(rules_version=VERSION, season=current['id'], request_id=request_id, game=game,
                            client_seed=client, client_salt=salt, nonce=nonce, wager=wager, options=opt,
