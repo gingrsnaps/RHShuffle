@@ -339,46 +339,128 @@
     if (game === "plinko") drawPlinko(options.rows, info.multipliers);
   }
   function drawPlinko(rows, multipliers, ball = null, hit = -1) {
-    const canvas = id("plinkoCanvas");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d"),
-      step = 620 / (rows + 1),
-      dy = 380 / rows;
-    ctx.clearRect(0, 0, 720, 510);
-    for (let r = 0; r < rows; r++)
-      for (let c = 0; c <= r; c++) {
+    try {
+      const canvas = id("plinkoCanvas");
+      if (!canvas) return false;
+      const ctx = canvas.getContext("2d"),
+        step = 620 / (rows + 1),
+        dy = 380 / rows;
+      if (!ctx) return false;
+      ctx.clearRect(0, 0, 720, 510);
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c <= r; c++) {
+          ctx.beginPath();
+          ctx.arc(360 + (c - r / 2) * step, 44 + r * dy, 3.5, 0, 2 * Math.PI);
+          ctx.fillStyle = "#e9d9de";
+          ctx.fill();
+        }
+      multipliers.forEach((value, index) => {
+        const x = 360 + (index - rows / 2) * step;
+        ctx.fillStyle =
+          index === hit
+            ? "#fff2b6"
+            : index < 2 || index > rows - 2
+              ? "#a91f36"
+              : "#672334";
+        ctx.fillRect(x - step * 0.47, 438, step * 0.94, 38);
+        ctx.fillStyle = index === hit ? "#1b1020" : "#ffffff";
+        ctx.font = `600 ${rows > 12 ? 9 : 12}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(
+          (value / 10000).toFixed(value >= 100000 ? 0 : 2) + "×",
+          x,
+          461,
+        );
+      });
+      if (ball) {
         ctx.beginPath();
-        ctx.arc(360 + (c - r / 2) * step, 44 + r * dy, 3.5, 0, 2 * Math.PI);
-        ctx.fillStyle = "#e9d9de";
+        ctx.arc(ball.x, ball.y, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ff415b";
+        ctx.shadowColor = "#ff415b";
+        ctx.shadowBlur = 15;
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
-    multipliers.forEach((value, index) => {
-      const x = 360 + (index - rows / 2) * step;
-      ctx.fillStyle =
-        index === hit
-          ? "#fff2b6"
-          : index < 2 || index > rows - 2
-            ? "#a91f36"
-            : "#672334";
-      ctx.fillRect(x - step * 0.47, 438, step * 0.94, 38);
-      ctx.fillStyle = index === hit ? "#1b1020" : "#ffffff";
-      ctx.font = `600 ${rows > 12 ? 9 : 12}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText(
-        (value / 10000).toFixed(value >= 100000 ? 0 : 2) + "×",
-        x,
-        461,
-      );
-    });
-    if (ball) {
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, 8, 0, 2 * Math.PI);
-      ctx.fillStyle = "#ff415b";
-      ctx.shadowColor = "#ff415b";
-      ctx.shadowBlur = 15;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      return true;
+    } catch {
+      // A missing/lost canvas must not interrupt a settled, verified round.
+      return false;
     }
+  }
+  function animatePlinko(rows, values, result) {
+    const landing = {
+      x: 360 + ((result.slot - rows / 2) * 620) / (rows + 1),
+      y: 419,
+    };
+    const finalBoard = () => drawPlinko(rows, values, landing, result.slot);
+    if (
+      document.hidden ||
+      globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+      typeof requestAnimationFrame !== "function" ||
+      !drawPlinko(rows, values, { x: 360, y: 20 })
+    ) {
+      finalBoard();
+      return Promise.resolve();
+    }
+    const steps = [{ x: 360, y: 20 }];
+    let right = 0;
+    result.path.forEach((bit, i) => {
+      right += bit;
+      steps.push({
+        x: 360 + ((right - (i + 1) / 2) * 620) / (rows + 1),
+        y: 44 + ((i + 1) * 380) / rows,
+      });
+    });
+    steps[rows] = landing;
+    return new Promise((resolve) => {
+      let frameId,
+        timeoutId,
+        finished = false;
+      const began = performance.now();
+      function finish() {
+        if (finished) return;
+        finished = true;
+        cancelAnimationFrame(frameId);
+        clearTimeout(timeoutId);
+        document.removeEventListener("visibilitychange", onVisibility);
+        finalBoard();
+        resolve();
+      }
+      function onVisibility() {
+        if (document.hidden) finish();
+      }
+      function frame() {
+        if (finished) return;
+        try {
+          // RAF timestamps can predate the bet callback. Use one clock and
+          // clamp both ends so an older frame cannot index outside the path.
+          const progress = Math.max(
+            0,
+            Math.min(1, (performance.now() - began) / 1100),
+          );
+          const position = progress * rows,
+            index = Math.min(rows - 1, Math.floor(position)),
+            part = position - index;
+          const drawn = drawPlinko(rows, values, {
+            x: steps[index].x + (steps[index + 1].x - steps[index].x) * part,
+            y: steps[index].y + (steps[index + 1].y - steps[index].y) * part,
+          });
+          if (!drawn || progress >= 1 || document.hidden) finish();
+          else frameId = requestAnimationFrame(frame);
+        } catch {
+          finish();
+        }
+      }
+      // Animation is presentation only: stalled frames must always release
+      // the controls. Settlement and fairness checks happen before this.
+      timeoutId = setTimeout(finish, 1600);
+      document.addEventListener("visibilitychange", onVisibility);
+      try {
+        frameId = requestAnimationFrame(frame);
+      } catch {
+        finish();
+      }
+    });
   }
   async function showReceipt(receipt) {
     if (id("gameResult")) {
@@ -411,44 +493,10 @@
     } else {
       const rows = receipt.options.rows,
         values = rules.plinko[String(rows)][receipt.options.risk].multipliers;
-      if (
-        !matchMedia("(prefers-reduced-motion: reduce)").matches &&
-        !document.hidden
-      ) {
-        const steps = [{ x: 360, y: 20 }];
-        let right = 0;
-        r.path.forEach((bit, i) => {
-          right += bit;
-          steps.push({
-            x: 360 + ((right - (i + 1) / 2) * 620) / (rows + 1),
-            y: 44 + ((i + 1) * 380) / rows,
-          });
-        });
-        await new Promise((resolve) => {
-          const began = performance.now();
-          function frame(now) {
-            const progress = Math.min(1, (now - began) / 1100),
-              position = progress * rows,
-              index = Math.min(rows - 1, Math.floor(position)),
-              part = position - index;
-            drawPlinko(rows, values, {
-              x: steps[index].x + (steps[index + 1].x - steps[index].x) * part,
-              y: steps[index].y + (steps[index + 1].y - steps[index].y) * part,
-            });
-            if (progress < 1 && !document.hidden) requestAnimationFrame(frame);
-            else resolve();
-          }
-          requestAnimationFrame(frame);
-        });
-      }
-      drawPlinko(
-        rows,
-        values,
-        { x: 360 + ((r.slot - rows / 2) * 620) / (rows + 1), y: 419 },
-        r.slot,
-      );
+      // Keep the verified outcome visible even if animation is unavailable.
       id("plinkoResult").textContent =
         `Slot ${r.slot} · ${multiple(r.multiplier)} · path ${r.path.map((n) => (n ? "R" : "L")).join(" ")}`;
+      await animatePlinko(rows, values, r);
     }
   }
   async function submit(body) {
@@ -604,6 +652,28 @@
       el.addEventListener("input", settingsChanged);
       el.addEventListener("change", settingsChanged);
     });
+  id("diceChance")?.addEventListener(
+    "wheel",
+    (event) => {
+      const slider = event.currentTarget;
+      if (
+        locked() ||
+        slider.disabled ||
+        event.ctrlKey ||
+        event.metaKey ||
+        !event.deltaY
+      )
+        return;
+      // Scroll only over this control; leave page scrolling and pinch zoom alone.
+      event.preventDefault();
+      const previous = slider.value;
+      if (event.deltaY < 0) slider.stepUp();
+      else slider.stepDown();
+      if (slider.value !== previous)
+        slider.dispatchEvent(new Event("input", { bubbles: true }));
+    },
+    { passive: false },
+  );
   async function poll() {
     clearTimeout(timer);
     if (document.hidden || polling) return;
