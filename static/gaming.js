@@ -16,10 +16,23 @@
     fatal = false,
     pending = null,
     timer,
-    polling = false;
+    polling = false,
+    feedback = "";
   let selections = new Set(),
     walletEtag = "";
   const betLabel = id("betButton")?.textContent || "Play";
+  const betForm = id("betForm");
+  if (betForm) {
+    // Handle validation ourselves so a rejected click has an inline reason.
+    betForm.noValidate = true;
+    const status = document.createElement("p");
+    status.id = "betStatus";
+    status.className = "small gaming-bet-status";
+    id("betButton").before(status);
+    id("betButton").setAttribute("aria-describedby", status.id);
+    id("betButton").setAttribute("autocomplete", "off");
+  }
+  const verifierReady = typeof globalThis.RedFair?.verify === "function";
   const secure = Boolean(
     globalThis.crypto?.subtle && globalThis.crypto?.getRandomValues,
   );
@@ -47,8 +60,10 @@
   const locked = () => busy || fatal || Boolean(pending);
   const message = (value = "") => {
     if (!value && !secure) value = secureMessage;
+    feedback = value;
     id("gamingError").textContent = value;
     id("gamingError").hidden = !value;
+    controls();
   };
   try {
     pending = JSON.parse(sessionStorage.getItem("rh.gaming.pending"));
@@ -76,24 +91,78 @@
       } catch {}
     });
   }
+  function wagerProblem() {
+    if (!id("redWager") || !wallet) return "";
+    const wager = Number(id("redWager").value);
+    if (!Number.isSafeInteger(wager) || wager < 1)
+      return "Enter a positive whole-point wager.";
+    if (wager > wallet.balance)
+      return `Your wager exceeds your ${number(wallet.balance)} RedPoints balance. Lower it to play.`;
+    return "";
+  }
   function controls() {
+    const disabled = locked();
     root
       .querySelectorAll(
         "#betForm input, #betForm select, #betForm button, [data-keno], #clientSeed",
       )
-      .forEach((el) => (el.disabled = locked()));
+      .forEach((el) => {
+        // Avoid repeatedly toggling the submit button during input/poll events.
+        if (el.id !== "betButton" && el.disabled !== disabled)
+          el.disabled = disabled;
+      });
     if (id("betButton")) {
       id("betButton").disabled =
-        locked() ||
+        busy ||
+        fatal ||
         !secure ||
-        wallet?.needs_profile ||
-        wallet?.balance < 1 ||
-        (game === "keno" && !selections.size);
-      id("betButton").textContent = busy ? "Checking your round…" : betLabel;
+        !verifierReady ||
+        !wallet ||
+        wallet.needs_profile ||
+        (!pending &&
+          (wallet.balance < 1 || (game === "keno" && !selections.size)));
+      id("betButton").textContent = busy
+        ? "Checking your round…"
+        : pending
+          ? "Recover previous round"
+          : betLabel;
+      id("betButton").setAttribute("aria-busy", String(busy));
+      const reason = fatal
+        ? "Verification failed. Reload and review your saved receipts before playing."
+        : !secure
+          ? secureMessage
+          : !verifierReady
+            ? "Game files did not load. Refresh this page."
+            : !wallet
+              ? "Loading your balance…"
+              : wallet.needs_profile
+                ? "Save your player name above to start playing."
+                : busy
+                  ? "Saving and verifying your round…"
+                  : pending
+                    ? "Your previous round needs confirmation. Recover it here without a duplicate debit."
+                    : wallet.balance < 1
+                      ? "You have no RedPoints left. Your balance resets with the next race week."
+                      : feedback ||
+                        wagerProblem() ||
+                        (game === "keno" && !selections.size
+                          ? "Pick 1–10 numbers to play."
+                          : game === "plinko"
+                            ? "Drop again as soon as your round is verified, even while balls are moving."
+                            : "Ready to play.");
+      if (id("betStatus")) {
+        id("betStatus").textContent = reason;
+        id("betStatus").classList.toggle(
+          "is-error",
+          Boolean(fatal || feedback || (!busy && !pending && wagerProblem())),
+        );
+      }
+      if (wagerProblem()) id("redWager").setAttribute("aria-invalid", "true");
+      else id("redWager").removeAttribute("aria-invalid");
     }
     if (id("retryBet")) {
       id("retryBet").hidden = !pending;
-      id("retryBet").disabled = busy || !secure;
+      id("retryBet").disabled = busy || fatal || !secure || !verifierReady;
     }
   }
   function renderWallet(next) {
@@ -111,6 +180,8 @@
         next.nonce < wallet.nonce)
     )
       return;
+    if (!wallet && id("redWager")?.value === "100" && next.balance > 0)
+      id("redWager").value = String(Math.min(100, next.balance));
     wallet = next;
     id("pointsBalance").textContent = number(next.balance);
     if (id("redWager")) id("redWager").max = String(next.balance);
@@ -336,133 +407,272 @@
         return box;
       }),
     );
-    if (game === "plinko") drawPlinko(options.rows, info.multipliers);
+    if (game === "plinko") plinko.setBoard(options.rows, info.multipliers);
   }
-  function drawPlinko(rows, multipliers, ball = null, hit = -1) {
-    try {
-      const canvas = id("plinkoCanvas");
-      if (!canvas) return false;
-      const ctx = canvas.getContext("2d"),
-        step = 620 / (rows + 1),
-        dy = 380 / rows;
-      if (!ctx) return false;
-      ctx.clearRect(0, 0, 720, 510);
-      for (let r = 0; r < rows; r++)
-        for (let c = 0; c <= r; c++) {
-          ctx.beginPath();
-          ctx.arc(360 + (c - r / 2) * step, 44 + r * dy, 3.5, 0, 2 * Math.PI);
-          ctx.fillStyle = "#e9d9de";
-          ctx.fill();
-        }
-      multipliers.forEach((value, index) => {
-        const x = 360 + (index - rows / 2) * step;
-        ctx.fillStyle =
-          index === hit
-            ? "#fff2b6"
-            : index < 2 || index > rows - 2
-              ? "#a91f36"
-              : "#672334";
-        ctx.fillRect(x - step * 0.47, 438, step * 0.94, 38);
-        ctx.fillStyle = index === hit ? "#1b1020" : "#ffffff";
-        ctx.font = `600 ${rows > 12 ? 9 : 12}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(
-          (value / 10000).toFixed(value >= 100000 ? 0 : 2) + "×",
-          x,
-          461,
+  // One canvas loop for every visible ball. Outcomes come only from verified
+  // receipts; the renderer never samples randomness or changes a payout.
+  const plinko = (() => {
+    const canvas = id("plinkoCanvas");
+    const width = 720,
+      height = 510,
+      pegRadius = 3.5,
+      ballRadius = 8;
+    let board,
+      layer,
+      ctx,
+      key = "",
+      balls = [],
+      resting = null;
+    let frameId = null,
+      timeoutId,
+      lastHit = -1,
+      warned = false;
+
+    function cancelFrames() {
+      if (frameId !== null && typeof cancelAnimationFrame === "function")
+        cancelAnimationFrame(frameId);
+      frameId = null;
+      clearTimeout(timeoutId);
+    }
+
+    function unavailable(error) {
+      cancelFrames();
+      balls = [];
+      if (!warned) {
+        warned = true;
+        console.warn(
+          "PLINKO Animation unavailable; verified results and balances are still saved.",
+          error,
         );
-      });
-      if (ball) {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, 8, 0, 2 * Math.PI);
-        ctx.fillStyle = "#ff415b";
-        ctx.shadowColor = "#ff415b";
-        ctx.shadowBlur = 15;
-        ctx.fill();
-        ctx.shadowBlur = 0;
       }
-      return true;
-    } catch {
-      // A missing/lost canvas must not interrupt a settled, verified round.
       return false;
     }
-  }
-  function animatePlinko(rows, values, result) {
-    const landing = {
-      x: 360 + ((result.slot - rows / 2) * 620) / (rows + 1),
-      y: 419,
-    };
-    const finalBoard = () => drawPlinko(rows, values, landing, result.slot);
-    if (
-      document.hidden ||
-      globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
-      typeof requestAnimationFrame !== "function" ||
-      !drawPlinko(rows, values, { x: 360, y: 20 })
-    ) {
-      finalBoard();
-      return Promise.resolve();
+
+    function slot(context, index, active = false) {
+      const x = 360 + (index - board.rows / 2) * board.step;
+      context.fillStyle = active
+        ? "#fff2b6"
+        : index < 2 || index > board.rows - 2
+          ? "#a91f36"
+          : "#672334";
+      context.fillRect(x - board.step * 0.47, 438, board.step * 0.94, 38);
+      context.fillStyle = active ? "#1b1020" : "#ffffff";
+      const label = multiple(board.values[index]);
+      let size = board.rows > 12 ? 10 : 12;
+      context.font = `600 ${size}px sans-serif`;
+      while (size > 6 && context.measureText(label).width > board.step * 0.84)
+        context.font = `600 ${--size}px sans-serif`;
+      context.textAlign = "center";
+      context.fillText(label, x, 461);
     }
-    const steps = [{ x: 360, y: 20 }];
-    let right = 0;
-    result.path.forEach((bit, i) => {
-      right += bit;
-      steps.push({
-        x: 360 + ((right - (i + 1) / 2) * 620) / (rows + 1),
-        y: 44 + ((i + 1) * 380) / rows,
+
+    function setBoard(rows, values) {
+      if (!canvas) return false;
+      try {
+        const scale = Math.max(
+          1,
+          Math.min(
+            2,
+            ((canvas.getBoundingClientRect().width || width) / width) *
+              (globalThis.devicePixelRatio || 1),
+          ),
+        );
+        const nextKey = `${rows}:${values.join(",")}:${scale.toFixed(2)}`;
+        if (key === nextKey && board) return true;
+        // A different board cannot display an earlier board's path accurately.
+        cancelFrames();
+        balls = [];
+        resting = null;
+        lastHit = -1;
+        board = {
+          rows,
+          values,
+          step: 620 / (rows + 1),
+          top: 64,
+          dy: 332 / (rows - 1),
+        };
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+        ctx = canvas.getContext("2d");
+        layer = document.createElement("canvas");
+        layer.width = canvas.width;
+        layer.height = canvas.height;
+        const background = layer.getContext("2d");
+        if (!ctx || !background) return unavailable("Canvas context missing");
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+        background.setTransform(scale, 0, 0, scale, 0, 0);
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c <= r; c++) {
+            background.beginPath();
+            background.arc(
+              360 + (c - r / 2) * board.step,
+              board.top + r * board.dy,
+              pegRadius,
+              0,
+              2 * Math.PI,
+            );
+            background.fillStyle = "#e9d9de";
+            background.fill();
+          }
+        }
+        values.forEach((_, index) => slot(background, index));
+        key = nextKey;
+        return paint(performance.now());
+      } catch (error) {
+        key = "";
+        return unavailable(error);
+      }
+    }
+
+    function trajectory(result, now) {
+      const points = [
+        { x: 360, y: 18 },
+        { x: 360, y: board.top - pegRadius - ballRadius },
+      ];
+      let right = 0;
+      result.path.forEach((bit, row) => {
+        right += bit;
+        points.push({
+          x: 360 + (right - (row + 1) / 2) * board.step,
+          y:
+            row === board.rows - 1
+              ? 427
+              : board.top + (row + 1) * board.dy - pegRadius - ballRadius,
+        });
       });
-    });
-    steps[rows] = landing;
-    return new Promise((resolve) => {
-      let frameId,
-        timeoutId,
-        finished = false;
-      const began = performance.now();
-      function finish() {
-        if (finished) return;
-        finished = true;
-        cancelAnimationFrame(frameId);
-        clearTimeout(timeoutId);
-        document.removeEventListener("visibilitychange", onVisibility);
-        finalBoard();
-        resolve();
-      }
-      function onVisibility() {
-        if (document.hidden) finish();
-      }
-      function frame() {
-        if (finished) return;
-        try {
-          // RAF timestamps can predate the bet callback. Use one clock and
-          // clamp both ends so an older frame cannot index outside the path.
-          const progress = Math.max(
-            0,
-            Math.min(1, (performance.now() - began) / 1100),
-          );
-          const position = progress * rows,
-            index = Math.min(rows - 1, Math.floor(position)),
-            part = position - index;
-          const drawn = drawPlinko(rows, values, {
-            x: steps[index].x + (steps[index + 1].x - steps[index].x) * part,
-            y: steps[index].y + (steps[index + 1].y - steps[index].y) * part,
-          });
-          if (!drawn || progress >= 1 || document.hidden) finish();
-          else frameId = requestAnimationFrame(frame);
-        } catch {
-          finish();
+      return {
+        points,
+        slot: result.slot,
+        began: now,
+        duration: 360 + (board.rows - 1) * 105,
+      };
+    }
+
+    function sample(ball, now) {
+      const elapsed = Math.max(0, Math.min(ball.duration, now - ball.began));
+      let segment, t;
+      if (elapsed < 180) {
+        segment = 0;
+        t = elapsed / 180;
+      } else {
+        const middle = (board.rows - 1) * 105;
+        if (elapsed < 180 + middle) {
+          segment = 1 + Math.floor((elapsed - 180) / 105);
+          t = ((elapsed - 180) % 105) / 105;
+        } else {
+          segment = board.rows;
+          t = Math.min(1, (elapsed - 180 - middle) / 180);
         }
       }
-      // Animation is presentation only: stalled frames must always release
-      // the controls. Settlement and fairness checks happen before this.
-      timeoutId = setTimeout(finish, 1600);
-      document.addEventListener("visibilitychange", onVisibility);
+      const a = ball.points[segment],
+        b = ball.points[segment + 1];
+      const dy = b.y - a.y;
+      // Contact points sit above each peg, not inside it. Each verified bit
+      // sends the ball to the left/right peg using a short parabolic bounce.
+      const rise = Math.min(5, dy * 0.2);
+      const launch = 2 * rise + 2 * Math.sqrt(rise * (rise + dy));
+      return {
+        x: a.x + (b.x - a.x) * t,
+        y:
+          segment === 0
+            ? a.y + dy * t * t
+            : a.y - launch * t + (dy + launch) * t * t,
+      };
+    }
+
+    function paint(now) {
+      if (!ctx || !layer) return false;
       try {
-        frameId = requestAnimationFrame(frame);
-      } catch {
-        finish();
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(layer, 0, 0, width, height);
+        if (lastHit >= 0) slot(ctx, lastHit, true);
+        const positions = balls.map((ball) => sample(ball, now));
+        if (resting && !balls.length) positions.push(resting);
+        for (const position of positions) {
+          ctx.beginPath();
+          ctx.arc(position.x, position.y, ballRadius, 0, 2 * Math.PI);
+          ctx.fillStyle = "#ff415b";
+          ctx.shadowColor = "#ff415b";
+          ctx.shadowBlur = 10;
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+        return true;
+      } catch (error) {
+        return unavailable(error);
       }
-    });
-  }
-  async function showReceipt(receipt) {
+    }
+
+    function finish() {
+      const last = balls[balls.length - 1];
+      if (last) {
+        resting = last.points[last.points.length - 1];
+        lastHit = last.slot;
+      }
+      balls = [];
+      cancelFrames();
+      paint(performance.now());
+    }
+
+    function frame() {
+      frameId = null;
+      try {
+        // Use one monotonic clock. Older RAF timestamps and slow frames must
+        // never rewind a ball or leave an animation waiting indefinitely.
+        const now = performance.now();
+        balls = balls.filter((ball) => {
+          if (now - ball.began < ball.duration) return true;
+          resting = ball.points[ball.points.length - 1];
+          lastHit = ball.slot;
+          return false;
+        });
+        if (!paint(now)) return;
+        if (balls.length && !document.hidden)
+          frameId = requestAnimationFrame(frame);
+        else finish();
+      } catch (error) {
+        unavailable(error);
+      }
+    }
+
+    function drop(rows, values, result) {
+      try {
+        if (!setBoard(rows, values)) return;
+        const now = performance.now();
+        balls.push(trajectory(result, now));
+        if (
+          document.hidden ||
+          globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+          typeof requestAnimationFrame !== "function"
+        ) {
+          finish();
+          return;
+        }
+        if (frameId === null) frameId = requestAnimationFrame(frame);
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(finish, balls[balls.length - 1].duration + 400);
+      } catch (error) {
+        unavailable(error);
+      }
+    }
+
+    if (canvas) {
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) finish();
+      });
+      window.addEventListener("pagehide", () => finish());
+      let resizeId;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeId);
+        resizeId = setTimeout(() => {
+          if (board) setBoard(board.rows, board.values);
+        }, 120);
+      });
+    }
+    return { setBoard, drop };
+  })();
+
+  function showReceipt(receipt) {
     if (id("gameResult")) {
       id("gameResult").textContent =
         `${receipt.game[0].toUpperCase() + receipt.game.slice(1)} · ${points(receipt.net)} RedPoints net · ${number(receipt.payout)} returned`;
@@ -496,42 +706,70 @@
       // Keep the verified outcome visible even if animation is unavailable.
       id("plinkoResult").textContent =
         `Slot ${r.slot} · ${multiple(r.multiplier)} · path ${r.path.map((n) => (n ? "R" : "L")).join(" ")}`;
-      await animatePlinko(rows, values, r);
+      plinko.drop(rows, values, r);
+    }
+  }
+  async function verifyReceipt(receipt, body) {
+    const fields = [
+      "request_id",
+      "season",
+      "game",
+      "client_seed",
+      "client_salt",
+      "nonce",
+      "wager",
+      "options",
+    ];
+    if (
+      !fields.every(
+        (key) =>
+          RedFair.canonical(receipt[key]) === RedFair.canonical(body[key]),
+      ) ||
+      !(await RedFair.verify(receipt, body.commitment))
+    ) {
+      fatal = true;
+      throw Error(
+        "Fairness verification failed. Stop playing and download your receipts for review.",
+      );
+    }
+  }
+  async function recoverSavedRound(next) {
+    if (!pending || busy || fatal || !secure || !verifierReady) return;
+    const body = pending;
+    const receipt = next.receipts.find(
+      (item) => item.request_id === body.request_id,
+    );
+    if (!receipt) return;
+    busy = true;
+    controls();
+    try {
+      // Read-only recovery: verify the existing receipt against the original
+      // commitment before clearing a lost-response marker. Never debit again.
+      await verifyReceipt(receipt, body);
+      remember(null);
+      message();
+      showReceipt(receipt);
+    } catch (error) {
+      message(error.message);
+    } finally {
+      busy = false;
+      controls();
     }
   }
   async function submit(body) {
-    if (busy || !secure) return;
+    if (busy || fatal || !secure || !verifierReady) return;
     busy = true;
     controls();
     message();
     try {
       const result = await api("/gaming/api/bet", body),
         receipt = result.receipt;
-      const fields = [
-        "request_id",
-        "season",
-        "game",
-        "client_seed",
-        "client_salt",
-        "nonce",
-        "wager",
-        "options",
-      ];
-      if (
-        !fields.every(
-          (key) =>
-            RedFair.canonical(receipt[key]) === RedFair.canonical(body[key]),
-        ) ||
-        !(await RedFair.verify(receipt, body.commitment))
-      ) {
-        fatal = true;
-        throw Error(
-          "Fairness verification failed. Stop playing and download your receipts for review.",
-        );
-      }
+      await verifyReceipt(receipt, body);
       remember(null);
       renderWallet(result.wallet);
-      await showReceipt(receipt);
+      // Rendering is independent of the transaction lock. A verified drop
+      // may keep animating while the next wager is submitted.
+      showReceipt(receipt);
     } catch (error) {
       if (error.definitive) {
         remember(null);
@@ -551,7 +789,19 @@
   }
   id("betForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (locked() || !secure || wallet.needs_profile) return;
+    if (
+      busy ||
+      fatal ||
+      !secure ||
+      !verifierReady ||
+      !wallet ||
+      wallet.needs_profile
+    )
+      return;
+    if (pending) {
+      void submit(pending);
+      return;
+    }
     const options = opt();
     if (game === "keno" && !selections.size)
       return message("Pick at least one Keno number.");
@@ -559,10 +809,12 @@
       wager = Number(id("redWager").value);
     if (!/^[A-Za-z0-9 _.\-]{1,64}$/.test(client))
       return message("Use a valid 1–64 character client seed.");
-    if (!Number.isSafeInteger(wager) || wager < 1 || wager > wallet.balance)
-      return message(
-        "Enter a positive whole-point wager within your RedPoints balance.",
-      );
+    const invalidWager = wagerProblem();
+    if (invalidWager) {
+      message(invalidWager);
+      id("redWager").focus();
+      return;
+    }
     const body = {
       rules_version: RedFair.VERSION,
       game,
@@ -684,13 +936,16 @@
     polling = true;
     try {
       const value = await api("/gaming/api/state", null, true);
-      if (value && !busy) renderWallet(value.wallet);
+      if (value && !busy) {
+        renderWallet(value.wallet);
+        await recoverSavedRound(value.wallet);
+      }
       id("gamingChecked").textContent =
         "Balance confirmed · checks every 5 seconds";
     } catch (error) {
       id("gamingChecked").textContent = "Balance update delayed · retrying";
     } finally {
-      polling = false;
+      ((polling = false), (feedback = ""));
       if (!document.hidden) timer = setTimeout(poll, 5000);
     }
   }
@@ -706,5 +961,6 @@
       "An earlier wager needs confirmation. Recover its result before placing another.",
     );
   if (!secure) message(secureMessage);
+  void recoverSavedRound(wallet);
   poll();
 })();
