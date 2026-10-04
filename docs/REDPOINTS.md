@@ -1,6 +1,6 @@
 # RedPoints gaming
 
-Release **2026.10.04-redpoints-arcade2**. New rounds use **redpoints-v2**; old
+Release **2026.10.04-redpoints-arcade2-shared-connections**. New rounds use **redpoints-v2**; old
 **redpoints-v1** receipts remain verifiable. Run only `python wager_backend.py`.
 
 ## Currency and identity
@@ -9,25 +9,35 @@ Dice, Keno, Plinko and Blackjack use one shared **RedPoints** wallet. These are
 play-only points, with no purchases, withdrawals or conversion to Shuffle or
 Botrix balances. None of these games sends bets to Shuffle.
 
-The signed player identity owns the name, wallet, statistics and receipts. One
-wallet may play per public IP each race week. All four games use that same mapping.
-A name or IP alone never authenticates someone else's wallet: restore an existing
-player in a new browser with its private recovery code. Users sharing a public IP
-cannot open separate gaming wallets that week. An existing signed player can move
-to a previously unclaimed IP without losing their points. IPv4 aliases and IPv6
-spelling are normalized. Canonical IPs are retained in private state for the admin
-view; they are not published in public wallet responses or receipts.
+The signed player identity owns the name, wallet, statistics and receipts. Everyone
+on a shared IP may have a separate wallet. A missing IP address or a full tracking
+directory never blocks play. Moving networks retains the same signed player's
+records. A name or IP never authenticates access to someone else's wallet; use the
+private recovery code to restore your own player in another browser.
+
+Save your community name on Gaming before playing. Existing boss names are offered
+as suggestions. First confirmation activates at least 100,000 points, preserving
+larger balances or prior admin grants. IP aliases are normalized and saved only as
+admin tracking information. Older exclusive IP claims migrate to many-player
+associations without merging wallets or dropping prior connection records.
 
 The existing boss identity and recovery code are reused. Boss household settings,
 30-second attacks, damage, health, uploads and achievements keep their own rules.
 
 ## Wallet and records
 
-- One **100,000-point** allowance per player/week, shared across four games.
+- **100,000 starting points** per confirmed player, shared across four games.
 - Weekly boundary: Tuesday **18:00 America/New_York**, including daylight saving.
 - No fixed stake cap or daily/weekly round-count limit. Stakes must be positive
   whole points, affordable, and safe under the exact-integer range `2^53−1`.
-- Reloads, changing names or switching games do not refill a wallet.
+- Reloading a Gaming page sets its player to exactly **100,000 available points**.
+  Server startup sets every saved wallet to **100,000**. Larger balances are also
+  set to 100,000. Changing games, changing names or automatic polls do not refill.
+- The admin grant adds **100,000 per saved wallet**, retaining existing points.
+  Grants require an authenticated admin, CSRF and an idempotent request ID.
+- Funding uses a separate wallet adjustment. It never counts as game profit.
+  Names, nonces, commitments, receipts and active Blackjack hands are preserved.
+  The normal weekly reset still clears standings and settles old pending hands.
 - Net winnings mean **returned points minus total points wagered**. Returned
   points include the original stake. Losses remain negative.
 - Debits, returns, seed rotation, receipts and statistics save under one file lock
@@ -37,13 +47,14 @@ The existing boss identity and recovery code are reused. Boss household settings
 - The latest 30 settled receipts per wallet remain available across weekly resets.
   Download receipts for longer retention. Full recovery includes wallets and seeds.
 - Existing three-game saves gain a zeroed Blackjack stats entry. Migration retains
-  balances, names, original seeds, nonces and receipts; it never merges players.
+  names, original seeds, nonces and receipts; it never merges players. The startup
+  funding rule restores available balances separately after validation.
 
 ## Admin rankings
 
 Sign in and open **Gaming top 5**, `/admin/gaming`, or `/admin?tab=gaming`.
 Overview also includes the same four lists. The visible installed release should
-be **2026.10.04-redpoints-arcade2**. Complete packages and patch files must match.
+be **2026.10.04-redpoints-arcade2-shared-connections**. Complete packages and patch files must match.
 
 Each game shows up to five players ranked by actual net winnings, then total
 returned points, then a stable short player identifier. Records include the full
@@ -133,7 +144,8 @@ code; reproducible results do not guarantee uptime or truthful hosting.
 ## Deployment and persistence
 
 On DigitalOcean App Platform set `TRUST_APP_PLATFORM=1` so visitor addresses come
-from its `DO-Connecting-IP` header. On a directly exposed/local server leave it
+from its `DO-Connecting-IP` header for private admin tracking. Missing forwarding
+never blocks Gaming. On a directly exposed/local server leave it
 at 0: do not trust visitor-supplied proxy headers. Use one application instance.
 
 The requested JSON-only design remains. **App Platform local files can disappear

@@ -1,6 +1,6 @@
 """Shared play-point wallets. All debits, outcomes, receipts and ranks commit once.
 
-Uses the existing JSON transaction, signed browser identity and weekly IP binding. No money, SQL,
+Uses the existing JSON transaction and signed browser identity. IPs are admin-only metadata. No money, SQL,
 Botrix balance integration, daily wager cap, or separate launch process.
 """
 import copy
@@ -55,7 +55,7 @@ def canonical_ip(address):
 
 
 def ip_key(guard, address):
-    # Key ownership by a stable digest. Canonical addresses are stored separately
+    # Index connections by a stable digest. Canonical addresses are stored separately
     # for the private admin view, never in public wallet responses or bet logs.
     return hmac.new(bytes.fromhex(guard['salt']), canonical_ip(address).encode('ascii'), hashlib.sha256).hexdigest()
 
@@ -150,15 +150,22 @@ def validate_gaming(value):
         grant_ids.add(grant['request_id'])
     guard = value.get('ip_guard')
     if guard is not None:
-        if (not isinstance(guard, dict) or guard.get('version') != 1 or
+        if (not isinstance(guard, dict) or guard.get('version') not in (1, 2) or
                 not isinstance(guard.get('salt'), str) or not re.fullmatch(r'[a-f0-9]{64}', guard['salt']) or
                 not isinstance(guard.get('season'), str) or not re.fullmatch(r'\d{1,12}', guard['season']) or
                 not isinstance(guard.get('claims'), dict) or len(guard['claims']) > MAX_IP_BINDINGS):
             raise ValueError('Invalid RedPoints IP bindings.')
-        for address, owner in guard['claims'].items():
+        links = 0
+        for address, owners in guard['claims'].items():
+            owners = [owners] if guard['version'] == 1 else owners
             if (not isinstance(address, str) or not re.fullmatch(r'[a-f0-9]{64}', address) or
-                    not isinstance(owner, str) or owner not in value['players']):
-                raise ValueError('Invalid RedPoints IP owner.')
+                    not isinstance(owners, list) or not owners or len(owners) > MAX_PLAYERS or
+                    any(not isinstance(key, str) or key not in value['players'] for key in owners) or
+                    len(set(owners)) != len(owners)):
+                raise ValueError('Invalid RedPoints IP association.')
+            links += len(owners)
+        if links > MAX_IP_BINDINGS:
+            raise ValueError('Too many saved RedPoints IP associations.')
         addresses = guard.get('addresses', {})
         if not isinstance(addresses, dict) or set(addresses)-set(guard['claims']):
             raise ValueError('Invalid private IP directory.')
@@ -175,8 +182,44 @@ class Gaming:
             validate_gaming(conn.get('gaming'))
         # Adding a game never resets an existing wallet, seed or receipt.
         with store.connection(transaction=True) as conn:
-            for player in (conn.get('gaming') or {}).get('players', {}).values():
+            data = conn.get('gaming') or {}
+            for player in data.get('players', {}).values():
                 player['stats'].setdefault('blackjack', fresh_stats()['blackjack'])
+            self._upgrade_networks(data.get('ip_guard'))
+
+    def restart_balances(self, now=None):
+        """Run once at server startup, never from a page or automatic poll.
+
+        Restore the playable allowance without erasing names, results, seeds or
+        unfinished hands. Normal weekly rollover still starts a fresh leaderboard.
+        """
+        current = season(now)
+        restored = skipped = 0
+        with self.store.connection(transaction=True) as conn:
+            for player in (conn.get('gaming') or {}).get('players', {}).values():
+                try:
+                    self._rollover(player, current)
+                    if player['balance'] != START_POINTS:
+                        self._reset_allowance(player)
+                    restored += 1
+                except GamingError:
+                    # An exceptional numeric/clock record must not take the
+                    # entire community offline. Keep that record unchanged.
+                    skipped += 1
+        LOG.info('GAMING startup restored %s RedPoints for %s wallets; names and game records retained. Shared IPs are allowed.',
+                 START_POINTS, restored)
+        if skipped:
+            LOG.warning('GAMING retained %s wallets unchanged due to their numeric range or future season.', skipped)
+        return dict(restored=restored, skipped=skipped)
+
+    @staticmethod
+    def _reset_allowance(player):
+        # This adjustment is funding, not winnings. Reserved Blackjack stakes
+        # remain in the hand and are settled exactly once by the normal ledger.
+        adjustment = player.get('balance_adjustment', 0) + START_POINTS - player['balance']
+        if abs(adjustment) > MAX_NUMBER or player['version'] >= MAX_NUMBER:
+            raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
+        player.update(balance=START_POINTS, balance_adjustment=adjustment, version=player['version']+1)
 
     def _player(self, conn, identity, name, now):
         current = season(now)
@@ -211,34 +254,48 @@ class Gaming:
                           stats=fresh_stats(), version=player['version']+1)
 
     @staticmethod
-    def _ip_issue(data, key, address, current):
+    def _upgrade_networks(guard):
+        """Turn old exclusive claims into many-player associations, in place."""
+        if guard and guard['version'] == 1:
+            guard['claims'] = {digest: [owner] for digest, owner in guard['claims'].items()}
+            guard['version'] = 2
+
+    @staticmethod
+    def _needs_network_record(data, key, address, current):
+        """Missing/full tracking data never affects eligibility to play."""
         try:
             address = canonical_ip(address)
         except ValueError:
-            return dict(code='ip_unavailable', message='Your connection could not be verified. Reload, or ask the host to check visitor IP settings.')
+            return False
         guard = (data or {}).get('ip_guard')
-        if guard and int(guard['season']) > int(current['id']):
-            return dict(code='clock', message='The server clock moved backwards. Your saved points are protected.')
-        if guard and guard['season'] == current['id']:
-            owner = guard['claims'].get(ip_key(guard, address))
-            if owner and owner != key:
-                return dict(code='ip_wallet_exists', message='This public IP already has a RedPoints wallet this race week. Restore that player with its recovery code, or use your usual connection.')
-        return None
+        if not guard or int(guard['season']) < int(current['id']):
+            return True
+        if int(guard['season']) > int(current['id']):
+            return False
+        digest = ip_key(guard, address)
+        owners = guard['claims'].get(digest, [])
+        if isinstance(owners, str):
+            owners = [owners]  # Recovery imports may still contain the old format.
+        if key in owners:
+            return digest not in guard.get('addresses', {})
+        links = sum(1 if isinstance(items, str) else len(items) for items in guard['claims'].values())
+        return links < MAX_IP_BINDINGS
 
-    def _claim_ip(self, data, key, address, current):
-        issue = self._ip_issue(data, key, address, current)
-        if issue:
-            raise GamingError(issue['message'], issue['code'], 409)
+    def _record_ip(self, data, key, address, current):
+        # A household, VPN, mobile carrier or proxy can represent many people.
+        # Only the signed browser/recovery identity owns a wallet, never an IP.
+        if not self._needs_network_record(data, key, address, current):
+            return
         guard = data.get('ip_guard')
         if guard is None:
-            guard = data['ip_guard'] = dict(version=1, salt=secrets.token_hex(32), season=current['id'], claims={}, addresses={})
+            guard = data['ip_guard'] = dict(version=2, salt=secrets.token_hex(32), season=current['id'], claims={}, addresses={})
+        self._upgrade_networks(guard)
         if guard['season'] != current['id']:
             guard.update(season=current['id'], claims={}, addresses={})
         digest = ip_key(guard, address)
-        if digest not in guard['claims']:
-            if len(guard['claims']) >= MAX_IP_BINDINGS:
-                raise GamingError('The connection registry is full. Contact the host.', 'capacity', 409)
-            guard['claims'][digest] = key
+        owners = guard['claims'].setdefault(digest, [])
+        if key not in owners:
+            owners.append(key)
         guard.setdefault('addresses', {})[digest] = canonical_ip(address)
 
     @staticmethod
@@ -256,45 +313,36 @@ class Gaming:
         return value
 
     @staticmethod
-    def _view(player, current, issue=None):
+    def _view(player, current):
         return dict(season=current, name=player['name'], balance=player['balance'], nonce=player['nonce'],
                     version=player['version'], commitment=commitment(player['server_seed']),
                     stats=copy.deepcopy(player['stats']), receipts=copy.deepcopy(player['receipts']),
                     needs_profile=not player.get('community_name_confirmed', False),
-                    rules_version=VERSION, ip_bound=issue is None, play_blocked=issue,
+                    rules_version=VERSION, ip_bound=False, play_blocked=None,
                     blackjack=Gaming._hand_view(player))
 
     def view(self, identity, name, now=None, *, client_ip=None):
         now = time.time() if now is None else now
         current = season(now)
         key = player_key(identity)
-        def preview(issue):
-            return dict(season=current, balance=0 if issue else START_POINTS, name=name or '', nonce=0, version=0,
+        def preview():
+            return dict(season=current, balance=START_POINTS, name=name or '', nonce=0, version=0,
                         commitment='', stats=fresh_stats(), receipts=[], needs_profile=True,
-                        rules_version=VERSION, ip_bound=False, play_blocked=issue, blackjack=None)
+                        rules_version=VERSION, ip_bound=False, play_blocked=None, blackjack=None)
         # Routine five-second reads neither copy the complete community save nor
-        # rewrite it. IP claims and wallet creation share the same transaction.
+        # rewrite it. Connection metadata is recorded only when it changes.
         with self.store.connection() as conn:
             data = conn.get('gaming') or {}
-            issue = self._ip_issue(data, key, client_ip, current)
             player = data.get('players', {}).get(key)
-            if not name or (issue and not player):
-                return preview(issue)
+            if not name:
+                return preview()
             if player and player['season'] == current['id'] and player['name'] == name:
-                guard = data.get('ip_guard')
-                if issue or (guard and guard['season'] == current['id'] and
-                             guard['claims'].get(ip_key(guard, client_ip)) == key and
-                             ip_key(guard, client_ip) in guard.get('addresses', {})):
-                    return self._view(player, current, issue)
+                if not self._needs_network_record(data, key, client_ip, current):
+                    return self._view(player, current)
         with self.store.connection(transaction=True) as conn:
-            data = conn.get('gaming') or {}
-            issue = self._ip_issue(data, key, client_ip, current)
-            if issue and key not in data.get('players', {}):
-                return preview(issue)
             player, current = self._player(conn, identity, name, now)
-            if not issue:
-                self._claim_ip(conn['gaming'], key, client_ip, current)
-            return self._view(player, current, issue)
+            self._record_ip(conn['gaming'], key, client_ip, current)
+            return self._view(player, current)
 
     def confirm_community_name(self, identity, name, now=None, *, client_ip=None):
         """Activate the shared wallet once, retaining wins, receipts and its owner.
@@ -308,7 +356,7 @@ class Gaming:
         now = time.time() if now is None else now
         with self.store.connection(transaction=True) as conn:
             player, current = self._player(conn, identity, name, now)
-            self._claim_ip(conn['gaming'], player_key(identity), client_ip, current)
+            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
             if not player.get('community_name_confirmed', False):
                 extra = max(0, START_POINTS - player['balance'])
                 adjustment = player.get('balance_adjustment', 0) + extra
@@ -371,17 +419,14 @@ class Gaming:
         now = time.time() if now is None else now
         with self.store.connection(transaction=True) as conn:
             player, current = self._player(conn, identity, name, now)
-            self._claim_ip(conn['gaming'], player_key(identity), client_ip, current)
+            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
             if body['season'] != current['id']:
                 # The weekly rollover already supplies the new allowance.
                 return dict(ok=True, wallet=self._view(player, current))
             if body['version'] != player['version']:
                 raise GamingError('Your balance changed in another request. Reload to refresh the latest wallet.',
                                   'stale_wallet', 409)
-            adjustment = player.get('balance_adjustment', 0) + START_POINTS - player['balance']
-            if abs(adjustment) > MAX_NUMBER or player['version'] >= MAX_NUMBER:
-                raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
-            player.update(balance=START_POINTS, balance_adjustment=adjustment, version=player['version']+1)
+            self._reset_allowance(player)
             LOG.info('GAMING browser refresh restored %s RedPoints; game records retained.', START_POINTS)
             return dict(ok=True, wallet=self._view(player, current))
 
@@ -411,12 +456,11 @@ class Gaming:
             player, current = self._player(conn, identity, name, now)
             duplicate = next((r for r in player['receipts'] if r['request_id']==request_id), None)
             if duplicate:
-                issue = self._ip_issue(conn['gaming'], player_key(identity), client_ip, current)
-                return dict(ok=True, duplicate=True, receipt=copy.deepcopy(duplicate), wallet=self._view(player, current, issue))
+                return dict(ok=True, duplicate=True, receipt=copy.deepcopy(duplicate), wallet=self._view(player, current))
             # Old receipts remain recoverable, but new wagers must use v2.
             if body.get('rules_version') != VERSION:
                 raise GamingError('Game rules changed. Reload before placing another wager.', 'release_mismatch', 409)
-            self._claim_ip(conn['gaming'], player_key(identity), client_ip, current)
+            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
             active = player.get('blackjack')
             if active:
                 if active['request_id'] == request_id:
@@ -476,9 +520,8 @@ class Gaming:
             player, current = self._player(conn, identity, name, now)
             done = next((r for r in player['receipts'] if r['request_id'] == round_id and r['game']=='blackjack'), None)
             if done:
-                issue = self._ip_issue(conn['gaming'], player_key(identity), client_ip, current)
-                return dict(ok=True, duplicate=True, receipt=copy.deepcopy(done), wallet=self._view(player, current, issue))
-            self._claim_ip(conn['gaming'], player_key(identity), client_ip, current)
+                return dict(ok=True, duplicate=True, receipt=copy.deepcopy(done), wallet=self._view(player, current))
+            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
             receipt = player.get('blackjack')
             if not receipt or receipt['request_id'] != round_id:
                 raise GamingError('This hand is no longer active. Reload your saved result.', 'stale_hand', 409)
@@ -508,10 +551,11 @@ class Gaming:
             guard = data.get('ip_guard') or {}
             networks = {}
             if guard.get('season') == current['id']:
-                for digest, key in guard['claims'].items():
+                for digest, owners in guard['claims'].items():
                     address = guard.get('addresses', {}).get(digest)
                     if address:
-                        networks.setdefault(key, []).append(address)
+                        for key in ([owners] if isinstance(owners, str) else owners):
+                            networks.setdefault(key, []).append(address)
             result, counts = {}, {}
             active = {key:p for key,p in players.items() if p['season']==current['id']}
             for game in GAMES:

@@ -73,6 +73,9 @@ def create_app(root=None, testing=False):
     app.extensions["settings"] = config
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     gaming = app.extensions['gaming'] = Gaming(runtime.store)
+    # One launch restores playable points for everyone, without clearing results.
+    # Page requests and five-second live updates never run this bulk reset.
+    gaming.restart_balances()
     guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
     recovery_signer = URLSafeSerializer(app.secret_key, salt="community-boss-recovery-v1")
     abuse = app.extensions["boss_abuse"] = AbuseGuard(app.secret_key)
@@ -330,7 +333,7 @@ def create_app(root=None, testing=False):
 
     @app.post('/gaming/api/refresh')
     def gaming_refresh():
-        # Reset only the signed player's wallet, with the same CSRF/IP rules as bets.
+        # Reset only the signed player's wallet, with the same CSRF rules as bets.
         require_player_csrf()
         try:
             result = gaming.refresh_balance(guest(), gaming_player_name(),
@@ -345,10 +348,6 @@ def create_app(root=None, testing=False):
         body = request.get_json(silent=True)
         if not isinstance(body, dict): return json_error('Enter a valid player name.', 422)
         try:
-            # Diagnose a conflicting/missing IP before changing the saved name.
-            issue = gaming_wallet().get('play_blocked')
-            if issue:
-                raise GamingError(issue['message'], issue['code'], 409)
             profile = boss.register(guest(), g.client_ip, None, body.get('username'))['you']
             wallet = gaming.confirm_community_name(guest(), profile['display_name'], client_ip=g.client_ip)
             return jsonify(ok=True, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)

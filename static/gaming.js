@@ -227,8 +227,8 @@
     if (id("blackjackResume"))
       id("blackjackResume").hidden = !next.blackjack || game === "blackjack";
     renderBlackjack(next.blackjack);
-    // A not-yet-activated allowance is labelled explicitly. An IP conflict is
-    // an access problem, not a real zero balance and never another user's wallet.
+    // The signed player owns this balance. Connection metadata never blocks play.
+    // Label the allowance until the player confirms their community name.
     const unclaimed = next.needs_profile && !next.play_blocked;
     id("pointsBalance").textContent = next.play_blocked && next.needs_profile
       ? "—" : number(unclaimed ? Math.max(100000, next.balance) : next.balance);
@@ -236,13 +236,11 @@
     if (id("redWager")) id("redWager").max = String(next.balance);
     id("pointsReset").textContent = unclaimed
       ? "Save your community name to activate this balance."
-      : "100,000 on refresh · Weekly reset " + next.season.end_et;
+      : "100,000 on refresh/restart · Weekly reset " + next.season.end_et;
     id("gamingProfile").hidden = !next.needs_profile;
     if (id("gamingNetworkNotice")) {
       id("gamingNetworkNotice").hidden = !next.play_blocked;
       id("gamingNetworkReason").textContent = next.play_blocked?.message || "";
-      id("gamingRestore").hidden =
-        next.play_blocked?.code !== "ip_wallet_exists";
     }
     id("gamingIdentity").hidden = next.needs_profile;
     id("gamingPlayerName").textContent = next.name;
@@ -351,6 +349,7 @@
         const error = Error(
           value.error || `Request failed (${response.status})`,
         );
+        error.code = value.code || "";
         error.definitive = response.status < 500 && response.status !== 408;
         throw error;
       }
@@ -1245,11 +1244,22 @@
       busy = refreshing = true;
       controls();
       try {
-        const result = await api("/gaming/api/refresh", {
-          season: wallet.season.id,
-          version: wallet.version,
-        });
-        renderWallet(result.wallet);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const result = await api("/gaming/api/refresh", {
+              season: wallet.season.id,
+              version: wallet.version,
+            });
+            renderWallet(result.wallet);
+            break;
+          } catch (error) {
+            // A restart, admin grant or other tab can race this page load.
+            // Read the latest wallet and retry once, retaining the server's
+            // version check; never blindly overwrite a concurrent wager.
+            if (attempt || error.code !== "stale_wallet") throw error;
+            renderWallet((await api("/gaming/api/state")).wallet);
+          }
+        }
         walletEtag = "";
       } catch (error) {
         message(error.name === "AbortError"

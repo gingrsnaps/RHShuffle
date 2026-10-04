@@ -152,7 +152,9 @@ class RedPointsTests(unittest.TestCase):
         restored=create_app(target,testing=True);self.addCleanup(restored.extensions['runtime'].store.close)
         other=restored.test_client();other.set_cookie('rh_raider',client.get_cookie('rh_raider').value)
         after=other.get('/gaming/api/state').json['wallet']
-        self.assertEqual(before,after)
+        self.assertEqual(after['balance'],100000)  # Restoring starts a new server.
+        for key in ('name','needs_profile','stats','receipts','nonce','commitment','blackjack'):
+            self.assertEqual(after[key],before[key],key)
         state=backup.json['redpoints'];next(iter(state['players'].values()))['balance']+=1
         with self.assertRaises(ValueError):validate_gaming(state)
 
@@ -239,7 +241,9 @@ class RedPointsTests(unittest.TestCase):
         other = restored.test_client()
         other.set_cookie('rh_raider', client.get_cookie('rh_raider').value)
         wallet = other.get('/gaming/api/state').json['wallet']
-        self.assertEqual(wallet, result.json['wallet'])
+        self.assertEqual(wallet['balance'], 100000)  # Startup restores the allowance.
+        for key in ('name', 'stats', 'nonce', 'commitment', 'receipts', 'blackjack'):
+            self.assertEqual(wallet[key], result.json['wallet'][key], key)
         self.assertTrue(verify(wallet['receipts'][0], body['commitment']))
 
 

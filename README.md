@@ -1,11 +1,36 @@
 # RedHunllef
 
-Release **2026.10.04-redpoints-arcade2**. This is the complete configured application.
+Release **2026.10.04-redpoints-arcade2-shared-connections**. This patch updates the existing application; keep its supporting files and private configuration.
 Run **`python wager_backend.py`**. All supporting modules load automatically.
 There is no database server, SQL setup, extra worker, scheduler or account-creation
 command. The app saves its state to `data/state.json` automatically.
 
-## This update: four RedPoints games and visible admin rankings
+## This update: shared connections and automatic playable balances
+
+The old one-wallet-per-IP rule could block an entire household, VPN or community
+behind a proxy. Gaming now identifies each player by their signed browser cookie
+and recovery code. Many people may share an IP; missing IP forwarding does not
+block registration, bets or balance refreshes. Existing IP records migrate in
+place and remain admin-only. No accounts, names or game results are merged.
+
+- Save a community name on Gaming once to activate at least **100,000 RedPoints**.
+- Refresh the Gaming dashboard or a game page to set your available points to
+  **exactly 100,000**. Changing games and five-second polls keep your balance.
+- Starting `wager_backend.py` restores **100,000 to every saved wallet**.
+  This can reduce a larger balance; actual net winnings and receipts stay intact.
+- Tuesday at 6 PM Eastern still starts a new weekly balance and standings.
+- **Admin → Gaming → Give everyone +100,000 RedPoints** adds points to all existing
+  wallets without altering winnings. Repeating the same request cannot grant twice.
+- Name confirmation, unfinished Blackjack hands, fairness seeds, receipt history
+  and per-game standings survive page refreshes and restarts within the same week.
+- An admin grant, another tab or restart during a reload no longer requires another
+  manual reload: the browser retries one stale-wallet response with current data.
+
+Apply all files from `Gaming_100k_Refresh_Update.zip` to your existing project,
+restart the same launcher, then reload Gaming. Do not delete `data/` or `private/`.
+No new dependencies, database, account-creation command or launch script is needed.
+
+## Four RedPoints games and visible admin rankings
 
 | Page | What it does |
 | --- | --- |
@@ -25,28 +50,27 @@ https://botrix.live/k/redhunllef/shop. Its balance is separate from RedPoints.
 
 ### One shared RedPoints wallet
 
-Each named player starts with **100,000 RedPoints total**, shared across
-all four games. One wallet may play per public IP each race week. It is saved after every settled wager. Refreshing, switching
-games, changing a name or restarting the process with the same save does not grant
-more points. The allowance and per-game standings reset at the next **Tuesday,
-6:00 PM America/New_York** boundary, with daylight saving handled automatically.
-This is the same fixed weekly boundary as public history; an early edit to the
-race form, campaign or prizes does not reset wallets. The next reset is displayed.
+Each confirmed player starts with **100,000 RedPoints total**, shared across
+all four games. Each browser player has a separate wallet, even on the same IP.
+Page refreshes restore that player's balance to 100,000. Server restarts restore
+all saved wallets to 100,000. Names, seeds, receipts, unfinished hands and winnings
+are preserved. The weekly reset clears per-game standings at the next **Tuesday,
+6:00 PM America/New_York** boundary, including daylight saving changes. This is
+the same fixed boundary as public history; editing the race form does not reset it.
 
 - Play-only points: no purchase, cash value, withdrawal or conversion to Shuffle or
   Botrix balances. These games do not add to the real Shuffle wager leaderboard.
-- Wagers are positive whole points within the available balance and exact-integer
-  safety range. There is no fixed stake cap, timed delay, or daily/weekly count limit. A zero balance waits for the weekly reset.
-- The existing persistent boss player cookie owns the wallet. A saved boss name
-  works in Gaming; saving a Gaming name also saves that same boss profile.
-  The existing private player recovery code restores this identity and its wallet.
-- A display name is self-reported, not proof of a Shuffle account or unique person.
-  A new browser on an already-used IP must restore the original player with its
-  recovery code; an IP alone cannot authenticate access to an existing wallet.
-  People sharing a public IP cannot create independent gaming wallets that week.
-  Changing a name never merges wallets or grants more points. The original signed
-  player can move to an unclaimed connection and retain their wallet. All four
-  games use these same bindings, and admins can see their canonical IP addresses.
+- Wagers are positive whole points within the balance and exact-integer range.
+  There is no fixed stake cap, timed delay or daily/weekly count limit. A player
+  with no points can refresh the Gaming page to get 100,000 again.
+- Save a community name on Gaming before playing. An existing boss name is offered
+  as a suggestion; confirming it activates Gaming. Both use the same signed identity.
+  A saved private recovery code restores that identity in another browser.
+- Names are self-reported labels, not authentication or proof of a Shuffle account.
+  An IP never grants access to someone else's wallet. People on a shared connection
+  can all play independently. Moving networks keeps the same signed player's wallet.
+  Connection records are visible only to admins; absent/full IP tracking never
+  prevents a valid player from playing.
 - Private rankings sort **net winnings = points returned − points wagered**,
   then total returned points, then a stable short profile tag. Losses remain visible
   and do not masquerade as profit. Only players who played that game appear.
@@ -78,13 +102,12 @@ math, examples and limits: [docs/REDPOINTS.md](docs/REDPOINTS.md).
 
 ### Verify the installed gaming release
 
-The complete ZIP and the cumulative update ZIP now include the same gaming
-implementation. Previously, the complete ZIP lagged the newer patch; using the
-complete archive alone could leave the older three-game build installed.
+Use every file in the current cumulative update ZIP together; an older complete
+archive does not include this fix until these files are applied over it.
 
 After applying all included code/templates/static files and restarting, open
 **`/admin/gaming`**. Its installed-release label must show
-**2026.10.04-redpoints-arcade2**. The header also includes **Gaming top 5**.
+**2026.10.04-redpoints-arcade2-shared-connections**. The header also includes **Gaming top 5**.
 If the panels are empty, check the displayed player/round counts and weekly reset.
 Only completed RedPoints rounds on this server create those records. Shuffle
 wagers and boss attacks are separate. Never invent entries to fill five places.
@@ -110,7 +133,7 @@ this update cannot reconstruct results that were never saved or backed up.
   unfinished hand automatically stands under the old week before the new balance.
   Double counts the full doubled stake in both the ledger and admin rankings.
 - Current fairness rules are `redpoints-v2`. Earlier `redpoints-v1` receipts remain
-  verifiable; updating does not erase balances, seeds, profiles or old receipts.
+  verifiable; updating keeps seeds, profiles and old receipts. The startup rule restores available points to 100,000.
 
 ### Homepage and boss refinements
 
@@ -194,7 +217,7 @@ name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to
 the actual trusted visitor IP on App Platform instead of the proxy socket address.
 
 After updating, restart the app and reload the homepage. `/healthz` should report
-**2026.10.04-redpoints-arcade2**. Asset versions change automatically, so the new
+**2026.10.04-redpoints-arcade2-shared-connections**. Asset versions change automatically, so the new
 scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
@@ -220,7 +243,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.10.04-redpoints-arcade2**. If it shows something else, the old application is
+**2026.10.04-redpoints-arcade2-shared-connections**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -276,7 +299,7 @@ An eligible hit remains allowed even when rejected-request throttling is active.
 ## Keep your current progress when updating
 
 1. Stop the running app before replacing its code. Keep a copy of the existing folder.
-2. Merge the application files from this complete ZIP into the existing folder.
+2. Merge all files from the update ZIP into the existing folder.
    Preserve your current `data/`, `private/`, root settings/account files, and
    environment settings. Do not replace newer private files with the bundled
    original seed. Do not create another nested project folder.
@@ -359,7 +382,8 @@ platform may try to resolve that binding before Python starts. This build ignore
 
 Keep one instance. Each App Platform instance has its own temporary filesystem,
 so multiple replicas would split boss progress and RedPoints wallets. A process restart that keeps the same
-data folder preserves progress; a container replacement or redeployment does not.
+data folder preserves names and game records and restores each wallet to 100,000.
+A container replacement or redeployment can remove local saves.
 DigitalOcean documents this restriction in
 [Store Data in App Platform](https://docs.digitalocean.com/products/app-platform/how-to/store-data/).
 **RedPoints cannot be guaranteed to survive container replacement with local-only storage.** This release adds no external persistence service. The existing manual recovery
