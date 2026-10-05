@@ -1,11 +1,11 @@
 # RedPoints gaming
 
-Release **2026.10.04-redpoints-arcade3-seven-games**. New rounds use **redpoints-v3**. Earlier
-**redpoints-v1** and **redpoints-v2** receipts remain verifiable. Run only `python wager_backend.py`.
+Release **2026.10.05-redpoints-arcade4**. New rounds use **redpoints-v4**. Earlier
+**redpoints-v1**, **redpoints-v2** and **redpoints-v3** receipts remain verifiable. Run only `python wager_backend.py`.
 
 ## Currency and identity
 
-Dice, Keno, Plinko, Blackjack, Limbo, Coinflip and Poker use one shared **RedPoints** wallet. These are
+Dice, Keno, Plinko, Blackjack, Limbo, Coinflip, Poker and Baccarat use one shared **RedPoints** wallet. These are
 play-only points, with no purchases, withdrawals or conversion to Shuffle or
 Botrix balances. None of these games sends bets to Shuffle.
 
@@ -26,7 +26,7 @@ The existing boss identity and recovery code are reused. Boss household settings
 
 ## Wallet and records
 
-- **100,000 starting points** per confirmed player, shared across seven games.
+- **100,000 starting points** per confirmed player, shared across eight games.
 - Weekly boundary: Tuesday **18:00 America/New_York**, including daylight saving.
 - No fixed stake cap or daily/weekly round-count limit. Stakes must be positive
   whole points, affordable, and safe under the exact-integer range `2^53−1`.
@@ -53,8 +53,8 @@ The existing boss identity and recovery code are reused. Boss household settings
 ## Admin rankings
 
 Sign in and open **Gaming top 5**, `/admin/gaming`, or `/admin?tab=gaming`.
-Overview also includes the same seven lists. The visible installed release should
-be **2026.10.04-redpoints-arcade3-seven-games**. Complete packages and patch files must match.
+Overview also includes the same eight lists. The visible installed release should
+be **2026.10.05-redpoints-arcade4**. Complete packages and patch files must match.
 
 Each game shows up to five players ranked by actual net winnings, then total
 returned points, then a stable short player identifier. Records include the full
@@ -79,7 +79,7 @@ lost. The application cannot recreate unrecorded results or invent five players.
 | --- | --- |
 | Dice | Choose a 1–95% integer win chance. Under wins below C×100; Over wins at or above 10000−C×100 on an unbiased integer roll 0–9999. A win returns floor(stake×99/C). The large bar, smaller slider, percentage and target are synchronized. |
 | Keno | Pick 1–10 distinct values from 1–40. Quick pick chooses ten. Ten values are drawn without replacement. Hits select the published risk/count payout table. |
-| Plinko | Choose 8, 12 or 16 rows and Low/Medium/High risk. Unbiased left/right bits define the path; their sum determines the slot. Fixed symmetric v2/v3 tables determine payouts. 16-row High has 1000× edge payouts, 12-row High 170×, and 8-row High 29×. |
+| Plinko | Choose 8, 12 or 16 rows and Low/Medium/High risk. Unbiased left/right bits define the path; their sum determines the slot. Fixed symmetric v2/v3/v4 tables determine payouts. 16-row High has 1000× edge payouts, 12-row High 170×, and 8-row High 29×. |
 | Blackjack | Six standard decks, freshly sampled without replacement each hand. Hit, Stand, or Double on the first two cards. Dealer checks for a natural before player decisions and stands on hard/soft 17. Naturals pay 3:2 profit, other wins 1:1, and pushes return the stake. No split, insurance or surrender. |
 | Limbo | Choose a target from 1.01× to 1,000,000× in 0.01 steps. Reach it or higher to win. A win returns the wager times the chosen target, rounded down; a higher result does not raise the payout. |
 | Coinflip | Pick Heads or Tails, each with a 50% chance. A win returns floor(stake×198/100); a loss returns 0. |
@@ -102,6 +102,60 @@ Plinko animation uses a cached board and one `requestAnimationFrame` loop for
 concurrent balls. Each verified bit controls a short parabolic bounce above the
 next peg; the ball ends in its verified payout slot. Rendering never decides or
 changes a payout. Reduced motion and canvas failures retain the textual result.
+
+## Baccarat
+
+Standard commission Punto Banco with a freshly sampled eight-deck shoe each round.
+Each physical card has ID `deck*52 + suit*13 + rank-1` in 0–415. Ace counts as 1,
+2–9 as their number, and 10/J/Q/K as 0. A hand's sum is taken modulo 10.
+
+Deal Player, Banker, Player, Banker. If either initial total is 8 or 9, both stand.
+Otherwise Player draws on 0–5 and stands on 6–7. If Player stands, Banker draws
+on 0–5. If Player draws, use its third-card value in this table:
+
+| Banker initial total | Draw when Player's third card is |
+| --- | --- |
+| 0–2 | Any value |
+| 3 | Any value except 8 |
+| 4 | 2–7 |
+| 5 | 4–7 |
+| 6 | 6–7 |
+| 7 | Never |
+
+The higher final total wins. Player wins return `stake*2`; Banker wins return
+`floor(stake*195/100)` including the stake and a 5% commission on the profit;
+Tie wins return `stake*9` (8:1 profit). Player/Banker bets push on a tie, returning
+the stake. There are no side bets, burns or continuing shoes in this variant.
+Small Banker stakes are affected by whole-point rounding.
+
+Rules reference: [Massachusetts Gaming Commission, Baccarat, sections 6 and 9–13](https://massgaming.com/wp-content/uploads/Rules-Baccarat-10-08-2020.pdf).
+This game's fresh shoe and integer-point settlement are explicitly defined above.
+
+### Receipt format
+
+Options are exactly `{"decks":8,"side":"player"}`, with side `player`, `banker` or
+`tie`. Use v4's normal HMAC context and rejection-sampled partial Fisher–Yates
+shuffle. Starting with IDs 0–415, for each index i sample `j=i+below(416-i)`, swap
+positions i and j, then consume position i. Draw only cards required by the rules;
+Player's third card, when needed, precedes Banker's. The receipt records both
+hands, final totals, natural flag, winner, win/push flags and exact total return.
+`baccarat.py` settles it; `static/fairness.js` independently replays it using a
+separate literal draw tableau and BigInt arithmetic.
+
+## Presentation
+
+Game POSTs and wallet updates use background JSON requests. Dice moves to the
+verified roll; Keno reveals its ten saved draws in order; Baccarat alternates
+the opening deal and adds the required third cards. Blackjack retains existing
+cards when hitting; Poker only replaces discarded positions. Coinflip and Limbo
+animate to their verified outcome. Results appear after the reveal. Payouts and
+proof controls remain accessible in expandable sections, with full rules here.
+
+Animations never choose outcomes or change points. Background-tab and reduced-
+motion handling reaches the exact result without leaving the controls locked.
+Plinko permits multiple committed drops, with the latest drop owning the result
+label. Resizing preserves its active ball trajectories. Automatic polls do not
+reset balances, re-deal cards or replay completed animations.
 
 ## Limbo and Coinflip probabilities
 
@@ -182,8 +236,8 @@ All payout calculations use exact integer arithmetic.
 Options have sorted keys and no insignificant whitespace. Blocks start at zero.
 Read consecutive four-byte big-endian words. For a draw from N possibilities,
 reject words at or above `2^32 − (2^32 mod N)`, then use the remainder modulo N.
-This avoids modulo bias. Use the exact rules version on the receipt: v3 for new
-wagers, or v1/v2 when verifying an earlier receipt.
+This avoids modulo bias. Use the exact rules version on the receipt: v4 for new
+wagers, or v1/v2/v3 when verifying an earlier receipt.
 
 Keno uses a partial Fisher–Yates shuffle of 1–40. Blackjack uses the same sampling
 method on a six-deck shoe of 312 unique IDs: `deck×52 + suit×13 + rank−1`. Suits are
@@ -195,7 +249,7 @@ The seed is revealed when a round finishes. The browser checks the earlier hash,
 inputs, result and payout using its separate Web Crypto/BigInt implementation.
 Blackjack verification reproduces the recorded action history. Poker verification
 replays the initial deal and held-card draw before evaluating the final hand.
-New v3 and earlier v2 receipts use the same fixed Plinko tables; v1 receipts use their original
+New v4 and earlier v2/v3 receipts use the same fixed Plinko tables; v1 receipts use their original
 weighted tables. All tables are published in `fairness.py` and
 `static/fairness.js`; the page displays exact multipliers before a wager.
 
@@ -223,7 +277,7 @@ before deployment. Recovery restores only what was saved in that backup; neither
 a recovery code nor the user's IP contains their balance. New database or service
 setup is not required by this update.
 
-`wager_backend.py` loads the wallet, fairness engine, Blackjack/Poker rules, templates
+`wager_backend.py` loads the wallet, fairness engine, Blackjack/Poker/Baccarat rules, templates
 and static assets automatically. The source connection clients remain separate.
 Blackjack has no Shuffle integration or real-money settlement path.
 
@@ -234,4 +288,4 @@ Blackjack has no Shuffle integration or real-money settlement path.
 
 The independent browser verifier matches the backend reference receipts in
 `tests/fairness_vectors.json`, `tests/fairness_v2_vectors.json` and
-`tests/fairness_v3_vectors.json`. Old fixtures stay unchanged when v3 is added.
+`tests/fairness_v3_vectors.json` and `tests/fairness_v4_vectors.json`. Earlier fixtures are unchanged.

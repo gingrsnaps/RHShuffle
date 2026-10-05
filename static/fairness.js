@@ -1,10 +1,10 @@
-/* Independent RedPoints v1/v2/v3 verifier. Uses Web Crypto and integer arithmetic.
+/* Independent RedPoints v1–v4 verifier. Uses Web Crypto and integer arithmetic.
    No API call, wallet mutation, or provider dependency is involved. */
 (() => {
   "use strict";
-  const VERSION = "redpoints-v3",
+  const VERSION = "redpoints-v4",
     SCALE = 10000n;
-  const SUPPORTED_VERSIONS = ["redpoints-v1", "redpoints-v2", VERSION];
+  const SUPPORTED_VERSIONS = ["redpoints-v1", "redpoints-v2", "redpoints-v3", VERSION];
   const PLINKO_TABLES = {
     8: {
       low: [56000, 21000, 11000, 10000, 5000, 10000, 11000, 21000, 56000],
@@ -267,11 +267,45 @@
     return { ended: true, initial, cards, holds, category, multiplier, payout: Number(BigInt(wager)*BigInt(multiplier)) };
   }
 
+  async function baccaratOutcome(pick, wager, side) {
+    const shoe = Array.from({length:416}, (_, index) => index);
+    let cursor = 0;
+    async function card() {
+      const other = cursor + await pick(416-cursor);
+      [shoe[cursor], shoe[other]] = [shoe[other], shoe[cursor]];
+      return shoe[cursor++];
+    }
+    const value = card => (card % 13 + 1) < 10 ? card % 13 + 1 : 0;
+    const total = cards => cards.reduce((sum, card) => sum+value(card), 0) % 10;
+    const player = [await card()], banker = [await card()];
+    player.push(await card()); banker.push(await card());
+    const pt = total(player), bt = total(banker), natural = pt >= 8 || bt >= 8;
+    if (!natural) {
+      let third = null;
+      if (pt <= 5) { player.push(await card()); third = value(player[2]); }
+      // An explicit independent tableau makes every boundary auditable.
+      const drawOn = [[0,1,2,3,4,5,6,7,8,9], [0,1,2,3,4,5,6,7,8,9],
+        [0,1,2,3,4,5,6,7,8,9], [0,1,2,3,4,5,6,7,9], [2,3,4,5,6,7],
+        [4,5,6,7], [6,7], []];
+      if (third === null ? bt <= 5 : drawOn[bt].includes(third)) banker.push(await card());
+    }
+    const player_total = total(player), banker_total = total(banker);
+    const winner = player_total === banker_total ? "tie" : player_total > banker_total ? "player" : "banker";
+    const won = side === winner, push = winner === "tie" && side !== "tie";
+    const payout = won ? BigInt(wager)*({player:200n,banker:195n,tie:900n}[side])/100n : push ? BigInt(wager) : 0n;
+    if (payout > BigInt(Number.MAX_SAFE_INTEGER)) throw Error("Points overflow");
+    return {player, banker, player_total, banker_total, natural, winner, won, push, payout:Number(payout)};
+  }
+
   async function outcome(seed, r) {
     const pick = await draw(seed, r),
       o = r.options;
-    if (["limbo", "coinflip", "poker"].includes(r.game) && r.rules_version !== VERSION)
+    if (["limbo", "coinflip", "poker"].includes(r.game) && !["redpoints-v3", VERSION].includes(r.rules_version))
       throw Error("This game requires redpoints-v3");
+    if (r.game === "baccarat") {
+      if (r.rules_version !== VERSION) throw Error("Baccarat requires redpoints-v4");
+      return baccaratOutcome(pick, r.wager, o.side);
+    }
     if (r.game === "limbo") {
       const roll = await pick(4294967296);
       const multiplier = Math.max(100, Number(99n*4294967296n/(4294967296n-BigInt(roll))));
@@ -318,7 +352,7 @@
       };
     }
     if (r.game === "blackjack") {
-      if (!["redpoints-v2", VERSION].includes(r.rules_version))
+      if (!["redpoints-v2", "redpoints-v3", VERSION].includes(r.rules_version))
         throw Error("Blackjack requires redpoints-v2 or later");
       return blackjackOutcome(pick, r.wager, r.actions || []);
     }
@@ -361,6 +395,7 @@
       limbo: ["target"],
       coinflip: ["side"],
       poker: ["variant"],
+      baccarat: ["decks", "side"],
     }[r.game];
     if (!keys || canonical(Object.keys(o).sort()) !== canonical(keys))
       return false;
@@ -375,17 +410,19 @@
     } else if (r.game === "blackjack") {
       if (
         o.decks !== 6 ||
-        !["redpoints-v2", VERSION].includes(r.rules_version) ||
+        !["redpoints-v2", "redpoints-v3", VERSION].includes(r.rules_version) ||
         !Array.isArray(r.actions)
       )
         return false;
+    } else if (r.game === "baccarat") {
+      if (r.rules_version !== VERSION || o.decks !== 8 || !["player", "banker", "tie"].includes(o.side)) return false;
     } else if (r.game === "limbo") {
-      if (r.rules_version !== VERSION || !Number.isInteger(o.target) || o.target < 101 || o.target > 100000000)
+      if (!["redpoints-v3", VERSION].includes(r.rules_version) || !Number.isInteger(o.target) || o.target < 101 || o.target > 100000000)
         return false;
     } else if (r.game === "coinflip") {
-      if (r.rules_version !== VERSION || !["heads", "tails"].includes(o.side)) return false;
+      if (!["redpoints-v3", VERSION].includes(r.rules_version) || !["heads", "tails"].includes(o.side)) return false;
     } else if (r.game === "poker") {
-      if (r.rules_version !== VERSION || o.variant !== "jacks_or_better" || !validHolds(r.holds)) return false;
+      if (!["redpoints-v3", VERSION].includes(r.rules_version) || o.variant !== "jacks_or_better" || !validHolds(r.holds)) return false;
     } else {
       if (!["low", "medium", "high"].includes(o.risk)) return false;
       if (r.game === "plinko") {

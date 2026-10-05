@@ -1,68 +1,62 @@
-# Validation — 2026.10.04-redpoints-arcade2
+# Validation — 2026.10.05-redpoints-arcade4
 
-These results are for the current packaging and admin-dashboard revision. Tests
-use disposable state, synthetic players and no live provider workers. None of the
-fixture balances, usernames, IPs or test admin accounts are production seed data.
+Checks use temporary state, synthetic players, seeds and provider replies. They
+do not read the configured private provider keys or place real-money wagers.
 
-| Current check | Result |
+| Check | Result |
 | --- | --- |
-| Python wallet/API tests | 17 passed in `test_redpoints.py`. |
-| Python IP/admin tests | 12 passed in `test_gaming_ip.py`, including seven players per game counted before selecting five. |
-| Python Blackjack rules | 8 passed in `test_blackjack.py`. |
-| Independent browser verifier | Three tests passed against all 47 legacy and 86 v2 reference receipts, including the 1000× Plinko edge and doubled Blackjack stakes. |
-| Admin DOM checks | Three passed: four populated lists, full counts/IPs; expired sessions clear private data and block late responses; release mismatches request reload. |
-| Native Chromium admin | Real login, direct `/admin/gaming`, installed-release label, four lists of five players, 28 completed synthetic rounds across seven players. Session-expiry cleanup passed. |
-| Native Chromium games | Plinko request, independent verification and exact slot landing; Blackjack hidden hole card, reload/resume, Stand and verified settlement; same player/balance on Dice; actual Dice dragging to 73%; Keno Quick pick 10. |
-| Shared public IP | A second browser could not claim a second wallet or read the original player's identity/results. Recovery remains required. |
-| Animation observation | Plinko's median frame interval was approximately 16–17 ms in the local browser runs. This is an observation, not a guaranteed frame rate on every device. |
-| Browser script errors | None in the exercised routes. |
+| Full Python suite | **226 passed**, including original race, history, boss, account, upload, recovery and RedPoints behavior. |
+| Full JavaScript suite | **74 passed**, using freshly rendered fixtures; includes admin privacy, gameplay controls, shared UI, CSS parsing and browser proof replay. |
+| Reference receipts | **396** match the independent Python/JavaScript implementations: 47 v1, 86 v2, 112 v3 and 151 v4. Modified payouts/commitments fail verification. |
+| Baccarat rules | Every initial Player/Banker total, every Player third-card value and all three bet sides: **3,000 scenarios**. Naturals, Banker exceptions, distinct physical cards, total calculation, pushes, commissions and whole-point returns checked. |
+| Compatibility | Saved v2/v3 Blackjack and v3 Poker hands retain seeds/cards; old proofs remain valid; new statistics start at zero. Failed writes roll back, duplicate bets/actions settle once. |
+| Native Chromium | All eight games play and verify; game requests cause **no page navigation**. Keno and Baccarat reveal in sequence. Dice dragging updates its percentage. |
+| Animation recovery | Three overlapping Plinko drops finish in the correct slots after resizing. Reduced-motion Baccarat and a simulated hidden-tab event finish at the exact recorded result. No control remains locked. |
+| Player continuity | Poker holds survive polls and actual reloads. A lost draw response recovers the saved result once. Reloads restore the requested 100,000 allowance without duplicating a hand. |
+| Private rankings | All eight games appear in admin with full names, IP metadata and net winnings. Expired sessions clear private rows. Public responses do not disclose another player's identity or IP. |
+| Mobile | Exercised at 390px and 430px; no horizontal document overflow on any game. Original navigation remains visible. |
+| Browser errors | None in the native game/registration/admin paths exercised. |
+| Package | All 20 root Python modules, current templates/scripts, original private seeds and logo files included. Source hashes and ZIP integrity checked. |
 
-The complete and cumulative update archives contain byte-identical versions of
-every shared file. The full archive includes Blackjack and its imports. Original
-private provider settings, account seed and logos are retained unchanged. Runtime
-state, caches, test dependencies and generated fixture data are excluded.
+Fresh browser previews are in `GAMING_DESKTOP.png`, `BACCARAT_MOBILE.png`,
+`POKER_DESKTOP.png`, `COINFLIP_MOBILE.png` and `LIMBO_MOBILE.png` in this folder.
+Other previews are earlier design references. All use synthetic data.
 
-The older patch's broader 203 Python / 47 JavaScript checks and its Chromium and
-Firefox runs remain historical evidence. They were not all rerun for this
-dashboard/distribution revision. The current targeted checks exercise the changed
-paths and their wallet/game dependencies. Exact probability tables and independent
-reproduction are stronger checks than claiming random trials alone prove fairness.
+## Repeat checks
 
-## Limits
-
-The user's hosted site, DigitalOcean deployment and live Shuffle/Kick responses
-were not accessed or changed. The earlier complete archive was missing the newer
-gaming changes; this is a verified distribution mismatch, not proof of which files
-are currently deployed on the user's server. The visible release marker resolves
-that ambiguity after installation.
-
-Rankings are actual current-week settled RedPoints totals. They cannot recover
-missing historical records from an erased local save. With the requested JSON-only
-storage, App Platform container replacement can erase local files. Restore a saved
-private recovery export when moving/deploying the app. No SQL dependency was added.
-
-Tests ran on Linux, not native Windows/Python 3.14. The deployed runtime declaration
-is unchanged. These checks are not a penetration test, independent fairness
-certification, or a throughput benchmark.
-
-## Repeat targeted checks
-
-Install the normal Python requirements first. The website only needs
-`python wager_backend.py`; the commands below are developer checks.
+The website requires only its five Python dependencies and the single launcher.
+The following optional developer commands are separate from deployment:
 
 ```bash
-python -m unittest discover -s tests -p test_redpoints.py -v
-python -m unittest discover -s tests -p test_gaming_ip.py -v
-python -m unittest discover -s tests -p test_blackjack.py -v
+python -m unittest discover -s tests -q
+python tests/render_fixtures.py .test-fixtures
 npm --prefix tests install --ignore-scripts
-node --test tests/test_fairness_frontend.cjs tests/test_admin_gaming_frontend.cjs
+npm --prefix tests test
 ```
 
-The admin DOM test generates synthetic HTML/JSON in a temporary directory and
-removes it afterward. Set `RH_TEST_PYTHON` if Python is not available as `python3`.
-For the existing full interface suite, run
-`python tests/render_fixtures.py .test-fixtures` first, then `npm --prefix tests test`.
+For native animation checks, install the optional Playwright Chromium browser,
+then run `node tests/gaming_motion.cjs`. Set `NODE_PATH=tests/node_modules` if the
+module cannot be found. `RH_TEST_PYTHON` selects the Python interpreter;
+`RH_CHROMIUM` can select an existing Chromium executable; `RH_SCREENSHOTS`
+selects the output directory. The HTTP fixture is disposable and never starts
+live provider workers. Fixture data and test dependencies are excluded from the ZIP.
 
-Selected screenshots in `docs/` illustrate synthetic UI states. Gaming, Plinko,
-Blackjack and private-ranking previews reflect this release; homepage and boss
-previews retain the previous release's unchanged designs.
+The current suite was run on Linux with Python 3.12 and Chromium. The App Platform
+runtime declaration remains Python 3.13.12. The ordinary launcher and UTF-8 reads
+have regression checks, but this is not a native Windows/Python 3.14 test.
+
+## Practical limits
+
+The package has not been deployed to the user's service. Shuffle and Kick
+availability, historical affiliate access and the hosting account were not tested
+live in this revision. Their existing 60-second workers remain intact.
+
+JSON storage and one app instance remain the requested design. App Platform can
+erase local state when replacing a container; a prior private recovery export
+restores only the data it contains. This release cannot recreate erased records.
+There is no new SQL, backup service or other infrastructure to manage.
+
+Animations present saved outcomes; they do not simulate new random results.
+Frame rate depends on device/browser load and is not guaranteed. Reproducible
+proofs are not third-party certification or proof that a host never changes its
+code. Keep the commitment observed before each bet for independent verification.
