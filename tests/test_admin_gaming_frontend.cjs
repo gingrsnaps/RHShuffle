@@ -21,9 +21,9 @@ function make(){
  w.fetch=async()=>response();w.eval(code);
  return {w,dom,data,timers,respond(fn){response=fn;}};
 }
-test('all seven top-five lists, exact full counts, IPs and no duplicate DOM IDs',async()=>{
+test('all eight top-five lists, exact full counts, IPs and no duplicate DOM IDs',async()=>{
  const p=make();await tick();
- for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker']) {
+ for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat']) {
   assert.equal(p.w.document.querySelectorAll('#gamingLeaders-'+game+' li').length,5);
   assert.match(p.w.document.getElementById('gamingCount-'+game).textContent,/Players: 7.*rounds: 7/);
   assert.match(p.w.document.getElementById('gamingLeaders-'+game).textContent,/192\.0\.2\./);

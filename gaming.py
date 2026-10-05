@@ -12,7 +12,7 @@ import re
 import secrets
 import time
 
-from fairness import VERSION, PREVIOUS_VERSION, GAMES, commitment, options_for, outcome, max_payout
+from fairness import VERSION, BLACKJACK_VERSIONS, POKER_VERSIONS, GAMES, commitment, options_for, outcome, max_payout
 from weekly_history import completed_weeks
 
 LOG = logging.getLogger('redhunllef')
@@ -100,7 +100,7 @@ def validate_gaming(value):
             if pending is None:
                 continue
             try:
-                allowed = (PREVIOUS_VERSION, VERSION) if game == 'blackjack' else (VERSION,)
+                allowed = BLACKJACK_VERSIONS if game == 'blackjack' else POKER_VERSIONS
                 if (pending['game'] != game or pending['rules_version'] not in allowed or
                         pending['nonce'] != player['nonce'] or pending['server_seed'] != player['server_seed'] or
                         pending['commitment'] != commitment(player['server_seed']) or pending['season'] != player['season'] or

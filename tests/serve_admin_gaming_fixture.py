@@ -1,4 +1,4 @@
-"""Disposable, synthetic seven-game fixture. Never starts provider workers."""
+"""Disposable, synthetic eight-game fixture. Never starts provider workers."""
 import json
 import os
 from pathlib import Path
@@ -21,7 +21,7 @@ if __name__ == '__main__':
         game = app.extensions['gaming']
         options = dict(dice=dict(chance=50,side='under'), keno=dict(picks=list(range(1,11)),risk='medium'),
                        plinko=dict(rows=16,risk='high'), blackjack=dict(decks=6), limbo=dict(target=200),
-                       coinflip=dict(side='heads'), poker=dict(variant='jacks_or_better'))
+                       coinflip=dict(side='heads'), poker=dict(variant='jacks_or_better'), baccarat=dict(decks=8,side='banker'))
         for index in range(7):
             identity, name, ip = 'fixture-'+str(index), 'TestPlayer'+str(index+1), '192.0.2.'+str(index+1)
             for item in GAMES:

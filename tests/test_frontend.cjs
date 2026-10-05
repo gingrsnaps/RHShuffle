@@ -168,8 +168,11 @@ test('empty-board explanation clears when live rows arrive on either page',async
 
 test('stylesheet parses and includes responsive and reduced-motion rules',()=>{
   const css=fs.readFileSync(path.join(root,'static/style.css'),'utf8');
-  const parsed=require('rrweb-cssom').parse(css);
-  assert.ok(parsed.cssRules.length>50);assert.match(css,/prefers-reduced-motion/);assert.match(css,/@media/);
+  const dom=new JSDOM('<!doctype html><head></head>');
+  const style=dom.window.document.createElement('style');style.textContent=css;dom.window.document.head.append(style);
+  assert.ok(style.sheet.cssRules.length>50);assert.match(css,/prefers-reduced-motion/);assert.match(css,/@media/);
+  const games=dom.window.document.createElement('style');games.textContent=fs.readFileSync(path.join(root,'static/gaming.css'),'utf8');
+  dom.window.document.head.append(games);assert.ok(games.sheet.cssRules.length>50);dom.window.close();
 });
 
 test('publishing dates automatically follows queued work and shows the saved window',async()=>{

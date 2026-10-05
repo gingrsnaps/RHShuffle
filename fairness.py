@@ -12,11 +12,14 @@ import json
 from math import comb
 import re
 
-VERSION = 'redpoints-v3'
-PREVIOUS_VERSION = 'redpoints-v2'
+VERSION = 'redpoints-v4'
+V2_VERSION = 'redpoints-v2'
+V3_VERSION = 'redpoints-v3'
 LEGACY_VERSION = 'redpoints-v1'
-SUPPORTED_VERSIONS = (LEGACY_VERSION, PREVIOUS_VERSION, VERSION)
-GAMES = ('dice', 'keno', 'plinko', 'blackjack', 'limbo', 'coinflip', 'poker')
+SUPPORTED_VERSIONS = (LEGACY_VERSION, V2_VERSION, V3_VERSION, VERSION)
+BLACKJACK_VERSIONS = (V2_VERSION, V3_VERSION, VERSION)
+POKER_VERSIONS = (V3_VERSION, VERSION)
+GAMES = ('dice', 'keno', 'plinko', 'blackjack', 'limbo', 'coinflip', 'poker', 'baccarat')
 RISKS = ('low', 'medium', 'high')
 SCALE = 10000
 
@@ -58,6 +61,10 @@ def options_for(game, value):
         if type(value.get('decks')) is not int or value['decks'] != 6:
             raise ValueError('Blackjack uses six decks.')
         return dict(decks=6)
+    if game == 'baccarat':
+        if type(value.get('decks')) is not int or value['decks'] != 8 or value.get('side') not in ('player', 'banker', 'tie'):
+            raise ValueError('Choose Player, Banker or Tie. Baccarat uses eight decks.')
+        return dict(decks=8, side=value['side'])
     if game == 'limbo':
         target = value.get('target')
         if type(target) is not int or not 101 <= target <= 100_000_000:
@@ -122,11 +129,13 @@ def table_info(game, size, risk):
 @lru_cache(maxsize=1)
 def rules():
     from poker import PAYTABLE, LABELS
+    from baccarat import RETURNS
     return dict(version=VERSION, scale=SCALE, games=list(GAMES), min_wager=1, max_wager=None,
                 dice_rtp_percent='99.0000',
                 limbo=dict(min_target=101, max_target=100_000_000, scale=100, outcomes=2**32),
                 coinflip=dict(multiplier=19800, win_probability=0.5),
                 poker=dict(variant='jacks_or_better', paytable=PAYTABLE, labels=LABELS),
+                baccarat=dict(decks=8, returns=RETURNS),
                 keno={str(k):{risk:table_info('keno', k, risk) for risk in RISKS} for k in range(1,11)},
                 plinko={str(k):{risk:table_info('plinko', k, risk) for risk in RISKS} for k in (8,12,16)})
 
@@ -134,6 +143,9 @@ def rules():
 def max_payout(game, wager, opt):
     """Exact upper bound used before reserving a stake or granting more funds."""
     if game == 'blackjack': return wager*4
+    if game == 'baccarat':
+        from baccarat import RETURNS
+        return wager*RETURNS[opt['side']]//SCALE
     if game == 'poker': return wager*800
     if game == 'limbo': return wager*opt['target']//100
     if game == 'coinflip': return wager*198//100
@@ -167,9 +179,14 @@ class Draw:
 def outcome(seed, receipt):
     game, opt, wager = receipt['game'], options_for(receipt['game'], receipt['options']), receipt['wager']
     version = receipt.get('rules_version', VERSION)
-    if game in ('limbo', 'coinflip', 'poker') and version != VERSION:
-        raise ValueError('This game requires redpoints-v3.')
+    if game in ('limbo', 'coinflip', 'poker') and version not in POKER_VERSIONS:
+        raise ValueError('This game requires redpoints-v3 or later.')
     draw = Draw(seed, {**receipt, 'options':opt})
+    if game == 'baccarat':
+        if version != VERSION:
+            raise ValueError('Baccarat requires redpoints-v4.')
+        from baccarat import replay
+        return replay(draw, wager, opt['side'])
     if game == 'limbo':
         roll = draw.below(2**32)
         multiplier = max(100, 99*2**32//(2**32-roll))
@@ -199,7 +216,7 @@ def outcome(seed, receipt):
         units = table(game, len(opt['picks']), opt['risk'], receipt.get('rules_version', VERSION))[hits]
         return dict(drawn=drawn, hits=hits, multiplier=units, payout=wager*units//SCALE)
     if game == 'blackjack':
-        if version not in (PREVIOUS_VERSION, VERSION):
+        if version not in BLACKJACK_VERSIONS:
             raise ValueError('Blackjack requires redpoints-v2 or later.')
         from blackjack import replay
         return replay(draw, wager, receipt.get('actions', []))

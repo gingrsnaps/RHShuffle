@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.10.04-redpoints-arcade2** — complete configured package.
+Release **2026.10.05-redpoints-arcade4** — complete configured package.
 
 Install dependencies once, then run only the existing launcher:
 
@@ -19,7 +19,7 @@ creation utility or extra worker is needed.
 | Completed-week history | `/history` |
 | Community boss | `/play` |
 | Gaming dashboard | `/gaming` |
-| Dice / Keno / Plinko / RedPoints Blackjack | `/gaming/dice`, `/gaming/keno`, `/gaming/plinko`, `/gaming/blackjack` |
+| RedPoints games | `/gaming/dice`, `/gaming/keno`, `/gaming/plinko`, `/gaming/blackjack`, `/gaming/limbo`, `/gaming/coinflip`, `/gaming/poker`, `/gaming/baccarat` |
 | Fairness / local receipt verifier | `/gaming/fairness` |
 | Admin / private game Top 5 lists | `/admin`, `/admin/gaming`, `/admin?tab=gaming` |
 | Requested external Points Shop | `https://botrix.live/k/redhunllef/shop` |
@@ -29,15 +29,15 @@ install. Existing accounts and changed passwords take precedence. Original priva
 provider configuration and logos are included. Keep this configured package private.
 
 Open **Gaming top 5** in the admin header. Confirm the installed label reads
-**2026.10.04-redpoints-arcade2**; this complete package now includes the latest
-Blackjack, IP-linked wallets, five-second private rankings and game controls.
+**2026.10.05-redpoints-arcade4**; this complete package now includes the latest
+eight games, shared wallets, five-second private rankings and smooth game controls.
 
 ## Updating an existing installation
 
 Preserve current `data/`, private files, recovery seeds, runtime settings and player
 cookies. Merge code into the matching paths; do not replace newer private seeds
 with bundled originals. There is no reason to reset the boss or clear cookies.
-Reload after restarting and check `/healthz` for **2026.10.04-redpoints-arcade2**.
+Reload after restarting and check `/healthz` for **2026.10.05-redpoints-arcade4**.
 
 On a persistent Linux host the existing `data/state.json` wins. A previous local
 SQLite save is imported read-only once if no JSON exists. Corrupt saves stop

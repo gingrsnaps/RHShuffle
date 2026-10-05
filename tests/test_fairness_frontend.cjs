@@ -4,6 +4,7 @@ const vectors = [
   ...require("./fairness_vectors.json"),
   ...require("./fairness_v2_vectors.json"),
   ...require("./fairness_v3_vectors.json"),
+  ...require("./fairness_v4_vectors.json"),
 ];
 const fair = require("../static/fairness.js");
 test("independent browser verifier reproduces every published Python reference receipt", async () => {

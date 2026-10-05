@@ -1,0 +1,5424 @@
+[
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-0",
+    "nonce": 0,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000000",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000000",
+    "commitment": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+    "result": {
+      "player": [
+        128,
+        17
+      ],
+      "banker": [
+        306,
+        322
+      ],
+      "player_total": 5,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-1",
+    "nonce": 1,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000001",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000001",
+    "commitment": "ec4916dd28fc4c10d78e287ca5d9cc51ee1ae73cbfde08c6b37324cbfaac8bc5",
+    "result": {
+      "player": [
+        106,
+        170,
+        45
+      ],
+      "banker": [
+        6,
+        21,
+        238
+      ],
+      "player_total": 2,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-2",
+    "nonce": 2,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000002",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000002",
+    "commitment": "9267d3dbed802941483f1afa2a6bc68de5f653128aca9bf1461c5d0a3ad36ed2",
+    "result": {
+      "player": [
+        150,
+        405
+      ],
+      "banker": [
+        234,
+        136
+      ],
+      "player_total": 1,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-3",
+    "nonce": 3,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000003",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000003",
+    "commitment": "d9147961436944f43cd99d28b2bbddbf452ef872b30c8279e255e7daafc7f946",
+    "result": {
+      "player": [
+        269,
+        286,
+        199
+      ],
+      "banker": [
+        117,
+        364,
+        22
+      ],
+      "player_total": 6,
+      "banker_total": 2,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-4",
+    "nonce": 4,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000004",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000004",
+    "commitment": "e38990d0c7fc009880a9c07c23842e886c6bbdc964ce6bdd5817ad357335ee6f",
+    "result": {
+      "player": [
+        43,
+        409,
+        286
+      ],
+      "banker": [
+        170,
+        130,
+        413
+      ],
+      "player_total": 3,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-5",
+    "nonce": 5,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000005",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000005",
+    "commitment": "96de8fc8c256fa1e1556d41af431cace7dca68707c78dd88c3acab8b17164c47",
+    "result": {
+      "player": [
+        375,
+        341,
+        168
+      ],
+      "banker": [
+        328,
+        323
+      ],
+      "player_total": 4,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-6",
+    "nonce": 6,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000006",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000006",
+    "commitment": "d1ec675902ef1633427ca360b290b0b3045a0d9058ddb5e648b4c3c3224c5c68",
+    "result": {
+      "player": [
+        363,
+        175
+      ],
+      "banker": [
+        27,
+        243,
+        360
+      ],
+      "player_total": 7,
+      "banker_total": 2,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-7",
+    "nonce": 7,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000007",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000007",
+    "commitment": "48428bdb7ddd829410d6bbb924fdeb3a3d7e88c2577bffae073b990c6f061d08",
+    "result": {
+      "player": [
+        261,
+        65,
+        193
+      ],
+      "banker": [
+        408,
+        142
+      ],
+      "player_total": 3,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-8",
+    "nonce": 8,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000008",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000008",
+    "commitment": "38df1c1f64a24a77b23393bca50dff872e31edc4f3b5aa3b90ad0b82f4f089b6",
+    "result": {
+      "player": [
+        325,
+        227
+      ],
+      "banker": [
+        63,
+        194
+      ],
+      "player_total": 8,
+      "banker_total": 0,
+      "natural": true,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-9",
+    "nonce": 9,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000009",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000009",
+    "commitment": "887bf140ce0b6a497ed8db5c7498a45454f0b2bd644b0313f7a82acc084d0027",
+    "result": {
+      "player": [
+        203,
+        260,
+        350
+      ],
+      "banker": [
+        64,
+        181,
+        139
+      ],
+      "player_total": 0,
+      "banker_total": 0,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-10",
+    "nonce": 10,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000000a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000a",
+    "commitment": "81b04ae4944e1704a65bc3a57b6fc3b06a6b923e3c558d611f6a854b5539ec13",
+    "result": {
+      "player": [
+        246,
+        2
+      ],
+      "banker": [
+        104,
+        33
+      ],
+      "player_total": 3,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-11",
+    "nonce": 11,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000000b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000b",
+    "commitment": "c09322c415a5ac9ffb1a6cde7e927f480cc1d8afaf22b39a47797966c08e9c4b",
+    "result": {
+      "player": [
+        356,
+        72
+      ],
+      "banker": [
+        99,
+        297
+      ],
+      "player_total": 4,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-12",
+    "nonce": 12,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000000c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000c",
+    "commitment": "a82872b96246dac512ddf0515f5da862a92ecebebcb92537b6e3e73199694c45",
+    "result": {
+      "player": [
+        95,
+        175
+      ],
+      "banker": [
+        116,
+        398
+      ],
+      "player_total": 2,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-13",
+    "nonce": 13,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000000d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000d",
+    "commitment": "2a3f128306951f1ded174b8803ee1f0df0c6404bbe92682be21fd84accf5d540",
+    "result": {
+      "player": [
+        18,
+        169
+      ],
+      "banker": [
+        376,
+        188
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-14",
+    "nonce": 14,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000000e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000e",
+    "commitment": "e14f5be83831f7fefa669d5a84daaa56ec01477dafc6701a83f243bc2228bb11",
+    "result": {
+      "player": [
+        336,
+        156,
+        363
+      ],
+      "banker": [
+        276,
+        247
+      ],
+      "player_total": 1,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-15",
+    "nonce": 15,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000000f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000000f",
+    "commitment": "3ba2581d53fbf070be34b6d6a2382faf1b8e76a3ade45b31c0c7c90ea289874e",
+    "result": {
+      "player": [
+        104,
+        278
+      ],
+      "banker": [
+        6,
+        232
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-16",
+    "nonce": 16,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000010",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000010",
+    "commitment": "a3ecde0c1d9daa6b7a949c87a1af7963c69cb2c412fb3086c495f14630c17b7b",
+    "result": {
+      "player": [
+        253,
+        406,
+        23
+      ],
+      "banker": [
+        129,
+        240
+      ],
+      "player_total": 1,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-17",
+    "nonce": 17,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000011",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000011",
+    "commitment": "99fdc3a44c06c65a307ea38acda009243287ccbbdb2b0ce423a25bb9b525d7f2",
+    "result": {
+      "player": [
+        241,
+        294
+      ],
+      "banker": [
+        124,
+        176
+      ],
+      "player_total": 7,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-18",
+    "nonce": 18,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000012",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000012",
+    "commitment": "c03eee8aa25e1b9fd36a28c6d3321bd0d0534a72034c40fcd9d75c70a610037e",
+    "result": {
+      "player": [
+        103,
+        383
+      ],
+      "banker": [
+        367,
+        7,
+        313
+      ],
+      "player_total": 7,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-19",
+    "nonce": 19,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000013",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000013",
+    "commitment": "d3b2f026768fb94e95a4848cf669d1f120a6c73cd795450e52de6bddcadd883c",
+    "result": {
+      "player": [
+        288,
+        185
+      ],
+      "banker": [
+        303,
+        302
+      ],
+      "player_total": 7,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-20",
+    "nonce": 20,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000014",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000014",
+    "commitment": "4d68bf921d7fcf9f99a27e28f59b875c234193f9c330403dcf29f1872be57ccd",
+    "result": {
+      "player": [
+        239,
+        151
+      ],
+      "banker": [
+        86,
+        307
+      ],
+      "player_total": 5,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-21",
+    "nonce": 21,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000015",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000015",
+    "commitment": "4290a8e5d23d8147282ec48c2c0ee8edcf541e2aa9b1264f792746c36eb17841",
+    "result": {
+      "player": [
+        100,
+        365,
+        354
+      ],
+      "banker": [
+        326,
+        366,
+        236
+      ],
+      "player_total": 6,
+      "banker_total": 8,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-22",
+    "nonce": 22,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000016",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000016",
+    "commitment": "3953a4e918f9b33a3ed6d8675b1fa3090fee373a32bb59f00b00dc678d143041",
+    "result": {
+      "player": [
+        112,
+        146,
+        350
+      ],
+      "banker": [
+        127,
+        266
+      ],
+      "player_total": 3,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-23",
+    "nonce": 23,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000017",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000017",
+    "commitment": "4303ef0796bae63d9f52f7bf61ae2d37b57889452f2ad07bba769d90d354fe37",
+    "result": {
+      "player": [
+        237,
+        2
+      ],
+      "banker": [
+        320,
+        76
+      ],
+      "player_total": 7,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-24",
+    "nonce": 24,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000018",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000018",
+    "commitment": "ac6e83f1e79a8a779646460bf6d26bfc08be3b7ad2fd3b265b094fd42b8843fa",
+    "result": {
+      "player": [
+        222,
+        85,
+        115
+      ],
+      "banker": [
+        146,
+        83,
+        409
+      ],
+      "player_total": 0,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-25",
+    "nonce": 25,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000019",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000019",
+    "commitment": "9380f4d9453d4b61778811d8355c429827d164b5d03019ff0b1265fc52b8332c",
+    "result": {
+      "player": [
+        128,
+        214
+      ],
+      "banker": [
+        99,
+        318
+      ],
+      "player_total": 7,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-26",
+    "nonce": 26,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000001a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001a",
+    "commitment": "0eac71efb3323eaf788a5334df213c4335748273f501afaeb4274b351125a17c",
+    "result": {
+      "player": [
+        263,
+        357,
+        211
+      ],
+      "banker": [
+        257,
+        87,
+        239
+      ],
+      "player_total": 5,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-27",
+    "nonce": 27,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000001b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001b",
+    "commitment": "06cde6cffab5316fb4f92f31b1b65e4bf89b4f435097e0f35d5cef09dfabbf47",
+    "result": {
+      "player": [
+        268,
+        217
+      ],
+      "banker": [
+        38,
+        67
+      ],
+      "player_total": 9,
+      "banker_total": 3,
+      "natural": true,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-28",
+    "nonce": 28,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000001c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001c",
+    "commitment": "ae2c63f9eff394b28d4a87520bd92dadac321b2806c1edd784a5ccbf08fd25ee",
+    "result": {
+      "player": [
+        179,
+        308,
+        345
+      ],
+      "banker": [
+        116,
+        206,
+        366
+      ],
+      "player_total": 8,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-29",
+    "nonce": 29,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000001d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001d",
+    "commitment": "71b0a2d864b04cf24fc99d2ccd806bba5f0fef35c0aa7d432af96383944d4327",
+    "result": {
+      "player": [
+        5,
+        268,
+        215
+      ],
+      "banker": [
+        246,
+        118,
+        106
+      ],
+      "player_total": 3,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-30",
+    "nonce": 30,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000001e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001e",
+    "commitment": "4e99747a3d41fe8318c4419b7b688741d8ef7096368129e14894ddbdac31795e",
+    "result": {
+      "player": [
+        126,
+        330
+      ],
+      "banker": [
+        341,
+        42
+      ],
+      "player_total": 6,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-31",
+    "nonce": 31,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000001f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000001f",
+    "commitment": "3b9c3a9ec9b9ea8f5b66ffdfc9e157f48f183a5b2b21b17ece0e9ceec4a7c9e0",
+    "result": {
+      "player": [
+        337,
+        31
+      ],
+      "banker": [
+        402,
+        117,
+        79
+      ],
+      "player_total": 6,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-32",
+    "nonce": 32,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000020",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000020",
+    "commitment": "9633190bf775667487569d0f5e7adfebc899e55ab9d62aaabe9f8754a3fa9c20",
+    "result": {
+      "player": [
+        169,
+        236,
+        100
+      ],
+      "banker": [
+        182,
+        262
+      ],
+      "player_total": 4,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-33",
+    "nonce": 33,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000021",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000021",
+    "commitment": "e3872ccfe29e8ddfc6fe1dca36f1acc5707d9bf3ce979ed15365bb735137a767",
+    "result": {
+      "player": [
+        125,
+        200,
+        326
+      ],
+      "banker": [
+        329,
+        202,
+        345
+      ],
+      "player_total": 7,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-34",
+    "nonce": 34,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000022",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000022",
+    "commitment": "46f3ce0180a8791e8c622020c2bbdf688405a3e3cf9a8061309dc71fcaa4b7ac",
+    "result": {
+      "player": [
+        192,
+        272,
+        171
+      ],
+      "banker": [
+        140,
+        263,
+        14
+      ],
+      "player_total": 3,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-35",
+    "nonce": 35,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000023",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000023",
+    "commitment": "7fcf17c37d3415fbe6dbab0f0fd197d0328b5720e438b13546449179f5ab3e6c",
+    "result": {
+      "player": [
+        95,
+        37,
+        127
+      ],
+      "banker": [
+        191,
+        160
+      ],
+      "player_total": 5,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-36",
+    "nonce": 36,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000024",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000024",
+    "commitment": "fa282a9c595eea43e942f1678efbff1f4b821a6b27aef7df0ae71b9de53fc8ce",
+    "result": {
+      "player": [
+        409,
+        124,
+        196
+      ],
+      "banker": [
+        377,
+        291
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-37",
+    "nonce": 37,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000025",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000025",
+    "commitment": "ec5ec87d286f6b476b516f52e0e554925b0d990a27130e676354d801ecc39429",
+    "result": {
+      "player": [
+        166,
+        129,
+        22
+      ],
+      "banker": [
+        305,
+        150
+      ],
+      "player_total": 0,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-38",
+    "nonce": 38,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000026",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000026",
+    "commitment": "4f3b739ea87efe9836ba4eb45954118152ed2e0500db02b8cc70ed216734a084",
+    "result": {
+      "player": [
+        49,
+        139,
+        313
+      ],
+      "banker": [
+        414,
+        207,
+        83
+      ],
+      "player_total": 2,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-39",
+    "nonce": 39,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000027",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000027",
+    "commitment": "62da635f399f5c1e36370cd28c1648a94125652b48e7bdb93f240203688a5345",
+    "result": {
+      "player": [
+        162,
+        365
+      ],
+      "banker": [
+        318,
+        158
+      ],
+      "player_total": 9,
+      "banker_total": 0,
+      "natural": true,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-40",
+    "nonce": 40,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000028",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000028",
+    "commitment": "1391854aca800961b604acd16f59e5ec4fd025a2fb0eb9ae166976bc2d42cb3c",
+    "result": {
+      "player": [
+        67,
+        179,
+        184
+      ],
+      "banker": [
+        365,
+        229,
+        170
+      ],
+      "player_total": 6,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-41",
+    "nonce": 41,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000029",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000029",
+    "commitment": "8b3680742cf524ec3552ca3db84735a40c96538fe641634e1a261bbc5416db78",
+    "result": {
+      "player": [
+        61,
+        215
+      ],
+      "banker": [
+        318,
+        399
+      ],
+      "player_total": 8,
+      "banker_total": 7,
+      "natural": true,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-42",
+    "nonce": 42,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000002a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002a",
+    "commitment": "0a28e9ffef0073f9a6a674cf57ee77307f38f0f1bebb087888d9011ed0eeefdf",
+    "result": {
+      "player": [
+        346,
+        324
+      ],
+      "banker": [
+        200,
+        226
+      ],
+      "player_total": 9,
+      "banker_total": 2,
+      "natural": true,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-43",
+    "nonce": 43,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000002b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002b",
+    "commitment": "7607861a685a66edb41f818ca921d9ebbbe4897b892cdcef24d41f989c43f7eb",
+    "result": {
+      "player": [
+        371,
+        176
+      ],
+      "banker": [
+        303,
+        186,
+        384
+      ],
+      "player_total": 6,
+      "banker_total": 8,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-44",
+    "nonce": 44,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000002c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002c",
+    "commitment": "e2375957ad31a202ce6190cd9b5f133c3a1ee02e116d7c0c2aad6d39cd7ffc3f",
+    "result": {
+      "player": [
+        397,
+        202
+      ],
+      "banker": [
+        324,
+        78,
+        146
+      ],
+      "player_total": 6,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-45",
+    "nonce": 45,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000002d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002d",
+    "commitment": "f66e7487deb9b520bba6729c749b7f6931656ccd58e0e756768e190874d32709",
+    "result": {
+      "player": [
+        318,
+        211,
+        256
+      ],
+      "banker": [
+        19,
+        119,
+        202
+      ],
+      "player_total": 1,
+      "banker_total": 8,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-46",
+    "nonce": 46,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000002e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002e",
+    "commitment": "fbf8b876daf777ac39279b7a0000c34f4f8c161d93242d88a73a3c87b544bbaf",
+    "result": {
+      "player": [
+        206,
+        220,
+        352
+      ],
+      "banker": [
+        153,
+        39,
+        374
+      ],
+      "player_total": 2,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "player",
+      "won": true,
+      "push": false,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-47",
+    "nonce": 47,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000002f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "player"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000002f",
+    "commitment": "c8bd03c1d9e18e8aaf6c909fa1bcb269062c932cd284fb4db7aed323699e4bdd",
+    "result": {
+      "player": [
+        139,
+        406,
+        291
+      ],
+      "banker": [
+        238,
+        78,
+        184
+      ],
+      "player_total": 0,
+      "banker_total": 9,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-48",
+    "nonce": 48,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000030",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000030",
+    "commitment": "7fe0799f131446599dc86c889010c7dda42ad5bdaa850e066577805c491dd63b",
+    "result": {
+      "player": [
+        73,
+        254
+      ],
+      "banker": [
+        52,
+        396
+      ],
+      "player_total": 7,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-49",
+    "nonce": 49,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000031",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000031",
+    "commitment": "218cd422fe6a50299655006c5c9a13a4a06d5d815f4c929b876885dda1fd4652",
+    "result": {
+      "player": [
+        387,
+        51,
+        287
+      ],
+      "banker": [
+        101,
+        120,
+        373
+      ],
+      "player_total": 2,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-50",
+    "nonce": 50,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000032",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000032",
+    "commitment": "f76fbd6024bba030c2263ef0eb5fbfa245f64f93947948c2ff29b7ae2ff65d5b",
+    "result": {
+      "player": [
+        119,
+        60,
+        52
+      ],
+      "banker": [
+        231,
+        160
+      ],
+      "player_total": 3,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-51",
+    "nonce": 51,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000033",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000033",
+    "commitment": "9e0c06b8d5a4f2ed55e74d790830a7e87c8931767aa992e765183c8746ae1f44",
+    "result": {
+      "player": [
+        1,
+        335
+      ],
+      "banker": [
+        72,
+        387
+      ],
+      "player_total": 2,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-52",
+    "nonce": 52,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000034",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000034",
+    "commitment": "49bbe71d6a985465a9245d9a4c7215952402b8f7cf4c58bb82090afead41a3ef",
+    "result": {
+      "player": [
+        254,
+        281
+      ],
+      "banker": [
+        209,
+        192,
+        17
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-53",
+    "nonce": 53,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000035",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000035",
+    "commitment": "72fc50b0d477f8b8dd5015cbee1ed5ec03f2ae56d1ac248f807a8f6ab3ce6f35",
+    "result": {
+      "player": [
+        370,
+        360
+      ],
+      "banker": [
+        288,
+        369
+      ],
+      "player_total": 7,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-54",
+    "nonce": 54,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000036",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000036",
+    "commitment": "b7fd47f5908abdbd022c848e4546ab55c2039706f8ab26bb27196b6cc04f99d0",
+    "result": {
+      "player": [
+        207,
+        136
+      ],
+      "banker": [
+        217,
+        2,
+        224
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-55",
+    "nonce": 55,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000037",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000037",
+    "commitment": "d76fee92fb29de26e8f02c557e5d06a26c409886c6cea1f53b9a42d7239d466a",
+    "result": {
+      "player": [
+        1,
+        246,
+        161
+      ],
+      "banker": [
+        247,
+        53,
+        295
+      ],
+      "player_total": 8,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-56",
+    "nonce": 56,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000038",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000038",
+    "commitment": "99296ef905c09d9b645cacd87d6cfde89a6ecc519b7354ea41771b89080746ab",
+    "result": {
+      "player": [
+        260,
+        392
+      ],
+      "banker": [
+        41,
+        70
+      ],
+      "player_total": 4,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-57",
+    "nonce": 57,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000039",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000039",
+    "commitment": "d6b08ea633e37f827ce117788ca2a7158319f6914311a06eaa6b78b00e451960",
+    "result": {
+      "player": [
+        397,
+        19,
+        262
+      ],
+      "banker": [
+        0,
+        247,
+        282
+      ],
+      "player_total": 8,
+      "banker_total": 2,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-58",
+    "nonce": 58,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000003a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000003a",
+    "commitment": "e3f66227e36644d1e5cf34802868a8b22709e823709dea17469b066ae32f9221",
+    "result": {
+      "player": [
+        67,
+        165,
+        100
+      ],
+      "banker": [
+        225,
+        65
+      ],
+      "player_total": 3,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-59",
+    "nonce": 59,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000003b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000003b",
+    "commitment": "74d9b5c712774672f8b47e3e554e354c30435565b28648f4729cbc6fc33cd092",
+    "result": {
+      "player": [
+        406,
+        216,
+        212
+      ],
+      "banker": [
+        155,
+        266
+      ],
+      "player_total": 8,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-60",
+    "nonce": 60,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000003c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000003c",
+    "commitment": "31545d22e98471bfbb16dbfe779d5fd996e9c637c081084f1f8783edb5663e77",
+    "result": {
+      "player": [
+        118,
+        321
+      ],
+      "banker": [
+        230,
+        294
+      ],
+      "player_total": 2,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-61",
+    "nonce": 61,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000003d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000003d",
+    "commitment": "bfc4f67a26b9cab5cd82fc8c1ad6fe8dce1668ab14c1b67f26d621f1715c03f1",
+    "result": {
+      "player": [
+        139,
+        78,
+        28
+      ],
+      "banker": [
+        410,
+        96,
+        353
+      ],
+      "player_total": 4,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-62",
+    "nonce": 62,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000003e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000003e",
+    "commitment": "3344e7bdb7884439459823d4ebac1c517d06f5f37cb8c932eb1dfd1682d305d1",
+    "result": {
+      "player": [
+        0,
+        276,
+        133
+      ],
+      "banker": [
+        76,
+        354,
+        177
+      ],
+      "player_total": 9,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-63",
+    "nonce": 63,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000003f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000003f",
+    "commitment": "5aabc2aaf168131a281aedcee3dea27e214d95e3b97372c78906696f9fe8c45a",
+    "result": {
+      "player": [
+        137,
+        380,
+        391
+      ],
+      "banker": [
+        191,
+        140,
+        356
+      ],
+      "player_total": 4,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-64",
+    "nonce": 64,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000040",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000040",
+    "commitment": "d9ece2cd2214f52c55dcd9bca56a900ec79c1343f12df8a60f0298d255896b61",
+    "result": {
+      "player": [
+        399,
+        386,
+        370
+      ],
+      "banker": [
+        221,
+        31
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-65",
+    "nonce": 65,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000041",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000041",
+    "commitment": "9d4bfb26dd8e60d25849ff56499c59b8eef24ddb6c8d8a27b6b2a4ecaa54011d",
+    "result": {
+      "player": [
+        132,
+        251
+      ],
+      "banker": [
+        269,
+        360
+      ],
+      "player_total": 8,
+      "banker_total": 0,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-66",
+    "nonce": 66,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000042",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000042",
+    "commitment": "aa796dee6b6abca795103a49a9715b499482dcf870f9237b2a7b03a3c93fd310",
+    "result": {
+      "player": [
+        75,
+        84
+      ],
+      "banker": [
+        160,
+        90,
+        378
+      ],
+      "player_total": 7,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-67",
+    "nonce": 67,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000043",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000043",
+    "commitment": "3016f312134e0e83b5b031b95680834cf946f9fbffb4a809210ff9e6a8f23fef",
+    "result": {
+      "player": [
+        273,
+        221,
+        119
+      ],
+      "banker": [
+        274,
+        15
+      ],
+      "player_total": 5,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-68",
+    "nonce": 68,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000044",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000044",
+    "commitment": "d69eeac6f2e1db99eeebdb994f1f775b7efc00942e52b2c5e96e01046744bf8c",
+    "result": {
+      "player": [
+        358,
+        252,
+        164
+      ],
+      "banker": [
+        136,
+        392,
+        84
+      ],
+      "player_total": 3,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-69",
+    "nonce": 69,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000045",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000045",
+    "commitment": "e8dd74435e8ddf42cd36eafa910cb5b00fc8b1a079dcfa0d50de97e9c90564f6",
+    "result": {
+      "player": [
+        193,
+        147
+      ],
+      "banker": [
+        64,
+        307
+      ],
+      "player_total": 5,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-70",
+    "nonce": 70,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000046",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000046",
+    "commitment": "30a2ded39679f7081be24b874375c89ac323f3e1990d49b98dd447d4456b844d",
+    "result": {
+      "player": [
+        214,
+        84,
+        203
+      ],
+      "banker": [
+        132,
+        271,
+        26
+      ],
+      "player_total": 3,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-71",
+    "nonce": 71,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000047",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000047",
+    "commitment": "dcd54768c9a4d836333a46cb3a5cdf6d2495e4a7474492e9236248f1415e3070",
+    "result": {
+      "player": [
+        266,
+        409,
+        396
+      ],
+      "banker": [
+        124,
+        108,
+        96
+      ],
+      "player_total": 1,
+      "banker_total": 9,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-72",
+    "nonce": 72,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000048",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000048",
+    "commitment": "a4c76b96fad3b6b441e92da80603e3112f5329af5a214806df84e8dddef4aab5",
+    "result": {
+      "player": [
+        163,
+        18,
+        315
+      ],
+      "banker": [
+        296,
+        143,
+        8
+      ],
+      "player_total": 8,
+      "banker_total": 0,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-73",
+    "nonce": 73,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000049",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000049",
+    "commitment": "eee737a376c9c13c253e8fefe7f570b77f715269f8725544de6408e8a20df5b8",
+    "result": {
+      "player": [
+        206,
+        341,
+        253
+      ],
+      "banker": [
+        87,
+        350,
+        378
+      ],
+      "player_total": 1,
+      "banker_total": 2,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-74",
+    "nonce": 74,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000004a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000004a",
+    "commitment": "4d222ea01974bfff48a0502de70a12de87e3fc4b01ab0fa692218c84cbde2898",
+    "result": {
+      "player": [
+        170,
+        251
+      ],
+      "banker": [
+        70,
+        55,
+        372
+      ],
+      "player_total": 7,
+      "banker_total": 9,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-75",
+    "nonce": 75,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000004b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000004b",
+    "commitment": "43a50c8b2e4747f3bb0900cc99d38b0be91e85097221009b29d5a77c7c453a81",
+    "result": {
+      "player": [
+        355,
+        123
+      ],
+      "banker": [
+        162,
+        364
+      ],
+      "player_total": 2,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-76",
+    "nonce": 76,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000004c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000004c",
+    "commitment": "3a828d1342187d3f95258980a357ab329db742c99f1abbde113e647f3f9db930",
+    "result": {
+      "player": [
+        1,
+        278
+      ],
+      "banker": [
+        349,
+        407
+      ],
+      "player_total": 8,
+      "banker_total": 5,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-77",
+    "nonce": 77,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000004d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000004d",
+    "commitment": "06875a60b22ed75764002c8b61dc1434f8138f925177c7315132ac6cef3f3215",
+    "result": {
+      "player": [
+        407,
+        399,
+        151
+      ],
+      "banker": [
+        302,
+        336
+      ],
+      "player_total": 4,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "tie",
+      "won": false,
+      "push": true,
+      "payout": 12345
+    },
+    "payout": 12345,
+    "net": 0
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-78",
+    "nonce": 78,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000004e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000004e",
+    "commitment": "ef5baacb42e1252292d5e364a9b583aef21d65e13bd77aa5ee5413ed28247e3f",
+    "result": {
+      "player": [
+        84,
+        110,
+        346
+      ],
+      "banker": [
+        358,
+        21
+      ],
+      "player_total": 3,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-79",
+    "nonce": 79,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000004f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000004f",
+    "commitment": "5e46fe597123003c55aa04da816a7cea976f22ae7449ca07ebdbb61536480ff0",
+    "result": {
+      "player": [
+        276,
+        26,
+        46
+      ],
+      "banker": [
+        115,
+        50,
+        174
+      ],
+      "player_total": 3,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-80",
+    "nonce": 80,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000050",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000050",
+    "commitment": "6294bd77fe3bc20791713a2ad329d6cb75b588677c13538a0039b34e9a79b8d8",
+    "result": {
+      "player": [
+        116,
+        165
+      ],
+      "banker": [
+        359,
+        61
+      ],
+      "player_total": 0,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-81",
+    "nonce": 81,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000051",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000051",
+    "commitment": "c4baceb37468f33a4178c2f7cfbe285bf1f817020426d8ab96acd9621ddd5ece",
+    "result": {
+      "player": [
+        409,
+        70
+      ],
+      "banker": [
+        365,
+        213
+      ],
+      "player_total": 3,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-82",
+    "nonce": 82,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000052",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000052",
+    "commitment": "6d66ab1a927c82f2ae3a747997f9e7c37725193b5a0eb6b9955a5c19873abe07",
+    "result": {
+      "player": [
+        265,
+        19,
+        397
+      ],
+      "banker": [
+        130,
+        41
+      ],
+      "player_total": 1,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-83",
+    "nonce": 83,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000053",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000053",
+    "commitment": "afbe800454326b2a9f58890a0313a5a98e98469fe0f56c87c6065eb50b276ea6",
+    "result": {
+      "player": [
+        66,
+        307,
+        382
+      ],
+      "banker": [
+        186,
+        64,
+        7
+      ],
+      "player_total": 7,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-84",
+    "nonce": 84,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000054",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000054",
+    "commitment": "f344734c0f0c21b97658e050f2e6f9ec53e8ad971ea3ea0837e886f157e2eacb",
+    "result": {
+      "player": [
+        246,
+        255
+      ],
+      "banker": [
+        68,
+        298
+      ],
+      "player_total": 9,
+      "banker_total": 4,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-85",
+    "nonce": 85,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000055",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000055",
+    "commitment": "c8c37c89fcc6ee7f5e8237d2b7ed8c17640c154f8d7751c774719b2b82040c76",
+    "result": {
+      "player": [
+        230,
+        241
+      ],
+      "banker": [
+        408,
+        383
+      ],
+      "player_total": 8,
+      "banker_total": 3,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-86",
+    "nonce": 86,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000056",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000056",
+    "commitment": "91903793d61541b0d582d3050bb6329972b01f0d3dddd8817aa11f8cebfdd7f8",
+    "result": {
+      "player": [
+        147,
+        151,
+        398
+      ],
+      "banker": [
+        78,
+        298,
+        8
+      ],
+      "player_total": 3,
+      "banker_total": 0,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-87",
+    "nonce": 87,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000057",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000057",
+    "commitment": "9edd2ce297aa8b04f037b1255d4b4d743423d4307893ddc930e5405f0b1cd50a",
+    "result": {
+      "player": [
+        414,
+        245,
+        402
+      ],
+      "banker": [
+        157,
+        308,
+        16
+      ],
+      "player_total": 0,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-88",
+    "nonce": 88,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000058",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000058",
+    "commitment": "40f68467d89308813670955d2e063701d7fd4f9f86985c0db0d84e955c867422",
+    "result": {
+      "player": [
+        94,
+        273,
+        102
+      ],
+      "banker": [
+        65,
+        387,
+        170
+      ],
+      "player_total": 5,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-89",
+    "nonce": 89,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000059",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000059",
+    "commitment": "cce1ddcb284606c436d4054f6bb708bcd7ab9ae07109e01ab18bd72879f132ee",
+    "result": {
+      "player": [
+        358,
+        83,
+        151
+      ],
+      "banker": [
+        36,
+        276
+      ],
+      "player_total": 3,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-90",
+    "nonce": 90,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000005a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000005a",
+    "commitment": "98e3364c5710374d979fca530be85d5537088bde6ad2f2b6feab63733959044d",
+    "result": {
+      "player": [
+        280,
+        306
+      ],
+      "banker": [
+        86,
+        329,
+        366
+      ],
+      "player_total": 6,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-91",
+    "nonce": 91,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000005b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000005b",
+    "commitment": "c7087afac76c92322ea925db4bebbab5b7f0c95799fd5406a4d849f722606811",
+    "result": {
+      "player": [
+        0,
+        369
+      ],
+      "banker": [
+        18,
+        123,
+        332
+      ],
+      "player_total": 7,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-92",
+    "nonce": 92,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000005c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000005c",
+    "commitment": "b552f33aa6a0260dd4cea478d753d530b7d300fffda48b48e30b74e77c99dc04",
+    "result": {
+      "player": [
+        336,
+        294
+      ],
+      "banker": [
+        36,
+        154
+      ],
+      "player_total": 9,
+      "banker_total": 0,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-93",
+    "nonce": 93,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000005d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000005d",
+    "commitment": "b8f028232228f94737b66c7ac275b8c981dc2fc7ec79525ba1ab543d95ec208c",
+    "result": {
+      "player": [
+        115,
+        270
+      ],
+      "banker": [
+        238,
+        340
+      ],
+      "player_total": 0,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-94",
+    "nonce": 94,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000005e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000005e",
+    "commitment": "14f6db8ce75ad904f5ebc4c2ad9d209cd2846541202919d2c778938824fb1b15",
+    "result": {
+      "player": [
+        66,
+        221,
+        307
+      ],
+      "banker": [
+        24,
+        77,
+        67
+      ],
+      "player_total": 2,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "banker",
+      "won": true,
+      "push": false,
+      "payout": 24072
+    },
+    "payout": 24072,
+    "net": 11727
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-95",
+    "nonce": 95,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000005f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "banker"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000005f",
+    "commitment": "5f763534c9565813a15c51c4157001173cea5a22b0e5ce21fdb375471291d7b3",
+    "result": {
+      "player": [
+        403,
+        21,
+        253
+      ],
+      "banker": [
+        336,
+        406,
+        168
+      ],
+      "player_total": 7,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-96",
+    "nonce": 96,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000060",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000060",
+    "commitment": "338e9c1f021bea3dbdca3780acfe19416c4facf0e26aa6e5239d235d17e2f0bc",
+    "result": {
+      "player": [
+        97,
+        72,
+        102
+      ],
+      "banker": [
+        101,
+        386,
+        258
+      ],
+      "player_total": 5,
+      "banker_total": 0,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-97",
+    "nonce": 97,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000061",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000061",
+    "commitment": "508106967af14280d6ee17d389feb5d96ad41b80f89d0671d1fed0c596bfb0da",
+    "result": {
+      "player": [
+        366,
+        93
+      ],
+      "banker": [
+        163,
+        392,
+        71
+      ],
+      "player_total": 6,
+      "banker_total": 8,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-98",
+    "nonce": 98,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000062",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000062",
+    "commitment": "0010d2c57c2552b023f787cafcd6cd962d6faa04a7621fba14faa3a9f6de8910",
+    "result": {
+      "player": [
+        369,
+        49
+      ],
+      "banker": [
+        382,
+        296
+      ],
+      "player_total": 6,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "tie",
+      "won": true,
+      "push": false,
+      "payout": 111105
+    },
+    "payout": 111105,
+    "net": 98760
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-99",
+    "nonce": 99,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000063",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000063",
+    "commitment": "d049a9ae4cfccb1d9a59c29b1670f25ca0cc1f2fb8a0f8e9a24a399760825f05",
+    "result": {
+      "player": [
+        32,
+        389
+      ],
+      "banker": [
+        193,
+        328,
+        364
+      ],
+      "player_total": 7,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-100",
+    "nonce": 100,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000064",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000064",
+    "commitment": "70147d9c3fe0b99a2ec9f2cbd549e637cb54c230e2bc7e6fb34b629ebe04272a",
+    "result": {
+      "player": [
+        280,
+        395,
+        233
+      ],
+      "banker": [
+        302,
+        221
+      ],
+      "player_total": 4,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-101",
+    "nonce": 101,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000065",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000065",
+    "commitment": "acd67765f0780f3dd017df5571f5fa2b400cbfdf34274ae77ac0de2b3b66737e",
+    "result": {
+      "player": [
+        278,
+        170
+      ],
+      "banker": [
+        253,
+        366
+      ],
+      "player_total": 8,
+      "banker_total": 0,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-102",
+    "nonce": 102,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000066",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000066",
+    "commitment": "d98515da5854dd302023ab19a27c0f72e9296a3ecc6574997ed7bae46e7b9226",
+    "result": {
+      "player": [
+        321,
+        49
+      ],
+      "banker": [
+        226,
+        378
+      ],
+      "player_total": 0,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-103",
+    "nonce": 103,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000067",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000067",
+    "commitment": "a079586a1014426c82899f8200a0f398331232f7ef689eedf65b3e675bce8f67",
+    "result": {
+      "player": [
+        36,
+        76,
+        89
+      ],
+      "banker": [
+        329,
+        219
+      ],
+      "player_total": 0,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-104",
+    "nonce": 104,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000068",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000068",
+    "commitment": "e2382f371c6df4b92b18d4c484037b76930e75e44a0adbf40dce72f152999d55",
+    "result": {
+      "player": [
+        161,
+        95
+      ],
+      "banker": [
+        152,
+        72
+      ],
+      "player_total": 1,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-105",
+    "nonce": 105,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000069",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000069",
+    "commitment": "7e035cacc1bd673ca552132b3cc58a49ca0a4d2995c940186f07bcc1d5d74d70",
+    "result": {
+      "player": [
+        117,
+        284,
+        202
+      ],
+      "banker": [
+        180,
+        339,
+        159
+      ],
+      "player_total": 9,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-106",
+    "nonce": 106,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000006a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000006a",
+    "commitment": "0cd3d3a1a848bd98453d536e8e79a4abcadeaf0bb54259b4eb988a280ea031c4",
+    "result": {
+      "player": [
+        10,
+        292
+      ],
+      "banker": [
+        174,
+        124,
+        71
+      ],
+      "player_total": 7,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-107",
+    "nonce": 107,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000006b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000006b",
+    "commitment": "1ab2f9161788042ad3cfdc69e9f2361c14b409cdb975060b042a76837ad225d5",
+    "result": {
+      "player": [
+        185,
+        154,
+        404
+      ],
+      "banker": [
+        370,
+        166
+      ],
+      "player_total": 6,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-108",
+    "nonce": 108,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000006c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000006c",
+    "commitment": "7124c856969ec06d9139f14cbf50ce8cf1aaf5f298a613d20758e82de8a39898",
+    "result": {
+      "player": [
+        301,
+        342
+      ],
+      "banker": [
+        254,
+        138
+      ],
+      "player_total": 8,
+      "banker_total": 7,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-109",
+    "nonce": 109,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000006d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000006d",
+    "commitment": "d2c8659d2b888014e0686324a4448a69ef64f1b36156948f17fa600dc170fc35",
+    "result": {
+      "player": [
+        163,
+        396,
+        295
+      ],
+      "banker": [
+        214,
+        231
+      ],
+      "player_total": 5,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-110",
+    "nonce": 110,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000006e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000006e",
+    "commitment": "eecd9b3b5fe066a2d88f4905b6014cad32040d44284d0ca8ce20ef86bb20bd89",
+    "result": {
+      "player": [
+        101,
+        328
+      ],
+      "banker": [
+        114,
+        333
+      ],
+      "player_total": 4,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-111",
+    "nonce": 111,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000006f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000006f",
+    "commitment": "7b1a8537216b5e3136f4e344190f9c7002f25067afbe4bfcdce69915a9c5ab59",
+    "result": {
+      "player": [
+        29,
+        191,
+        325
+      ],
+      "banker": [
+        97,
+        90
+      ],
+      "player_total": 5,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-112",
+    "nonce": 112,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000070",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000070",
+    "commitment": "728c1370e7c4307d97039b4ddea2e4eb805e8909a37c722cf22f3d81bf39c612",
+    "result": {
+      "player": [
+        80,
+        226
+      ],
+      "banker": [
+        94,
+        186
+      ],
+      "player_total": 9,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "tie",
+      "won": true,
+      "push": false,
+      "payout": 111105
+    },
+    "payout": 111105,
+    "net": 98760
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-113",
+    "nonce": 113,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000071",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000071",
+    "commitment": "e75491ace2f93a7cc05f2f73a21d77c0b5ab6431fec9f8658ff2e222c85b8ad8",
+    "result": {
+      "player": [
+        84,
+        344,
+        193
+      ],
+      "banker": [
+        368,
+        150,
+        276
+      ],
+      "player_total": 4,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-114",
+    "nonce": 114,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000072",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000072",
+    "commitment": "1e2b57158abc313b8b445c15dcb766cc1e996ddc7aa632337b1e037b236c8010",
+    "result": {
+      "player": [
+        79,
+        340,
+        180
+      ],
+      "banker": [
+        377,
+        222,
+        285
+      ],
+      "player_total": 5,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-115",
+    "nonce": 115,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000073",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000073",
+    "commitment": "1afad2231b73fefa2f10a5b4c7a2b97b314064652cbc3ebdd4287b3c868254ae",
+    "result": {
+      "player": [
+        28,
+        258,
+        121
+      ],
+      "banker": [
+        4,
+        59,
+        282
+      ],
+      "player_total": 8,
+      "banker_total": 3,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-116",
+    "nonce": 116,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000074",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000074",
+    "commitment": "79b7e36c39301bbfaf96e244b01b969e66385a5ac1b5585719c9fb6e7010c041",
+    "result": {
+      "player": [
+        249,
+        95
+      ],
+      "banker": [
+        356,
+        118
+      ],
+      "player_total": 8,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "tie",
+      "won": true,
+      "push": false,
+      "payout": 111105
+    },
+    "payout": 111105,
+    "net": 98760
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-117",
+    "nonce": 117,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000075",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000075",
+    "commitment": "c1838a3415eadcb185b058a3676428cb7b4ec80490e20a6cd72740e7246a86df",
+    "result": {
+      "player": [
+        217,
+        167
+      ],
+      "banker": [
+        412,
+        85
+      ],
+      "player_total": 0,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-118",
+    "nonce": 118,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000076",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000076",
+    "commitment": "7e6bc39b9628f91e6d3320dd608c0847ea4b27c7fac0f08fea0e2cd7cb718f87",
+    "result": {
+      "player": [
+        410,
+        77
+      ],
+      "banker": [
+        183,
+        178
+      ],
+      "player_total": 8,
+      "banker_total": 2,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-119",
+    "nonce": 119,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000077",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000077",
+    "commitment": "93027c050a08db29f1dbce7462edc984ef34096ddb070a113ff01081a2f8122c",
+    "result": {
+      "player": [
+        329,
+        162,
+        254
+      ],
+      "banker": [
+        146,
+        304,
+        224
+      ],
+      "player_total": 0,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-120",
+    "nonce": 120,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000078",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000078",
+    "commitment": "de5c56e5afab5531e10f4edc2602f577c491c1edd6c67dea10375d2a109434d3",
+    "result": {
+      "player": [
+        160,
+        89,
+        105
+      ],
+      "banker": [
+        402,
+        51,
+        22
+      ],
+      "player_total": 7,
+      "banker_total": 0,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-121",
+    "nonce": 121,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000079",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000079",
+    "commitment": "d4e7b5ee2a566d0cc65208291874f791552c3011787db6d27a1198cd82489872",
+    "result": {
+      "player": [
+        363,
+        168
+      ],
+      "banker": [
+        103,
+        371
+      ],
+      "player_total": 0,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-122",
+    "nonce": 122,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000007a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000007a",
+    "commitment": "4ef2a179fbf70070821744bd1164935c267ab0cdc32e1b4c0f3b9ba4b5a9f478",
+    "result": {
+      "player": [
+        354,
+        51
+      ],
+      "banker": [
+        73,
+        63
+      ],
+      "player_total": 4,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-123",
+    "nonce": 123,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000007b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000007b",
+    "commitment": "661ffbd00de5aea14a1cdfb143127566abdc469ffe1160b006acc5eacb0f0ead",
+    "result": {
+      "player": [
+        394,
+        191,
+        376
+      ],
+      "banker": [
+        200,
+        278,
+        222
+      ],
+      "player_total": 5,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-124",
+    "nonce": 124,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000007c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000007c",
+    "commitment": "be46555915b66a24aaab1289fbeedf95300e6f5ab36ea7e200bcff8e8123e1bb",
+    "result": {
+      "player": [
+        89,
+        138
+      ],
+      "banker": [
+        333,
+        151
+      ],
+      "player_total": 9,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-125",
+    "nonce": 125,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000007d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000007d",
+    "commitment": "7d5f30cde20b406aae8924e4c191e0019f161daeee6f97f33ec90e713ac931fd",
+    "result": {
+      "player": [
+        338,
+        95
+      ],
+      "banker": [
+        186,
+        291,
+        410
+      ],
+      "player_total": 6,
+      "banker_total": 9,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-126",
+    "nonce": 126,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000007e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000007e",
+    "commitment": "a5e6a586c4d95421177b9e85c9d61df6f5a78666c05be49a0e92a3e0c708e6ec",
+    "result": {
+      "player": [
+        357,
+        149,
+        6
+      ],
+      "banker": [
+        373,
+        303,
+        309
+      ],
+      "player_total": 1,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-127",
+    "nonce": 127,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000007f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000007f",
+    "commitment": "a48bd64dc8de3fe1438f55d19ed877ff00e2bd1333b48a7c3abde636494ec80a",
+    "result": {
+      "player": [
+        140,
+        359
+      ],
+      "banker": [
+        376,
+        351
+      ],
+      "player_total": 9,
+      "banker_total": 1,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-128",
+    "nonce": 128,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000080",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000080",
+    "commitment": "63794a3bf8875ac2c32ba6238d27e7e15e56a3b794b8d2d6aec82faef2360e3a",
+    "result": {
+      "player": [
+        321,
+        172,
+        350
+      ],
+      "banker": [
+        10,
+        52,
+        223
+      ],
+      "player_total": 4,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "tie",
+      "won": true,
+      "push": false,
+      "payout": 111105
+    },
+    "payout": 111105,
+    "net": 98760
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-129",
+    "nonce": 129,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000081",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000081",
+    "commitment": "0e01bc9c1bd2710b7e43fa3daac3762439ae4dc3c23a5b2144bd2d358237eb67",
+    "result": {
+      "player": [
+        407,
+        298,
+        308
+      ],
+      "banker": [
+        369,
+        322
+      ],
+      "player_total": 5,
+      "banker_total": 6,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-130",
+    "nonce": 130,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000082",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000082",
+    "commitment": "137f4c656af4bf83734acc1255be7d3e8150c22b66b6bd36f0145620ef04aa86",
+    "result": {
+      "player": [
+        74,
+        334,
+        379
+      ],
+      "banker": [
+        207,
+        132,
+        384
+      ],
+      "player_total": 3,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-131",
+    "nonce": 131,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000083",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000083",
+    "commitment": "5d1838a832762e0d76b6485a15e99ecca47f2e90cc59c1bdcad292f39928e80a",
+    "result": {
+      "player": [
+        159,
+        390,
+        116
+      ],
+      "banker": [
+        220,
+        335,
+        55
+      ],
+      "player_total": 5,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-132",
+    "nonce": 132,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000084",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000084",
+    "commitment": "dbe8daf7602df5c7e1273292d4be621036ab8543ce85b50dcc0700c5e44e389c",
+    "result": {
+      "player": [
+        111,
+        223,
+        193
+      ],
+      "banker": [
+        67,
+        169
+      ],
+      "player_total": 1,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-133",
+    "nonce": 133,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000085",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000085",
+    "commitment": "5307f09febbaffb6041085bba18eb97027e6398e1c4395d6b1f27e9f5c6b2000",
+    "result": {
+      "player": [
+        259,
+        113,
+        376
+      ],
+      "banker": [
+        2,
+        400,
+        123
+      ],
+      "player_total": 0,
+      "banker_total": 0,
+      "natural": false,
+      "winner": "tie",
+      "won": true,
+      "push": false,
+      "payout": 111105
+    },
+    "payout": 111105,
+    "net": 98760
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-134",
+    "nonce": 134,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000086",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000086",
+    "commitment": "f2b3301702a8f5d976a2de6e0d4f1070f35b4f27df243d53d8e6b52f5c0c5172",
+    "result": {
+      "player": [
+        263,
+        251
+      ],
+      "banker": [
+        314,
+        398
+      ],
+      "player_total": 9,
+      "banker_total": 2,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-135",
+    "nonce": 135,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000087",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000087",
+    "commitment": "7d96c2e719290228d8a9aca288c8462eb335110096607ec4ebcbfa7111679e7d",
+    "result": {
+      "player": [
+        166,
+        105
+      ],
+      "banker": [
+        170,
+        70
+      ],
+      "player_total": 2,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-136",
+    "nonce": 136,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000088",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000088",
+    "commitment": "16c37b1fc0ad73a8b68ba5a5ebfc9ea5e9fbc19c00e316a57778f780a1d82525",
+    "result": {
+      "player": [
+        315,
+        196
+      ],
+      "banker": [
+        397,
+        50
+      ],
+      "player_total": 6,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-137",
+    "nonce": 137,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000089",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000089",
+    "commitment": "7a0ea05691caf0a9ecaf6f70aa3b3f836c3d8a89fdba74954679defaeb7371ec",
+    "result": {
+      "player": [
+        265,
+        177,
+        413
+      ],
+      "banker": [
+        48,
+        341
+      ],
+      "player_total": 5,
+      "banker_total": 4,
+      "natural": false,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-138",
+    "nonce": 138,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000008a",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000008a",
+    "commitment": "88df062109859c85daad58e6d705248f8649f4965c78bce6af0ad3ec5584ad53",
+    "result": {
+      "player": [
+        256,
+        379,
+        105
+      ],
+      "banker": [
+        368,
+        154
+      ],
+      "player_total": 5,
+      "banker_total": 5,
+      "natural": false,
+      "winner": "tie",
+      "won": true,
+      "push": false,
+      "payout": 111105
+    },
+    "payout": 111105,
+    "net": 98760
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-139",
+    "nonce": 139,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000008b",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000008b",
+    "commitment": "e5632d733c86d0718d48d44ad595fb5ce51494f86ea094c5cf30e960f45fecec",
+    "result": {
+      "player": [
+        106,
+        342
+      ],
+      "banker": [
+        274,
+        123
+      ],
+      "player_total": 8,
+      "banker_total": 9,
+      "natural": true,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-140",
+    "nonce": 140,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000008c",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000008c",
+    "commitment": "4ebb1f311cdb471e433d4e9c2eef0660756dd3f1f0a0d9362fa465fb03a38cd2",
+    "result": {
+      "player": [
+        47,
+        216
+      ],
+      "banker": [
+        95,
+        112
+      ],
+      "player_total": 8,
+      "banker_total": 4,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-141",
+    "nonce": 141,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000008d",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000008d",
+    "commitment": "3c375446cb1d8c8ed0dbc4f4272833b128afa13783ed12f9e11bab434c0e5841",
+    "result": {
+      "player": [
+        306,
+        403
+      ],
+      "banker": [
+        19,
+        312
+      ],
+      "player_total": 9,
+      "banker_total": 8,
+      "natural": true,
+      "winner": "player",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-142",
+    "nonce": 142,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000008e",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000008e",
+    "commitment": "d6318c5c84c556ecc37a4c94bc061a3e5f3de7ba55137136109eb6a52ff7043f",
+    "result": {
+      "player": [
+        232,
+        350,
+        159
+      ],
+      "banker": [
+        346,
+        263,
+        250
+      ],
+      "player_total": 4,
+      "banker_total": 7,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "baccarat",
+    "request_id": "v4-reference-143",
+    "nonce": 143,
+    "client_seed": "independent-reference",
+    "client_salt": "0000000000000000000000000000008f",
+    "wager": 12345,
+    "options": {
+      "decks": 8,
+      "side": "tie"
+    },
+    "server_seed": "000000000000000000000000000000000000000000000000000000000000008f",
+    "commitment": "b8123b183168413d5896cea429a5681effffc7b0a67e4261ea53e5fc753d07ba",
+    "result": {
+      "player": [
+        296,
+        74,
+        402
+      ],
+      "banker": [
+        166,
+        246,
+        169
+      ],
+      "player_total": 0,
+      "banker_total": 1,
+      "natural": false,
+      "winner": "banker",
+      "won": false,
+      "push": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "dice",
+    "request_id": "v4-reference-144",
+    "nonce": 144,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000090",
+    "wager": 12345,
+    "options": {
+      "chance": 50,
+      "side": "under"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000090",
+    "commitment": "dcd93f4069244d5eb5df703e73369d9568bc1d3504c5ea9566ccbf4c5341bf09",
+    "result": {
+      "roll": 2557,
+      "won": true,
+      "payout": 24443
+    },
+    "payout": 24443,
+    "net": 12098
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "keno",
+    "request_id": "v4-reference-145",
+    "nonce": 145,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000091",
+    "wager": 12345,
+    "options": {
+      "picks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "risk": "high"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000091",
+    "commitment": "571893752ae81af47e25ab7a1794f1034655f41ca4dcd8afe47dc69a1fb83801",
+    "result": {
+      "drawn": [
+        15,
+        16,
+        32,
+        17,
+        34,
+        2,
+        36,
+        30,
+        6,
+        4
+      ],
+      "hits": 3,
+      "multiplier": 2456,
+      "payout": 3031
+    },
+    "payout": 3031,
+    "net": -9314
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "plinko",
+    "request_id": "v4-reference-146",
+    "nonce": 146,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000092",
+    "wager": 12345,
+    "options": {
+      "rows": 16,
+      "risk": "high"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000092",
+    "commitment": "680d37b0ae989894fdab85648bff19ac111728d08e8f15d7a7cac3130f08b465",
+    "result": {
+      "path": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "slot": 7,
+      "multiplier": 2000,
+      "payout": 2469
+    },
+    "payout": 2469,
+    "net": -9876
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "blackjack",
+    "request_id": "v4-reference-147",
+    "nonce": 147,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000093",
+    "wager": 12345,
+    "options": {
+      "decks": 6
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000093",
+    "commitment": "83c314985ef8975b301e325cfcadfeab7acecaf6e8a9466a86b0ba1307eaaebd",
+    "actions": [
+      "stand"
+    ],
+    "result": {
+      "ended": true,
+      "player": [
+        287,
+        25
+      ],
+      "dealer": [
+        121,
+        192,
+        188
+      ],
+      "player_total": 12,
+      "dealer_total": 22,
+      "player_soft": false,
+      "dealer_soft": false,
+      "status": "win",
+      "total_wager": 12345,
+      "payout": 24690
+    },
+    "payout": 24690,
+    "net": 12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "poker",
+    "request_id": "v4-reference-148",
+    "nonce": 148,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000094",
+    "wager": 12345,
+    "options": {
+      "variant": "jacks_or_better"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000094",
+    "commitment": "025082d71f29da35e3e224c30c9e3caecebb4304d5301fe97dd12495be5c8a18",
+    "holds": [
+      0,
+      2,
+      4
+    ],
+    "result": {
+      "ended": true,
+      "initial": [
+        35,
+        36,
+        14,
+        31,
+        27
+      ],
+      "cards": [
+        35,
+        12,
+        14,
+        2,
+        27
+      ],
+      "holds": [
+        0,
+        2,
+        4
+      ],
+      "category": "no_win",
+      "multiplier": 0,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "coinflip",
+    "request_id": "v4-reference-149",
+    "nonce": 149,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000095",
+    "wager": 12345,
+    "options": {
+      "side": "heads"
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000095",
+    "commitment": "1077f3fee4ed655e7c6f6443f859507bf4ccf11bb7b48989c330448bb1ce86b2",
+    "result": {
+      "side": "tails",
+      "won": false,
+      "multiplier": 19800,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  },
+  {
+    "rules_version": "redpoints-v4",
+    "season": "1790114400",
+    "game": "limbo",
+    "request_id": "v4-reference-150",
+    "nonce": 150,
+    "client_seed": "independent-reference",
+    "client_salt": "00000000000000000000000000000096",
+    "wager": 12345,
+    "options": {
+      "target": 250
+    },
+    "server_seed": "0000000000000000000000000000000000000000000000000000000000000096",
+    "commitment": "95ff0b232a40c71f96a0f4340985539a62252464e15b2324ee8147a5a54def63",
+    "result": {
+      "roll": 682344098,
+      "multiplier": 117,
+      "won": false,
+      "payout": 0
+    },
+    "payout": 0,
+    "net": -12345
+  }
+]

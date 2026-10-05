@@ -278,4 +278,4 @@ class GamingIPTests(unittest.TestCase):
             self.assertEqual(len(saved['games'][item]),5)
             self.assertEqual(saved['counts'][item],dict(players=7,rounds=7))
             self.assertTrue(all(row['ips'] and row['bets']==1 for row in saved['games'][item]))
-        self.assertIn('arcade3',saved['release'])
+        self.assertIn('arcade4',saved['release'])

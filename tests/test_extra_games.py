@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import test_app
 import test_redpoints
-from fairness import VERSION, PREVIOUS_VERSION, commitment, outcome, verify, max_payout
+from fairness import VERSION, V2_VERSION, commitment, outcome, verify, max_payout
 from gaming import Gaming, GamingError, player_key, validate_gaming
 from poker import PAYTABLE, classify, replay
 from storage import StoreError
@@ -89,15 +89,15 @@ class ExtraWalletTests(unittest.TestCase):
         result=game.bet(who,name,body,client_ip='192.0.2.1')
         return game,body,result
 
-    def test_seven_games_share_a_profile_wallet_and_private_rankings(self):
+    def test_eight_games_share_a_profile_wallet_and_private_rankings(self):
         client,_=self.player('SevenGames')
-        for name in ('dice','keno','plinko','blackjack','limbo','coinflip','poker'):
+        for name in ('dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat'):
             self.assertEqual(client.get('/gaming/'+name).status_code,200)
             result,_=self.play(client,name,time.time())
             self.assertTrue(verify(result['receipt']))
         rankings=self.client.get('/admin/gaming/status').json
-        self.assertEqual(rankings['completed_rounds'],7)
-        self.assertEqual(len(rankings['games']),7)
+        self.assertEqual(rankings['completed_rounds'],8)
+        self.assertEqual(len(rankings['games']),8)
         self.assertTrue(all(rows[0]['name']=='SevenGames' for rows in rankings['games'].values()))
         self.assertEqual(len({rows[0]['player_tag'] for rows in rankings['games'].values()}),1)
         self.assertNotIn('SevenGames',self.app.test_client().get('/gaming/api/state').text)
@@ -163,20 +163,20 @@ class ExtraWalletTests(unittest.TestCase):
         body=self.body(wallet,'blackjack')
         for seed in range(100):
             private=f'{seed:064x}'
-            pending={**body,'rules_version':PREVIOUS_VERSION,'server_seed':private,
+            pending={**body,'rules_version':V2_VERSION,'server_seed':private,
                      'commitment':commitment(private),'actions':[],'action_ids':[],'at':int(time.time())}
             if not outcome(private,pending)['ended']:break
         with game.store.connection(transaction=True) as conn:
             player=conn['gaming']['players'][player_key('old')]
-            for new in ('limbo','coinflip','poker'):player['stats'].pop(new)
+            for new in ('limbo','coinflip','poker','baccarat'):player['stats'].pop(new)
             player.update(server_seed=private,blackjack=pending,balance=99900)
         validate_gaming(game.recovery());migrated=Gaming(game.store)
         migrated.restart_balances()
         saved=migrated.recovery()['players'][player_key('old')]
-        self.assertEqual(saved['blackjack'],pending);self.assertEqual(len(saved['stats']),7)
+        self.assertEqual(saved['blackjack'],pending);self.assertEqual(len(saved['stats']),8)
         hand=migrated.view('old','OldPlayer')['blackjack']
         result=migrated.blackjack_action('old','OldPlayer',dict(round_id=hand['round_id'],step=0,action='stand',action_id='finish-old-hand'))
-        self.assertEqual(result['receipt']['rules_version'],PREVIOUS_VERSION)
+        self.assertEqual(result['receipt']['rules_version'],V2_VERSION)
         self.assertTrue(verify(result['receipt']));validate_gaming(migrated.recovery())
 
 

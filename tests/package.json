@@ -1,6 +1,6 @@
 {
   "name": "redhunllef-interface-tests",
   "private": true,
-  "scripts": {"test": "node --test test_*.cjs", "test:visual": "node visual_checks.cjs"},
+  "scripts": {"test": "node --test test_*.cjs", "test:visual": "node visual_checks.cjs", "test:gaming-motion": "node gaming_motion.cjs"},
   "devDependencies": {"jsdom": "26.1.0", "playwright": "1.62.1"}
 }

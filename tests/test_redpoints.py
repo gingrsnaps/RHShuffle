@@ -31,7 +31,7 @@ class RedPointsTests(unittest.TestCase):
         return client,response.json
 
     def body(self, wallet, game='dice', **values):
-        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='medium'),'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6),'limbo':dict(target=200),'coinflip':dict(side='heads'),'poker':dict(variant='jacks_or_better')}[game]
+        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='medium'),'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6),'limbo':dict(target=200),'coinflip':dict(side='heads'),'poker':dict(variant='jacks_or_better'),'baccarat':dict(decks=8,side='banker')}[game]
         return dict(rules_version=VERSION, game=game, request_id='test-bet-'+str(wallet['nonce']), season=wallet['season']['id'],
                     nonce=wallet['nonce'], commitment=wallet['commitment'], client_seed='player-chosen-seed',
                     client_salt='0123456789abcdef'*2,wager=100,options=options,**values)

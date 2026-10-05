@@ -1,3 +1,16 @@
+# 2026.10.05-redpoints-arcade4
+
+- Complete configured package, including all root modules, original seeds and logos.
+- Added RedPoints Baccarat, shared wallet and private admin Top 5 tracking.
+- Added versioned v4 proofs and independent browser Baccarat replay; retained v1–v3.
+- Preserved active Blackjack and Poker hands during upgrade and weekly settlement.
+- Reduced game-page text; expandable payouts/fairness, detailed rules kept separate.
+- Sequenced Dice/Keno/card reveals, synchronized results, smooth Coinflip/Limbo and
+  concurrent Plinko drops; no gameplay page reloads. Reduced-motion and hidden-tab fallbacks.
+- No new runtime dependencies, database, worker or launch command.
+
+## Previous releases
+
 # 2026.10.04-redpoints-arcade2
 
 The complete configured archive and cumulative patch are now synchronized.
