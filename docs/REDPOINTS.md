@@ -1,6 +1,6 @@
 # RedPoints gaming
 
-Release **2026.10.05-redpoints-arcade4**. New rounds use **redpoints-v4**. Earlier
+Release **2026.10.06-redpoints-holdem5**. New rounds use **redpoints-v5**. Earlier
 **redpoints-v1**, **redpoints-v2** and **redpoints-v3** receipts remain verifiable. Run only `python wager_backend.py`.
 
 ## Currency and identity
@@ -54,7 +54,7 @@ The existing boss identity and recovery code are reused. Boss household settings
 
 Sign in and open **Gaming top 5**, `/admin/gaming`, or `/admin?tab=gaming`.
 Overview also includes the same eight lists. The visible installed release should
-be **2026.10.05-redpoints-arcade4**. Complete packages and patch files must match.
+be **2026.10.06-redpoints-holdem5**. Complete packages and patch files must match.
 
 Each game shows up to five players ranked by actual net winnings, then total
 returned points, then a stable short player identifier. Records include the full
@@ -79,11 +79,11 @@ lost. The application cannot recreate unrecorded results or invent five players.
 | --- | --- |
 | Dice | Choose a 1–95% integer win chance. Under wins below C×100; Over wins at or above 10000−C×100 on an unbiased integer roll 0–9999. A win returns floor(stake×99/C). The large bar, smaller slider, percentage and target are synchronized. |
 | Keno | Pick 1–10 distinct values from 1–40. Quick pick chooses ten. Ten values are drawn without replacement. Hits select the published risk/count payout table. |
-| Plinko | Choose 8, 12 or 16 rows and Low/Medium/High risk. Unbiased left/right bits define the path; their sum determines the slot. Fixed symmetric v2/v3/v4 tables determine payouts. 16-row High has 1000× edge payouts, 12-row High 170×, and 8-row High 29×. |
+| Plinko | Choose 8, 12 or 16 rows and Low/Medium/High risk. Unbiased left/right bits define the path; their sum determines the slot. Fixed symmetric v2/v3/v4/v5 tables determine payouts. 16-row High has 1000× edge payouts, 12-row High 170×, and 8-row High 29×. |
 | Blackjack | Six standard decks, freshly sampled without replacement each hand. Hit, Stand, or Double on the first two cards. Dealer checks for a natural before player decisions and stands on hard/soft 17. Naturals pay 3:2 profit, other wins 1:1, and pushes return the stake. No split, insurance or surrender. |
 | Limbo | Choose a target from 1.01× to 1,000,000× in 0.01 steps. Reach it or higher to win. A win returns the wager times the chosen target, rounded down; a higher result does not raise the payout. |
 | Coinflip | Pick Heads or Tails, each with a 50% chance. A win returns floor(stake×198/100); a loss returns 0. |
-| Poker | Single-player five-card draw Video Poker. One 52-card deck, no jokers. Hold any of the five initial cards, then draw replacements once. The 9/6 Jacks or Better paytable below applies at every wager size. |
+| Poker | Heads-up no-limit Texas Hold’em against RedBot, with two private cards, five community cards, proper betting rounds, pot awards and no rake. Legacy Video Poker hands remain separately recoverable. |
 
 Multipliers include the wager; whole-point payouts round down. Keno tables target
 99% before multiplier/payout rounding. Plinko's fixed table expectation is shown
@@ -147,7 +147,7 @@ separate literal draw tableau and BigInt arithmetic.
 Game POSTs and wallet updates use background JSON requests. Dice moves to the
 verified roll; Keno reveals its ten saved draws in order; Baccarat alternates
 the opening deal and adds the required third cards. Blackjack retains existing
-cards when hitting; Poker only replaces discarded positions. Coinflip and Limbo
+cards when hitting; Hold’em animates saved betting events, each street and the showdown. Legacy Video Poker replaces only discarded positions. Coinflip and Limbo
 animate to their verified outcome. Results appear after the reveal. Payouts and
 proof controls remain accessible in expandable sections, with full rules here.
 
@@ -172,7 +172,10 @@ probability 1/2. A correct selection returns `floor(wager×198/100)`. Before
 whole-point rounding, the expected return is 99%. A one-point winning wager
 returns one point, so very small bets have a lower effective expectation.
 
-## Poker decisions and paytable
+## Legacy Video Poker decisions and paytable
+
+These v3/v4 rules apply only to already saved hands and archived receipts. New
+Poker deals use the Hold’em rules below.
 
 | Final five-card hand | Total return |
 | --- | ---: |
@@ -205,9 +208,9 @@ An unfinished card hand must finish before that same wallet starts another game.
 At the weekly boundary, a pending Poker hand keeps all five initial cards and
 settles in the old week; then the usual new balance and standings apply.
 
-## Poker byte format
+## Legacy Video Poker byte format
 
-Poker uses `{"variant":"jacks_or_better"}` with standard-deck card IDs 0–51.
+Legacy Video Poker uses `{"variant":"jacks_or_better"}` with standard-deck card IDs 0–51.
 Each ID is `suit×13 + rank−1`: suits spades, hearts, clubs, diamonds; ranks A=1
 through K=13. At draw index i, choose j uniformly from i through 51, swap those
 positions, and consume the card at i. Consume the first five cards for the deal.
@@ -217,8 +220,80 @@ changing a decision never changes the underlying committed random sequence.
 
 Coinflip options are `{"side":"heads"}` or `{"side":"tails"}`. Limbo uses
 `{"target":200}` for 2.00×. The Limbo result multiplier is also in hundredths.
-Poker multipliers use whole units; Coinflip, Keno and Plinko use 1/10,000 units.
+Legacy Video Poker multipliers use whole units; Coinflip, Keno and Plinko use 1/10,000 units.
 All payout calculations use exact integer arithmetic.
+
+## Texas Hold’em · v5
+
+The `/gaming/poker` page is heads-up no-limit Hold’em against **RedBot**, a clearly
+labelled computer. Both seats start each hand with the chosen table stack. The
+wallet reserves the player's stack and credits the entire remaining stack after
+the hand. The table stack minimum is 20 whole RedPoints; the numeric ceiling is
+floor((2^53−1)/2), further restricted by wallet and ledger capacity. There is no
+daily/weekly hand quota, rake or multiplier paytable.
+
+- Big blind: max(2, floor(stack/50)); small blind: max(1, floor(big blind/2)).
+- The button rotates with completed Hold’em hands in the current week, beginning
+  with the player. The button is small blind and acts first preflop, last postflop.
+- There is a big-blind option after a preflop call. Flop is three cards, then turn
+  and river one each. Each street opens a betting round unless a player is all-in.
+- Check, Call, Bet, Raise, Fold and All-in are validated by the server. A bet/raise
+  amount is a total street contribution. A full raise must increase the current
+  bet by at least the previous full raise; a shorter increase is all-in only.
+- Best five of seven wins, including every kicker and the ace-low straight.
+  Suits never break ties. The best hand may use zero, one or two hole cards.
+- Uncalled chips return before pot settlement. Equal hands split the pot; the
+  standard odd chip goes to the seat left of the button. In this equal-stack,
+  heads-up, whole-point game matched pots are even.
+- `payout` is the entire table stack returned to the wallet. `total_wager` is the
+  player's matched contribution; `returned` is their pot award. Both
+  `payout − buy_in` and `returned − total_wager` equal net earnings. Only the
+  latter actual wagers/returns feed the admin Top 5.
+- Refresh, reconnect, funding and restart preserve the same hand/seed/actions.
+  Actions have request IDs and step numbers; duplicate retries settle once.
+  Weekly expiry folds an unfinished hand without spending additional points.
+
+The v5 options are `{"button":"player","variant":"texas_holdem"}` (or computer).
+Card IDs are suit×13 + rank−1, with suits spades/hearts/clubs/diamonds and A=1.
+Use the standard HMAC context below. Fully shuffle 0–51 with Fisher–Yates:
+i=0…50; sample j=i+below(52−i); swap. Deal alternately to big blind first using
+positions 0–3. Burn 4; flop 5–7; burn 8; turn 9; burn 10; river 11. Later choices
+never enter the random stream. The one-time seed reveals only after settlement.
+
+`actions` stores only player choices as `{action, amount}`. Amount is zero except
+for bet/raise. The verifier reconstructs the public event list, CPU decisions,
+all cards, legal betting and final accounting. It checks saved initial cards and
+the player's locally retained action history against the receipt. The domain's
+normal HTTPS and signed player/session protections still apply.
+
+### Published opponent policy
+
+`redbot-v1` is a deterministic, lightweight heuristic. It receives only CPU hole
+cards, revealed board, pot, highest street contribution, legal sizes, blind size,
+street index and its own raise count. It receives no player hole cards, deck or
+seed. Both implementations publish the exact function. Strength scores are not
+claimed equity probabilities.
+
+Preflop strength: pocket pair = 65 + 2×rank; otherwise 3×high + low, plus 8 if
+suited and 5 if connected. Ace is 14. Postflop strength: high card 2×rank; pair
+40 + 2×pair rank; two pair 75; trips 90; straight or better 110. A deterministic
+bluff is selected when (sum of CPU card IDs + sum of board IDs + pot + street
+index) mod 13 equals zero.
+
+With a legal full raise and no prior CPU raise this street, strength ≥80 raises;
+a bluff can also raise when checking is free. Raise target is the larger of the
+legal minimum and highest bet + max(big blind, floor(pot/2)), capped by the CPU's
+stack. Otherwise it checks if possible. Facing a bet, it calls at strength ≥90,
+or ≥65 if call×2≤pot, or ≥40 if call×4≤pot; otherwise it folds. This policy can
+be learned and exploited; it is published for reproducibility, not advertised
+as expert play. The verifier proves the recorded policy/deal/accounting agree,
+not server availability or optimal strategy.
+
+Legacy `stats.poker` migrates once to `stats.video_poker`, using an explicit
+`poker_stats_version=2` marker. Existing receipts, balances and pending hands
+keep their original contexts. Only new Hold’em results enter the Poker Top 5;
+admin legacy records remain in their own collapsible section for the current
+week. Normal weekly statistics resets still apply.
 
 ## Independent verification
 
@@ -236,8 +311,8 @@ All payout calculations use exact integer arithmetic.
 Options have sorted keys and no insignificant whitespace. Blocks start at zero.
 Read consecutive four-byte big-endian words. For a draw from N possibilities,
 reject words at or above `2^32 − (2^32 mod N)`, then use the remainder modulo N.
-This avoids modulo bias. Use the exact rules version on the receipt: v4 for new
-wagers, or v1/v2/v3 when verifying an earlier receipt.
+This avoids modulo bias. Use the exact rules version on the receipt: v5 for new
+wagers, or v1/v2/v3/v4 when verifying an earlier receipt.
 
 Keno uses a partial Fisher–Yates shuffle of 1–40. Blackjack uses the same sampling
 method on a six-deck shoe of 312 unique IDs: `deck×52 + suit×13 + rank−1`. Suits are
@@ -247,9 +322,10 @@ fixed sequence; actions do not change or reshuffle the committed shoe.
 
 The seed is revealed when a round finishes. The browser checks the earlier hash,
 inputs, result and payout using its separate Web Crypto/BigInt implementation.
-Blackjack verification reproduces the recorded action history. Poker verification
-replays the initial deal and held-card draw before evaluating the final hand.
-New v4 and earlier v2/v3 receipts use the same fixed Plinko tables; v1 receipts use their original
+Blackjack verification reproduces the recorded action history. Hold’em verification replays the full shuffle, legal betting, published opponent
+policy, best-five evaluation and chip settlement. Legacy Video Poker verification
+still reproduces the held-card draw.
+New v5 and earlier v2/v3/v4 receipts use the same fixed Plinko tables; v1 receipts use their original
 weighted tables. All tables are published in `fairness.py` and
 `static/fairness.js`; the page displays exact multipliers before a wager.
 
@@ -277,7 +353,7 @@ before deployment. Recovery restores only what was saved in that backup; neither
 a recovery code nor the user's IP contains their balance. New database or service
 setup is not required by this update.
 
-`wager_backend.py` loads the wallet, fairness engine, Blackjack/Poker/Baccarat rules, templates
+`wager_backend.py` loads the wallet, fairness engine, Blackjack/Video Poker/Hold’em/Baccarat rules, templates
 and static assets automatically. The source connection clients remain separate.
 Blackjack has no Shuffle integration or real-money settlement path.
 
@@ -288,4 +364,6 @@ Blackjack has no Shuffle integration or real-money settlement path.
 
 The independent browser verifier matches the backend reference receipts in
 `tests/fairness_vectors.json`, `tests/fairness_v2_vectors.json` and
-`tests/fairness_v3_vectors.json` and `tests/fairness_v4_vectors.json`. Earlier fixtures are unchanged.
+`tests/fairness_v3_vectors.json` and `tests/fairness_v4_vectors.json`. Earlier fixtures are unchanged. `tests/holdem_vectors.py` generates 88 v5 receipts,
+including all eight games, both button positions, all-ins, folds, weekly expiry
+and large exact-integer table stacks.

@@ -5,6 +5,7 @@ const vectors = [
   ...require("./fairness_v2_vectors.json"),
   ...require("./fairness_v3_vectors.json"),
   ...require("./fairness_v4_vectors.json"),
+  ...JSON.parse(require("node:child_process").execFileSync(process.env.RH_TEST_PYTHON || "python3", [require("node:path").join(__dirname, "holdem_vectors.py")], {encoding:"utf8",maxBuffer:16*1024*1024})),
 ];
 const fair = require("../static/fairness.js");
 test("independent browser verifier reproduces every published Python reference receipt", async () => {

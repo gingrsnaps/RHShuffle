@@ -1,6 +1,6 @@
 # RedHunllef
 
-Release **2026.10.05-redpoints-arcade4** — complete configured package.
+Release **2026.10.06-redpoints-holdem5** — Hold’em update for the configured project.
 
 Install dependencies once, then launch the entire website with the same script:
 
@@ -15,15 +15,15 @@ must stay beside `wager_backend.py`; the app imports them automatically.
 
 ## This release
 
-- **Eight games:** Dice, Keno, Plinko, Blackjack, Limbo, Coinflip, Video Poker and
-  the new **Baccarat**. All use the same RedPoints wallet and community name.
+- **Eight games:** Dice, Keno, Plinko, Blackjack, Limbo, Coinflip, Texas Hold’em and
+  Baccarat. All use the same RedPoints wallet and community name.
 - **Less text:** controls, balance and results remain visible. Payouts, client seed
   and commitment details are expandable. Full rules live at `/gaming/fairness`.
 - **Smooth play:** Dice travels to its recorded roll; Keno reveals numbers in order;
   Plinko follows its saved peg path; card games deal and reveal cards progressively;
   Limbo climbs to its exact multiplier; Coinflip lands on its saved face.
   Bets, draws and name saves use background requests, without page reloads or dialogs.
-- Results are verified before presentation. Result labels follow the animation.
+- Completed results are verified before presentation; unfinished card hands display their saved server state. Result labels follow the animation.
   Reduced-motion preferences, hidden tabs and animation fallback paths still show
   the exact saved outcome. Multiple Plinko balls share one canvas loop.
 - **Baccarat:** fresh eight-deck Punto Banco, Player / Banker / Tie bets. Total
@@ -32,15 +32,18 @@ must stay beside `wager_backend.py`; the app imports them automatically.
   rules and exact receipt encoding are published in `docs/REDPOINTS.md`.
 - All eight private admin Top 5 lists track actual net winnings, full names and
   recorded IPs. Funding grants do not count as winnings.
-- New bets use **redpoints-v4**. All v1–v3 proofs remain verifiable. Active v2/v3
-  Blackjack hands and v3 Poker hands keep their original seed, cards and rules.
+- New bets use **redpoints-v5**. All v1–v4 proofs remain verifiable. Saved Blackjack
+  and Video Poker hands keep their original seed, cards and rules. Video Poker
+  statistics move once into a separate admin legacy section.
 - Original accounts, provider configuration, logos, live race/history, boss game,
   mobile navigation and the external Points Shop remain included.
 
-The ZIP is the **complete project**, not a patch. For a fresh install, extract
-`redhunllef-rebuilt/` and run the commands above. For an update, merge its code
-while retaining your current `data/`, `private/`, settings and recovery files.
-The bundled original seeds must not replace your newer private configuration.
+This update supplies complete contents of changed and new files only. Apply them
+to the working configured project, retaining `data/`, `private/`, settings, original
+seeds and all unlisted files. Keep `poker.py`: archived hands still import it.
+The launch command and requirements are unchanged. New supporting files are
+`holdem.py`, `static/holdem-fairness.js`, `static/holdem-ui.js`,
+`static/holdem.css` and `templates/holdem_table.html`.
 
 ## Retained: shared connections and automatic playable balances
 
@@ -78,7 +81,7 @@ No new dependencies, database, account-creation command or launch script is need
 | `/gaming/blackjack` | RedPoints-only six-deck Blackjack: Hit, Stand and Double; saved hands and verifiable receipts. |
 | `/gaming/limbo` | Choose a target multiplier; reach it to win at that target. |
 | `/gaming/coinflip` | Pick Heads or Tails; 50% win chance and 1.98× total return on a win. |
-| `/gaming/poker` | Five-card draw Video Poker with holds, one draw and the published Jacks or Better paytable. |
+| `/gaming/poker` | Heads-up no-limit Texas Hold’em versus RedBot: blinds, betting rounds, shared board, saved hands and pot settlement. |
 | `/gaming/baccarat` | Eight-deck Punto Banco with Player, Banker and Tie bets, automatic draws and verified card reveals. |
 | `/gaming/fairness` | Published rules, exact seed format and a browser-only receipt verifier. |
 | `/admin/gaming` or `/admin?tab=gaming` | Eight private Top 5 lists; full names, shared player IDs, linked IPs, actual net winnings, stakes, returns and counts. |
@@ -148,7 +151,7 @@ archive does not include this fix until these files are applied over it.
 
 After applying all included code/templates/static files and restarting, open
 **`/admin/gaming`**. Its installed-release label must show
-**2026.10.05-redpoints-arcade4**. The header also includes **Gaming top 5**.
+**2026.10.06-redpoints-holdem5**. The header also includes **Gaming top 5**.
 If the panels are empty, check the displayed player/round counts and weekly reset.
 Only completed RedPoints rounds on this server create those records. Shuffle
 wagers and boss attacks are separate. Never invent entries to fill five places.
@@ -173,11 +176,21 @@ this update cannot reconstruct results that were never saved or backed up.
   on reload, and settles each move/hand only once. At the weekly boundary an
   unfinished hand automatically stands under the old week before the new balance.
   Double counts the full doubled stake in both the ledger and admin rankings.
-- Poker reserves one stake and allows one hold/draw decision. Replacements come
-  from the remaining 47 cards; discards cannot return. Pending Poker hands keep all
-  five initial cards at the weekly cutoff, settle under that week, then reset.
-- Current fairness rules are `redpoints-v3`. Earlier `redpoints-v1` and `redpoints-v2` receipts remain
-  verifiable; updating keeps seeds, profiles and old receipts. The startup rule restores available points to 100,000.
+- Hold’em reserves an equal table stack for each seat. The player chooses a stack
+  of at least 20 RP; blinds are 1/50 of that stack (minimum 2), and half that for
+  the small blind. The button alternates. Preflop, flop, turn and river have legal
+  Fold, Check, Call, Bet, Raise and All-in actions. Best five of seven wins.
+- An unfinished Hold’em hand resumes on refresh. Weekly expiry folds it under the
+  old week without placing another bet, then resets the allowance. Unused and
+  uncalled chips return with pot winnings. Rankings count only actual committed
+  chips and pot awards, not the reserved stack or refresh funding.
+- RedBot is a published deterministic heuristic, not a human or external AI API.
+  It receives only its own cards and public betting information. The independent
+  verifier replays its decisions as well as the fixed deck and pot accounting.
+- Legacy Video Poker hands still hold/draw once under their original v3/v4 rules.
+  Its old module and proofs are retained; its results are separate from Hold’em.
+- Current fairness rules are `redpoints-v5`; v1–v4 receipts remain verifiable.
+  The startup rule still restores available points to 100,000.
 
 ### Homepage and boss refinements
 
@@ -261,7 +274,7 @@ name/avatar/HP/damage/pause/restart controls. Also fixed the self-block check to
 the actual trusted visitor IP on App Platform instead of the proxy socket address.
 
 After updating, restart the app and reload the homepage. `/healthz` should report
-**2026.10.05-redpoints-arcade4**. Asset versions change automatically, so the new
+**2026.10.06-redpoints-holdem5**. Asset versions change automatically, so the new
 scripts are requested. Preserve `data/`, current private files and player cookies.
 
 ## Username save repair
@@ -287,7 +300,7 @@ Finally, a display name left in an older profile could block a returning player.
   integration credentials remain intact. No new dependency or separate launcher.
 
 After updating, restart the app and reload `/play`. `/healthz` should show release
-**2026.10.05-redpoints-arcade4**. If it shows something else, the old application is
+**2026.10.06-redpoints-holdem5**. If it shows something else, the old application is
 still serving requests. Do not clear your player cookie or delete `data/`.
 
 For a hosted installation, open the normal **HTTPS** website directly. Cookies are
@@ -563,15 +576,14 @@ created, not proof that someone saved it externally.
 
 ## File structure and complete code
 
-`RedHunllef_Complete_2026-10-05.zip` includes every application module, template,
-asset, original private seed, tests and documentation in `redhunllef-rebuilt/`.
-`FULL_CODE_BLOCKS.md` contains the complete text files in individual code blocks
-and binary assets encoded as base64. The companion
-`RedHunllef_Full_Code_2026-10-05.md` is the same full source document.
+The base configured project is still required. The Hold’em update contains only
+changed/new files, each with its full contents. `holdem.py` and the new static
+files are imports/assets; only `wager_backend.py` launches the site.
 
-See `FILE_STRUCTURE.md` for the complete inventory and `MANIFEST.json` for file
-hashes. Keep the original logos, `poker.py`, the new `baccarat.py`, and every other
-root module. They are imports, not separate programs to run.
+The older complete ZIP, `FULL_CODE_BLOCKS.md`, `FILE_STRUCTURE.md` and
+`MANIFEST.json` describe the base release. Their archived inventory/hashes are
+not a manifest for this patch. No account, logo or provider-setting replacement
+is needed. Keep `poker.py`, `blackjack.py`, `baccarat.py` and all unlisted modules.
 
 An old `manage_admin.py` is not required. Keep your existing local state and latest
 private recovery export when updating. Do not include test fixtures or runtime
@@ -579,15 +591,16 @@ saves when committing this configured package to your private repository.
 
 ## Verification
 
-See `docs/VALIDATION.md` for this release's measured checks and limits. Tests use
+See `docs/VALIDATION.md` for the base release checks; the Hold’em regression suite
+is `tests/test_holdem.py`, with independent reference generation in `tests/holdem_vectors.py`. Tests use
 synthetic players, seeds and provider replies; they do not place real bets or
 contact Shuffle/Kick. This package has not been deployed to your account.
 
-The Python and independent browser verifiers agree on **396 reference receipts**:
-47 v1, 86 v2, 112 v3 and 151 v4. Baccarat checks cover every initial total and
+The Python and independent browser verifiers agree on **484 reference receipts**:
+47 v1, 86 v2, 112 v3, 151 v4 and 88 v5. Baccarat checks cover every initial total and
 possible Player third-card value, each bet side, payouts, naturals and pushes.
 Native Chromium checks all eight games, animation sequencing without navigation,
-mobile widths, Poker recovery, reduced motion and private admin rankings.
+mobile widths, Hold’em recovery, reduced motion and private admin rankings.
 
 Developer checks are optional; they are not website launch commands:
 

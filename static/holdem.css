@@ -1,0 +1,39 @@
+/* The existing red theme, sized for a two-seat table without horizontal scrolling. */
+.gaming-page[data-game="poker"] .game-layout{grid-template-columns:minmax(180px,240px) minmax(0,1fr)}
+.holdem-table{--card-w:clamp(40px,6.5vw,67px);position:relative;background:radial-gradient(ellipse at 50% 46%,#49242b 0,#24161c 60%,#181117 100%);border:1px solid #72404b;border-radius:26px;padding:20px;box-shadow:inset 0 0 0 6px #ffffff03,0 12px 32px #0003;overflow:hidden}
+.holdem-topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.holdem-seat{display:flex;flex-direction:column;align-items:center;gap:9px;position:relative}
+.holdem-seat-label{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
+.holdem-seat-label strong small{font-weight:400;font-size:.72rem;color:#d0adb6;margin-left:4px}
+.holdem-seat-label output{font-variant-numeric:tabular-nums;color:#fff;font-weight:700}
+.dealer-button{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#f2e8e9;color:#511825;font-size:.65rem;font-weight:900;box-shadow:0 2px 5px #0006}
+.holdem-hole,.holdem-board{justify-content:center;gap:7px;min-height:calc(var(--card-w)*1.4);flex-wrap:nowrap}
+.holdem-table .playing-card,.holdem-card-slot{width:var(--card-w);min-width:0;height:calc(var(--card-w)*1.4);flex:0 0 var(--card-w);border-radius:8px;font-size:clamp(.9rem,2.3vw,1.35rem);padding:7px;box-sizing:border-box}
+.holdem-card-slot{border:1px dashed #b177833d;background:#08070a26}
+.holdem-table .playing-card.is-hidden{background:repeating-linear-gradient(45deg,#7e273a,#7e273a 4px,#682033 4px,#682033 8px);border:2px solid #df92a064;color:#ffbeca}
+.holdem-table .playing-card.is-winning{outline:3px solid #ff536d;outline-offset:2px;box-shadow:0 0 18px #ff385333}
+.holdem-center{margin:10px auto 18px;text-align:center}
+.holdem-pot{position:relative;display:inline-flex;align-items:baseline;gap:8px;margin:0 0 13px;min-width:100px;justify-content:center}
+.holdem-pot small{font-size:.62rem;letter-spacing:.17em;color:#cb9aa6}
+.holdem-pot output{font-size:1.4rem;font-weight:800;font-variant-numeric:tabular-nums}
+#holdemChip{position:absolute;display:grid;place-items:center;right:-30px;top:2px;border:2px dashed #ff9baa;background:#a72442;color:#fff;width:25px;height:25px;border-radius:50%;font-size:.65rem;font-weight:900}
+.holdem-street{display:inline-block;text-transform:uppercase;letter-spacing:.16em;font-size:.62rem;color:#cfa8b3;margin-top:9px}
+.holdem-seat-bet{font-size:.72rem;min-height:1.1em;color:#e6b5c0;font-variant-numeric:tabular-nums}
+.holdem-status{min-height:2.8em;margin:16px 0 8px;text-align:center;font-size:.9rem;line-height:1.4;color:#f8e1e7;text-wrap:balance}
+.holdem-moves{justify-content:center;display:flex;flex-wrap:wrap;gap:7px}
+.holdem-moves .button{min-height:42px;flex:1 1 84px;padding:10px 12px}
+.holdem-raise{margin:14px auto 0;max-width:420px;display:grid;gap:8px}
+.holdem-raise label{font-size:.75rem;color:#d7b5be}
+.holdem-raise-input{display:flex;gap:8px;min-width:0}
+.holdem-raise-input input{min-width:0;width:100%;font-variant-numeric:tabular-nums}
+.holdem-raise .button-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#holdemRaiseCost{font-size:.72rem;margin-left:auto}
+.holdem-log{margin-top:16px;border-top:1px solid #ffffff12;padding-top:10px;font-size:.75rem}
+.holdem-log summary{color:#c3a3ad;cursor:pointer}
+.holdem-log ol{padding-left:20px;max-height:190px;overflow-y:auto;line-height:1.7;margin-bottom:0}
+.holdem-rules{font-size:.87rem;line-height:1.65;max-width:72ch}
+.holdem-rules ul{padding-left:22px}
+.holdem-legacy{margin-bottom:12px}
+.holdem-table [hidden]{display:none!important}
+@media(max-width:760px){.gaming-page[data-game="poker"] .game-layout{grid-template-columns:1fr}.gaming-page[data-game="poker"] .bet-controls{padding:15px}.holdem-table{padding:14px 10px;--card-w:clamp(34px,12vw,60px)}.holdem-table .playing-card{padding:5px}.holdem-hole,.holdem-board{gap:5px}.holdem-topline .eyebrow{font-size:.65rem}.holdem-topline .small{font-size:.65rem}.holdem-seat-label{font-size:.8rem}.holdem-moves .button{font-size:.78rem;flex-basis:65px}.holdem-table{border-radius:18px}}
+@media(prefers-reduced-motion:reduce){.holdem-table *{animation:none!important;transition:none!important}}

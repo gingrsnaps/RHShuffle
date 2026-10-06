@@ -1,10 +1,10 @@
-/* Independent RedPoints v1–v4 verifier. Uses Web Crypto and integer arithmetic.
+/* Independent RedPoints v1–v5 verifier. Uses Web Crypto and integer arithmetic.
    No API call, wallet mutation, or provider dependency is involved. */
 (() => {
   "use strict";
-  const VERSION = "redpoints-v4",
+  const VERSION = "redpoints-v5",
     SCALE = 10000n;
-  const SUPPORTED_VERSIONS = ["redpoints-v1", "redpoints-v2", "redpoints-v3", VERSION];
+  const SUPPORTED_VERSIONS = ["redpoints-v1", "redpoints-v2", "redpoints-v3", "redpoints-v4", VERSION];
   const PLINKO_TABLES = {
     8: {
       low: [56000, 21000, 11000, 10000, 5000, 10000, 11000, 21000, 56000],
@@ -300,10 +300,10 @@
   async function outcome(seed, r) {
     const pick = await draw(seed, r),
       o = r.options;
-    if (["limbo", "coinflip", "poker"].includes(r.game) && !["redpoints-v3", VERSION].includes(r.rules_version))
+    if (["limbo", "coinflip", "poker"].includes(r.game) && !["redpoints-v3", "redpoints-v4", VERSION].includes(r.rules_version))
       throw Error("This game requires redpoints-v3");
     if (r.game === "baccarat") {
-      if (r.rules_version !== VERSION) throw Error("Baccarat requires redpoints-v4");
+      if (!["redpoints-v4", VERSION].includes(r.rules_version)) throw Error("Baccarat requires redpoints-v4 or later");
       return baccaratOutcome(pick, r.wager, o.side);
     }
     if (r.game === "limbo") {
@@ -316,7 +316,16 @@
       const side = ["heads", "tails"][await pick(2)], won = side === o.side;
       return { side, won, multiplier: 19800, payout: won ? Number(BigInt(r.wager)*198n/100n) : 0 };
     }
-    if (r.game === "poker") return pokerOutcome(pick, r.wager, r.holds);
+    if (r.game === "poker") {
+      if (o.variant === "texas_holdem") {
+        if (r.rules_version !== VERSION) throw Error("Hold’em requires redpoints-v5");
+        const verifier = globalThis.RedHoldemFair || (typeof require === "function" ? require("./holdem-fairness.js") : null);
+        if (!verifier) throw Error("The Hold’em verifier is missing. Reload this release.");
+        return verifier.replay(pick, r.wager, o, r.actions, r.ending);
+      }
+      if (!["redpoints-v3", "redpoints-v4"].includes(r.rules_version) || o.variant !== "jacks_or_better") throw Error("Invalid legacy Poker version");
+      return pokerOutcome(pick, r.wager, r.holds);
+    }
     if (r.game === "dice") {
       const roll = await pick(10000),
         won =
@@ -352,7 +361,7 @@
       };
     }
     if (r.game === "blackjack") {
-      if (!["redpoints-v2", "redpoints-v3", VERSION].includes(r.rules_version))
+      if (!["redpoints-v2", "redpoints-v3", "redpoints-v4", VERSION].includes(r.rules_version))
         throw Error("Blackjack requires redpoints-v2 or later");
       return blackjackOutcome(pick, r.wager, r.actions || []);
     }
@@ -394,7 +403,7 @@
       blackjack: ["decks"],
       limbo: ["target"],
       coinflip: ["side"],
-      poker: ["variant"],
+      poker: o.variant === "texas_holdem" ? ["button", "variant"] : ["variant"],
       baccarat: ["decks", "side"],
     }[r.game];
     if (!keys || canonical(Object.keys(o).sort()) !== canonical(keys))
@@ -410,19 +419,21 @@
     } else if (r.game === "blackjack") {
       if (
         o.decks !== 6 ||
-        !["redpoints-v2", "redpoints-v3", VERSION].includes(r.rules_version) ||
+        !["redpoints-v2", "redpoints-v3", "redpoints-v4", VERSION].includes(r.rules_version) ||
         !Array.isArray(r.actions)
       )
         return false;
     } else if (r.game === "baccarat") {
-      if (r.rules_version !== VERSION || o.decks !== 8 || !["player", "banker", "tie"].includes(o.side)) return false;
+      if (!["redpoints-v4", VERSION].includes(r.rules_version) || o.decks !== 8 || !["player", "banker", "tie"].includes(o.side)) return false;
     } else if (r.game === "limbo") {
-      if (!["redpoints-v3", VERSION].includes(r.rules_version) || !Number.isInteger(o.target) || o.target < 101 || o.target > 100000000)
+      if (!["redpoints-v3", "redpoints-v4", VERSION].includes(r.rules_version) || !Number.isInteger(o.target) || o.target < 101 || o.target > 100000000)
         return false;
     } else if (r.game === "coinflip") {
-      if (!["redpoints-v3", VERSION].includes(r.rules_version) || !["heads", "tails"].includes(o.side)) return false;
+      if (!["redpoints-v3", "redpoints-v4", VERSION].includes(r.rules_version) || !["heads", "tails"].includes(o.side)) return false;
     } else if (r.game === "poker") {
-      if (!["redpoints-v3", VERSION].includes(r.rules_version) || o.variant !== "jacks_or_better" || !validHolds(r.holds)) return false;
+      if (o.variant === "texas_holdem") {
+        if (r.rules_version !== VERSION || !["player", "computer"].includes(o.button) || !Array.isArray(r.actions)) return false;
+      } else if (!["redpoints-v3", "redpoints-v4"].includes(r.rules_version) || o.variant !== "jacks_or_better" || !validHolds(r.holds)) return false;
     } else {
       if (!["low", "medium", "high"].includes(o.risk)) return false;
       if (r.game === "plinko") {

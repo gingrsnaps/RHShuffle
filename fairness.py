@@ -12,13 +12,14 @@ import json
 from math import comb
 import re
 
-VERSION = 'redpoints-v4'
+VERSION = 'redpoints-v5'
+V4_VERSION = 'redpoints-v4'
 V2_VERSION = 'redpoints-v2'
 V3_VERSION = 'redpoints-v3'
 LEGACY_VERSION = 'redpoints-v1'
-SUPPORTED_VERSIONS = (LEGACY_VERSION, V2_VERSION, V3_VERSION, VERSION)
-BLACKJACK_VERSIONS = (V2_VERSION, V3_VERSION, VERSION)
-POKER_VERSIONS = (V3_VERSION, VERSION)
+SUPPORTED_VERSIONS = (LEGACY_VERSION, V2_VERSION, V3_VERSION, V4_VERSION, VERSION)
+BLACKJACK_VERSIONS = (V2_VERSION, V3_VERSION, V4_VERSION, VERSION)
+POKER_VERSIONS = (V3_VERSION, V4_VERSION, VERSION)
 GAMES = ('dice', 'keno', 'plinko', 'blackjack', 'limbo', 'coinflip', 'poker', 'baccarat')
 RISKS = ('low', 'medium', 'high')
 SCALE = 10000
@@ -75,9 +76,11 @@ def options_for(game, value):
             raise ValueError('Choose Heads or Tails.')
         return dict(side=value['side'])
     if game == 'poker':
-        if value.get('variant') != 'jacks_or_better':
-            raise ValueError('Poker uses the published Jacks or Better paytable.')
-        return dict(variant='jacks_or_better')
+        if value.get('variant') == 'jacks_or_better':
+            return dict(variant='jacks_or_better')  # Archived hands only.
+        if value.get('variant') == 'texas_holdem' and value.get('button') in ('player', 'computer'):
+            return dict(variant='texas_holdem', button=value['button'])
+        raise ValueError('Choose the current Hold’em table settings.')
     risk = value.get('risk')
     if risk not in RISKS:
         raise ValueError('Choose Low, Medium, or High risk.')
@@ -134,7 +137,8 @@ def rules():
                 dice_rtp_percent='99.0000',
                 limbo=dict(min_target=101, max_target=100_000_000, scale=100, outcomes=2**32),
                 coinflip=dict(multiplier=19800, win_probability=0.5),
-                poker=dict(variant='jacks_or_better', paytable=PAYTABLE, labels=LABELS),
+                poker=dict(variant='texas_holdem', policy='redbot-v1', min_buy_in=20,
+                           legacy_paytable=PAYTABLE, legacy_labels=LABELS),
                 baccarat=dict(decks=8, returns=RETURNS),
                 keno={str(k):{risk:table_info('keno', k, risk) for risk in RISKS} for k in range(1,11)},
                 plinko={str(k):{risk:table_info('plinko', k, risk) for risk in RISKS} for k in (8,12,16)})
@@ -146,7 +150,7 @@ def max_payout(game, wager, opt):
     if game == 'baccarat':
         from baccarat import RETURNS
         return wager*RETURNS[opt['side']]//SCALE
-    if game == 'poker': return wager*800
+    if game == 'poker': return wager*(2 if opt['variant'] == 'texas_holdem' else 800)
     if game == 'limbo': return wager*opt['target']//100
     if game == 'coinflip': return wager*198//100
     if game == 'dice': return wager*99//opt['chance']
@@ -183,8 +187,8 @@ def outcome(seed, receipt):
         raise ValueError('This game requires redpoints-v3 or later.')
     draw = Draw(seed, {**receipt, 'options':opt})
     if game == 'baccarat':
-        if version != VERSION:
-            raise ValueError('Baccarat requires redpoints-v4.')
+        if version not in (V4_VERSION, VERSION):
+            raise ValueError('Baccarat requires redpoints-v4 or later.')
         from baccarat import replay
         return replay(draw, wager, opt['side'])
     if game == 'limbo':
@@ -197,7 +201,14 @@ def outcome(seed, receipt):
         side = ('heads', 'tails')[draw.below(2)]
         won = side == opt['side']
         return dict(side=side, won=won, multiplier=19800, payout=wager*198//100 if won else 0)
+    if game == 'poker' and opt['variant'] == 'texas_holdem':
+        if version != VERSION:
+            raise ValueError('Hold’em requires redpoints-v5.')
+        from holdem import replay
+        return replay(draw, wager, opt, receipt.get('actions', []), receipt.get('ending'))
     if game == 'poker':
+        if version not in (V3_VERSION, V4_VERSION):
+            raise ValueError('New Poker hands use Texas Hold’em.')
         from poker import replay
         return replay(draw, wager, receipt.get('holds'))
     if game == 'dice':

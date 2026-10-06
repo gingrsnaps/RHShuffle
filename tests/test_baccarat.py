@@ -113,6 +113,7 @@ class BaccaratWalletTests(unittest.TestCase):
             with self.subTest(card_game=card_game):
                 game=self.app.extensions['gaming'];identity='legacy-'+card_game
                 wallet=game.view(identity,identity);body=self.body(wallet,card_game)
+                if card_game=='poker':body['options']=dict(variant='jacks_or_better')
                 for number in range(100):
                     seed=f'{number:064x}'
                     pending={**body,'rules_version':V3_VERSION,'server_seed':seed,'commitment':commitment(seed),

@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import test_app
 import test_redpoints
-from fairness import VERSION, V2_VERSION, commitment, outcome, verify, max_payout
+from fairness import V4_VERSION, VERSION, V2_VERSION, commitment, outcome, verify, max_payout
 from gaming import Gaming, GamingError, player_key, validate_gaming
 from poker import PAYTABLE, classify, replay
 from storage import StoreError
@@ -86,7 +86,15 @@ class ExtraWalletTests(unittest.TestCase):
         game=self.app.extensions['gaming']
         wallet=game.confirm_community_name(who,name,client_ip='192.0.2.1')
         body=self.body(wallet,'poker')
-        result=game.bet(who,name,body,client_ip='192.0.2.1')
+        # Emulate an actual pre-upgrade saved Video Poker hand. New deals are Hold’em.
+        body.update(rules_version=V4_VERSION,options=dict(variant='jacks_or_better'))
+        with game.store.connection(transaction=True) as conn:
+            player=conn['gaming']['players'][player_key(who)]
+            player['poker']=dict(**body,server_seed=player['server_seed'],holds=None,at=int(time.time()))
+            player['balance']-=body['wager']
+            player.pop('poker_stats_version',None)
+        game=Gaming(game.store)
+        result=dict(receipt=None,wallet=game.view(who,name))
         return game,body,result
 
     def test_eight_games_share_a_profile_wallet_and_private_rankings(self):
@@ -115,7 +123,7 @@ class ExtraWalletTests(unittest.TestCase):
         for i in move['holds']:self.assertEqual(receipt['result']['cards'][i],initial[i])
         self.assertEqual(result['wallet']['balance'],99900+receipt['payout'])
         self.assertIsNone(result['wallet']['poker'])
-        self.assertEqual(result['wallet']['stats']['poker']['bets'],1)
+        self.assertEqual(result['wallet']['legacy_poker']['bets'],1)
         again=game.poker_action('poker','PokerPlayer',move)
         self.assertTrue(again['duplicate']);self.assertEqual(again['wallet'],result['wallet'])
         self.assertFalse(verify({**receipt,'holds':[1,3]}))

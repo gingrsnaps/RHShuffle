@@ -19,7 +19,8 @@
     pendingAction = null,
     timer,
     polling = false,
-    feedback = "";
+    feedback = "",
+    holdemTable = null;
   let selections = new Set(),
     pokerHolds = new Set(),
     pokerRound = "",
@@ -38,10 +39,12 @@
     id("betButton").setAttribute("aria-describedby", status.id);
     id("betButton").setAttribute("autocomplete", "off");
   }
-  const verifierReady = typeof globalThis.RedFair?.verify === "function";
+  const verifierReady = typeof globalThis.RedFair?.verify === "function" &&
+    (game !== "poker" || (typeof globalThis.RedHoldemFair?.replay === "function" && typeof globalThis.RedHoldemUI?.create === "function"));
   const secure = Boolean(
     globalThis.crypto?.subtle && globalThis.crypto?.getRandomValues,
   );
+  const isHoldem = value => value?.variant === "texas_holdem" || value?.options?.variant === "texas_holdem";
   const secureMessage =
     "Fairness verification requires HTTPS or localhost and a browser with Web Crypto. Wagering is disabled.";
   const randomHex = () =>
@@ -101,8 +104,8 @@
   function wagerProblem() {
     if (!id("redWager") || !wallet) return "";
     const wager = Number(id("redWager").value);
-    if (!Number.isSafeInteger(wager) || wager < 1)
-      return "Enter a positive whole-point wager.";
+    if (!Number.isSafeInteger(wager) || wager < (game === "poker" ? 20 : 1))
+      return game === "poker" ? "Choose a table stack of at least 20 whole RedPoints." : "Enter a positive whole-point wager.";
     if (wager > wallet.balance)
       return `Your wager exceeds your ${number(wallet.balance)} RedPoints balance. Lower it to play.`;
     return "";
@@ -121,7 +124,7 @@
       if (wallet.play_blocked) return wallet.play_blocked.message;
       if (pendingAction && !wallet.play_blocked) return "";
       if (wallet.poker) return game === "poker"
-        ? "Choose the cards to hold, then draw once."
+        ? isHoldem(wallet.poker) ? "Your hand is saved. Use the table controls." : "Choose the cards to hold, then draw once."
         : "Continue your saved Poker hand before starting another game.";
       return game === "blackjack"
         ? "Use Hit, Stand or Double to finish this hand."
@@ -211,6 +214,7 @@
     });
     if (id("pokerDraw")) id("pokerDraw").textContent = busy ? "Saving draw…" :
       pokerHolds.size === 5 ? "Keep all · finish hand" : `Draw ${5-pokerHolds.size} card${pokerHolds.size === 4 ? "" : "s"}`;
+    holdemTable?.controls(pokerLocked || !isHoldem(wallet?.poker));
     if (id("retryBet")) {
       id("retryBet").textContent = pendingAction
         ? "Recover your move"
@@ -247,8 +251,16 @@
         fatal = true;
         throw Error("The saved initial Poker cards changed. Keep your receipt and reload before playing.");
       }
+      if (isHoldem(next.poker)) {
+        assertHoldemActions(next.poker, pending);
+        if (pendingAction?.variant === "texas_holdem" && pendingAction.round_id === next.poker.round_id && next.poker.step > pendingAction.step) {
+          rememberAction(null); // A lost reply is acknowledged by the saved matching action.
+          message();
+        }
+      }
       if (!pending || pending.request_id === next.poker.round_id)
-        remember({ ...(pending || next.poker.bet), initial_cards: [...next.poker.initial] });
+        remember({ ...(pending || next.poker.bet), initial_cards: [...next.poker.initial],
+          ...(isHoldem(next.poker) ? {player_actions:next.poker.actions} : {}) });
     }
     if (id("pokerResume")) id("pokerResume").hidden = !next.poker || game === "poker";
     renderPoker(next.poker);
@@ -279,7 +291,7 @@
         ...Object.entries(next.stats).map(([name, stat]) => {
           const article = document.createElement("article");
           for (const [tag, text] of [
-            ["strong", name[0].toUpperCase() + name.slice(1)],
+            ["strong", name === "poker" ? "Hold’em" : name[0].toUpperCase() + name.slice(1)],
             ["b", points(stat.net)],
             ["small", `${stat.bets} rounds · net RedPoints`],
           ]) {
@@ -296,9 +308,9 @@
         ? next.receipts.map((receipt) => {
             const tr = document.createElement("tr");
             for (const text of [
-              receipt.game,
+              receipt.game === "poker" ? isHoldem(receipt) ? "Hold’em" : "Video Poker · legacy" : receipt.game,
               number(receipt.result?.total_wager ?? receipt.wager),
-              number(receipt.payout),
+              number(isHoldem(receipt) ? receipt.result.returned : receipt.payout),
               points(receipt.net),
             ]) {
               const td = document.createElement("td");
@@ -390,7 +402,7 @@
   function opt() {
     if (game === "blackjack") return { decks: 6 };
     if (game === "baccarat") return {decks:8, side:root.querySelector('[name="baccaratSide"]:checked').value};
-    if (game === "poker") return { variant: "jacks_or_better" };
+    if (game === "poker") return { variant: "texas_holdem", button:wallet?.poker_button || "player" };
     if (game === "limbo") return { target: Math.round(Number(id("limboTarget").value)*100) };
     if (game === "coinflip") return { side: root.querySelector('[name="coinSide"]:checked').value };
     if (game === "dice") return { chance: Number(id("diceChance").value), side: id("diceSide").value };
@@ -506,12 +518,19 @@
       id("payoutDescription").textContent = "Win 1.98× · Loss 0× · 50% chance";
       return;
     }
+    if (game === "poker" && !wallet?.poker?.holds && (!wallet?.poker || isHoldem(wallet.poker))) {
+      const stack = Number(id("redWager").value), big = Math.max(2, Math.floor(stack/50));
+      id("holdemNextBlinds").textContent = `Blinds ${number(Math.max(1,Math.floor(big/2)))} / ${number(big)} RP`;
+      id("payoutDescription").textContent = "Strongest to weakest. Best five of seven wins; suits do not break ties.";
+      id("payoutTable").replaceChildren(...[...(globalThis.RedHoldemFair?.labels || [])].reverse().map(label => Object.assign(document.createElement("div"), {textContent:label})));
+      return;
+    }
     if (game === "poker") {
       id("payoutDescription").textContent = "9/6 Jacks or Better · Total returns";
       id("payoutTable").classList.add("poker-paytable");
-      id("payoutTable").replaceChildren(...Object.entries(rules.poker.paytable).sort((a,b) => b[1]-a[1]).map(([hand, multiplier]) => {
+      id("payoutTable").replaceChildren(...Object.entries(rules.poker.legacy_paytable).sort((a,b) => b[1]-a[1]).map(([hand, multiplier]) => {
         const cell = document.createElement("div");cell.dataset.hand = hand;
-        for (const [tag, text] of [["small", rules.poker.labels[hand]], ["strong", `${multiplier}×`], ["small", `${number(amount*BigInt(multiplier))} returned`]]) {
+        for (const [tag, text] of [["small", rules.poker.legacy_labels[hand]], ["strong", `${multiplier}×`], ["small", `${number(amount*BigInt(multiplier))} returned`]]) {
           const node = document.createElement(tag);node.textContent = text;cell.append(node);
         }
         return cell;
@@ -931,7 +950,9 @@
     const done = () => {
       if (ticket !== presentationSequence) return;
       delete root.dataset.animating;
-      id("gameResult").textContent = `${points(receipt.net)} RP · ${number(receipt.payout)} returned`;
+      id("gameResult").textContent = isHoldem(receipt)
+        ? `${points(receipt.net)} RP net · ${number(r.payout)} returned to wallet`
+        : `${points(receipt.net)} RP · ${number(receipt.payout)} returned`;
       if (receipt.game === "keno") id("gameResult").textContent = `${r.hits} matched · `+id("gameResult").textContent;
       id("gameResult").classList.toggle("is-win",receipt.net > 0);
       id("betProof").textContent = `Verified · #${receipt.nonce}`;
@@ -977,7 +998,21 @@
     else if (game === "blackjack") { renderBlackjack({...r, nonce:receipt.nonce, round_id:receipt.request_id}); await waitForCards(); }
     done();
   }
+  function assertHoldemActions(value, body) {
+    if (!isHoldem(value)) return;
+    const actions = value.actions || [], saved = body?.player_actions || [];
+    const mismatch = saved.some((move,index) => RedFair.canonical(move) !== RedFair.canonical(actions[index]));
+    const pendingMismatch = pendingAction?.variant === "texas_holdem" &&
+      pendingAction.round_id === (value.round_id || value.request_id) && value.ending !== "weekly_reset" &&
+      (value.ended || value.result || actions.length > pendingAction.step) &&
+      RedFair.canonical(actions[pendingAction.step]) !== RedFair.canonical(pendingAction.move);
+    if (mismatch || pendingMismatch) {
+      fatal = true;
+      throw Error("Hold’em action history changed. Your saved proof has been retained.");
+    }
+  }
   async function verifyReceipt(receipt, body) {
+    assertHoldemActions(receipt, body);
     const fields = [
       "rules_version",
       "request_id",
@@ -989,7 +1024,7 @@
       "wager",
       "options",
     ];
-    if (body.game === "poker" && pendingAction?.game === "poker" &&
+    if (body.game === "poker" && !isHoldem(body) && pendingAction?.game === "poker" &&
         pendingAction.round_id === receipt.request_id && receipt.ending !== "weekly_reset" &&
         RedFair.canonical(receipt.holds) !== RedFair.canonical(pendingAction.holds)) {
       fatal = true;
@@ -1119,8 +1154,24 @@
     coin.setAttribute("aria-label",result.side === "heads" ? "Heads" : "Tails");
     id("coinStatus").textContent = `${result.side === "heads" ? "Heads" : "Tails"} · ${result.won ? "Correct call" : "Other side"}`;
   }
+  holdemTable = globalThis.RedHoldemUI?.create(root, {
+    number, playingCard, animateElement, tween, error:message, changed:controls,
+    move(move) {
+      const hand = wallet?.poker;
+      if (!isHoldem(hand) || busy || fatal || pendingAction || !secure || !verifierReady || holdemTable?.isMoving()) return;
+      const body = {game:"poker",variant:"texas_holdem",round_id:hand.round_id,step:hand.step,move,action_id:randomHex()};
+      rememberAction(body); void submitAction(body);
+    },
+  });
   function renderPoker(hand) {
-    if (!id("pokerCards") || !hand) return;
+    if (!id("pokerCards")) return;
+    if (isHoldem(hand) || !hand) {
+      if (hand) { id("legacyPokerTable").hidden = true; id("holdemTable").hidden = false; }
+      const task = holdemTable?.render(hand);
+      if (task) { cardAnimations.add(task); task.finally(() => cardAnimations.delete(task)); }
+      return;
+    }
+    id("legacyPokerTable").hidden = false; id("holdemTable").hidden = true;
     if (pokerRound !== hand.round_id) {
       pokerRound = hand.round_id;
       const saved = pending?.request_id === hand.round_id ? pending.poker_holds : [];
@@ -1152,7 +1203,7 @@
       button.querySelector("small").textContent = pokerHolds.has(index) ? "HELD" : hand.ended ? "DRAWN" : "HOLD";
     });
     const pokerStatus = () => { id("pokerStatus").textContent = hand.ended
-      ? `${rules.poker.labels[hand.category]} · ${hand.multiplier}× returned`
+      ? `${rules.poker.legacy_labels[hand.category]} · ${hand.multiplier}× returned`
       : `${pokerHolds.size} held · ${5-pokerHolds.size} to draw`; };
     if (cardAnimations.size) { id("pokerStatus").textContent = "Dealing…"; void waitForCards().then(pokerStatus); }
     else pokerStatus();
@@ -1238,7 +1289,7 @@
       const pokerMove = body.game === "poker";
       const result = await api(pokerMove ? "/gaming/api/poker/action" : "/gaming/api/blackjack/action", body);
       if (result.receipt) {
-        if (pokerMove && RedFair.canonical(result.receipt.holds) !== RedFair.canonical(body.holds)) {
+        if (pokerMove && body.variant !== "texas_holdem" && RedFair.canonical(result.receipt.holds) !== RedFair.canonical(body.holds)) {
           fatal = true;
           throw Error("Poker hold verification failed. Your receipt is retained for review.");
         }
@@ -1248,6 +1299,7 @@
         await showReceipt(result.receipt);
         renderWallet(result.wallet);
       } else {
+        assertHoldemActions(result.wallet?.poker, pending);
         rememberAction(null);
         renderWallet(result.wallet);
         await waitForCards();

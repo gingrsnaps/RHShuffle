@@ -1,0 +1,33 @@
+<div id="holdemTable" class="holdem-table" aria-label="Texas Hold’em table">
+  <div class="holdem-topline"><span class="eyebrow">TEXAS HOLD’EM</span><span id="holdemBlinds" class="small muted">Heads-up · No limit</span></div>
+  <section class="holdem-seat" aria-label="Computer opponent">
+    <div class="holdem-seat-label"><strong>RedBot <small>Computer</small></strong><span id="holdemComputerButton" class="dealer-button" hidden aria-label="Dealer button">D</span><output id="holdemComputerStack">—</output></div>
+    <div id="holdemComputerCards" class="playing-cards holdem-hole" aria-label="Computer cards"><span class="playing-card is-hidden">◆</span><span class="playing-card is-hidden">◆</span></div>
+    <small id="holdemComputerBet" class="holdem-seat-bet">&nbsp;</small>
+  </section>
+  <div class="holdem-center">
+    <div class="holdem-pot"><small>POT</small><output id="holdemPot">0</output><span id="holdemChip" aria-hidden="true">R</span></div>
+    <div id="holdemBoard" class="playing-cards holdem-board" aria-label="Community cards">{% for n in range(5) %}<span class="holdem-card-slot" aria-hidden="true"></span>{% endfor %}</div>
+    <span id="holdemStreet" class="holdem-street">Ready to deal</span>
+  </div>
+  <section class="holdem-seat" aria-label="Your Hold’em seat">
+    <small id="holdemPlayerBet" class="holdem-seat-bet">&nbsp;</small>
+    <div id="holdemPlayerCards" class="playing-cards holdem-hole" aria-label="Your cards"><span class="playing-card is-hidden">◆</span><span class="playing-card is-hidden">◆</span></div>
+    <div class="holdem-seat-label"><strong>You</strong><span id="holdemPlayerButton" class="dealer-button" hidden aria-label="Dealer button">D</span><output id="holdemPlayerStack">—</output></div>
+  </section>
+  <p id="holdemStatus" class="holdem-status" role="status" aria-live="polite">Choose a table stack. Deal when ready.</p>
+  <div id="holdemControls" class="holdem-controls" hidden>
+    <div class="button-row holdem-moves">
+      <button type="button" class="button" data-holdem="fold">Fold</button>
+      <button type="button" class="button primary" data-holdem="check">Check</button>
+      <button type="button" class="button primary" data-holdem="call">Call</button>
+      <button type="button" class="button" data-holdem="all_in">All-in</button>
+    </div>
+    <div id="holdemRaiseControls" class="holdem-raise">
+      <label for="holdemRaise">Raise to · RedPoints</label>
+      <div class="holdem-raise-input"><input id="holdemRaise" type="number" inputmode="numeric" min="1" step="1"><button type="button" class="button primary" id="holdemRaiseButton">Raise</button></div>
+      <div class="button-row"><button type="button" class="button small" data-holdem-size="min">Min</button><button type="button" class="button small" data-holdem-size="half">½ pot</button><button type="button" class="button small" data-holdem-size="pot">Pot</button><small id="holdemRaiseCost" class="muted"></small></div>
+    </div>
+  </div>
+  <details class="holdem-log"><summary>Hand history</summary><ol id="holdemLog"></ol></details>
+</div>

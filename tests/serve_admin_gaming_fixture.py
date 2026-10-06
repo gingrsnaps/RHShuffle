@@ -21,7 +21,7 @@ if __name__ == '__main__':
         game = app.extensions['gaming']
         options = dict(dice=dict(chance=50,side='under'), keno=dict(picks=list(range(1,11)),risk='medium'),
                        plinko=dict(rows=16,risk='high'), blackjack=dict(decks=6), limbo=dict(target=200),
-                       coinflip=dict(side='heads'), poker=dict(variant='jacks_or_better'), baccarat=dict(decks=8,side='banker'))
+                       coinflip=dict(side='heads'), poker=dict(variant='texas_holdem',button='player'), baccarat=dict(decks=8,side='banker'))
         for index in range(7):
             identity, name, ip = 'fixture-'+str(index), 'TestPlayer'+str(index+1), '192.0.2.'+str(index+1)
             for item in GAMES:
@@ -33,9 +33,9 @@ if __name__ == '__main__':
                 if not result['receipt'] and item == 'blackjack':
                     hand=result['wallet']['blackjack']
                     game.blackjack_action(identity,name,dict(round_id=hand['round_id'],step=0,action='stand',action_id='fixture-stand'),client_ip=ip)
-                elif not result['receipt'] and item == 'poker':
+                while not result['receipt'] and item == 'poker':
                     hand=result['wallet']['poker']
-                    game.poker_action(identity,name,dict(round_id=hand['round_id'],holds=[0,1,2,3,4],action_id='fixture-draw'),client_ip=ip)
+                    result=game.poker_action(identity,name,dict(variant='texas_holdem',round_id=hand['round_id'],step=hand['step'],move=dict(action='check' if hand['legal']['check'] else 'call',amount=0),action_id='fixture-move-'+str(hand['step'])),client_ip=ip)
         if len(sys.argv) == 3 and sys.argv[1] == '--write-fixtures':
             # DOM tests can generate their inputs without a browser or HTTP server.
             destination = Path(sys.argv[2])

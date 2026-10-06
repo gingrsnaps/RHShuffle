@@ -32,12 +32,13 @@
     id("gamingNoRecords").hidden = data.completed_rounds > 0;
     if (typeof data.visitor_ip_configured === "boolean")
       id("gamingIpWarning").hidden = data.visitor_ip_configured;
-    for (const [game, rows] of Object.entries(data.games)) {
+    for (const [game, rows] of Object.entries({...data.games, video_poker:data.legacy_poker || []})) {
       const list = id("gamingLeaders-" + game);
       if (!list) continue;
-      if (data.counts?.[game]) {
+      const count = game === "video_poker" ? data.legacy_poker_counts : data.counts?.[game];
+      if (count) {
         id("gamingCount-" + game).textContent =
-          `Players: ${fmt(data.counts[game].players)} · Completed rounds: ${fmt(data.counts[game].rounds)}`;
+          `Players: ${fmt(count.players)} · Completed rounds: ${fmt(count.rounds)}`;
       }
       list.replaceChildren(
         ...(rows.length

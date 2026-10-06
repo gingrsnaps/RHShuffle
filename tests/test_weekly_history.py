@@ -113,7 +113,9 @@ class WeeklyHistoryTests(unittest.TestCase):
         self.assertEqual(value['weeks'][1]['rows'][0]['prize'], '—')
 
     def test_failure_retains_results_and_respects_provider_retry(self):
-        now = int(time.time())
+        # Keep both checks in one completed-week selection, even when this test
+        # runs on a Tuesday. Rollover behavior has its own boundary tests.
+        now = stamp('2026-10-07T12:00:00')
         self.fill(now)
         before = self.r.history.public(now=now)['selected']['rows']
         later = now+86400

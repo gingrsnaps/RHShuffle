@@ -78,20 +78,39 @@ fs.mkdirSync(dir,{recursive:true});
   assert.equal(await p.locator('#baccaratBankerTotal').textContent(),String(hiddenResult.receipt.result.banker_total));
   await p.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
   await p.goto(base+'/gaming/poker');let opened=await bet();assert.ok(opened.wallet.poker);const initial=opened.wallet.poker.initial;
-  for(const index of [0,2,4])await p.locator('[data-poker-hold="'+index+'"]').click();
-  assert.equal(await p.locator('[data-poker-hold][aria-pressed=true]').count(),3);
-  await p.waitForTimeout(5200);assert.equal(await p.locator('[data-poker-hold][aria-pressed=true]').count(),3);
+  assert.equal(initial.length,2);assert.deepEqual(opened.wallet.poker.computer,[null,null]);
+  assert.equal(await p.locator('#holdemComputerCards .is-hidden').count(),2);
+  await p.waitForTimeout(5200);assert.deepEqual((await state()).poker.initial,initial);
   const refresh=p.waitForResponse(r=>r.url().endsWith('/gaming/api/refresh'));await p.reload();assert.equal((await(await refresh).json()).wallet.balance,100000);
-  assert.equal(await p.locator('[data-poker-hold][aria-pressed=true]').count(),3);assert.deepEqual((await state()).poker.initial,initial);
-  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'poker mobile overflow');
-  await p.screenshot({path:dir+'/poker-mobile-held.png',fullPage:true});
-  const drawn=p.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));await p.locator('#pokerDraw').click();let result=await(await drawn).json();assert.equal(result.ok,true,JSON.stringify(result));assert.deepEqual(result.receipt.holds,[0,2,4]);assert.deepEqual(result.receipt.result.initial,initial);await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-  await p.setViewportSize({width:1280,height:900});await p.screenshot({path:dir+'/poker-desktop-result.png',fullPage:true});
-  // Server saves the draw but its reply is lost. Automatic polling recovers it.
-  opened=await bet();await p.locator('#pokerHoldAll').click();let lost=false;
+  assert.deepEqual((await state()).poker.initial,initial);
+  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Holdem mobile overflow');
+  await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/holdem-mobile.png',fullPage:true});
+  async function pokerMove(action){
+    const watching=p.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));
+    await p.locator('[data-holdem="'+action+'"]').click();const response=await watching,value=await response.json();assert.equal(response.status(),200,JSON.stringify(value));
+    await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');
+    return value;
+  }
+  let result=opened;
+  while(result.wallet.poker)result=await pokerMove(result.wallet.poker.legal.check?'check':'call');
+  assert.deepEqual(result.receipt.result.initial,initial);await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
+  if(result.receipt.result.reason==='showdown'){
+    assert.equal(await p.locator('#holdemBoard .playing-card').count(),5);
+    assert.equal(await p.locator('#holdemComputerCards .is-hidden').count(),0);
+    assert.ok(await p.locator('.playing-card.is-winning').count()>=5);
+  }
+  await p.setViewportSize({width:1280,height:900});await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/holdem-desktop-result.png',fullPage:true});
+  // Reach the player's button. A folded computer opening hand is still a valid settled round.
+  for(let n=0;n<4;n++){
+    opened=await bet();
+    if(opened.wallet.poker?.button==='player')break;
+    while(opened.wallet.poker)opened=await pokerMove(opened.wallet.poker.legal.check?'check':'call');
+  }
+  assert.equal(opened.wallet.poker.button,'player');const prior=(await state()).stats.poker.bets;let lost=false;
   await p.route('**/gaming/api/poker/action',async route=>{if(!lost){lost=true;await route.fetch();await route.abort('failed');}else await route.continue();});
-  await p.locator('#pokerDraw').click();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor({timeout:16000});
-  const saved=await state();assert.equal(saved.stats.poker.bets,2);assert.equal(saved.poker,null);assert.deepEqual(saved.receipts[0].holds,[0,1,2,3,4]);
+  await p.locator('[data-holdem=fold]').click();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor({timeout:16000});
+  const saved=await state();assert.equal(saved.stats.poker.bets,prior+1);assert.equal(saved.poker,null);assert.equal(saved.receipts[0].actions.at(-1).action,'fold');
+  await p.unroute('**/gaming/api/poker/action');
   await p.emulateMedia({reducedMotion:'reduce'});await p.goto(base+'/gaming/baccarat');
   result=await bet();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
   assert.equal(await p.locator('#baccaratPlayerTotal').textContent(),String(result.receipt.result.player_total));
@@ -99,6 +118,6 @@ fs.mkdirSync(dir,{recursive:true});
   const admin=await ctx.newPage();admin.on('pageerror',e=>errors.push(e.message));await admin.goto(base+'/admin/gaming');await admin.locator('#username').fill('fixtureadmin');await admin.locator('#password').fill('fixture-only');await admin.locator('form button[type=submit]').click();await admin.locator('#grantGamingButton').waitFor();await admin.goto(base+'/admin/gaming');
   for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat'])assert.match(await admin.locator('#gamingLeaders-'+game).textContent(),/EightGamePlayer/);
   await p.goto(base+'/gaming');await p.screenshot({path:dir+'/dashboard-desktop.png',fullPage:true});
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({eight_games_play_and_verify:true,animated_reveals_without_navigation:true,dice_drag_synced:true,overlapping_plinko_survives_resize:true,hidden_tab_exact_completion:true,poker_holds_persist_after_poll_and_reload:true,poker_lost_draw_recovers_once:true,admin_tracks_eight_games:true,exact_limbo_result:true,coin_face_matches_result:true,mobile_no_overflow:true,page_errors:errors}));
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({eight_games_play_and_verify:true,animated_reveals_without_navigation:true,dice_drag_synced:true,overlapping_plinko_survives_resize:true,hidden_tab_exact_completion:true,holdem_cards_and_stack_persist_after_poll_and_reload:true,holdem_lost_action_recovers_once:true,admin_tracks_eight_games:true,exact_limbo_result:true,coin_face_matches_result:true,mobile_no_overflow:true,page_errors:errors}));
  }finally{if(browser)await browser.close();server.kill('SIGTERM');}
 })().catch(e=>{console.error(e);process.exitCode=1;});

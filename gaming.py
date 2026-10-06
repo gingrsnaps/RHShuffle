@@ -64,6 +64,21 @@ def fresh_stats():
     return {game:dict(bets=0, wagered=0, paid=0, net=0, biggest_payout=0) for game in GAMES}
 
 
+def is_holdem(hand):
+    return bool(hand and hand.get('options', {}).get('variant') == 'texas_holdem')
+
+
+def upgrade_poker_stats(player):
+    # One-way, explicit migration: old 'poker' winnings were Video Poker.
+    # Keep proof IDs/options untouched; their original HMAC context is immutable.
+    if player.get('poker_stats_version', 1) == 1:
+        legacy = player['stats'].pop('poker', None)
+        if legacy is not None:
+            player['stats']['video_poker'] = legacy
+        player['poker_stats_version'] = 2
+    player['stats'].setdefault('poker', fresh_stats()['poker'])
+
+
 def validate_gaming(value):
     """Fail closed on malformed recovery, without overwriting existing saves."""
     if value is None:
@@ -84,8 +99,12 @@ def validate_gaming(value):
         for name in ('balance', 'nonce', 'version'):
             if type(player.get(name)) is not int or not 0 <= player[name] <= MAX_NUMBER:
                 raise ValueError('Invalid RedPoints wallet counter.')
-        if not {'dice', 'keno', 'plinko'} <= set(player.get('stats', {})) <= set(GAMES):
+        if not {'dice', 'keno', 'plinko'} <= set(player.get('stats', {})) <= set(GAMES) | {'video_poker'}:
             raise ValueError('Invalid RedPoints game statistics.')
+        if player.get('poker_stats_version', 1) not in (1, 2):
+            raise ValueError('Invalid Poker statistics version.')
+        if 'video_poker' in player['stats'] and player.get('poker_stats_version') != 2:
+            raise ValueError('Video Poker records need their migration marker.')
         for stats in player['stats'].values():
             for name in ('bets','wagered','paid','biggest_payout'):
                 if type(stats.get(name)) is not int or not 0 <= stats[name] <= MAX_NUMBER:
@@ -110,11 +129,11 @@ def validate_gaming(value):
                         not re.fullmatch(r'[A-Za-z0-9 _.-]{1,64}', pending['client_seed']) or
                         options_for(game, pending['options']) != pending['options']):
                     raise ValueError('Invalid reserved hand')
-                if game == 'blackjack':
+                if game == 'blackjack' or is_holdem(pending):
                     if (len(pending['action_ids']) != len(pending['actions']) or
                             len(set(pending['action_ids'])) != len(pending['action_ids']) or
                             any(not re.fullmatch(r'[A-Za-z0-9_-]{8,64}', item) for item in pending['action_ids'])):
-                        raise ValueError('Invalid Blackjack moves')
+                        raise ValueError('Invalid saved card moves')
                 elif pending.get('holds') is not None or 'draw_id' in pending:
                     raise ValueError('A drawn Poker hand must already be settled')
                 if outcome(player['server_seed'], pending)['ended']:
@@ -195,6 +214,7 @@ class Gaming:
         with store.connection(transaction=True) as conn:
             data = conn.get('gaming') or {}
             for player in data.get('players', {}).values():
+                upgrade_poker_stats(player)
                 for game, stats in fresh_stats().items():
                     player['stats'].setdefault(game, stats)
             self._upgrade_networks(data.get('ip_guard'))
@@ -245,8 +265,9 @@ class Gaming:
             if len(players) >= MAX_PLAYERS:
                 raise GamingError('The player registry is full. Contact the host.', 'capacity', 409)
             players[key] = dict(name=name, season=current['id'], balance=START_POINTS, stats=fresh_stats(),
-                                nonce=0, version=1, server_seed=secrets.token_hex(32), receipts=[], last_bet_at=0)
+                                nonce=0, version=1, poker_stats_version=2, server_seed=secrets.token_hex(32), receipts=[], last_bet_at=0)
         player = players[key]
+        upgrade_poker_stats(player)
         for game, stats in fresh_stats().items():
             player['stats'].setdefault(game, stats)
         self._rollover(player, current)
@@ -265,6 +286,9 @@ class Gaming:
             if hand:
                 if hand['game'] == 'blackjack':
                     hand['actions'].append('stand')
+                elif is_holdem(hand):
+                    # Fold the saved hand at the boundary; do not wager more.
+                    pass
                 else:
                     # A week boundary keeps all five initial cards, then settles
                     # under the old week before the new allowance is created.
@@ -339,8 +363,8 @@ class Gaming:
         if not hand:
             return None
         value = outcome(player['server_seed'], hand)
-        value.update(round_id=hand['request_id'], wager=hand['wager'],
-                     bet={k:v for k,v in hand.items() if k not in {'server_seed', 'holds'}})
+        value.update(round_id=hand['request_id'], wager=hand['wager'], step=len(hand.get('actions', [])),
+                     bet={k:v for k,v in hand.items() if k not in {'server_seed', 'holds', 'actions', 'action_ids'}})
         return value
 
     @staticmethod
@@ -348,6 +372,8 @@ class Gaming:
         return dict(season=current, name=player['name'], balance=player['balance'], nonce=player['nonce'],
                     version=player['version'], commitment=commitment(player['server_seed']),
                     stats={game:copy.deepcopy(player['stats'].get(game, stats)) for game, stats in fresh_stats().items()},
+                    legacy_poker=copy.deepcopy(player['stats'].get('video_poker')),
+                    poker_button='player' if player['stats'].get('poker', {}).get('bets', 0) % 2 == 0 else 'computer',
                     receipts=copy.deepcopy(player['receipts']),
                     needs_profile=not player.get('community_name_confirmed', False),
                     rules_version=VERSION, ip_bound=False, play_blocked=None,
@@ -360,7 +386,8 @@ class Gaming:
         def preview():
             return dict(season=current, balance=START_POINTS, name=name or '', nonce=0, version=0,
                         commitment='', stats=fresh_stats(), receipts=[], needs_profile=True,
-                        rules_version=VERSION, ip_bound=False, play_blocked=None, blackjack=None, poker=None)
+                        rules_version=VERSION, ip_bound=False, play_blocked=None, blackjack=None, poker=None,
+                        poker_button='player', legacy_poker=None)
         # Routine five-second reads neither copy the complete community save nor
         # rewrite it. Connection metadata is recorded only when it changes.
         with self.store.connection() as conn:
@@ -368,7 +395,7 @@ class Gaming:
             player = data.get('players', {}).get(key)
             if not name:
                 return preview()
-            if player and player['season'] == current['id'] and player['name'] == name:
+            if player and player.get('poker_stats_version') == 2 and player['season'] == current['id'] and player['name'] == name:
                 if not self._needs_network_record(data, key, client_ip, current):
                     return self._view(player, current)
         with self.store.connection(transaction=True) as conn:
@@ -504,6 +531,10 @@ class Gaming:
                 raise GamingError('Another tab used this seed. Refresh your balance and fairness details.', 'stale_seed', 409)
             if wager > player['balance']:
                 raise GamingError('Not enough RedPoints. Lower the wager or refresh the page for 100,000 RedPoints.', 'balance', 409)
+            if game == 'poker':
+                button = 'player' if player['stats']['poker']['bets'] % 2 == 0 else 'computer'
+                if opt != dict(variant='texas_holdem', button=button):
+                    raise GamingError('The dealer button changed. Reload the saved table.', 'stale_hand', 409)
             largest = max_payout(game, wager, opt)
             stats = player['stats'][game]
             if max(player['balance']-wager+largest, stats['paid']+largest, stats['wagered']+wager*(2 if game=='blackjack' else 1),
@@ -515,7 +546,7 @@ class Gaming:
             if game == 'blackjack':
                 receipt.update(actions=[], action_ids=[])
             elif game == 'poker':
-                receipt['holds'] = None
+                receipt.update(actions=[], action_ids=[])
             result = outcome(player['server_seed'], receipt)
             player['balance'] -= wager
             if game in ('blackjack', 'poker') and not result['ended']:
@@ -536,7 +567,12 @@ class Gaming:
         player.pop('poker', None)
         receipt.update(result=result, payout=payout, net=net, balance_after=player['balance'],
                        next_commitment=commitment(player['server_seed']))
-        stats = player['stats'][receipt['game']]
+        stat_game = 'video_poker' if receipt['game'] == 'poker' and not is_holdem(receipt) else receipt['game']
+        stats = player['stats'].setdefault(stat_game, dict(bets=0, wagered=0, paid=0, net=0, biggest_payout=0))
+        # Hold’em credits the entire remaining table stack to the wallet, but
+        # only contested chips and pot awards belong in gambling statistics.
+        if is_holdem(receipt):
+            wager, payout = result['total_wager'], result['returned']
         stats.update(bets=stats['bets']+1, wagered=stats['wagered']+wager, paid=stats['paid']+payout,
                      net=stats['net']+net, biggest_payout=max(stats['biggest_payout'], payout))
         player['receipts'] = [copy.deepcopy(receipt)]+player['receipts'][:RECEIPTS-1]
@@ -578,6 +614,8 @@ class Gaming:
 
     def poker_action(self, identity, name, body, now=None, *, client_ip=None):
         """Commit one hold/draw decision and settle it atomically, once."""
+        if isinstance(body, dict) and body.get('variant') == 'texas_holdem':
+            return self.holdem_action(identity, name, body, now, client_ip=client_ip)
         from poker import validate_holds
         if not name or not isinstance(body, dict):
             raise GamingError('Restore your player before drawing cards.', 'username_required', 409)
@@ -590,6 +628,8 @@ class Gaming:
             player, current = self._player(conn, identity, name, now)
             done = next((r for r in player['receipts'] if r['request_id'] == round_id and r['game'] == 'poker'), None)
             if done:
+                if is_holdem(done):
+                    raise GamingError('This is a saved Hold’em result.', 'stale_hand', 409)
                 if done.get('draw_id') != action_id or done['holds'] != holds:
                     raise GamingError('This hand was already drawn. Its saved result has been kept.', 'stale_hand', 409)
                 return dict(ok=True, duplicate=True, receipt=copy.deepcopy(done), wallet=self._view(player, current))
@@ -597,9 +637,46 @@ class Gaming:
             hand = player.get('poker')
             if not hand or hand['request_id'] != round_id:
                 raise GamingError('This Poker hand is no longer active. Reload your saved result.', 'stale_hand', 409)
+            if is_holdem(hand):
+                raise GamingError('Use the Hold’em action controls.', 'stale_hand', 409)
             hand.update(holds=holds, draw_id=action_id)
             self._settle(player, hand, outcome(player['server_seed'], hand))
             return dict(ok=True, duplicate=False, receipt=copy.deepcopy(hand), wallet=self._view(player, current))
+
+    def holdem_action(self, identity, name, body, now=None, *, client_ip=None):
+        """Replay a saved hand and commit one player decision exactly once."""
+        from holdem import validate_action
+        if not name or not isinstance(body, dict):
+            raise GamingError('Restore your player before continuing.', 'username_required', 409)
+        move = validate_action(body.get('move'))
+        action_id, round_id, step = (body.get(k) for k in ('action_id', 'round_id', 'step'))
+        if (type(step) is not int or not 0 <= step < 4096 or
+                any(not isinstance(v, str) or not re.fullmatch(r'[A-Za-z0-9_-]{8,64}', v) for v in (action_id, round_id))):
+            raise GamingError('Send a valid Hold’em move.')
+        now = time.time() if now is None else now
+        with self.store.connection(transaction=True) as conn:
+            player, current = self._player(conn, identity, name, now)
+            done = next((r for r in player['receipts'] if r['request_id'] == round_id and is_holdem(r)), None)
+            hand = done or player.get('poker')
+            if not is_holdem(hand) or hand['request_id'] != round_id:
+                raise GamingError('This Hold’em hand is no longer active. Reload its saved result.', 'stale_hand', 409)
+            # Reusing an ID with a different move is not an idempotent retry.
+            if action_id in hand['action_ids']:
+                index = hand['action_ids'].index(action_id)
+                if index != step or hand['actions'][index] != move:
+                    raise GamingError('That move ID already has a different decision.', 'stale_hand', 409)
+                return dict(ok=True, duplicate=True, receipt=copy.deepcopy(done), wallet=self._view(player, current))
+            if done or step != len(hand['actions']):
+                raise GamingError('Another tab moved. Your saved table has been updated.', 'stale_hand', 409)
+            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
+            hand['actions'].append(move)
+            hand['action_ids'].append(action_id)
+            result = outcome(player['server_seed'], hand)  # Illegal actions roll back the transaction.
+            if result['ended']:
+                self._settle(player, hand, result)
+                return dict(ok=True, duplicate=False, receipt=copy.deepcopy(hand), wallet=self._view(player, current))
+            player['version'] += 1
+            return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
 
     def leaders(self, now=None):
         """Private rankings from settled ledger totals, never client-reported wins."""
@@ -617,14 +694,24 @@ class Gaming:
                             networks.setdefault(key, []).append(address)
             result, counts = {}, {}
             active = {key:p for key,p in players.items() if p['season']==current['id']}
-            for game in GAMES:
+            def game_stats(player, game):
+                # A live recovery import may predate startup migration. Keep its
+                # Video Poker rankings separate even before that player visits.
+                if player.get('poker_stats_version', 1) == 1:
+                    if game == 'poker': return {}
+                    if game == 'video_poker': return player['stats'].get('poker', {})
+                return player['stats'].get(game, {})
+            for game in (*GAMES, 'video_poker'):
                 rows = [dict(name=p['name'], player_tag=key[:12], ips=sorted(networks.get(key, [])),
-                             balance=p['balance'], **p['stats'][game]) for key,p in active.items() if p['stats'].get(game, {}).get('bets')]
+                             balance=p['balance'], **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
                 rows.sort(key=lambda p:(-p['net'], -p['paid'], p['player_tag']))
                 # Count the complete ledger before slicing the five leaders.
                 counts[game] = dict(players=len(rows), rounds=sum(row['bets'] for row in rows))
                 result[game] = rows[:5]
-            return dict(season=current, games=result, counts=counts, completed_rounds=sum(c['rounds'] for c in counts.values()),
+            legacy = result.pop('video_poker')
+            legacy_counts = counts.pop('video_poker')
+            return dict(season=current, games=result, counts=counts, legacy_poker=legacy, legacy_poker_counts=legacy_counts,
+                        completed_rounds=sum(c['rounds'] for c in counts.values())+legacy_counts['rounds'],
                         revision=sum(p['version'] for p in active.values()), player_count=len(active),
                         confirmed_players=sum(bool(p.get('community_name_confirmed')) for p in active.values()),
                         last_grant=copy.deepcopy((data.get('admin_grants') or [None])[0]),
