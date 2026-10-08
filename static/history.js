@@ -8,7 +8,7 @@
     id(name).textContent = value;
   };
   const labels = {
-    ready: "Results available",
+    ready: "Provider confirmed",
     partial: "Partial results",
     delayed: "Update delayed",
     loading: "Loading results",
@@ -91,7 +91,7 @@
     }
     text("historyTitle", week.label);
     text("historyWindow", week.start_et + " → " + week.end_et);
-    text("historyStatus", labels[week.status] || "Loading results");
+    text("historyStatus", week.origin === "snapshot" ? "Saved standings" : labels[week.status] || "Loading results");
     text("historyMessage", week.message || "");
     id("historyMessage").hidden = !week.message;
     text(

@@ -275,6 +275,7 @@
         "% defeated",
     );
     const bar = $("bossHealthBar");
+    if (stage) stage.dataset.healthPhase = state.hp === 0 ? 'defeated' : state.hp/state.max_hp <= .25 ? 'critical' : state.hp/state.max_hp <= .5 ? 'fierce' : state.hp/state.max_hp <= .75 ? 'stirring' : 'full';
     if (bar) {
       bar.max = state.max_hp;
       bar.value = state.hp;

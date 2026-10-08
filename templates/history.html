@@ -23,7 +23,7 @@
     </div>
   </form>
   <section class="panel history-results" aria-labelledby="historyTitle">
-    <div class="history-result-heading"><div><p class="eyebrow">TOP 25 · USERNAMES PROTECTED</p><h2 id="historyTitle">{{ week.label }}</h2></div><span id="historyStatus" class="badge">{{ {'ready':'Results available','partial':'Partial results','delayed':'Update delayed','loading':'Loading results'}[week.status] }}</span></div>
+    <div class="history-result-heading"><div><p class="eyebrow">TOP 25 · USERNAMES PROTECTED</p><h2 id="historyTitle">{{ week.label }}</h2></div><span id="historyStatus" class="badge">{{ 'Saved standings' if week.origin=='snapshot' else {'ready':'Provider confirmed','partial':'Partial results','delayed':'Update delayed','loading':'Loading results'}[week.status] }}</span></div>
     <p class="muted history-window" id="historyWindow">{{ week.start_et }} → {{ week.end_et }}</p>
     <p id="historyMessage" class="notice" role="status" {% if not week.message %}hidden{% endif %}>{{ week.message }}</p>
     <p id="historyNetwork" class="notice warning" role="status" hidden></p>

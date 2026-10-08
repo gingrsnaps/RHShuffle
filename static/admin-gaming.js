@@ -44,6 +44,7 @@
         ...(rows.length
           ? rows.map((row, index) => {
               const item = document.createElement("li");
+              item.dataset.tone = row.net > 0 ? "positive" : row.net < 0 ? "negative" : "neutral";
               for (const [tag, text] of [
                 ["strong", `${index + 1}. ${row.name}`],
                 ["b", `${row.net > 0 ? "+" : ""}${fmt(row.net)} net RP`],
@@ -59,6 +60,7 @@
                   "small",
                   `IPs: ${row.ips.join(", ") || "Not linked this week yet"}`,
                 ],
+                ["small", `Funding adjustments: ${(row.funding_adjustment || 0) > 0 ? "+" : ""}${fmt(row.funding_adjustment || 0)} RP · excluded from winnings`],
               ]) {
                 const node = document.createElement(tag);
                 node.textContent = text;

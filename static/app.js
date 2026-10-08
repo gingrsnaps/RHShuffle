@@ -490,6 +490,11 @@
       id("sponsorLink").href = site.sponsor_url;
     if (isAdmin) {
       jobs = value.jobs || {};
+      if (value.health) globalThis.RedHealth?.render(value.health);
+      if (value.checkpoint && id('recoveryReminder')) {
+        id('recoveryReminder').hidden = !value.checkpoint.changes;
+        text(id('recoveryReminderDetail'), value.checkpoint.details);
+      }
       if (value.checkpoint) {
         text(id("checkpointLabel"), value.checkpoint.label);
         text(id("checkpointDetails"), value.checkpoint.details);
@@ -672,7 +677,8 @@
       }
       if (!response.ok)
         throw new Error(
-          `${value?.error || "The server could not complete this request."} (HTTP ${response.status})`,
+          `${value?.error || "The server could not complete this request."} (HTTP ${response.status})` +
+          (response.status >= 500 && value?.request_id ? ` Reference: ${value.request_id}.` : ''),
         );
       if (conditional) {
         publicCache = value;
