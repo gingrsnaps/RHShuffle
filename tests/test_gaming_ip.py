@@ -1,3 +1,4 @@
+from config import RELEASE
 """Shared connections, private rankings and backwards-compatible RedPoints saves."""
 import copy
 import json
@@ -278,4 +279,4 @@ class GamingIPTests(unittest.TestCase):
             self.assertEqual(len(saved['games'][item]),5)
             self.assertEqual(saved['counts'][item],dict(players=7,rounds=7))
             self.assertTrue(all(row['ips'] and row['bets']==1 for row in saved['games'][item]))
-        self.assertIn('holdem5',saved['release'])
+        self.assertEqual(RELEASE,saved['release'])

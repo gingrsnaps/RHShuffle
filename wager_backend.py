@@ -18,6 +18,7 @@ import logging
 import re
 import secrets
 import signal
+import sys
 import threading
 import time
 
@@ -42,6 +43,7 @@ from runtime import Runtime
 from storage import Conflict, StoreError
 from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
+from telemetry import Measurements, health_view
 
 LOG = logging.getLogger("redhunllef")
 TABS = {"overview":"Overview", "race":"Race", "players":"Players", "boss":"Community boss", "gaming":"Gaming", "settings":"Settings"}
@@ -71,6 +73,7 @@ def create_app(root=None, testing=False):
                       SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=timedelta(hours=12))
     app.extensions["runtime"] = runtime
     app.extensions["settings"] = config
+    measurements = app.extensions['measurements'] = Measurements()
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     gaming = app.extensions['gaming'] = Gaming(runtime.store)
     # One launch restores playable points for everyone, without clearing results.
@@ -106,13 +109,12 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith(("/play/api/", "/gaming/api/")) or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/diagnostics", "/healthz", "/readyz"
+            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/diagnostics", "/admin/health-report", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
-        body = dict(ok=False, error=message, status=status, release=RELEASE)
-        if code:
-            body['code'] = code
+        body = dict(ok=False, error=message, status=status, release=RELEASE,
+                    request_id=getattr(g, 'request_id', ''), code=code or 'http_'+str(status))
         return jsonify(body), status
 
     def require_csrf():
@@ -138,6 +140,7 @@ def create_app(root=None, testing=False):
     @app.before_request
     def before():
         g.began, g.user, g.superadmin = time.perf_counter(), None, False
+        g.request_id = secrets.token_hex(8)
         # App Platform supplies the visitor address in DO-Connecting-IP. Never
         # trust this header on a directly exposed/local server.
         address = request.headers.get("DO-Connecting-IP") if config.proxy else request.remote_addr
@@ -151,11 +154,22 @@ def create_app(root=None, testing=False):
             if name and record.get("auth_version", 1) == session.get("auth_version"):
                 g.user = name
                 g.superadmin = name.casefold() == g.admin.get("superadmin", config.superadmin).casefold()
+            if request.endpoint == 'recovery_preview' and g.superadmin:
+                # A complete community export can exceed an ordinary form or
+                # avatar. Only authenticated Superadmins get this larger limit.
+                request.max_content_length = 64 * 1024 * 1024
         if request.path not in {"/healthz", "/readyz"} and g.client_ip in runtime.admin.get("banned_ips", []):
             abort(403, description="Access from this address has been disabled.")
 
     @app.after_request
     def after(response):
+        response.headers['X-Request-ID'] = getattr(g, 'request_id', '')
+        elapsed = (time.perf_counter()-g.began)*1000
+        if request.endpoint not in {'static', 'health', 'ready'}:
+            measurements.request(request.endpoint, response.status_code, elapsed)
+        if response.status_code >= 500:
+            LOG.error('REQUEST id=%s route=%s status=%s elapsed_ms=%.1f',
+                      g.request_id, request.endpoint or 'unmatched', response.status_code, elapsed)
         response.headers.update({"X-Content-Type-Options":"nosniff", "X-Frame-Options":"DENY",
             "Referrer-Policy":"strict-origin-when-cross-origin", "X-RedHunllef-Release":RELEASE,
             "Content-Security-Policy":"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
@@ -601,10 +615,8 @@ def create_app(root=None, testing=False):
 
     @app.get("/readyz")
     def ready():
-        runtime.store.admin()
-        value = runtime.public()
-        ok = value["freshness"]["state"] in {"current", "partial"} or value["site"]["race_state"] == "upcoming"
-        return jsonify(ok=ok, data_state=value["freshness"]["state"]), 200 if ok else 503
+        check = runtime.store.readiness()
+        return jsonify(ok=check['ok'], release=RELEASE, checked_at=check['checked_at']), 200 if check['ok'] else 503
 
     def recovery_status():
         with runtime.lock:
@@ -619,6 +631,7 @@ def create_app(root=None, testing=False):
             tab = "overview"
         values = runtime.status()
         values['gaming'] = gaming.leaders()
+        values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
@@ -747,6 +760,7 @@ def create_app(root=None, testing=False):
     def status():
         value = runtime.status()
         value['gaming'] = gaming.leaders()
+        value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
@@ -764,6 +778,12 @@ def create_app(root=None, testing=False):
                     history=value['history'], generated_at=int(time.time()))
         return Response(json.dumps(safe, indent=2), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=redhunllef-diagnostics.json"})
+
+    @app.get('/admin/health-report')
+    @protected
+    def health_report():
+        # All fields are chosen by health_view. Never dump runtime/state objects.
+        return jsonify(health_view(runtime, measurements, runtime.status()))
 
     def safe_backup():
         with runtime.lock:
@@ -786,15 +806,20 @@ def create_app(root=None, testing=False):
         # validated seed format as startup and is never part of public feeds.
         if not g.superadmin:
             abort(403, description="Only the Superadmin can download private account recovery files.")
-        with runtime.lock:
-            value = copy.deepcopy(runtime.admin)
-            value["leaderboard_snapshots"] = safe_backup()["leaderboard_snapshots"]
-            value.update(boss.recovery())
-            value['weekly_history'] = runtime.store.live('weekly_history')
-            value['redpoints'] = gaming.recovery()
-            marker = export_marker(runtime.admin, value["leaderboard_snapshots"], value["community_boss"], int(time.time()), value["redpoints"])
+        # One transaction captures accounts, game stakes and receipts at the same
+        # instant. Separate reads could otherwise straddle a settling game.
+        with runtime.lock, runtime.store.connection(transaction=True) as conn:
+            value = copy.deepcopy(conn['admin'])
+            saved = conn['live']['shuffle']
+            value['leaderboard_snapshots'] = dict(race_key=saved['key'], last_top15=copy.deepcopy(saved['rows'][:15]),
+                prev_top15=copy.deepcopy(saved.get('previous_top', [])), updated_at=saved['updated_at'])
+            value['community_boss'] = copy.deepcopy(conn['boss'])
+            value['community_boss_avatar'] = copy.deepcopy(conn.get('avatar'))
+            value['weekly_history'] = copy.deepcopy(conn['live'].get('weekly_history'))
+            value['redpoints'] = copy.deepcopy(conn.get('gaming'))
+            marker = export_marker(conn['admin'], value["leaderboard_snapshots"], value["community_boss"], int(time.time()), value["redpoints"])
             value["recovery_export"] = marker
-            runtime.store.checkpoint(marker)
+            conn['checkpoint'] = marker
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=recovery.seed.json"})
 
@@ -819,6 +844,20 @@ def create_app(root=None, testing=False):
                           start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
                           game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]),
                           avatar=bool(avatar), redpoints=len(redpoints['players']) if redpoints else 0)
+            with runtime.store.connection() as conn:
+                old_players = (conn.get('gaming') or {}).get('players', {})
+                new_players = (redpoints or {}).get('players', {})
+                review['comparison'] = dict(
+                    accounts_before=len(conn['admin']['users']), wallets_before=len(old_players),
+                    accounts_added=sorted(set(value['users'])-set(conn['admin']['users'])),
+                    accounts_removed=sorted(set(conn['admin']['users'])-set(value['users'])),
+                    accounts_changed=sum(conn['admin']['users'][key] != value['users'][key]
+                                         for key in set(value['users']) & set(conn['admin']['users'])),
+                    wallets_added=len(set(new_players)-set(old_players)),
+                    wallets_removed=len(set(old_players)-set(new_players)),
+                    wallets_changed=sum(old_players[key] != new_players[key] for key in set(new_players)&set(old_players)),
+                    pending_before=sum(bool(p.get('poker') or p.get('blackjack')) for p in old_players.values()),
+                    pending_after=sum(bool(p.get('poker') or p.get('blackjack')) for p in new_players.values()))
             return render_admin("settings", recovery_review=review)
         except (ValueError, RuntimeError, UnicodeDecodeError) as exc:
             return render_admin("settings", errors={"recovery":str(exc)}, status=422)
@@ -1026,11 +1065,20 @@ def create_app(root=None, testing=False):
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     try:
+        from release_check import check_release
+        checked = check_release(strict='--check' in sys.argv)
+        if not checked['ok']:
+            raise RuntimeError('Release check failed: '+'; '.join(checked['problems']))
+        for warning in checked['warnings']:
+            LOG.warning('RELEASE %s', warning)
+        if '--check' in sys.argv:
+            LOG.info('RELEASE Checked %s Python modules and %s templates. No accounts or game state changed.', checked['python_modules'], checked['templates'])
+            return 0
         app = create_app()
         config, runtime = app.extensions["settings"], app.extensions["runtime"]
         from waitress import create_server
         options = dict(host="0.0.0.0", port=config.port, threads=6, ident="RedHunllef", expose_tracebacks=False,
-                       max_request_body_size=8*1024*1024, channel_timeout=60, clear_untrusted_proxy_headers=True)
+                       max_request_body_size=64*1024*1024, channel_timeout=60, clear_untrusted_proxy_headers=True)
         if config.proxy:
             # App Platform is the only trusted ingress. Do not enable this on
             # a directly exposed host. Waitress applies proxy interpretation once.
@@ -1038,6 +1086,7 @@ def main():
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
         LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
+        LOG.info('HEALTH /healthz checks the process; /readyz checks local reads and writes. Provider delays appear separately in Admin Overview.')
         LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Identity and cooldowns follow signed browser cookies, never shared IPs. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")

@@ -703,7 +703,7 @@ class Gaming:
                 return player['stats'].get(game, {})
             for game in (*GAMES, 'video_poker'):
                 rows = [dict(name=p['name'], player_tag=key[:12], ips=sorted(networks.get(key, [])),
-                             balance=p['balance'], **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
+                             balance=p['balance'], funding_adjustment=p.get('balance_adjustment', 0), **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
                 rows.sort(key=lambda p:(-p['net'], -p['paid'], p['player_tag']))
                 # Count the complete ledger before slicing the five leaders.
                 counts[game] = dict(players=len(rows), rounds=sum(row['bets'] for row in rows))

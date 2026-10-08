@@ -24,6 +24,7 @@ from boss_avatar import validate_avatar
 from presentation import valid_marker
 from weekly_history import clean_history
 from gaming import validate_gaming
+from telemetry import Measurements
 
 LOG = logging.getLogger("redhunllef")
 
@@ -68,6 +69,8 @@ class Store:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.cached, self.stamp = None, None
+        self.measurements = Measurements()
+        self._probe, self._probe_until = None, 0
         self.initialize()
 
     @contextmanager
@@ -119,20 +122,57 @@ class Store:
     @contextmanager
     def connection(self, transaction=False):
         """Existing call sites use this as a transaction, not a SQL connection."""
+        started = time.perf_counter()
+        waited, copied, written, size = 0, None, None, 0
         with self.lock:
             try:
                 with self._file_lock():
+                    waited = (time.perf_counter()-started)*1000
                     current = self._disk()
+                    copying = time.perf_counter()
                     value = copy.deepcopy(current) if transaction else current
+                    copied = (time.perf_counter()-copying)*1000 if transaction else None
                     yield value
                     if transaction and value != current:
+                        writing = time.perf_counter()
                         atomic_json(self.path, value)
                         self._remember(value)
+                        written = (time.perf_counter()-writing)*1000
+                    size = self.stamp[1] if self.stamp else 0
             except (Conflict, ValueError, RuntimeError):
                 raise
             except OSError as exc:
+                self.measurements.failed('store_io_error')
+                self._probe_until = 0
                 LOG.error("STORAGE Local file operation failed (%s).", type(exc).__name__)
                 raise StoreError("Local storage could not be read or written. Check free space and the data folder permissions; keep your saved file.") from None
+            finally:
+                self.measurements.transaction(waited, copied, written, size)
+
+    def readiness(self):
+        """Probe local state and a tiny temporary write, at most once per 15s.
+
+        Never rewrite community state as a health check. Upstream availability
+        does not determine whether this application can serve its users.
+        """
+        with self.lock:
+            if self._probe and time.monotonic() < self._probe_until:
+                return dict(self._probe)
+            try:
+                with self._file_lock():
+                    if self._disk() is None:
+                        raise StoreError('Missing saved state')
+                    with tempfile.TemporaryFile(dir=self.path.parent) as check:
+                        check.write(b'ready\n')
+                        check.flush()
+                        os.fsync(check.fileno())
+                ok, message = True, 'Local save checked. Keep a private recovery export outside this server.'
+            except (OSError, ValueError, RuntimeError):
+                ok, message = False, 'Check data-folder permissions, free disk space and runtime logs. Existing state was not reset.'
+                self.measurements.failed('store_probe_failed')
+            self._probe = dict(ok=ok, checked_at=int(time.time()), message=message)
+            self._probe_until = time.monotonic() + 15
+            return dict(self._probe)
 
     def initialize(self):
         with self.lock, self._file_lock():
