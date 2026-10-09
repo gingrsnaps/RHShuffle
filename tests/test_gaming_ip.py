@@ -258,7 +258,7 @@ class GamingIPTests(unittest.TestCase):
             for game in ('dice','keno','plinko','blackjack'):
                 self.assertIn('gamingLeaders-'+game,response.text)
                 self.assertIn('gamingCount-'+game,response.text)
-            self.assertIn('No completed RedPoints rounds are saved',response.text)
+            self.assertIn('No completed rounds this week',response.text)
             self.assertIn(RELEASE,response.text)
             self.assertIn('href="/admin/gaming">Gaming top 5',response.text)
         self.assertEqual(self.app.test_client().get('/admin/gaming').status_code,302)

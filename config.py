@@ -5,7 +5,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.08-community-polish6"
+RELEASE = "2026.10.08-community-clarity7"
 INTERVAL = 60
 
 

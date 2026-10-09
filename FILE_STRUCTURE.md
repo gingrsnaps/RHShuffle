@@ -1,13 +1,14 @@
-# Complete file structure — 2026.10.08
+# Complete file structure — 2026.10.08-community-clarity7
 
-Extract the ZIP. `redhunllef-rebuilt/` is the project root. Install requirements,
-then run `python wager_backend.py` from that folder. The list below contains the
-actual source/assets/documentation, not patch instructions. Runtime `data/` is
-created automatically and must be preserved when updating an existing host.
+Extract the ZIP to find redhunllef-rebuilt/. Run only wager_backend.py. All modules
+below are included; supporting Python files are imports. Runtime data/ is created
+automatically and must be preserved when updating an existing host.
 
 ```text
 redhunllef-rebuilt/
+  .env.example
   .github/workflows/test.yml
+  .gitignore
   BUILD_MANIFEST.json
   CHANGES.md
   FILE_STRUCTURE.md
@@ -28,6 +29,8 @@ redhunllef-rebuilt/
   docs/ADMIN_GAMING.png
   docs/BACCARAT_MOBILE.png
   docs/BLACKJACK_DESKTOP.png
+  docs/BOSS_CONTROLS_DESKTOP.png
+  docs/BOSS_CONTROLS_MOBILE.png
   docs/BOSS_MOBILE.png
   docs/COINFLIP_MOBILE.png
   docs/COMMUNITY_BOSS.md
@@ -87,6 +90,7 @@ redhunllef-rebuilt/
   store_schema.py
   telemetry.py
   templates/admin.html
+  templates/admin_attention.html
   templates/admin_boss.html
   templates/admin_gaming.html
   templates/admin_health.html
@@ -108,6 +112,7 @@ redhunllef-rebuilt/
   templates/macros.html
   templates/recovery_panel.html
   tests/assert_visual_pixels.py
+  tests/clarity_motion.cjs
   tests/experience_motion.cjs
   tests/fairness_v2_vectors.json
   tests/fairness_v3_vectors.json
@@ -132,6 +137,7 @@ redhunllef-rebuilt/
   tests/test_boss.py
   tests/test_boss_admin.py
   tests/test_boss_frontend.cjs
+  tests/test_clarity_update.py
   tests/test_comfort_update.py
   tests/test_community.py
   tests/test_extra_games.py
@@ -155,5 +161,6 @@ redhunllef-rebuilt/
   weekly_history.py
 ```
 
-All source files use UTF-8. Optional test/browser dependencies, bytecode caches,
-real runtime state and development fixtures are excluded from the distribution.
+All source uses UTF-8. Bytecode caches, local test fixtures, installed test tools
+and live runtime data are excluded. Original private configuration is included;
+keep your customized/newer configuration when installing this update.

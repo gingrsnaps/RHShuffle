@@ -107,7 +107,7 @@ test("username saves through the actual website and persists with real cookies",
         () =>
           dom.window.document
             .querySelector("#bossConnection")
-            .textContent.startsWith("Live"),
+            .textContent.startsWith("Updated"),
         "game scripts start",
       );
       assert.deepEqual(faults, []);

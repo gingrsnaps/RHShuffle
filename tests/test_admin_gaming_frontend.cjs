@@ -49,3 +49,18 @@ test('mixed release reports a reload message instead of claiming a fresh update'
  assert.match(p.w.document.getElementById('gamingAdminChecked').textContent,/release changed.*Reload/);
  assert.equal(p.w.document.querySelectorAll('#gamingLeaders-blackjack li').length,5);p.dom.window.close();
 });
+
+test('unchanged rankings retain DOM nodes; changed scores retain expanded records and focus',async()=>{
+ const p=make();await tick();
+ try {
+  const doc=p.w.document,list=doc.getElementById('gamingLeaders-dice'),first=list.firstElementChild,detail=first.querySelector('details'),summary=first.querySelector('summary');
+  detail.open=true;summary.focus();
+  p.w.RedGamingAdmin.render(p.data);
+  assert.equal(list.firstElementChild,first,'No replacement on unchanged polls');
+  assert.equal(doc.activeElement,summary);
+  p.data.revision++;p.data.games.dice[0].net+=7;p.w.RedGamingAdmin.render(p.data);
+  assert.equal(list.firstElementChild.querySelector('details').open,true);
+  assert.equal(doc.activeElement,list.firstElementChild.querySelector('summary'));
+  assert.match(list.firstElementChild.querySelector('.player-record').textContent,/Funding adjustments.*excluded from winnings/);
+ } finally {p.dom.window.close();}
+});

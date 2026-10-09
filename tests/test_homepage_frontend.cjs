@@ -63,7 +63,7 @@ function page() {
     },
   };
 }
-test("homepage bar drains while the defeated counter rises", async () => {
+test("homepage bar and remaining percentage drain together", async () => {
   const p = page();
   await flush();
   for (const percent of [0, 25, 75, 100]) {
@@ -83,7 +83,7 @@ test("homepage bar drains while the defeated counter rises", async () => {
     );
     assert.equal(
       p.w.document.querySelector("#invitePercent").textContent,
-      percent.toFixed(2) + "% defeated",
+      (100 - percent).toFixed(2) + "% remaining",
     );
   }
   assert.match(

@@ -225,7 +225,7 @@ test("victory and paused raids stop attacks, hostile names render as text", asyn
   await p.advance(5000);
   assert.match(
     p.w.document.querySelector("#attackButton").textContent,
-    /Victory/,
+    /Boss defeated/,
   );
   assert.equal(p.w.document.querySelector("#victoryRecap").hidden, false);
   p.close();
@@ -679,7 +679,7 @@ test("name save preserves typed drafts, unlocks play, and never sends an automat
   assert.equal(doc.querySelectorAll("#yourBadges li").length, 8);
   assert.match(
     doc.querySelector("#bossPercent").textContent,
-    /^0.00% defeated$/,
+    /^100.00% remaining$/,
   );
   p.close();
 });
@@ -848,7 +848,7 @@ test("last checked ages between polls and exact totals remain available", async 
   await p.advance(2000);
   assert.match(
     doc.querySelector("#bossConnection").textContent,
-    /Last checked 2s ago/,
+    /Updated 2s ago/,
   );
   assert.match(doc.querySelector("#bossHealth").textContent, /2.4M/);
   assert.match(doc.querySelector("#exactRaidTotals").textContent, /2,400,000/);

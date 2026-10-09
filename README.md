@@ -1,6 +1,6 @@
 # RedHunllef
 
-**Release: 2026.10.08-community-polish6** — complete configured Python application.
+**Release: 2026.10.08-community-clarity7** — complete configured Python application.
 
 Run everything through **`python wager_backend.py`**. The web server, automatic
 Shuffle/Kick checks, race history, community boss and all eight RedPoints games
@@ -104,7 +104,7 @@ https://docs.digitalocean.com/products/app-platform/how-to/store-data/
    private configuration with the bundled original seed.
 3. Install `requirements.txt` with the Python interpreter used for startup.
 4. Run `python wager_backend.py`. Reload the browser after startup.
-5. Check `/healthz` for `2026.10.08-community-polish6`, sign into `/admin`, and
+5. Check `/healthz` for `2026.10.08-community-clarity7`, sign into `/admin`, and
    review **Overview → Behind the scenes**. Confirm the intended race dates.
 
 Existing state wins over bootstrap files. A corrupt state file causes a clear
@@ -131,42 +131,41 @@ contains the actual files in their own folders instead of a combined source dump
 
 ## This update
 
-- **Independent health checks.** `/healthz` checks the running process. `/readyz`
-  checks local state access and a tiny temporary write, cached for 15 seconds.
-  Shuffle/Kick outages no longer make readiness fail. They remain visible in the
-  admin health cards and connection details.
-- **Private health overview.** Website, Shuffle, Kick, Games and Saved data cards
-  show current checks and next steps. A copyable/downloadable support report uses
-  allow-listed fields and excludes player names, IPs, credentials, password hashes,
-  private game seeds and provider response bodies.
-- **Measured storage.** Bounded in-memory samples show request latency, file size,
-  save time, copy time and lock waits. Every response receives `X-Request-ID`;
-  machine-readable errors include the same reference. Server-error logs include
-  that ID and the route name, without request bodies or query strings.
-- **Consistent recovery.** Full exports capture accounts, wallets, pending hands,
-  boss state and history from one store transaction. Preview compares account,
-  wallet and pending-hand counts against the current save. Uploading a preview
-  does not restore or change records. Superadmin recovery previews allow up to
-  64 MiB; ordinary requests and avatar uploads retain their existing limits.
-- **Cleaner mobile layout.** Every main header destination stays visible. Gaming
-  has a compact selector, a smaller wallet, and available/in-play/last-net labels.
-  Active card hands hide the redundant new-hand wager form. Mobile table actions
-  stay within their game area.
-- **Shorter dashboard.** Eight consistent game cards, visible resume-hand links,
-  explicit positive/negative results and a five-round preview with View all.
-  Expanding history or focusing a receipt survives unchanged wallet polls.
-- **Clear play states.** Submitting, checking a proof, animating and recovering
-  have different labels. Results remain server-authoritative. Animations never
-  decide a payout, invent a reroll, or submit an extra bet.
-- **Smaller page-specific code.** Only the Plinko page downloads the canvas
-  renderer. Hold'em UI code is loaded only for Hold'em. Shared proof code stays
-  available for verifying older receipts from any game.
-- **Consistent red styling.** Shared colors, panel treatments, inputs, focus rings,
-  comfortable primary touch controls and reduced-motion support. Boss phase
-  shading changes cosmetically with remaining health; damage rules are unchanged.
-- **Clearer history.** Saved standings are labelled separately from provider-
-  confirmed results. The homepage prioritizes the race and standings, followed
-  by the community boss invitation.
+- **Boss first.** The community boss is directly below the homepage hero/countdown,
+  above standings. Its bar and percentage both show **HP remaining**, from full
+  to empty. One Fight boss button leads to the arena; latest-hit details expand.
+- **Cleaner admin overview.** Race, boss and community summaries come first,
+  followed by all eight Top 5 lists. Diagnostics, history checks and performance
+  measurements remain available in one collapsed section below daily controls.
+  One service summary highlights problems without repeating provider errors.
+- **Compact private rankings.** Full names and net winnings stay visible. Expand
+  a player to see wagers, returns, balance, recorded IPs and funding adjustments.
+  Free points and admin grants are excluded from winnings. Open records and
+  keyboard focus survive refreshed scores; unchanged rows keep their DOM nodes.
+- **Separate boss tasks.** Name, avatar, maximum/current HP and damage have clear
+  controls and separate saves. Name/damage edits merge inside the guarded state
+  transaction. A name or image change cannot restore health. HP previews explain
+  deliberate heals, and the archive/new-raid control is separate.
+- **Reliable consecutive saves.** A second save on the same admin page reloads
+  the confirmed document even when only the destination fragment changes. This
+  refreshes edit revisions and displays the correct receipt next to the control.
+  Rejected writes retain the current draft; unsaved changes prompt on navigation.
+- **Clear player actions.** Attack ready, cooldown, paused and defeated states
+  have short labels. The saved community name is visible with Edit name and
+  recovery access. First entry to Gaming still requires its original one-time
+  name confirmation; a saved boss name is prefilled and clearly labelled.
+- **Quieter updates.** Public freshness labels use Updated rather than technical
+  polling text. The admin minute feed omits the rankings already supplied by the
+  five-second conditional feed; that local feed also updates the overview boss.
+  No new poll timer or provider request is added. Saved data stays visible on failure.
+- **Mobile polish.** All main navigation destinations remain accessible. Red
+  actions, panel spacing, touch controls, focus rings, and reduced-motion support
+  are consistent. Reserved content space reduces movement during refreshes.
+
+Previous reliability improvements remain included: independent liveness/readiness,
+private support reports, bounded storage/request measurements, response reference
+IDs, atomic full recovery exports, recovery previews and startup completeness checks.
+Game rules, provider integration and the existing save format are retained.
 
 `docs/VALIDATION.md` records the checks run for this release and their limits.
 `docs/PERFORMANCE.md` describes measurement targets and the local load sample.
@@ -198,7 +197,7 @@ existing race, boss, avatar and ranking permissions.
 
 The admin Players tab retains full names and the expandable first 100 Code Red
 wagerers. The Gaming section retains separate Top 5 lists for all eight games,
-full community names and recorded connection IPs. Legacy Video Poker records
+full community names and expandable recorded connection IPs. Legacy Video Poker records
 remain separate from Hold'em. Funding adjustments are labelled and excluded from
 game net winnings. **Give everyone +100,000 RedPoints** remains additive and
 retry-safe; it does not erase scores or pending hands.
@@ -266,8 +265,8 @@ npm --prefix tests install --ignore-scripts
 npm --prefix tests test
 ```
 
-Real-browser scripts are `tests/gaming_motion.cjs`, `tests/holdem_motion.cjs` and
-`tests/experience_motion.cjs`. They use temporary synthetic accounts and do not
+Real-browser scripts are `tests/gaming_motion.cjs`, `tests/holdem_motion.cjs`,
+`tests/experience_motion.cjs` and `tests/clarity_motion.cjs`. They use temporary synthetic accounts and do not
 contact Shuffle or Kick. Set `RH_TEST_PYTHON` to the desired Python interpreter
 and `RH_CHROMIUM` to an installed Chromium executable, or install Playwright's
 browser for development. `RH_SCREENSHOTS` selects a local output directory.

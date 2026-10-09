@@ -415,7 +415,9 @@ def create_app(root=None, testing=False):
     @app.get('/admin/gaming/status')
     @protected
     def admin_gaming_status():
-        response = jsonify(ok=True, **gaming.leaders(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
+        # The overview reuses this five-second local read for its boss card.
+        # Neither this endpoint nor its conditional response contacts providers.
+        response = jsonify(ok=True, **gaming.leaders(), boss=boss.summary(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
         response.set_etag(token(response.get_json()))
         return response.make_conditional(request)
 
@@ -631,6 +633,7 @@ def create_app(root=None, testing=False):
             tab = "overview"
         values = runtime.status()
         values['gaming'] = gaming.leaders()
+        values['boss'] = boss.summary()
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         visible = filtered(values["rows"], values["edits"], request.args)
@@ -686,16 +689,20 @@ def create_app(root=None, testing=False):
                 boss.release_profile(request.form.get('raid_id'), request.form.get('player_name'), actor=g.user)
             elif action == 'household':
                 boss.household(request.form.get('raid_id'), request.form.get('player_name'), int(request.form.get('slots', '')), actor=g.user)
-            elif action == 'settings':
+            elif action in {'settings', 'name', 'damage'}:
                 try:
-                    values = dict(name=request.form.get('boss_name', ''),
-                                  damage=int(request.form.get('base_damage', '')),
-                                  weak_damage=int(request.form.get('weak_damage', '')),
-                                  burst_bonus=int(request.form.get('burst_bonus', '')))
+                    values = {}
+                    if action in {'settings', 'name'}:
+                        values['name'] = request.form.get('boss_name', '')
+                    if action in {'settings', 'damage'}:
+                        values.update(damage=int(request.form.get('base_damage', '')),
+                                      weak_damage=int(request.form.get('weak_damage', '')),
+                                      burst_bonus=int(request.form.get('burst_bonus', '')))
                     settings_revision = int(request.form.get('settings_revision', '-1'))
                 except ValueError:
                     raise ValueError('Enter whole numbers for damage and reload if this form is out of date.') from None
-                boss.configure(request.form.get('raid_id'), values, settings_revision, actor=g.user)
+                boss.configure(request.form.get('raid_id'), values, settings_revision,
+                               actor=g.user, partial=action != 'settings')
             else:
                 boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
                              health_revision=int(request.form.get('health_revision', '-1')) if action in {'health', 'remaining_health'} else None, actor=g.user)
@@ -705,15 +712,22 @@ def create_app(root=None, testing=False):
                    'household':'Shared connection allowance saved. Each approved player keeps a 30-second cooldown.',
                    'release_player':'Connection released. The original browser retains its name and achievements.',
                    'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
+                   'name':'Boss name saved. Health and damage settings were kept.',
+                   'damage':'Damage settings saved. These apply to future hits; existing progress was kept.',
                    'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action]
             saved = boss.summary()
             if action in {'health', 'remaining_health', 'restart'}:
                 message += f" Remaining HP: {saved['hp']:,}; maximum HP: {saved['max_hp']:,}."
             elif action == 'settings':
                 message += f" Name: {values['name']}; base: {values['damage']:,}; weakness: {values['weak_damage']:,}; burst: {values['burst_bonus']:,}."
+            elif action == 'name':
+                message += f" Name: {values['name'].strip()}."
+            elif action == 'damage':
+                message += f" Base: {values['damage']:,}; weakness: {values['weak_damage']:,}; burst: {values['burst_bonus']:,}."
             LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
             target = {'avatar':'avatarHeading', 'avatar_reset':'avatarHeading', 'health':'healthHeading',
-                      'remaining_health':'healthHeading', 'settings':'bossSettingsHeading', 'restart':'bossRestart'}.get(action, 'bossControls')
+                      'remaining_health':'healthHeading', 'settings':'bossSettingsHeading',
+                      'name':'bossNameHeading', 'damage':'bossSettingsHeading', 'restart':'bossRestart'}.get(action, 'bossControls')
             return admin_saved(message, 'boss', target)
         except ValueError as exc:
             return render_admin("boss", errors={"boss":str(exc)}, status=422)
@@ -759,7 +773,11 @@ def create_app(root=None, testing=False):
     @protected
     def status():
         value = runtime.status()
-        value['gaming'] = gaming.leaders()
+        # The dedicated gaming feed owns fast rankings. Older clients still
+        # receive them unless they explicitly opt out of this duplicate body.
+        if request.args.get('gaming') != '0':
+            value['gaming'] = gaming.leaders()
+        value['boss'] = boss.summary()
         value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
         rows, edits = value.pop("rows"), value.pop("edits")

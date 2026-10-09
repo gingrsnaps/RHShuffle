@@ -1,6 +1,6 @@
 # Start RedHunllef
 
-Release **2026.10.08-community-polish6** — complete configured package.
+Release **2026.10.08-community-clarity7** — complete configured package.
 
 Install dependencies once, then run only the existing launcher:
 
@@ -29,7 +29,7 @@ install. Existing accounts and changed passwords take precedence. Original priva
 provider configuration and logos are included. Keep this configured package private.
 
 Open **Gaming top 5** in the admin header. Confirm the installed label reads
-**2026.10.08-community-polish6**; this complete package now includes the latest
+**2026.10.08-community-clarity7**; this complete package now includes the latest
 eight games, shared wallets, five-second private rankings, the health overview and refined mobile controls.
 
 ## Updating an existing installation
@@ -37,7 +37,7 @@ eight games, shared wallets, five-second private rankings, the health overview a
 Preserve current `data/`, private files, recovery seeds, runtime settings and player
 cookies. Merge code into the matching paths; do not replace newer private seeds
 with bundled originals. There is no reason to reset the boss or clear cookies.
-Reload after restarting and check `/healthz` for **2026.10.08-community-polish6**.
+Reload after restarting and check `/healthz` for **2026.10.08-community-clarity7**.
 
 On a persistent Linux host the existing `data/state.json` wins. A previous local
 SQLite save is imported read-only once if no JSON exists. Corrupt saves stop

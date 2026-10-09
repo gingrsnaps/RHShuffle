@@ -59,7 +59,7 @@ class BossTests(unittest.TestCase):
         self.assertNotIn('How to play together',html)
         self.assertNotIn('id="howToPlay"',html)
         self.assertNotIn('href="/admin"',a.get('/').text)
-        self.assertIn('Join the boss fight',a.get('/').text)
+        self.assertIn('Fight boss',a.get('/').text)
 
     def test_simultaneous_hits_from_distinct_players_are_atomic(self):
         def attack(i): return self.hit(str(i),f'198.51.100.{i+1}')
@@ -159,7 +159,7 @@ class BossTests(unittest.TestCase):
         self.assertEqual(self.b.status()['hp'], saved['hp'])
         # Reloaded HTML must not briefly label a damaged boss as 100% health.
         page = self.app.test_client().get('/play')
-        self.assertIn(f'id="bossPercent">{(saved["max_hp"] - saved["hp"]) / saved["max_hp"] * 100:.2f}% defeated</span>', page.text)
+        self.assertIn(f'id="bossPercent">{saved["hp"] / saved["max_hp"] * 100:.2f}% remaining</span>', page.text)
 
     def test_cold_app_restart_retains_all_committed_damage(self):
         self.hit()

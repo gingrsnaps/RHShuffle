@@ -1,25 +1,27 @@
-# Changes in 2026.10.08-community-polish6
+# Changes in 2026.10.08-community-clarity7
 
-1. Decoupled readiness from Shuffle freshness; temporary local-write probe.
-2. Added the five-card admin health overview and private support-report copying.
-3. Added bounded request, JSON copy/write and lock-wait measurements.
-4. Added trace IDs to responses, JSON errors and server-error logs.
-5. Made full recovery exports atomic across accounts, wallets, boss and history.
-6. Added recovery preview comparisons and an overview checkpoint reminder.
-7. Added automatic release completeness checks and an optional strict check.
-8. Refined the red design, mobile header, game selector, focus and touch controls.
-9. Added Available / In play / Last net wallet labels and explicit play phases.
-10. Reduced recent-history clutter and preserved focus during unchanged polls.
-11. Loaded Plinko rendering only on its page; preserved receipt-driven motion.
-12. Prioritized homepage standings, clarified saved/final history and added boss
-    health-phase shading without changing damage or cooldowns.
-13. Distinguished admin funding adjustments from settled game winnings.
-14. Added readiness/privacy/recovery tests, a 100-player concurrency check and
-    native-browser experience/performance checks.
+1. Restored the community boss above the homepage leaderboard, after the hero.
+2. Changed all boss health labels/previews to remaining HP. Bar and percentage
+   drain together; the combat engine and no-regeneration rule are retained.
+3. Simplified the boss invitation and public update messages.
+4. Reorganized the admin overview around race, boss, players and quick actions.
+5. Grouped connections/history/performance inside expandable Diagnostics and
+   consolidated routine connection warnings into one actionable summary.
+6. Kept all eight Top 5 game lists visible, with full names and net winnings.
+   Player IPs, balances, detailed totals and funding expand on demand.
+7. Preserved expanded records and keyboard focus when rankings change, and
+   skipped rebuilding unchanged rows. Removed duplicate minute-feed rankings.
+8. Reused the five-second local gaming feed for the overview boss summary.
+9. Split name and damage saves into guarded partial edits. Health and unrelated
+   settings stay intact; existing combined-settings requests remain compatible.
+10. Fixed fragment-only admin redirects: consecutive saves now reload confirmed
+    values, current edit revisions and the correct success receipt.
+11. Improved name/recovery links, initial Gaming confirmation text, attack states,
+    unsaved upload detection, accessible feedback and mobile spacing.
+12. Added regression coverage for partial-edit authorization, stale edits,
+    conditional feeds, details/focus retention and real-browser repeated saves.
 
-Original accounts, credentials, logos, wager weighting and game/fairness rules are
-retained. No SQL service, extra worker, launch script or play-count quota was added.
-The full package contains actual source files; it is not a patch-only archive.
-
-See docs/VALIDATION.md for evidence. Local App Platform files remain temporary;
-this update does not claim to provide durable external storage.
+The complete package retains original private provider settings/account seed,
+logos, single Python launch, all games/proofs and existing runtime-state format.
+Keep newer deployed configuration and saved data when upgrading. See README.md
+for App Platform recovery instructions and docs/VALIDATION.md for test limits.

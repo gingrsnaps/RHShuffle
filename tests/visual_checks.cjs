@@ -55,7 +55,7 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
         await page.goto(base);
         await page
           .locator("#invitePercent")
-          .filter({ hasText: percent.toFixed(2) + "% defeated" })
+          .filter({ hasText: (100 - percent).toFixed(2) + "% remaining" })
           .waitFor();
         assert.equal(
           await page
@@ -74,24 +74,8 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
           ),
         }));
         assert.ok(geometry.width <= width, "Homepage overflows " + size);
-        if (geometry.leaderboard >= height) {
-          await page.screenshot({
-            path: path.join(output, "layout-failure-" + size + ".png"),
-            fullPage: true,
-          });
-          const blocks = await page.evaluate(() =>
-            Object.fromEntries(
-              [".site-header", ".hero", ".play-invite"].map((q) => [
-                q,
-                document.querySelector(q).getBoundingClientRect().toJSON(),
-              ]),
-            ),
-          );
-          throw Error(
-            "Leaderboard below first screen: " +
-              JSON.stringify({ size, ...geometry, blocks }),
-          );
-        }
+        const bossTop = await page.locator('#communityBoss').evaluate(node => node.getBoundingClientRect().top);
+        assert.ok(bossTop < geometry.leaderboard, "Boss above standings");
         if (size === "mobile")
           assert.ok(
             geometry.nav.every((h) => h >= 44),

@@ -519,9 +519,14 @@ class CommunityBoss:
                          state["max_hp"], COOLDOWN)
             return dict(ok=True, duplicate=False, hit=hit, state=self._project(state, guest, address, now))
 
-    def configure(self, raid_id, values, settings_revision, *, actor="System"):
-        """Called only after the HTTP admin-session and CSRF guards succeed."""
-        values = combat_settings(values)
+    def configure(self, raid_id, values, settings_revision, *, actor="System", partial=False):
+        """Save one admin task without overwriting unrelated combat settings.
+
+        Partial edits merge inside the same lock/transaction as the revision
+        check. Appearance edits can never change HP or reset player damage.
+        """
+        if not partial:
+            values = combat_settings(values)
         with self.lock:
             with self.store.connection(transaction=True) as conn:
                 state = self._read(conn, locked=True)
@@ -529,6 +534,8 @@ class CommunityBoss:
                     raise BossError('Another raid started. Reload before changing its settings.', 'new_raid', 409)
                 if settings_revision != state.get('settings_revision', 0):
                     raise BossError('Another admin saved boss settings. Reload and review before saving.', 'settings_conflict', 409)
+                if partial:
+                    values = combat_settings({**combat_settings(state.get('settings')), **values})
                 if values == combat_settings(state.get('settings')):
                     return
                 previous = copy.deepcopy(state)
