@@ -9,7 +9,7 @@ consecutive identical draws are valid. Defaults are 100 normal damage, 150 weakn
 damage, and a 100 bonus every tenth hit. Admins can change those whole-number values.
 
 Health never regenerates automatically. Only an explicit admin health edit or a new
-raid can increase it. The percentage measures defeated HP from 0% through 100%.
+raid can increase it. The bar and percentage both show remaining HP from 100% down to 0%.
 Requests never supply trusted damage. Repeated request receipts return the original
 hit without dealing damage twice. A lost response can therefore be retried safely.
 
@@ -70,3 +70,11 @@ intercept them. The live interface uses `/play/api/profile`. Both call the same
 validation and atomic save. Public game writes accept a player-bound CSRF token;
 the separate admin session and its CSRF checks remain mandatory for admin changes.
 Neither a lost admin session nor a newly started raid prevents a name save.
+
+## Current controls
+
+The homepage invitation sits above the wager leaderboard. Admin → Community boss
+groups Appearance, Health and Damage. Save name and Save damage independently;
+these guarded edits preserve HP and player contributions. Avatar uploads retain
+server-side image validation. Maximum HP and Current HP have separate previews
+and confirmations. Starting a new raid remains an explicit archive/reset action.

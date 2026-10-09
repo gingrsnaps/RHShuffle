@@ -15,7 +15,7 @@
       data-edit-name="{{ '1' if name_error or request.args.get('edit_name') == '1' else '0' }}"
       data-boss-bootstrap="{{ {'state': boss_data, 'csrf': csrf(), 'player_csrf': player_csrf} | tojson | forceescape }}">
   <div class="boss-live">
-    <span id="bossConnection" role="status">Connecting…</span>
+    <span id="bossConnection">Connecting…</span>
     <div class="share-tools">
       <button class="button small" id="copyRaidLink" type="button">{{ icon('link', 18) }} Copy link</button>
       <span id="shareResult" class="small muted" role="status"></span>
@@ -52,7 +52,7 @@
       </div>
       <div class="hp-label">
         <strong id="bossHealth">{{ '{:,}'.format(boss_data.hp) }} / {{ '{:,}'.format(boss_data.max_hp) }} HP</strong>
-        <span id="bossPercent">{{ '%.2f' | format((boss_data.max_hp - boss_data.hp) / boss_data.max_hp * 100) }}% defeated</span>
+        <span id="bossPercent">{{ '%.2f' | format(boss_data.hp / boss_data.max_hp * 100) }}% remaining</span>
       </div>
       <progress id="bossHealthBar" class="health-bar" max="{{ boss_data.max_hp }}"
                 value="{{ boss_data.hp }}" aria-label="Boss health remaining"></progress>
@@ -97,13 +97,13 @@
       </div>
       <div id="playerIdentity" class="player-identity" {% if not boss_data.you.identity_ready or name_error or request.args.get('edit_name') == '1' %}hidden{% endif %}>
         <span>Playing as <strong id="playingAs">{{ boss_data.you.display_name }}</strong></span>
-        <a id="editPlayerName" href="{{ url_for('play', edit_name='1', _anchor='yourTurn') }}" class="text-button">Edit</a>
+        <a id="editPlayerName" href="{{ url_for('play', edit_name='1', _anchor='yourTurn') }}" class="text-button">Edit name</a>
       </div>
       <form id="playerNameForm" class="player-name-form" method="post" action="{{ url_for('boss_profile_form') }}"
             {% if boss_data.you.identity_ready and not name_error and request.args.get('edit_name') != '1' %}hidden{% endif %}>
         <input type="hidden" name="csrf" value="{{ player_csrf }}">
         <input type="hidden" name="raid_id" value="{{ boss_data.raid_id }}">
-        <label for="playerUsername">Community / Shuffle username</label>
+        <label for="playerUsername">Community name</label>
         <div class="player-name-row"><input id="playerUsername" name="username" type="text" maxlength="64" required
           autocomplete="username" spellcheck="false" value="{{ name_draft if name_draft is defined else boss_data.you.display_name }}"
           aria-describedby="playerNameResult"><button class="button small" type="submit">Save</button></div>
@@ -130,6 +130,7 @@
         <p id="recoveryResult" class="small" role="status"></p>
       </details>
       <button class="button primary attack-button" id="attackButton" type="button" disabled>Connecting…</button>
+      <p id="attackAvailability" class="visually-hidden" role="status" aria-live="polite"></p>
       <p id="rearmHint" class="small muted" role="status"></p>
       <p id="hitResult" class="hit-result" role="status"></p>
       <div class="personal-stats">

@@ -1,4 +1,4 @@
-/* The health bar drains as HP falls; the separate defeated percentage rises.
+/* The bar and its percentage both show remaining HP and drain together.
    Five-second reads use saved anonymous state, never the affiliate providers. */
 (() => {
   "use strict";
@@ -6,7 +6,7 @@
   if (!bar) return;
   const id = (name) => document.getElementById(name);
   const text = (name, value) => {
-    id(name).textContent = value;
+    if (id(name).textContent !== String(value)) id(name).textContent = value;
   };
   const card = bar.closest(".play-invite");
   const retired = new Set();
@@ -31,7 +31,7 @@
     );
     text(
       "inviteChecked",
-      `Last confirmed ${ageLabel(seconds)}${delayed ? " · retrying" : " · checks every 5s"}`,
+      `Updated ${ageLabel(seconds)}${delayed ? " · retrying" : ""}`,
     );
     const change = state?.health_change;
     const notice = id("inviteHealthNotice");
@@ -97,17 +97,17 @@
     confirmedAt = performance.now();
     delayed = false;
     id("inviteError").hidden = true;
-    const percent = ((next.max_hp - next.hp) / next.max_hp) * 100;
+    const percent = (next.hp / next.max_hp) * 100;
     bar.max = next.max_hp;
     bar.value = next.hp;
     bar.setAttribute(
       "aria-valuetext",
       `${next.hp.toLocaleString()} of ${next.max_hp.toLocaleString()} HP remaining`,
     );
-    text("invitePercent", percent.toFixed(2) + "% defeated");
+    text("invitePercent", percent.toFixed(2) + "% remaining");
     text(
       "inviteProgress",
-      `${next.hp.toLocaleString()} HP left · ${next.raiders} raiders united`,
+      `${next.hp.toLocaleString()} HP · ${next.raiders} raiders`,
     );
     text("inviteBossName", next.name);
     const hitData = next.latest_hit;
@@ -131,7 +131,7 @@
         ? "View the victory"
         : next.status === "paused"
           ? "View the raid"
-          : "Join the fight",
+          : "Fight boss",
     );
     const avatar = id("inviteAvatar");
     if (next.avatar_url?.startsWith("/") && !next.avatar_url.startsWith("//"))
@@ -184,7 +184,7 @@
       updateAge();
       text(
         "inviteError",
-        "Showing the last confirmed progress. Retrying automatically; reload after an app update.",
+        "Connection delayed. Saved progress is shown; retrying automatically.",
       );
       id("inviteError").hidden = false;
     } finally {

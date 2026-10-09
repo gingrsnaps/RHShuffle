@@ -28,14 +28,13 @@
     id("bossPreviewHealth").max = saved.max_hp;
     id("bossPreviewHealth").value = saved.hp;
     id("bossPreviewPercent").textContent =
-      (((saved.max_hp - saved.hp) / saved.max_hp) * 100).toFixed(2) +
-      "% defeated";
+      ((saved.hp / saved.max_hp) * 100).toFixed(2) + "% remaining";
     id("bossPreviewRemaining").textContent =
-      `${saved.hp.toLocaleString()} HP left · ${saved.raiders} raiders united`;
+      `${saved.hp.toLocaleString()} HP remaining · ${saved.raiders} raiders united`;
     id("bossPreviewMessage").textContent =
       imageError ||
       (imageDraft || draftName !== saved.name
-        ? "Unsaved appearance preview. Save the name and upload the avatar separately below."
+        ? "Unsaved appearance preview. Save the name and upload the avatar in Appearance."
         : "Showing saved appearance.");
   }
   name.addEventListener("input", render);

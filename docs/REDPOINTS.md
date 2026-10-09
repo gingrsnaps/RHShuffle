@@ -1,6 +1,6 @@
 # RedPoints gaming
 
-Release **2026.10.08-community-polish6**. New rounds use **redpoints-v5**. Earlier
+Release **2026.10.08-community-clarity7**. New rounds use **redpoints-v5**. Earlier
 **redpoints-v1**, **redpoints-v2**, **redpoints-v3** and **redpoints-v4** receipts remain verifiable. Run only `python wager_backend.py`.
 
 ## Currency and identity
@@ -54,7 +54,7 @@ The existing boss identity and recovery code are reused. Boss household settings
 
 Sign in and open **Gaming top 5**, `/admin/gaming`, or `/admin?tab=gaming`.
 Overview also includes the same eight lists. The visible installed release should
-be **2026.10.08-community-polish6**. Complete packages and patch files must match.
+be **2026.10.08-community-clarity7**. Complete packages and patch files must match.
 
 Each game shows up to five players ranked by actual net winnings, then total
 returned points, then a stable short player identifier. Records include the full

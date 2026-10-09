@@ -18,6 +18,7 @@
     if (node) {
       node.hidden = !value;
       text(node, value);
+      if (name === "networkError") globalThis.RedHealth?.attention();
     }
   };
   const currency = (value) =>
@@ -58,10 +59,20 @@
   let dirty = false;
   const dirtyForms = new Set();
   document.querySelectorAll("[data-dirty]").forEach((form) => {
-    const initial = new URLSearchParams(new FormData(form)).toString();
+    // Files need their own signature; URLSearchParams reduces every File to
+    // the same string and would miss a changed avatar selection.
+    const signature = () =>
+      JSON.stringify(
+        [...new FormData(form)].map(([key, value]) => [
+          key,
+          typeof value === "string"
+            ? value
+            : [value.name, value.size, value.lastModified],
+        ]),
+      );
+    const initial = signature();
     const update = () => {
-      if (new URLSearchParams(new FormData(form)).toString() !== initial)
-        dirtyForms.add(form);
+      if (signature() !== initial) dirtyForms.add(form);
       else dirtyForms.delete(form);
       dirty = dirtyForms.size > 0;
       text(id("saveLabel"), dirty ? "Unsaved changes" : "All changes saved");
@@ -160,7 +171,8 @@
     publicETag = "",
     lastProviderFailure = "";
   let participantVersion = "",
-    redVersion = "";
+    redVersion = "",
+    historyVersion = "";
   try {
     const boot = JSON.parse(document.body.dataset.bootstrap);
     site = boot.site;
@@ -210,7 +222,7 @@
     if (sourceAt)
       text(
         id("sourceTime"),
-        "Last checked " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
+        "Updated " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
       );
     for (const [name, job] of Object.entries(jobs)) {
       const remaining = Math.max(0, Math.ceil(job.next_check - now));
@@ -491,9 +503,10 @@
     if (isAdmin) {
       jobs = value.jobs || {};
       if (value.health) globalThis.RedHealth?.render(value.health);
-      if (value.checkpoint && id('recoveryReminder')) {
-        id('recoveryReminder').hidden = !value.checkpoint.changes;
-        text(id('recoveryReminderDetail'), value.checkpoint.details);
+      if (value.boss) globalThis.RedHealth?.renderBoss(value.boss);
+      if (value.checkpoint && id("recoveryReminder")) {
+        id("recoveryReminder").hidden = !value.checkpoint.changes;
+        text(id("recoveryReminderDetail"), value.checkpoint.details);
       }
       if (value.checkpoint) {
         text(id("checkpointLabel"), value.checkpoint.label);
@@ -512,7 +525,13 @@
       progress(value);
       if (value.gaming) globalThis.RedGamingAdmin?.render(value.gaming);
       const historyDiagnostics = id("historyDiagnostics");
-      if (historyDiagnostics && value.history?.weeks) {
+      const historyKey = JSON.stringify(value.history?.weeks || []);
+      if (
+        historyDiagnostics &&
+        value.history?.weeks &&
+        historyKey !== historyVersion
+      ) {
+        historyVersion = historyKey;
         historyDiagnostics.replaceChildren(
           ...value.history.weeks.map((week) => {
             const article = document.createElement("article");
@@ -642,10 +661,12 @@
           server_time: currentTime ?? Date.now() / 1000,
         };
       }
-      if (response.status === 401)
+      if (isAdmin && [401, 403].includes(response.status)) {
+        document.dispatchEvent(new Event("admin:expired"));
         throw new Error(
           "Your session expired. Sign in again to resume updates.",
         );
+      }
       if (
         response.redirected &&
         response.url &&
@@ -678,7 +699,9 @@
       if (!response.ok)
         throw new Error(
           `${value?.error || "The server could not complete this request."} (HTTP ${response.status})` +
-          (response.status >= 500 && value?.request_id ? ` Reference: ${value.request_id}.` : ''),
+            (response.status >= 500 && value?.request_id
+              ? ` Reference: ${value.request_id}.`
+              : ""),
         );
       if (conditional) {
         publicCache = value;
@@ -707,6 +730,15 @@
       if (isAdmin) {
         for (const [key, value] of new URLSearchParams(location.search))
           url.searchParams.set(key, value);
+        url.searchParams.set(
+          "tab",
+          document.body.dataset.adminTab ||
+            url.searchParams.get("tab") ||
+            "overview",
+        );
+        // Rankings already have a five-second conditional feed. Do not send
+        // the same private lists again in the slower provider-status response.
+        url.searchParams.set("gaming", "0");
         if (id("codeRed")?.open) url.searchParams.set("code_red", "1");
       }
       const result = await getJSON(url);
@@ -726,7 +758,9 @@
         "networkError",
         error.name === "AbortError"
           ? "Dashboard request timed out. Previous results are retained; updates will retry."
-          : error.message,
+          : isAdmin
+            ? error.message
+            : "Connection delayed. Saved standings remain visible; retrying automatically.",
       );
     } finally {
       busy = false;

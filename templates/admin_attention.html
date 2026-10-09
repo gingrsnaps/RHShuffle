@@ -1,0 +1,7 @@
+{# One actionable summary; detailed errors stay inside Diagnostics. #}
+{% set issues = data.health.components|rejectattr('state','equalto','good')|list %}
+<section class="admin-attention" id="adminAttention" data-state="{{ 'warning' if issues else 'good' }}" aria-label="Service status">
+  <div class="attention-heading"><strong id="attentionSummary">{{ 'Needs attention' if issues else 'Everything is connected' }}</strong><a class="text-link small" href="#diagnostics">View diagnostics →</a></div>
+  <ul id="adminIssueList" role="status" aria-live="polite" aria-atomic="true" {% if not issues %}hidden{% endif %}>{% for item in issues %}<li>{{ item.label }}: {{ 'Saving unavailable. Check storage before making changes.' if item.key in ['storage','games'] else 'Updates delayed. Saved results remain visible; retrying automatically.' }}</li>{% endfor %}</ul>
+  <p id="networkError" class="notice warning" role="status" hidden></p>
+</section>

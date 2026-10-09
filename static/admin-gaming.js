@@ -12,8 +12,10 @@
     revision = -1,
     granting = false,
     expired = false;
+  const rowKeys = new Map();
   function render(data) {
     if (expired) return;
+    if (data.boss) globalThis.RedHealth?.renderBoss(data.boss);
     if (
       Number(data.season.id) < season ||
       (Number(data.season.id) === season && data.revision < revision)
@@ -21,10 +23,9 @@
       return;
     season = Number(data.season.id);
     revision = data.revision;
-    id("gamingAdminReset").textContent =
-      `Balances and rankings reset ${data.season.end_et}. Each signed player has a separate wallet. Shared connections are allowed.`;
+    id("gamingAdminReset").textContent = `Weekly reset: ${data.season.end_et}.`;
     id("gamingAdminSummary").textContent =
-      `Wallets: ${fmt(data.player_count)} · Names confirmed: ${fmt(data.confirmed_players || 0)} · Completed rounds: ${fmt(data.completed_rounds)} · Linked IPs: ${fmt(data.ip_count)} · Active card hands: ${fmt(data.active_hands)}`;
+      `Players: ${fmt(data.player_count)} · Rounds: ${fmt(data.completed_rounds)} · Active hands: ${fmt(data.active_hands)}`;
     const grant = data.last_grant;
     id("gamingLastGrant").textContent = grant
       ? `Last grant: ${grant.actor} · +${fmt(grant.amount)} each · ${fmt(grant.players)} ${grant.players === 1 ? "wallet" : "wallets"} · ${new Date(grant.at * 1000).toLocaleString()}`
@@ -32,40 +33,68 @@
     id("gamingNoRecords").hidden = data.completed_rounds > 0;
     if (typeof data.visitor_ip_configured === "boolean")
       id("gamingIpWarning").hidden = data.visitor_ip_configured;
-    for (const [game, rows] of Object.entries({...data.games, video_poker:data.legacy_poker || []})) {
+    for (const [game, rows] of Object.entries({
+      ...data.games,
+      video_poker: data.legacy_poker || [],
+    })) {
       const list = id("gamingLeaders-" + game);
       if (!list) continue;
-      const count = game === "video_poker" ? data.legacy_poker_counts : data.counts?.[game];
+      const count =
+        game === "video_poker" ? data.legacy_poker_counts : data.counts?.[game];
       if (count) {
         id("gamingCount-" + game).textContent =
           `Players: ${fmt(count.players)} · Completed rounds: ${fmt(count.rounds)}`;
       }
+      const key = JSON.stringify(rows);
+      if (rowKeys.get(game) === key) continue;
+      rowKeys.set(game, key);
+      // Preserve open records and keyboard focus when a score changes.
+      const open = new Set(
+        [...list.querySelectorAll("details[open]")].map(
+          (node) => node.closest("[data-player-key]").dataset.playerKey,
+        ),
+      );
+      const focused = list.contains(document.activeElement)
+        ? document.activeElement.closest("[data-player-key]")?.dataset.playerKey
+        : null;
       list.replaceChildren(
         ...(rows.length
           ? rows.map((row, index) => {
-              const item = document.createElement("li");
-              item.dataset.tone = row.net > 0 ? "positive" : row.net < 0 ? "negative" : "neutral";
-              for (const [tag, text] of [
-                ["strong", `${index + 1}. ${row.name}`],
-                ["b", `${row.net > 0 ? "+" : ""}${fmt(row.net)} net RP`],
-                [
-                  "small",
-                  `${fmt(row.paid)} returned · ${fmt(row.wagered)} wagered · ${fmt(row.bets)} rounds`,
-                ],
-                [
-                  "small",
-                  `${fmt(row.balance)} available RP · player ${row.player_tag}`,
-                ],
-                [
-                  "small",
-                  `IPs: ${row.ips.join(", ") || "Not linked this week yet"}`,
-                ],
-                ["small", `Funding adjustments: ${(row.funding_adjustment || 0) > 0 ? "+" : ""}${fmt(row.funding_adjustment || 0)} RP · excluded from winnings`],
+              const item = document.createElement("li"),
+                detail = document.createElement("details"),
+                summary = document.createElement("summary");
+              item.dataset.playerKey = game + ":" + row.player_tag;
+              item.dataset.tone =
+                row.net > 0 ? "positive" : row.net < 0 ? "negative" : "neutral";
+              detail.className = "player-breakdown";
+              detail.open = open.has(item.dataset.playerKey);
+              const name = document.createElement("span"),
+                rank = document.createElement("small"),
+                label = document.createElement("strong"),
+                score = document.createElement("b"),
+                unit = document.createElement("small");
+              name.className = "leader-name";
+              rank.textContent = index + 1;
+              label.textContent = row.name;
+              name.append(rank, label);
+              score.textContent = `${row.net >= 0 ? "+" : ""}${fmt(row.net)} `;
+              unit.textContent = "RP";
+              score.append(unit);
+              summary.append(name, score);
+              const record = document.createElement("div");
+              record.className = "player-record";
+              for (const value of [
+                `${fmt(row.paid)} returned · ${fmt(row.wagered)} wagered · ${row.bets} rounds`,
+                `${fmt(row.balance)} available RP · player ${row.player_tag}`,
+                `IPs: ${row.ips.join(", ") || "Not linked this week yet"}`,
+                `Funding adjustments: ${(row.funding_adjustment || 0) >= 0 ? "+" : ""}${fmt(row.funding_adjustment || 0)} RP · excluded from winnings`,
               ]) {
-                const node = document.createElement(tag);
-                node.textContent = text;
-                item.append(node);
+                const node = document.createElement("small");
+                node.textContent = value;
+                record.append(node);
               }
+              detail.append(summary, record);
+              item.append(detail);
               return item;
             })
           : [
@@ -75,16 +104,26 @@
               }),
             ]),
       );
+      if (focused)
+        [...list.children]
+          .find((node) => node.dataset.playerKey === focused)
+          ?.querySelector("summary")
+          ?.focus({ preventScroll: true });
     }
   }
   function clearPrivateRankings() {
     // A late response from the shared admin feed must not reveal these again.
     expired = true;
+    rowKeys.clear();
     etag = "";
     clearTimeout(timer);
     root.removeAttribute("data-rankings");
-    root.querySelectorAll('[id^="gamingLeaders-"]').forEach(list => list.replaceChildren());
-    root.querySelectorAll('[id^="gamingCount-"]').forEach(node => { node.textContent = "Sign in to view statistics."; });
+    root
+      .querySelectorAll('[id^="gamingLeaders-"]')
+      .forEach((list) => list.replaceChildren());
+    root.querySelectorAll('[id^="gamingCount-"]').forEach((node) => {
+      node.textContent = "Sign in to view statistics.";
+    });
     id("gamingAdminSummary").textContent = "Private player information hidden.";
     id("gamingAdminSession").hidden = false;
     id("gamingNoRecords").hidden = true;
@@ -97,36 +136,48 @@
     event.preventDefault();
     if (granting || expired) return;
     granting = true;
-    const button = id("grantGamingButton"), form = event.currentTarget;
+    const button = id("grantGamingButton"),
+      form = event.currentTarget;
     button.disabled = true;
     id("gamingGrantMessage").textContent = "Saving the grant to every wallet…";
-    const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 15000);
+    const controller = new AbortController(),
+      timeout = setTimeout(() => controller.abort(), 15000);
     try {
       // Keep the same request ID after failures, including a lost response.
       // The server remembers it so retrying cannot credit the grant twice.
       const response = await fetch(form.action, {
-        method: "POST", body: new FormData(form), credentials: "same-origin",
-        cache: "no-store", headers: { Accept: "application/json" }, signal: controller.signal,
+        method: "POST",
+        body: new FormData(form),
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
       });
       if (response.status === 401 || response.status === 403) {
         clearPrivateRankings();
         throw Error("Sign in again to grant points.");
       }
       if (!response.headers.get("content-type")?.includes("application/json"))
-        throw Error("Unexpected response. Reload the admin panel and check the last grant.");
+        throw Error(
+          "Unexpected response. Reload the admin panel and check the last grant.",
+        );
       const value = await response.json();
-      if (!response.ok || !value.ok) throw Error(value.error || "The grant was not saved.");
+      if (!response.ok || !value.ok)
+        throw Error(value.error || "The grant was not saved.");
       if (expired) return;
       if (value.release !== document.body.dataset.release)
-        throw Error("The release changed. Reload and check the last grant before continuing.");
+        throw Error(
+          "The release changed. Reload and check the last grant before continuing.",
+        );
       render(value);
       etag = "";
       form.elements.namedItem("request_id").value = value.next_request_id;
       id("gamingGrantMessage").textContent = value.message;
     } catch (error) {
-      id("gamingGrantMessage").textContent = error.name === "AbortError"
-        ? "Response timed out. You can retry this same grant safely; it will not be added twice."
-        : error.message;
+      id("gamingGrantMessage").textContent =
+        error.name === "AbortError"
+          ? "Response timed out. You can retry this same grant safely; it will not be added twice."
+          : error.message;
     } finally {
       clearTimeout(timeout);
       granting = false;
@@ -162,14 +213,14 @@
           throw Error("Stats are delayed. Saved rankings remain visible.");
         const value = await response.json();
         if (value.release && value.release !== document.body.dataset.release)
-          throw Error("The server release changed. Reload this page to use the matching gaming dashboard.");
+          throw Error(
+            "The server release changed. Reload this page to use the matching gaming dashboard.",
+          );
         render(value);
         etag = response.headers.get("etag") || "";
       }
       id("gamingAdminChecked").textContent =
-        "Updated " +
-        new Date().toLocaleTimeString() +
-        " · checks every 5 seconds";
+        "Updated " + new Date().toLocaleTimeString() + "";
     } catch (error) {
       id("gamingAdminChecked").textContent =
         error.name === "AbortError"
@@ -183,6 +234,7 @@
     }
   }
   globalThis.RedGamingAdmin = { render };
+  document.addEventListener("admin:expired", clearPrivateRankings);
   render(JSON.parse(root.dataset.rankings));
   root.removeAttribute("data-rankings");
   id("refreshGaming").addEventListener("click", refresh);

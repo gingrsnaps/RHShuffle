@@ -1,11 +1,10 @@
-<section class="panel health-panel" id="systemHealth" data-health="{{ data.health|tojson|forceescape }}" aria-labelledby="healthHeading">
-  <div class="section-title"><div><p class="eyebrow">SYSTEM HEALTH</p><h2 id="healthHeading">Behind the scenes</h2></div><button class="button small" id="copyHealthReport" type="button">Copy support report</button></div>
+<section class="panel health-panel" id="systemHealth" data-health="{{ data.health|tojson|forceescape }}" aria-labelledby="systemHealthHeading">
+  <div class="section-title"><div><p class="eyebrow">SYSTEM HEALTH</p><h2 id="systemHealthHeading">System health</h2></div><button class="button small" id="copyHealthReport" type="button">Copy support report</button></div>
   <div class="health-grid">{% for item in data.health.components %}<article class="health-card" data-health-card="{{ item.key }}" data-state="{{ item.state }}">
     <span class="eyebrow">{{ item.label }}</span><strong data-health-status>{{ item.status }}</strong>
     <p data-health-detail>{{ item.detail }}</p><small class="muted" data-health-time>{{ 'Checked ' ~ fmt_et(item.last_success) if item.last_success else 'Waiting for first confirmation' }}</small>
     {% if item.action %}<a class="text-link small" href="{{ item.action }}">{{ 'Recovery & storage' if item.key=='storage' else 'View games' if item.key=='games' else 'Connection details' }} →</a>{% endif %}
   </article>{% endfor %}</div>
-  <details class="health-measurements"><summary>Performance details</summary><div class="health-metrics" id="healthMetrics"></div><p class="small muted">Recent measurements on this server. Request reports contain no player names, IPs, keys or saved game seeds.</p></details>
+  <details class="health-measurements"><summary>Recent measurements</summary><div class="health-metrics" id="healthMetrics"></div><p class="small muted">Recent measurements on this server. Request reports contain no player names, IPs, keys or saved game seeds.</p></details>
   <p id="healthReportFeedback" class="small" role="status" hidden></p>
 </section>
-{% if superadmin %}<aside class="recovery-reminder panel" id="recoveryReminder" {% if not data.checkpoint.changes %}hidden{% endif %}><div><strong>Keep a recovery checkpoint</strong><p id="recoveryReminderDetail">{{ data.checkpoint.details }}</p><small>Downloads must be saved outside this server to survive its replacement.</small></div><a class="button" href="/admin?tab=settings#recovery">Review recovery →</a></aside>{% endif %}

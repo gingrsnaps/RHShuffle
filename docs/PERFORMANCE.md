@@ -1,4 +1,4 @@
-# Performance — 2026.10.08-community-polish6
+# Performance — 2026.10.08-community-clarity7
 
 These measurements are local development samples. They are not DigitalOcean
 production measurements, a 100-user HTTP load test, or a service-level guarantee.
@@ -13,11 +13,11 @@ not a full real-user session-window assessment.
 
 | Page | LCP | Observed layout shift | Resource bytes |
 | --- | ---: | ---: | ---: |
-| `/` | 1.016 s | 0.0207 | 103,580 |
-| `/gaming` | 1.292 s | 0.0661 | 210,532 |
-| `/gaming/dice` | 1.256 s | 0.0000 | 210,532 |
-| `/play` | 1.180 s | 0.0108 | 159,804 |
-| `/history` | 0.948 s | 0.0000 | 114,811 |
+| `/` | 1.112 s | 0.0000 | 112,902 |
+| `/gaming` | 1.280 s | 0.0661 | 219,891 |
+| `/gaming/dice` | 1.272 s | 0.0000 | 219,891 |
+| `/play` | 1.200 s | 0.0108 | 169,989 |
+| `/history` | 0.976 s | 0.0000 | 124,170 |
 
 Product targets are LCP <= 2.5 seconds, INP <= 200 milliseconds, and CLS <= 0.1
 at the 75th percentile of real visits, evaluated separately on desktop and mobile.
@@ -33,11 +33,11 @@ All 100 settled once; all retries returned the original result. Every wallet and
 receipt passed validation. This exercises the transaction engine directly;
 Waitress ingress and internet latency are not included.
 
-- Operation p50: 82.57 ms; p95: 107.00 ms.
-- Recent JSON-copy p95: 5.23 ms.
-- Recent atomic-save p95: 1.78 ms.
-- Recent lock-wait p95: 98.56 ms.
-- Sample state size: 160,824 bytes.
+- Operation p50: 67.17 ms; p95: 96.73 ms.
+- Recent JSON-copy p95: 3.97 ms.
+- Recent atomic-save p95: 1.37 ms.
+- Recent lock-wait p95: 92.50 ms.
+- Sample state size: 160,739 bytes.
 
 The measured cost under this burst was principally waiting for serialized
 transactions. This release retains synchronous atomic commits and the existing
@@ -46,6 +46,11 @@ store based on a small sample. Larger saved histories and slower disks require
 measurement on the real server; the new admin instruments expose that cost.
 
 ## Applied optimizations
+
+- The admin minute feed no longer duplicates private gaming rankings.
+- The existing five-second local feed also updates the overview boss; no extra timer.
+- Unchanged Top 5 rows are retained. Changed rows keep expanded player records
+  and keyboard focus; identities remain confined to protected admin responses.
 
 - Plinko's canvas renderer is downloaded only by the Plinko page.
 - Unchanged wallet receipts/statistics keep their existing DOM nodes, focus and

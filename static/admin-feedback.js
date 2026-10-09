@@ -70,7 +70,8 @@
         const result = await response.json();
         if (!response.ok || !result.ok)
           throw Error(
-            result.error || "The server did not confirm this change.",
+            (result.error || "The server did not confirm this change.") +
+              (result.request_id ? ` Reference: ${result.request_id}.` : ""),
           );
         const next = new URL(result.redirect, location.origin);
         if (
@@ -85,7 +86,14 @@
         document.dispatchEvent(
           new CustomEvent("admin:saved", { detail: { form } }),
         );
-        location.assign(next.href);
+        if (next.pathname === location.pathname && next.search === location.search) {
+          // A fragment-only navigation does not request a new document. Reload
+          // after a confirmed save so receipts and edit revisions are current.
+          history.replaceState(history.state, "", next.href);
+          location.reload();
+        } else {
+          location.assign(next.href);
+        }
       } catch (error) {
         feedback.className = "form-feedback notice warning";
         feedback.textContent =

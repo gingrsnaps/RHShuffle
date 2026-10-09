@@ -8,7 +8,7 @@
   const $ = (id) => root.querySelector("#" + id);
   const text = (id, value) => {
     const el = $(id);
-    if (el) el.textContent = String(value);
+    if (el && el.textContent !== String(value)) el.textContent = String(value);
   };
   const number = (value) =>
     (typeof value === "bigint" ? value : Number(value)).toLocaleString("en-US");
@@ -271,14 +271,27 @@
     );
     text(
       "bossPercent",
-      (((state.max_hp - state.hp) / state.max_hp) * 100).toFixed(2) +
-        "% defeated",
+      ((state.hp / state.max_hp) * 100).toFixed(2) + "% remaining",
     );
     const bar = $("bossHealthBar");
-    if (stage) stage.dataset.healthPhase = state.hp === 0 ? 'defeated' : state.hp/state.max_hp <= .25 ? 'critical' : state.hp/state.max_hp <= .5 ? 'fierce' : state.hp/state.max_hp <= .75 ? 'stirring' : 'full';
+    if (stage)
+      stage.dataset.healthPhase =
+        state.hp === 0
+          ? "defeated"
+          : state.hp / state.max_hp <= 0.25
+            ? "critical"
+            : state.hp / state.max_hp <= 0.5
+              ? "fierce"
+              : state.hp / state.max_hp <= 0.75
+                ? "stirring"
+                : "full";
     if (bar) {
       bar.max = state.max_hp;
       bar.value = state.hp;
+      bar.setAttribute(
+        "aria-valuetext",
+        `${number(state.hp)} of ${number(state.max_hp)} HP remaining`,
+      );
     }
     text(
       "bossPhase",
@@ -448,6 +461,16 @@
     return typeof value === "number" ? number(value) : String(value);
   }
   function adminTools() {
+    const paused = state.status === "paused",
+      defeated = state.status === "victory";
+    root.querySelectorAll("[data-boss-pause]").forEach((node) => {
+      node.closest("form").hidden = paused;
+      node.disabled = defeated;
+    });
+    root.querySelectorAll("[data-boss-resume]").forEach((node) => {
+      node.closest("form").hidden = !paused;
+      node.disabled = defeated;
+    });
     const b = state.balance;
     if (b) {
       text(
@@ -783,7 +806,7 @@
     if (!stale)
       text(
         "bossConnection",
-        `Live · Last checked ${Math.max(0, Math.floor((performance.now() - lastGood) / 1000))}s ago`,
+        `Updated ${Math.max(0, Math.floor((performance.now() - lastGood) / 1000))}s ago`,
       );
     else
       text("bossConnection", "Reconnecting · Showing the last confirmed state");
@@ -810,7 +833,7 @@
           : pending
             ? "Retry last strike"
             : state.status === "victory"
-              ? "Victory · We did it!"
+              ? "Boss defeated"
               : state.status === "paused"
                 ? "Raid paused"
                 : !state.connection_ready
@@ -818,12 +841,29 @@
                   : !state.you.identity_ready
                     ? "Save your username to play"
                     : seconds < state.you.ready_at
-                      ? `Next strike in ${duration(state.you.ready_at - seconds)}`
+                      ? `Next attack in ${duration(state.you.ready_at - seconds)}`
                       : !armed
                         ? inputMode === "keyboard"
                           ? "Release the key to re-arm"
                           : "Move off the button to re-arm"
-                        : `Attack with ${labels[selected]} →`;
+                        : `Attack ready · ${labels[selected]}`;
+    // Announce a transition once, not every second of the countdown.
+    text(
+      "attackAvailability",
+      busy
+        ? "Attack submitted."
+        : stale
+          ? "Reconnecting."
+          : state.status === "victory"
+            ? "Boss defeated."
+            : state.status === "paused"
+              ? "Raid paused."
+              : ready && armed
+                ? "Attack ready."
+                : !state.you.identity_ready
+                  ? "Save your name to play."
+                  : "Waiting for your next attack.",
+    );
     text(
       "attackHint",
       pending
