@@ -1,6 +1,6 @@
 # RedHunllef
 
-**Release: 2026.10.08-community-clarity7** — complete configured Python application.
+**Release: 2026.10.29-empiredrop-independent2** — complete configured Python application.
 
 Run everything through **`python wager_backend.py`**. The web server, automatic
 Shuffle/Kick checks, race history, community boss and all eight RedPoints games
@@ -270,3 +270,27 @@ Real-browser scripts are `tests/gaming_motion.cjs`, `tests/holdem_motion.cjs`,
 contact Shuffle or Kick. Set `RH_TEST_PYTHON` to the desired Python interpreter
 and `RH_CHROMIUM` to an installed Chromium executable, or install Playwright's
 browser for development. `RH_SCREENSHOTS` selects a local output directory.
+
+
+## New: EmpireDrop, affiliate code red
+
+The home page contains independent **Shuffle Top 15** and **EmpireDrop Top 15** boards and sponsor links. The EmpireDrop referral is https://empiredrop.com/c/red and its code is **red**. Admin → Overview is the common control center; Admin → Shuffle and Admin → EmpireDrop are two separate authenticated provider panels. Existing Gaming, Boss, History, prizes and JSON storage remain separate.
+
+**IMPORTANT:** The public EmpireDrop affiliate site does not document its authenticated wager endpoint or the exact signature/header schema. The integration does not guess this API. A blank official endpoint is included by default; EmpireDrop Top 15 stays explicitly unavailable until you configure an official contract in Admin → EmpireDrop. The two production credentials you supplied are in `private/settings.json` by explicit request. The archive is **private**; do not distribute it or put it on public GitHub.
+
+See `docs/EMPIREDROP_INTEGRATION.md` and `docs/EMPIREDROP_VALIDATION.md` for exact scope and tests. Run `python -m pip install -r requirements.txt`, then `python wager_backend.py`.
+
+
+## EmpireDrop independent controls (October 29, 2026)
+
+The dedicated EmpireDrop admin panel lives at `/admin?tab=empiredrop`.
+It provides independent Tuesday 6 PM Eastern or custom race dates, protected API
+credentials with masked source previews, an isolated authenticated test, and
+private Top 15 standings. The public switcher displays a provider-specific
+schedule and never carries Shuffle's prize promises into EmpireDrop.
+
+The supplied EmpireDrop keys and code `red` remain in the *private* deployment
+configuration. The provider's authenticated wagering API contract is still
+unverified: do not guess an API URL or publish rankings as live until EmpireDrop
+provides its official endpoint/authentication/field specification. See
+`docs/EMPIREDROP_INTEGRATION.md` and `docs/EMPIREDROP_VALIDATION.md`.

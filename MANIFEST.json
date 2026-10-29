@@ -530,5 +530,6 @@
       "bytes": 19315,
       "sha256": "a5b3b8de13d6cdc94dd3cf89c04f4d2159b9294474fe88a1ff6785c660732abf"
     }
-  }
+  },
+  "note": "Historical release information retained for reference; BUILD_MANIFEST.json describes this delivery."
 }

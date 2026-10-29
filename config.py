@@ -1,17 +1,21 @@
 """One configuration path; saved race settings win after the first import."""
 import os
 import re
+import json
+import tempfile
+import threading
 from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.08-community-clarity7"
+RELEASE = "2026.10.29-empiredrop-independent2"
 INTERVAL = 60
 
 
 class Config:
     def __init__(self, root=None):
         self.root = Path(root or Path(__file__).parent).resolve()
+        self.credential_lock = threading.RLock()
         path = lambda name, default: Path(os.getenv(name) or self.root / default)
         self.legacy = path("ADMIN_STORE_PATH", "admin_store.json")
         self.seed = path("ADMIN_SEED_PATH", "private/admin_store.seed.json")
@@ -27,7 +31,7 @@ class Config:
         integrations = read_json(integration_path) if integration_path.is_file() else {}
         defaults = {**private, **settings}
         self.credentials, self.sources = {}, {}
-        for key in ("shuffle_api_key", "kick_client_id", "kick_client_secret"):
+        for key in ("shuffle_api_key", "kick_client_id", "kick_client_secret", "empiredrop_public_key", "empiredrop_private_key"):
             layers = [(os.getenv(key.upper()), key.upper())]
             if key == "shuffle_api_key":
                 layers.append((os.getenv("API_KEY"), "API_KEY"))
@@ -37,6 +41,30 @@ class Config:
             self.credentials[key], self.sources[key] = value, source
         # This build deliberately uses only local JSON. Old database variables
         # cannot make startup depend on a removed service.
+        # EmpireDrop's API contract is not publicly documented. The endpoint,
+        # auth header names, wager unit and time parameters are explicit here,
+        # never guessed by the application or sent to the browser.
+        self.empiredrop = {
+            "api_url": str(os.getenv("EMPIREDROP_API_URL", defaults.get("empiredrop_api_url", ""))),
+            "public_header": str(defaults.get("empiredrop_public_header", "X-Public-Key")),
+            "private_header": str(defaults.get("empiredrop_private_header", "X-Private-Key")),
+            "start_param": str(defaults.get("empiredrop_start_param", "startTime")),
+            "end_param": str(defaults.get("empiredrop_end_param", "endTime")),
+            "currency": str(defaults.get("empiredrop_currency", "EUR")).upper(),
+            "wager_divisor": str(defaults.get("empiredrop_wager_divisor", "1")),
+            "code_param": str(defaults.get("empiredrop_code_param", "")),
+            "code_field": str(defaults.get("empiredrop_code_field", "referralCode")),
+            "wager_field": str(defaults.get("empiredrop_wager_field", "totalWagered")),
+            "name_field": str(defaults.get("empiredrop_name_field", "username")),
+            "code_scoped": str(defaults.get("empiredrop_code_scoped", False)).lower() in ("1", "true"),
+            "record_mode": str(defaults.get("empiredrop_record_mode", "player_total")),
+            "user_id_field": str(defaults.get("empiredrop_user_id_field", "")),
+            "transaction_id_field": str(defaults.get("empiredrop_transaction_id_field", "")),
+            "pagination_mode": str(defaults.get("empiredrop_pagination_mode", "none")),
+            "cursor_param": str(defaults.get("empiredrop_cursor_param", "cursor")),
+            "next_cursor_field": str(defaults.get("empiredrop_next_cursor_field", "nextCursor")),
+            "verified_contract": str(defaults.get("empiredrop_verified_contract", False)).lower() in ("1", "true"),
+        }
         self.storage_mode, self.db_url = "local", ""
         self.ignored_database_url = bool(os.getenv("DATABASE_URL"))
         self.state_key = os.getenv("APP_STATE_KEY", "redhunllef")
@@ -77,3 +105,44 @@ class Config:
 
     def diagnostics(self):
         return {key: {"configured": bool(value), "source": self.sources[key]} for key, value in self.credentials.items()}
+
+    def replace_empiredrop_keys(self, public='', private=''):
+        """Superadmin-only server-side operation. Empty input retains the old key.
+
+        Written to private/settings.json with an atomic replacement and mode 0600.
+        Environment-supplied keys deliberately cannot be overridden by this form.
+        """
+        updates = {}
+        for field, value, prefix in (("empiredrop_public_key",public,"pk_prod_"),
+                                     ("empiredrop_private_key",private,"sk_prod_")):
+            value = str(value or '').strip()
+            if not value:
+                continue
+            if os.getenv(field.upper()):
+                raise ValueError('A deployment environment variable overrides ' + field + '. Update it at the host.')
+            if not value.startswith(prefix) or not re.fullmatch(r'[A-Za-z0-9_]{24,128}', value):
+                raise ValueError('Invalid ' + field + ' format. Enter the provider-issued value.')
+            updates[field] = value
+        if not updates:
+            return False
+        with self.credential_lock:
+            target = self.root / 'private' / 'settings.json'
+            target.parent.mkdir(parents=True, exist_ok=True)
+            original = read_json(target) if target.exists() else {}
+            if not isinstance(original, dict):
+                raise ValueError('Private settings must be a JSON object.')
+            content = {**original, **updates}
+            fd, temp = tempfile.mkstemp(prefix='.empiredrop-', suffix='.json', dir=target.parent)
+            try:
+                with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as file:
+                    json.dump(content, file, ensure_ascii=False, indent=2)
+                    file.write('\n')
+                    file.flush(); os.fsync(file.fileno())
+                os.chmod(temp, 0o600)
+                os.replace(temp, target)
+            finally:
+                if os.path.exists(temp):
+                    os.unlink(temp)
+            for key, value in updates.items():
+                self.credentials[key], self.sources[key] = value, 'private/settings.json'
+        return True

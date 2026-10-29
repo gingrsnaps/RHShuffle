@@ -25,3 +25,15 @@ The complete package retains original private provider settings/account seed,
 logos, single Python launch, all games/proofs and existing runtime-state format.
 Keep newer deployed configuration and saved data when upgrading. See README.md
 for App Platform recovery instructions and docs/VALIDATION.md for test limits.
+
+
+## 2026-10-29 · EmpireDrop independence and diagnostics
+
+- Dedicated EmpireDrop schedule and weekly rollover (America/New_York DST).
+- Protected credential-source and masked preview, atomic private key replacement.
+- Read-only API connection test, accurate queued/running/attempt/success states.
+- Provider-contract confirmation gate, fail-closed referral filtering and pagination.
+- Transaction dedupe and aggregated player dedupe; no inferred wager amounts.
+- Preserve same-period last-good results on errors/config saves.
+- Provider-specific public hero dates/labels, without Shuffle prizes.
+- Offline contract and security unit tests, updated documentation.

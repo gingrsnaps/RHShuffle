@@ -43,10 +43,12 @@ from runtime import Runtime
 from storage import Conflict, StoreError
 from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
+from empiredrop import validate_settings, EDITABLE, schedule as empire_schedule, CODE as EMPIRE_CODE
+from integrations import ProviderError
 from telemetry import Measurements, health_view
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "race":"Race", "players":"Players", "boss":"Community boss", "gaming":"Gaming", "settings":"Settings"}
+TABS = {"overview":"Overview", "shuffle":"Shuffle", "empiredrop":"EmpireDrop", "race":"Race", "players":"Players", "boss":"Community boss", "gaming":"Gaming", "settings":"Settings"}
 
 
 def account(users, name):
@@ -109,7 +111,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith(("/play/api/", "/gaming/api/")) or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/diagnostics", "/admin/health-report", "/healthz", "/readyz"
+            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -652,7 +654,8 @@ def create_app(root=None, testing=False):
                                boss_data=boss_admin_view() if tab == "boss" else None,
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review, admin_receipt=receipt,
-                               gaming_grant_id=secrets.token_hex(16)), status
+                               gaming_grant_id=secrets.token_hex(16),
+                               empire_admin=runtime.empiredrop.private_status(g.admin['site_settings'])), status
 
     def admin_saved(message, tab, target):
         """A receipt is created only after the state commit succeeds.
@@ -787,6 +790,128 @@ def create_app(root=None, testing=False):
         if request.args.get("code_red") != "1":
             value.pop("red", None)
         return jsonify(value)
+
+    @app.get('/admin/empiredrop/status')
+    @protected
+    def empire_admin_status():
+        """Protected provider diagnostics; a public request can never read names."""
+        return jsonify(runtime.empiredrop.private_status(g.admin['site_settings']))
+
+    @app.post('/admin/empiredrop/refresh')
+    @protected
+    def empire_admin_refresh():
+        """Queue an independent worker check; do not claim success when queued."""
+        require_csrf()
+        if runtime.started:
+            queued = runtime.empiredrop.request_refresh()
+            message = ('EmpireDrop refresh requested; check status for the confirmed result.' if queued
+                       else 'A refresh was requested recently; the 15-second limit is still active.')
+        else:
+            message = 'The EmpireDrop worker is not running. Launch python wager_backend.py.'
+        return admin_saved(message, 'empiredrop', 'empireRefresh')
+
+    @app.post('/admin/empiredrop/test')
+    @protected
+    def empire_admin_test():
+        """Test authenticated access WITHOUT publishing or changing any standings.
+
+        This is a real network test only when the Superadmin has confirmed the
+        official provider contract; otherwise it fails safely with an explanation.
+        """
+        require_csrf()
+        if not g.superadmin:
+            abort(403)
+        try:
+            rows = runtime.empiredrop.fetch(empire_schedule(g.admin))
+        except ProviderError as exc:
+            # Only our own short safe exception text is exposed; no response body or keys.
+            result = {'ok': False, 'kind': exc.kind, 'message': str(exc)[:220]}
+            status = 422
+        else:
+            result = {'ok': True, 'kind': 'verified', 'message': 'Authenticated result validated. No standings were changed.',
+                      'qualified_players': len(rows)}
+            status = 200
+        return jsonify(result), status
+
+    @app.post('/admin/empiredrop/schedule')
+    @protected
+    def empire_admin_schedule():
+        """EmpireDrop calendar is never copied from or written into Shuffle."""
+        require_csrf()
+        if not g.superadmin:
+            abort(403)
+        try:
+            expected = int(request.form.get('revision', '-1'))
+            if expected != g.revision:
+                raise Conflict('Another administrator saved settings. Reload before editing.')
+            mode = request.form.get('mode')
+            if mode == 'weekly':
+                value = {'mode':'weekly'}
+            elif mode == 'custom':
+                start = eastern_epoch(request.form.get('start_et'))
+                end = eastern_epoch(request.form.get('end_et'))
+                if not 0 < start < end <= 4102444799 or end-start > 90*86400:
+                    raise ValueError('EmpireDrop custom race must be between 1 minute and 90 days.')
+                value = {'mode':'custom', 'start_time':start, 'end_time':end}
+            else:
+                raise ValueError('Choose a valid EmpireDrop schedule mode.')
+            candidate = copy.deepcopy(g.admin)
+            candidate['empiredrop_race'] = value
+            runtime.commit(candidate, expected)
+            runtime.empiredrop.request_refresh()
+            return admin_saved('EmpireDrop schedule saved independently of Shuffle.', 'empiredrop', 'empireSchedule')
+        except (ValueError, Conflict) as exc:
+            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc, Conflict) else 422)
+
+    @app.post('/admin/empiredrop/keys')
+    @protected
+    def empire_admin_keys():
+        """Update the server-side private file, never store credentials in admin JSON."""
+        require_csrf()
+        if not g.superadmin:
+            abort(403)
+        try:
+            changed = config.replace_empiredrop_keys(request.form.get('empiredrop_public_key',''),
+                                                     request.form.get('empiredrop_private_key',''))
+            return admin_saved('EmpireDrop credentials updated in private/settings.json.' if changed
+                               else 'No new credential was entered; existing keys remain unchanged.',
+                               'empiredrop', 'empireKeys')
+        except (ValueError, OSError) as exc:
+            return render_admin('empiredrop', errors={'empiredrop':'Credential update failed: ' +
+                                ('Check that private settings are writable.' if isinstance(exc,OSError) else str(exc))}, status=422)
+
+    @app.post('/admin/empiredrop/config')
+    @protected
+    def empire_admin_config():
+        require_csrf()
+        if not g.superadmin:
+            abort(403, description='Only the Superadmin can configure EmpireDrop.')
+        try:
+            expected = int(request.form.get('revision', '-1'))
+            if expected != g.revision:
+                raise Conflict('Another administrator changed settings. Reload and try again.')
+            fields = {name: request.form.get(name, '').strip() for name in sorted(EDITABLE - {'code_scoped','verified_contract'})}
+            fields['code_scoped'] = request.form.get('code_scoped') == 'yes'
+            fields['verified_contract'] = request.form.get('verified_contract') == 'yes'
+            candidate = copy.deepcopy(g.admin)
+            candidate['empiredrop_api'] = validate_settings(fields)
+            runtime.commit(candidate, expected)
+            # Preserve the last verified result on configuration saves. It is
+            # marked stale until a successful provider response replaces it.
+            with runtime.empiredrop.lock:
+                prior = dict(runtime.empiredrop.saved)
+                if prior.get('updated_at'):
+                    prior.update(error='API configuration changed; last verified results retained until rechecked.',
+                                 error_kind='configuration')
+                    runtime.store.publish('empiredrop', prior)
+                    runtime.empiredrop.saved = prior
+            runtime.empiredrop.request_refresh()
+            return admin_saved('EmpireDrop API configuration saved. Last verified results preserved; refresh requested.',
+                               'empiredrop', 'empireConfig')
+        except (ValueError, Conflict) as exc:
+            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc, Conflict) else 422)
 
     @app.get("/admin/diagnostics")
     @protected
