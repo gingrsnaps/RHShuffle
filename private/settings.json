@@ -53,5 +53,14 @@
   "community_name": "Discord",
   "community_url": "https://discord.gg/nhCbCZQEMK",
   "responsible_gambling_url": "https://www.ncpgambling.org/responsible-gambling/",
-  "repair_bootstrap_login_on_upgrade": true
+  "repair_bootstrap_login_on_upgrade": true,
+  "empiredrop_public_key": "pk_prod_fIjbtQOdrbVqL8TrUrghtiHMRHy1yG1r",
+  "empiredrop_private_key": "sk_prod_fBy8TMvWoU4d3s4B9SYjrjBtV90jTGQVcgRdSvFp",
+  "empiredrop_api_url": "",
+  "empiredrop_public_header": "X-Public-Key",
+  "empiredrop_private_header": "X-Private-Key",
+  "empiredrop_start_param": "startTime",
+  "empiredrop_end_param": "endTime",
+  "empiredrop_wager_divisor": "1",
+  "empiredrop_currency": "EUR"
 }
