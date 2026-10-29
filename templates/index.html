@@ -2,8 +2,14 @@
 {% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
 <main id="main" class="shell">
-<section class="hero"><div><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
-<aside class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside></section>
+<section class="hero"><div><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><a class="sponsor empire-sponsor" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored" aria-label="EmpireDrop referral link"><span class="sponsor-symbol">E</span><span><small>SPONSOR · CODE RED</small><strong>EmpireDrop</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
+<aside id="shuffleRaceClock" class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside>
+<aside id="empireRaceClock" class="race-clock panel" hidden aria-label="EmpireDrop race schedule">
+  <div class="row"><span class="eyebrow">EMPIREDROP · CODE RED</span><span class="badge">Independent race</span></div>
+  <p class="clock" id="empireRaceMode">{{ 'Weekly · Tuesday 6 PM ET' if data.empiredrop.schedule.mode == 'weekly' else 'Custom race' }}</p>
+  <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
+  <div class="clock-footer"><span>15 leaderboard positions</span><span>No announced prize schedule</span></div>
+</aside></section>
 
 <section class="play-invite panel" id="communityBoss" aria-labelledby="inviteTitle">
 <img id="inviteAvatar" src="{{ data.boss.avatar_url }}" class="{% if data.boss.avatar_custom %}custom-avatar{% endif %}" alt="" width="72" height="72">
@@ -19,6 +25,8 @@
 </section>
 
 <section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
+<div class="provider-tabs" role="tablist" aria-label="Choose leaderboard provider"><button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button><button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 15</button></div>
+<div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
 <p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
 <p id="networkError" class="notice warning" role="status" hidden></p>
@@ -26,8 +34,20 @@
 <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="Leaderboard places four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Weighted wager</th><th class="number">Prize</th></tr></thead><tbody>{% for n in range(4,16) %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<tr data-rank="{{ n }}"><td class="rank">{{ '%02d'|format(n) }}</td><td><strong data-name>{{ r.username if r else 'Open position' }}</strong></td><td class="number" data-wager>{{ r.wager if r else '$0.00' }}</td><td class="number accent" data-prize>{{ money(data.site.prizes[n|string]) }}</td></tr>{% endfor %}</tbody></table></div>
 <div class="leaderboard-foot"><span>Usernames protected · weighted affiliate data</span><span>Automatic updates every 60 seconds</span></div>
 <details class="panel explanation"><summary>How weighted wagers are counted <span aria-hidden="true">+</span></summary><div class="weighting-grid">{% for rule in weighting %}<div><strong>{{ rule.range }}</strong><p>{{ rule.counts }}</p></div>{% endfor %}</div><p class="muted small">Rankings cover the saved race window. Results and prizes may be reviewed or adjusted. Independently operated; not affiliated with Shuffle.com.</p></details>
+</div>
+<div id="empireBoard" role="tabpanel" aria-labelledby="empireTab" hidden>
+  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · CODE RED</p><h3>EmpireDrop leaderboard<span class="accent">.</span></h3></div><a class="button" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">Join with code Red ↗</a></div>
+  <p class="small muted">Separate EmpireDrop wagers. Shuffle rankings and prize amounts do not transfer to this board.</p>
+  <p id="empireMessage" class="notice" role="status">{{ data.empiredrop.label }}</p>
+  <div class="empire-podium podium" id="empirePodium" aria-label="EmpireDrop top three">
+  {% for n in [2,1,3] %}<article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">Open position</strong><div class="podium-values"><div><small>EMPIREDROP WAGER</small><strong data-empire-wager="{{ n }}">—</strong></div></div></article>{% endfor %}
+  </div>
+  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">EmpireDrop wager</th></tr></thead><tbody id="empireRows">{% for n in range(4,16) %}<tr><td class="rank">{{ '%02d'|format(n) }}</td><td data-empire-row-name="{{ n }}">Open position</td><td class="number" data-empire-row-wager="{{ n }}">—</td></tr>{% endfor %}</tbody></table></div>
+  <p class="leaderboard-foot">Usernames protected · updates every 60 seconds · <span id="empireChecked">Waiting for a confirmed update</span></p>
+</div>
 <noscript><p class="notice">Live screen updates require JavaScript. Reload to see the latest saved results.</p></noscript>
 </section></main>
 {% endblock %}
 
-{% block scripts %}<script src="{{ url_for('static', filename='homepage.js', v=asset_version) }}" defer></script>{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='empiredrop.css',v=asset_version) }}">{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='empiredrop.js',v=asset_version) }}" defer></script><script src="{{ url_for('static', filename='homepage.js', v=asset_version) }}" defer></script>{% endblock %}

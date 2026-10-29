@@ -1,0 +1,83 @@
+{# Everything on this panel belongs to EmpireDrop. Shuffle's admin and wagers are independent. #}
+<section class="panel form-panel" aria-labelledby="empireAdminTitle">
+  <p class="eyebrow">INDEPENDENT PROVIDER · EMPIREDROP</p>
+  <h2 id="empireAdminTitle">EmpireDrop administration</h2>
+  <p>Affiliate code <strong>red</strong> · <a class="text-link" href="https://empiredrop.com/c/red" rel="noopener noreferrer sponsored" target="_blank">EmpireDrop referral link ↗</a></p>
+  <p class="small muted">Separate Top 15, separate schedule, separate stored data, and separate refresh worker. EmpireDrop does not inherit Shuffle's ranking weights, prizes or dates.</p>
+  <div class="health-grid" aria-label="EmpireDrop connection details">
+    <article class="health-card"><span class="eyebrow">CONNECTION</span><strong id="empireAdminStatus" role="status">{{ empire_admin.label }}</strong><small>{{ 'Worker active' if empire_admin.running else 'Worker not started' }}</small></article>
+    <article class="health-card"><span class="eyebrow">CONFIRMED UPDATE</span><strong id="empireAdminConfirmed">{{ fmt_et(empire_admin.updated_at) if empire_admin.updated_at else 'Not yet verified' }}</strong></article>
+    <article class="health-card"><span class="eyebrow">LAST ATTEMPT</span><strong id="empireAdminAttempted">{{ fmt_et(empire_admin.attempt_at) if empire_admin.attempt_at else 'Not attempted' }}</strong></article>
+    <article class="health-card"><span class="eyebrow">REFERRAL</span><strong>red</strong><small>{{ empire_admin.currency }} wagering totals</small></article>
+    <article class="health-card"><span class="eyebrow">CHECK STATUS</span><strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Idle' }}</strong><small>Automatic checks every 60 seconds</small></article>
+  </div>
+  <p id="empireError" class="notice warning" role="status" {% if not empire_admin.error %}hidden{% endif %}>{{ empire_admin.error }}</p>
+  {{ action_feedback('empireRefresh') }}
+  <div class="button-row">
+    <form method="post" action="/admin/empiredrop/refresh"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="button primary" type="submit">Request EmpireDrop refresh</button></form>
+    {% if superadmin %}<button type="button" id="testEmpireConnection" class="button" data-csrf="{{ csrf() }}">Test API connection (no changes)</button>{% endif %}
+  </div>
+  <p id="empireTestResult" class="small muted" role="status" aria-live="polite"></p>
+  <h3>EmpireDrop Top 15 · full names (admin only)</h3>
+  <p class="small muted">These are verified provider wager totals for the EmpireDrop period below. Public usernames are always masked.</p>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Private EmpireDrop Top 15">
+    <table><thead><tr><th>Place</th><th>Player</th><th class="number">Wager total ({{ empire_admin.currency }})</th></tr></thead>
+    <tbody id="empireAdminRows">{% for row in empire_admin.rows %}<tr><td>{{ '%02d'|format(row.rank) }}</td><td>{{ row.username }}</td><td class="number">{{ row.wager }}</td></tr>{% else %}<tr><td colspan="3">No verified EmpireDrop wagers in this period.</td></tr>{% endfor %}</tbody></table>
+  </div>
+</section>
+<section class="panel form-panel" aria-labelledby="empireDatesTitle">
+  <p class="eyebrow">EMPIREDROP ONLY</p><h2 id="empireDatesTitle">Independent race dates</h2>
+  <p>Currently selected: <strong>{{ 'Automatic Tuesday 6 PM ET weekly race' if empire_admin.schedule.mode == 'weekly' else 'Custom race dates' }}</strong>.</p>
+  <p class="muted">{{ empire_admin.schedule.start_et }} → {{ empire_admin.schedule.end_et }}. Daylight saving is handled automatically.</p>
+  {% if superadmin %}
+  {{ action_feedback('empireSchedule') }}
+  <form method="post" action="/admin/empiredrop/schedule" class="stack" data-dirty>
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
+    <div class="field"><label for="empireMode">EmpireDrop schedule</label><select id="empireMode" name="mode"><option value="weekly" {% if empire_admin.schedule.mode=='weekly' %}selected{% endif %}>Auto-repeat Tuesday 6 PM Eastern (recommended)</option><option value="custom" {% if empire_admin.schedule.mode=='custom' %}selected{% endif %}>Custom start/end</option></select></div>
+    <div class="form-grid">
+      <div class="field"><label for="empireStart">Custom start · Eastern</label><input id="empireStart" name="start_et" type="datetime-local" value="{{ empire_admin.schedule.start_input }}"></div>
+      <div class="field"><label for="empireEnd">Custom end · Eastern</label><input id="empireEnd" name="end_et" type="datetime-local" value="{{ empire_admin.schedule.end_input }}"></div>
+    </div>
+    <p class="small muted">Changing this window changes only EmpireDrop's visible board. Old saved data is not overwritten. Shuffle's dates remain unchanged.</p>
+    <button class="button primary" type="submit">Save EmpireDrop schedule</button>
+  </form>
+  {% else %}<p class="small muted">Only the Superadmin may change race dates.</p>{% endif %}
+</section>
+<section class="panel form-panel" aria-labelledby="empireKeysTitle">
+  <p class="eyebrow">SERVER CONFIGURATION</p><h2 id="empireKeysTitle">Public and private API keys</h2>
+  <p class="small muted">Keys are read from the server's private settings file or environment. They are not printed in HTML, public feeds, network status or browser JavaScript.</p>
+  <div class="form-grid">
+    {% for key,label in [('empiredrop_public_key','Public API key'),('empiredrop_private_key','Private API key')] %}
+    <div class="field"><label>{{ label }}</label><p class="small"><strong>{{ empire_admin.configured[key].masked if empire_admin.configured[key].configured else 'Not configured' }}</strong> · {{ empire_admin.configured[key].source }}</p></div>
+    {% endfor %}
+  </div>
+  {% if superadmin %}
+  {{ action_feedback('empireKeys') }}
+  <form method="post" action="/admin/empiredrop/keys" class="stack" data-dirty autocomplete="off">
+    <input type="hidden" name="csrf" value="{{ csrf() }}">
+    <div class="form-grid"><div class="field"><label for="empirePublicKey">Replace public key (optional)</label><input id="empirePublicKey" name="empiredrop_public_key" type="password" autocomplete="new-password" placeholder="Leave blank to retain saved key"></div><div class="field"><label for="empirePrivateKey">Replace private key (optional)</label><input id="empirePrivateKey" name="empiredrop_private_key" type="password" autocomplete="new-password" placeholder="Leave blank to retain saved key"></div></div>
+    <button class="button" type="submit">Save new server-side credentials</button>
+  </form>
+  {% else %}<p class="small muted">Credential replacement is Superadmin-only.</p>{% endif %}
+</section>
+<section class="panel form-panel" aria-labelledby="empireContractTitle">
+  <p class="eyebrow">PROVIDER CONFIRMATION REQUIRED</p><h2 id="empireContractTitle">Verified API contract</h2>
+  <p class="notice warning">EmpireDrop publicly describes its affiliate dashboard, but its authenticated wager endpoint and signature/headers were not verified. No speculative host/path is called. Enter the values given by EmpireDrop support; confirm the API uses two key headers before enabling this connection.</p>
+  {% if superadmin %}
+  {{ action_feedback('empireConfig') }}
+  <form method="post" action="/admin/empiredrop/config" class="stack" data-dirty>
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
+    <div class="form-grid">
+      {% for key,label in [('api_url','Official provider HTTPS endpoint'),('public_header','Public key HTTP header'),('private_header','Private key HTTP header'),('start_param','Start-date query field'),('end_param','End-date query field'),('code_param','Referral code query field (if applicable)'),('name_field','Username field'),('user_id_field','Stable player ID field (if available)'),('wager_field','Wager amount field'),('code_field','Referral code result field'),('wager_divisor','Units divisor'),('transaction_id_field','Unique transaction ID field (transaction mode)'),('cursor_param','Cursor request field'),('next_cursor_field','Next-cursor response field')] %}
+      <div class="field"><label for="empire-{{ key }}">{{ label }}</label><input id="empire-{{ key }}" name="{{ key }}" value="{{ empire_admin.configuration[key] }}" maxlength="350" {% if key not in ['api_url','code_param','user_id_field','transaction_id_field'] %}required{% endif %}></div>
+      {% endfor %}
+      <div class="field"><label for="empireCurrency">Currency</label><select id="empireCurrency" name="currency">{% for value in ['EUR','USD'] %}<option value="{{ value }}" {% if empire_admin.configuration.currency==value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="empireRecordMode">API response mode</label><select id="empireRecordMode" name="record_mode"><option value="player_total" {% if empire_admin.configuration.record_mode=='player_total' %}selected{% endif %}>Already aggregated player totals (deduplicate)</option><option value="transactions" {% if empire_admin.configuration.record_mode=='transactions' %}selected{% endif %}>Individual transactions (sum unique IDs)</option></select></div>
+      <div class="field"><label for="empirePages">Pagination mode</label><select id="empirePages" name="pagination_mode"><option value="none" {% if empire_admin.configuration.pagination_mode=='none' %}selected{% endif %}>One complete page</option><option value="cursor" {% if empire_admin.configuration.pagination_mode=='cursor' %}selected{% endif %}>Provider cursor pagination</option></select></div>
+      <div class="field"><label><input type="checkbox" name="code_scoped" value="yes" {% if empire_admin.configuration.code_scoped %}checked{% endif %}> Provider guarantees this endpoint is exclusively referral code red</label></div>
+      <div class="field"><label><input type="checkbox" name="verified_contract" value="yes" {% if empire_admin.configuration.verified_contract %}checked{% endif %}> I verified URL, auth headers, timestamps, wager fields, units, pagination and referral scoping with EmpireDrop</label></div>
+    </div>
+    <button class="button primary" type="submit">Save verified connection configuration</button>
+  </form>
+  {% else %}<p>Only the Superadmin can update the provider API contract.</p>{% endif %}
+</section>

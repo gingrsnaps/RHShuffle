@@ -1,0 +1,15 @@
+{# Shuffle controls live here; this tab does not alter EmpireDrop. #}
+<section class="panel form-panel" aria-labelledby="shuffleAdminTitle">
+  <p class="eyebrow">INDEPENDENT PROVIDER · SHUFFLE</p><h2 id="shuffleAdminTitle">Shuffle leaderboard</h2>
+  <p>Code Red · weighted wagers · 15 paid positions. These rankings use only Shuffle's feed and the existing Shuffle race rules.</p>
+  <p><strong>Connection:</strong> {{ 'Check delayed' if data.jobs.shuffle.error else 'Automatic checks enabled' }}.
+    <strong>Last successful update:</strong> {{ fmt_et(data.jobs.shuffle.last_success) }}</p>
+  <p class="muted">{{ data.leaderboard_message or data.freshness.label }}</p>
+  <form method="post" action="/admin/action">
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="tab" value="shuffle"><input type="hidden" name="action" value="refresh"><input type="hidden" name="service" value="shuffle">
+    <button class="button primary" type="submit">Request Shuffle refresh</button>
+    <a class="button" href="/admin?tab=players">Manage Shuffle participants</a>
+    <a class="button" href="/admin?tab=race">Shuffle race schedule &amp; prizes</a>
+  </form>
+  <p class="small muted">EmpireDrop credentials, connection status and positions are managed on their own tab.</p>
+</section>

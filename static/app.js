@@ -614,6 +614,8 @@
         text(node.querySelector("[data-wager]"), row?.wager || "$0.00");
         text(node.querySelector("[data-prize]"), currency(site.prizes[n]));
       });
+      if (value.empiredrop)
+        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site} }));
       if (value.boss)
         document.dispatchEvent(
           new CustomEvent("boss:summary", {
