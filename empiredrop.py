@@ -8,7 +8,7 @@ sends keys to redirects, scrapes the website, or fabricates results.
 from __future__ import annotations
 
 import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import hashlib
 import json
@@ -39,9 +39,12 @@ DEFAULTS = {
     'code_scoped': False, 'record_mode': 'player_total', 'transaction_id_field': '',
     'pagination_mode': 'none', 'cursor_param': 'cursor', 'next_cursor_field': 'nextCursor',
     'verified_contract': False,
+    'auth_mode': 'dual_headers', 'http_method': 'GET', 'request_location': 'query',
+    'timestamp_format': 'unix_s', 'rows_path': '', 'next_cursor_path': '',
 }
 EDITABLE = frozenset(DEFAULTS)
 FIELD = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,49}$')
+PATH = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,49}(?:\.[a-zA-Z][a-zA-Z0-9_-]{0,49}){0,7}$')
 HEADER = re.compile(r'^[a-zA-Z][a-zA-Z0-9-]{0,49}$')
 
 
@@ -105,13 +108,28 @@ def validate_settings(value):
                   'connection', 'location', 'transfer-encoding', 'proxy-authorization'}
     if any(result[k].casefold() in prohibited for k in ('public_header', 'private_header')):
         raise ValueError('Use the provider-documented API credential headers.')
-    for key in ('start_param', 'end_param', 'code_field', 'name_field', 'wager_field',
-                'cursor_param', 'next_cursor_field'):
+    for key in ('start_param', 'end_param', 'cursor_param'):
         if not FIELD.fullmatch(str(result[key])):
             raise ValueError('Invalid EmpireDrop query/response field: ' + key)
-    for key in ('code_param', 'user_id_field', 'transaction_id_field'):
+    for key in ('code_field', 'name_field', 'wager_field', 'next_cursor_field'):
+        if not PATH.fullmatch(str(result[key])):
+            raise ValueError('Invalid EmpireDrop JSON field path: ' + key)
+    for key in ('code_param',):
         if result[key] and not FIELD.fullmatch(str(result[key])):
-            raise ValueError('Invalid EmpireDrop optional field: ' + key)
+            raise ValueError('Invalid EmpireDrop query field: ' + key)
+    for key in ('user_id_field', 'transaction_id_field', 'rows_path', 'next_cursor_path'):
+        if result[key] and not PATH.fullmatch(str(result[key])):
+            raise ValueError('Invalid EmpireDrop JSON path: ' + key)
+    if result['auth_mode'] not in ('dual_headers', 'private_header', 'public_header', 'bearer_private', 'basic_pair'):
+        raise ValueError('Unsupported API authentication mode.')
+    if result['http_method'] not in ('GET', 'POST'):
+        raise ValueError('Unsupported read-only API HTTP method.')
+    if result['request_location'] not in ('query', 'json'):
+        raise ValueError('Unsupported parameter location.')
+    if result['http_method'] == 'GET' and result['request_location'] != 'query':
+        raise ValueError('GET API requests must use query parameters.')
+    if result['timestamp_format'] not in ('unix_s', 'unix_ms', 'iso8601_utc'):
+        raise ValueError('Unsupported timestamp format.')
     if len({result['start_param'], result['end_param'], result['code_param'] or '__none__'}) != 3:
         raise ValueError('Date and referral-code query parameters must differ.')
     if result['currency'] not in ('EUR', 'USD'):
@@ -135,7 +153,53 @@ def validate_settings(value):
     return result
 
 
-def extract_page(payload):
+def read_path(value, path):
+    """Read explicitly configured dotted JSON fields; never evaluate expressions."""
+    if not path:
+        return value
+    for part in path.split('.'):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
+
+
+def format_timestamp(seconds, mode):
+    if mode == 'unix_s':
+        return int(seconds)
+    if mode == 'unix_ms':
+        return int(seconds) * 1000
+    return datetime.fromtimestamp(int(seconds), timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
+
+
+def build_auth_headers(opts, keys):
+    mode = opts['auth_mode']
+    public, private = keys.get('empiredrop_public_key', ''), keys.get('empiredrop_private_key', '')
+    if mode == 'dual_headers':
+        if not public or not private:
+            raise ProviderError('Both EmpireDrop keys are required for the configured auth mode.', kind='configuration')
+        return {opts['public_header']: public, opts['private_header']: private}, None
+    if mode in ('private_header', 'bearer_private'):
+        if not private:
+            raise ProviderError('EmpireDrop private key is missing.', kind='configuration')
+        if mode == 'bearer_private':
+            return {'Authorization': 'Bearer ' + private}, None
+        return {opts['private_header']: private}, None
+    if mode == 'public_header':
+        if not public:
+            raise ProviderError('EmpireDrop public key is missing.', kind='configuration')
+        return {opts['public_header']: public}, None
+    if not public or not private:
+        raise ProviderError('Both EmpireDrop keys are required for Basic authentication.', kind='configuration')
+    return {}, (public, private)
+
+
+def extract_page(payload, *, rows_path=""):
+    if rows_path:
+        rows = read_path(payload, rows_path)
+        if not isinstance(rows, list):
+            raise ProviderError("EmpireDrop configured rows path is not an array.", kind="format")
+        return rows, payload if isinstance(payload, dict) else None
     """Accept known safe envelope shapes, not arbitrary nested number fields."""
     if isinstance(payload, list):
         return payload, None
@@ -169,7 +233,7 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
     if currency is not None: opts['currency'] = currency
     if divisor is not None: opts['wager_divisor'] = divisor
     opts = validate_settings(opts)
-    rows, _ = extract_page(payload)
+    rows, _ = extract_page(payload, rows_path=opts['rows_path'])
     if len(rows) > MAX_ROWS:
         raise ProviderError('EmpireDrop returned too many records.', kind='format')
     totals, display_names, seen_transactions = {}, {}, set()
@@ -177,14 +241,14 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
     for row in rows:
         if not isinstance(row, dict):
             continue
-        code = row.get(opts['code_field'])
+        code = read_path(row, opts['code_field'])
         if code is None:
             if not opts['code_scoped']:
                 continue
         elif not isinstance(code, str) or code.strip().casefold() != CODE:
             continue
         matched_code = True
-        name, amount = row.get(opts['name_field']), row.get(opts['wager_field'])
+        name, amount = read_path(row, opts['name_field']), read_path(row, opts['wager_field'])
         if not isinstance(name, str) or not name.strip() or len(name.strip()) > 64 or amount is None or isinstance(amount, bool):
             continue
         try:
@@ -193,10 +257,10 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
             continue
         if not wager.is_finite() or wager < 0 or wager > Decimal('1e18'):
             continue
-        user_id = row.get(opts['user_id_field']) if opts['user_id_field'] else None
+        user_id = read_path(row, opts['user_id_field']) if opts['user_id_field'] else None
         identity = str(user_id).strip() if isinstance(user_id, (str, int)) and not isinstance(user_id, bool) and str(user_id).strip() else name.strip().casefold()
         if opts['record_mode'] == 'transactions':
-            tx = row.get(opts['transaction_id_field'])
+            tx = read_path(row, opts['transaction_id_field'])
             if not isinstance(tx, (str, int)) or isinstance(tx, bool) or not str(tx).strip():
                 raise ProviderError('A transaction is missing its unique identifier.', kind='format')
             if str(tx) in seen_transactions:
@@ -210,7 +274,7 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
     if rows and matched_code and not valid:
         raise ProviderError('EmpireDrop red records lack valid username or wager fields.', kind='format')
     if rows and not opts['code_scoped'] and not matched_code and not any(
-            isinstance(r, dict) and opts['code_field'] in r for r in rows):
+            isinstance(r, dict) and read_path(r, opts['code_field']) is not None for r in rows):
         raise ProviderError('Referral field missing; do not show unverified referral results.', kind='format')
     symbol = '€' if opts['currency'] == 'EUR' else '$'
     winners = sorted(totals, key=lambda key: (-totals[key], display_names[key].casefold()))[:15]
@@ -239,8 +303,6 @@ class EmpireDropBoard:
         url = opts['api_url']
         if not url or not opts['verified_contract']:
             raise ProviderError('Official EmpireDrop wager API contract is not verified; configure and confirm it first.', kind='configuration')
-        if not keys.get('empiredrop_public_key') or not keys.get('empiredrop_private_key'):
-            raise ProviderError('EmpireDrop API keys are not configured.', kind='configuration')
         if not opts['code_param'] and not opts['code_scoped']:
             # Allowed only if the response includes a verified per-row code field.
             pass
@@ -248,10 +310,11 @@ class EmpireDropBoard:
         start, end = int(site['start_time']), min(int(site['end_time']), now)
         if end <= start:
             raise ProviderError('EmpireDrop race has not started.', kind='window')
-        headers = {'Accept':'application/json', 'User-Agent':'RedHunllef-EmpireDrop/2.0',
-                   opts['public_header']:keys['empiredrop_public_key'],
-                   opts['private_header']:keys['empiredrop_private_key']}
-        params = {opts['start_param']:start, opts['end_param']:end}
+        headers = {'Accept':'application/json', 'User-Agent':'RedHunllef-EmpireDrop/3.0'}
+        auth_headers, basic_auth = build_auth_headers(opts, keys)
+        headers.update(auth_headers)
+        params = {opts['start_param']:format_timestamp(start, opts['timestamp_format']),
+                  opts['end_param']:format_timestamp(end, opts['timestamp_format'])}
         if opts['code_param']:
             params[opts['code_param']] = CODE
         rows, cursor, used = [], None, set()
@@ -261,8 +324,19 @@ class EmpireDropBoard:
                 query[opts['cursor_param']] = cursor
             try:
                 # Never forward either credential to a redirect destination.
-                with requests.get(url, params=query, headers=headers, timeout=(5, 20),
-                                  allow_redirects=False, stream=True) as response:
+                kwargs = {'headers': headers, 'timeout': (5,20), 'allow_redirects': False,
+                          'stream': True}
+                if basic_auth:
+                    kwargs['auth'] = basic_auth
+                if opts['request_location'] == 'json':
+                    kwargs['json'] = query
+                else:
+                    kwargs['params'] = query
+                if opts['http_method'] == 'GET':
+                    response_context = requests.get(url, **kwargs)
+                else:
+                    response_context = requests.post(url, **kwargs)
+                with response_context as response:
                     status = response.status_code
                     if status in (301, 302, 303, 307, 308):
                         raise ProviderError('EmpireDrop API redirected; credentials were not forwarded.', kind='http', status=status)
@@ -283,13 +357,14 @@ class EmpireDropBoard:
                         raise ProviderError('EmpireDrop returned invalid JSON.', kind='format') from None
             except requests.RequestException:
                 raise ProviderError('EmpireDrop could not be reached.', kind='connection') from None
-            part, envelope = extract_page(payload)
+            part, envelope = extract_page(payload, rows_path=opts['rows_path'])
             rows.extend(part)
             if len(rows) > MAX_ROWS:
                 raise ProviderError('More than 10,000 wager records; verify pagination.', kind='format')
-            next_cursor = envelope.get(opts['next_cursor_field']) if envelope else None
+            next_cursor = (read_path(envelope, opts['next_cursor_path']) if opts['next_cursor_path']
+                           else read_path(envelope, opts['next_cursor_field'])) if envelope else None
             if next_cursor in (None, '', False):
-                return parse_rows(rows, settings=opts)
+                return parse_rows(rows, settings={**opts, "rows_path": ""})
             if opts['pagination_mode'] != 'cursor':
                 raise ProviderError('EmpireDrop returned additional pages; configure documented cursor pagination before publishing.', kind='format')
             if not isinstance(next_cursor, (str, int)) or len(str(next_cursor)) > 512 or str(next_cursor) in used:

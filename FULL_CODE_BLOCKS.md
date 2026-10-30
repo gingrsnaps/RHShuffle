@@ -1,16 +1,12 @@
-# RedHunllef — complete independent source code blocks
+# RedHunllef — complete source code blocks
 
-**Release:** 2026.10.29-empiredrop-independent2
+**Release:** 2026.10.30-empiredrop-contract-adapter3
 
-Each file below is complete and labeled with its project-relative path.
-To run the site, use the complete project ZIP; code blocks are supplied for inspection and editing.
-**PRIVATE:** contains actual credentials in `private/settings.json` at the owner's request. Do not publish.
-Generated folders and binary screenshots are provided only in the runnable project ZIP.
+The complete configured project ZIP is authoritative; source blocks are provided for editing. Original private keys appear in `private/settings.json` in this document **at the owner’s request**; do not publish or share.
 
-**Files:** 144
+**Files:** 145
 
 ## File index
-
 - `BUILD_MANIFEST.json`
 - `CHANGES.md`
 - `FILE_STRUCTURE.md`
@@ -32,6 +28,7 @@ Generated folders and binary screenshots are provided only in the runnable proje
 - `docs/COMMUNITY_BOSS(1).md`
 - `docs/COMMUNITY_BOSS.md`
 - `docs/COMMUNITY_UPDATE.md`
+- `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`
 - `docs/EMPIREDROP_INTEGRATION.md`
 - `docs/EMPIREDROP_VALIDATION.md`
 - `docs/PERFORMANCE.md`
@@ -158,15 +155,21 @@ Generated folders and binary screenshots are provided only in the runnable proje
 
 ---
 
-## `BUILD_MANIFEST.json`
+## BUILD_MANIFEST.json
 
-```json
+``````json
 {
-  "release": "2026.10.29-empiredrop-independent2",
+  "release": "2026.10.30-empiredrop-contract-adapter3",
   "algorithm": "sha256",
   "files": {
+    "CHANGES.md": "634d54962953d0e3c5d93499778f154c74b4d0431a3a562e7c890c0e52b6d13a",
+    "FILE_STRUCTURE.md": "85d2a028ce6c6d17a730d8808231355f759b9160f599a4d094c827e2c7ef70a4",
     "Procfile": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83",
-    "README.md": "bdba5c14d6beddf8d2981b21299469833db65afaf0d2f8f785deb637d4e6b15e",
+    "RAID_UPDATE.md": "8f642740f7ca08de415d52fb8a9ede751560ca53a4c6e991a05552d7768b2a86",
+    "README.md": "e8b26dc8dd17cf5c8c9c14e2d9c1ccf19210fd3afe5b285875f5ea588bce48bf",
+    "RELEASE_METADATA.json": "83b65b92ffa0880a374e69f3f4130d7b21e27e23925645674a90c6693a86803b",
+    "START_HERE.md": "2d0c2203c5290765fed3a333c6037663dab339f748ee57647fe41ace189774ab",
+    "UPDATE.md": "da7ccb7f716f12918739fefbdb2fe03a7b015220f5be1a6f42079cce18623215",
     "abuse_guard.py": "c86e98c9c0a44c2c80f631f3f39c8c42c284c7bd7577c12fbe38de229c9ba9fa",
     "app.yaml": "1a57629c19f2f3a294691d2fd6b74d5355f4311c10201858598058093bfc878b",
     "baccarat.py": "e859c61a9a101b9e51da02524e5b18d3a915397e2d476f2dbe8899202f88c154",
@@ -175,10 +178,37 @@ Generated folders and binary screenshots are provided only in the runnable proje
     "boss_avatar.py": "d4cc504b1a090ca026fdf4ede179aad701680da3679acfa1194967abe49f88c0",
     "boss_extras.py": "dd7e5464f9e63c5afd9ffd6e1897318bcbdcf368028adf547c3ac4c150020a8d",
     "boss_progress.py": "8eee0a96219866030d0b6a2b83d73a1fd01dcfbacd697e1238fbf26d6a7c9d40",
-    "config.py": "95db3426d793726b7dc0a782c98b78a1cb8341812a7a21b693fd99ee00cf7706",
-    "docs/EMPIREDROP_INTEGRATION.md": "1cbb0925dee0618250e22cf58b555bf018d6062dff154e6482989edbeeacb891",
+    "config.py": "8674f0a1f9c331fdd91ef1c77b460a173fb8e10708286c4d3989d4c9fe6c6020",
+    "docs/ADMIN_GAMING.png": "6be1cac1f1080d5763702687cfeabe76aaee76e31425387bdea1f672bab3c7a0",
+    "docs/BACCARAT_MOBILE.png": "ed7c081a3325dd083cf0e88241490e132f3a00724df0bd0d8e4d9e28be0cc068",
+    "docs/BLACKJACK_DESKTOP.png": "ac964be7288ea8aa9c3e242c719af41f05ac9568b8e23215e6b150707ea78573",
+    "docs/BOSS_CONTROLS_DESKTOP.png": "1a5d1ace99081eeb1050d1a6dd5350c0342ac2dd83ce7b93a00fdc14a3251740",
+    "docs/BOSS_CONTROLS_MOBILE.png": "081c30144f31b172fcf5be35ec674d70b16108aa2372c698f42a1b6f789e80b1",
+    "docs/BOSS_MOBILE.png": "076f67049a81d3fbc6d258ca1ac5b05da72ed45fcd3b982aa9561928acaec857",
+    "docs/COINFLIP_MOBILE.png": "080f6567d4e2d70818c35c69db87ee1cd756ec7874c6d78127cf061c5968ac29",
+    "docs/COMMUNITY_BOSS(1).md": "e8cc28dc96617036e5ee988a1c72028756fe859d315f7bfa71cb4971d4cc078d",
+    "docs/COMMUNITY_BOSS.md": "e8cc28dc96617036e5ee988a1c72028756fe859d315f7bfa71cb4971d4cc078d",
+    "docs/COMMUNITY_UPDATE.md": "0acf9ed9d50e9701a7877d6b8447fab8c16d90dea1b5a837d2b5c5cc5e69cbd7",
+    "docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md": "d8ca5b0bc90cb74044323c594f20f95deb5a07154c917f2c521a047dd0765cc4",
+    "docs/EMPIREDROP_INTEGRATION.md": "76f120b80aca76d1a085c68dbce800512d45faf8f22bc5b08476215e7c1b72a8",
     "docs/EMPIREDROP_VALIDATION.md": "88336408c5c9f3fda3b69f282881e385354c2593718851a884ba45994faf613f",
-    "empiredrop.py": "a6b508f30b90ec67bb1325bc622851aa3262dee1ef5061a3b0c6bcadeb949296",
+    "docs/GAMING_DESKTOP.png": "593691f0b70bcdb687b54916441263e9abd58a61238e3baa36e5636ff991453c",
+    "docs/GAMING_MOBILE.png": "75d53af96f344208dadc180dfe652710c62b11387ad572a1109d79d0745c037c",
+    "docs/HEALTH_DESKTOP.png": "75f964b3d0c30ab3d762199bbac066c1e517c3e8974635bc0935d6772b10dfe8",
+    "docs/HEALTH_MOBILE.png": "9064ad3283f706277b033760113929dc2cb7439dadc3db8f530724996d0820a6",
+    "docs/HISTORY_MOBILE(1).png": "21c02ba14d5d8864a523d186da0404828d3fae9684f468004878aa0f8c098504",
+    "docs/HISTORY_MOBILE.png": "21c02ba14d5d8864a523d186da0404828d3fae9684f468004878aa0f8c098504",
+    "docs/LIMBO_MOBILE.png": "278e47ad87bf9d7db72a9b277b0cf933ce442122eab7dac6f771e370ad5ab7cf",
+    "docs/PERFORMANCE.md": "3bf0c0cebcd61a0c1b2d5fa30dca3fbb7fbe4138e0c5c8b645290fd85e65ef4c",
+    "docs/PLINKO_DESKTOP.png": "d6d73246718dcc584352911d8a493cff2f021109ceede1a6a43dc3656ed830a8",
+    "docs/POKER_DESKTOP.png": "1169f6efb4911e37fde5477d78e178ab1fe5bb7888a944ff5e482a9d71600ca8",
+    "docs/POKER_MOBILE.png": "c926a0622229b509750b3407a4ac53f2258c590d842e0abe013f031cbb353dfb",
+    "docs/PREVIEW_DESKTOP.png": "dd702d25a50343b6318f27f172ff250b788d222529e95ade8aad8becee367ff3",
+    "docs/PREVIEW_MOBILE.png": "7a078eeedefac09a0de15d3b8157a2116220994a5db89d6b1141f2d194b12b5a",
+    "docs/REDPOINTS.md": "579830be5ca5a72ab1c2303bf5a93b48f41d6e5a5f1601da0b6da43ce6ce13cb",
+    "docs/VALIDATION.md": "3fd3babdffde589c9c635013ef4012249bbbc324b5231b4a8f0f0a10b89a0a9e",
+    "docs/redlogo(3).png": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186",
+    "empiredrop.py": "c8c7faae717e6931423c29af25b8dd67a64d0ed53e8c7e1d1f659cc76f37198d",
     "fairness.py": "fce747b68b1bc98a46fd46981154abf16af501b4b4272a12c4efa50198a9a08f",
     "gaming.py": "3cfbf529ecd96edf9a1cbb855b7bd36e28db90e02d934cb4a040b16d93036935",
     "holdem.py": "bb42721439cf74f291b91e11fdde2a57d4ff2ae6747eb8dc418475630d184764",
@@ -188,6 +218,7 @@ Generated folders and binary screenshots are provided only in the runnable proje
     "race.py": "d342af11d32d65157c87f96b0cdf942be89446d9657f615f2157887d4cfab7ad",
     "race_support.py": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96",
     "release_check.py": "81f1bc7c59905991c1edf11ccca6d5cc190bd57c7fb6d9f8dd9f230a9bec0f66",
+    "requirements-postgres.txt": "c77064a44093905f671aec742f1e9638eec34b1f295e89420053f17d3a7245a4",
     "requirements.txt": "4c1a45a322ba363062403c67632144a14742dfa8d2d4df090620a13da7d9d13d",
     "runtime.py": "ead4388a05781964cd8ec553f9b18e869be435080d2d55af31661c596227c500",
     "runtime.txt": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d",
@@ -223,7 +254,7 @@ Generated folders and binary screenshots are provided only in the runnable proje
     "templates/admin.html": "8331e32b43ef674067c154ca807b673750f5addd664e04966c2aafac4af6671a",
     "templates/admin_attention.html": "8db1b7b0a8b5ca7e803541cd7827f26cdb7e5d0364a7dd7cb5a568da5b3d10ce",
     "templates/admin_boss.html": "95ecb0537bcefb5ac84444c2535bc7f0c107d1602b62d4853649bdcdd2398a76",
-    "templates/admin_empiredrop.html": "da0156dc32176467dfb280fc7fe28bb4be2a359b3f9647b8cdc2bbad597c3c52",
+    "templates/admin_empiredrop.html": "e10df655253f1116d2b9f646fff1aab05d2019569af3512a7f3a09d37933180d",
     "templates/admin_gaming.html": "1e7f70402e45352149a676e5b426ac4835919022da168c1a6f62a9543cf37c8d",
     "templates/admin_health.html": "08f3683595dd1b15c0a1798a95dab4521a4fedce82ce78c0b2eaafc23dfffa94",
     "templates/admin_overview.html": "46887d116f238f7ae608c0522aa357230fb2e86cc24b68fd3977eb34726e9c35",
@@ -274,7 +305,7 @@ Generated folders and binary screenshots are provided only in the runnable proje
     "tests/test_comfort_update.py": "923a35e0d2e1e7e4fe16d65ff5e91e1cf6137286dd26c1c88d0d92b951ffaed1",
     "tests/test_community.py": "b25c22cc7af7056b6a218c1d1d8b91ab58084067767e8138f3b4dd3c5c18a31c",
     "tests/test_empiredrop.py": "6444b495fd8e165bbae720c35c2555f2edc21e3fcf70ab10beaa0f31ab813d5a",
-    "tests/test_empiredrop_contract.py": "05b02ed994538a3e772031af154110c3502974d6b4bafe8aa464be6d2ae92f4d",
+    "tests/test_empiredrop_contract.py": "94c7086f895500d854f2e3f591a3cd0e3904c5d1564b2805debed08a1a847efd",
     "tests/test_empiredrop_frontend.cjs": "9099d2843431374ea968a8796936fe938acb5808dc921293e51b0c88d10c28b7",
     "tests/test_extra_games.py": "1527ba6487d58fc103e8c3499961af1210491136c4be0e6da6c7380d074ae911",
     "tests/test_fairness_frontend.cjs": "0fc38987f73c0a9b7caec171079552eda62b89ffe59dabe2c0d17b5da2a1a394",
@@ -297,59 +328,43 @@ Generated folders and binary screenshots are provided only in the runnable proje
     "weekly_history.py": "a5b3b8de13d6cdc94dd3cf89c04f4d2159b9294474fe88a1ff6785c660732abf"
   }
 }
-```
+``````
 
 ---
 
-## `CHANGES.md`
+## CHANGES.md
 
-```markdown
-# Changes in 2026.10.08-community-clarity7
+``````markdown
+# RedHunllef Release Notes — October 30, 2026
 
-1. Restored the community boss above the homepage leaderboard, after the hero.
-2. Changed all boss health labels/previews to remaining HP. Bar and percentage
-   drain together; the combat engine and no-regeneration rule are retained.
-3. Simplified the boss invitation and public update messages.
-4. Reorganized the admin overview around race, boss, players and quick actions.
-5. Grouped connections/history/performance inside expandable Diagnostics and
-   consolidated routine connection warnings into one actionable summary.
-6. Kept all eight Top 5 game lists visible, with full names and net winnings.
-   Player IPs, balances, detailed totals and funding expand on demand.
-7. Preserved expanded records and keyboard focus when rankings change, and
-   skipped rebuilding unchanged rows. Removed duplicate minute-feed rankings.
-8. Reused the five-second local gaming feed for the overview boss summary.
-9. Split name and damage saves into guarded partial edits. Health and unrelated
-   settings stay intact; existing combined-settings requests remain compatible.
-10. Fixed fragment-only admin redirects: consecutive saves now reload confirmed
-    values, current edit revisions and the correct success receipt.
-11. Improved name/recovery links, initial Gaming confirmation text, attack states,
-    unsaved upload detection, accessible feedback and mobile spacing.
-12. Added regression coverage for partial-edit authorization, stale edits,
-    conditional feeds, details/focus retention and real-browser repeated saves.
+## EmpireDrop API integration update
 
-The complete package retains original private provider settings/account seed,
-logos, single Python launch, all games/proofs and existing runtime-state format.
-Keep newer deployed configuration and saved data when upgrading. See README.md
-for App Platform recovery instructions and docs/VALIDATION.md for test limits.
+- Preserved the prior project's **original** `private/settings.json`, `private/admin_store.seed.json` and all `data/` files, including credentials and account history. This archive is **not encrypted**. Keep private.
+- Kept the independent EmpireDrop referral `red` leaderboard, the Tuesday 6 PM Eastern schedule, automatic 60-second refresh, separate admin panels, public masked names, and isolation from Shuffle ranking/prizes.
+- Added configurable HTTP GET/POST transport, query/JSON parameters, five standard authentication options (two-header, private-header, public-header, bearer-private, Basic key pair), three timestamp formats (Unix seconds/milliseconds/ISO 8601 UTC) and nested JSON field mappings.
+- Retained strict HTTPS `empiredrop.com` host checking, no automatic redirects, safe HTTP errors, max body/page limits, unique transaction deduplication, referral-code gating and last-good same-period result protection.
+- Expanded administrator configuration UI, and added offline unit tests for new auth, data, timestamp and request-body paths.
+- Added `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md` with a step-by-step source-of-truth configuration workflow.
 
+### Still required to enable live EmpireDrop results
 
-## 2026-10-29 · EmpireDrop independence and diagnostics
+`https://developers.empiredrop.com/` loads client-side and no official authenticated affiliate-wager OpenAPI contract was retrievable in the available tooling on October 30, 2026. **No official endpoint, auth scheme, request signing method or wager response field can be claimed as verified.** An empty official endpoint remains empty and the verified-contract safeguard remains false. This release is an improved, tested *adapter*, not proof of a working live provider API connection. Obtain the official endpoint and schema from the developer portal or EmpireDrop support, then configure and test before publishing standings.
 
-- Dedicated EmpireDrop schedule and weekly rollover (America/New_York DST).
-- Protected credential-source and masked preview, atomic private key replacement.
-- Read-only API connection test, accurate queued/running/attempt/success states.
-- Provider-contract confirmation gate, fail-closed referral filtering and pagination.
-- Transaction dedupe and aggregated player dedupe; no inferred wager amounts.
-- Preserve same-period last-good results on errors/config saves.
-- Provider-specific public hero dates/labels, without Shuffle prizes.
-- Offline contract and security unit tests, updated documentation.
-```
+### Validation
+
+- Focused offline Python contract tests: 16 passed (synthetic responses only).
+- Frontend EmpireDrop test: 1 passed (Node.js synthetic DOM).
+- Python source compile: passed.
+- All Jinja source parse checks: completed for templates.
+- Full application suite: **not verified in this sandbox** because Flask/Werkzeug are not installed in the execution environment.
+- Live EmpireDrop requests and actual DigitalOcean deployment: not performed.
+``````
 
 ---
 
-## `FILE_STRUCTURE.md`
+## FILE_STRUCTURE.md
 
-```markdown
+``````markdown
 # Complete file structure — 2026.10.08-community-clarity7
 
 Extract the ZIP to find redhunllef-rebuilt/. Run only wager_backend.py. All modules
@@ -516,13 +531,13 @@ redhunllef-rebuilt/
 All source uses UTF-8. Bytecode caches, local test fixtures, installed test tools
 and live runtime data are excluded. Original private configuration is included;
 keep your customized/newer configuration when installing this update.
-```
+``````
 
 ---
 
-## `MANIFEST.json`
+## MANIFEST.json
 
-```json
+``````json
 {
   "release": "2026.10.05-redpoints-arcade4",
   "packaging": "complete",
@@ -1058,21 +1073,21 @@ keep your customized/newer configuration when installing this update.
   },
   "note": "Historical release information retained for reference; BUILD_MANIFEST.json describes this delivery."
 }
-```
+``````
 
 ---
 
-## `Procfile`
+## Procfile
 
-```text
+``````text
 web: python wager_backend.py
-```
+``````
 
 ---
 
-## `RAID_UPDATE.md`
+## RAID_UPDATE.md
 
-```markdown
+``````markdown
 # Complete community update
 
 This is a **complete package**, not a changed-files overlay. Keep every root
@@ -1088,16 +1103,18 @@ Preserve current data and private configuration when merging this release.
 The latest player-access repair removes the IP gate that blocked shared networks.
 Names/cooldowns now follow the signed browser cookie, with no reset required.
 Existing recovery codes, HP, contributions and admin controls remain.
-```
+``````
 
 ---
 
-## `README.md`
+## README.md
 
-```markdown
+``````markdown
+> **October 30, 2026 update:** The EmpireDrop adapter now supports configurable API authentication, GET/POST, ISO/millisecond timestamps and nested JSON mapping. Its official wager API URL and contract remain **unverified**, so live EmpireDrop calls are not automatically enabled. Read `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`. This archive includes the original live private configuration by owner request; it is **not encrypted**.
+
 # RedHunllef
 
-**Release: 2026.10.29-empiredrop-independent2** — complete configured Python application.
+**Release: 2026.10.30-empiredrop-contract-adapter3** — complete configured Python application.
 
 Run everything through **`python wager_backend.py`**. The web server, automatic
 Shuffle/Kick checks, race history, community boss and all eight RedPoints games
@@ -1391,13 +1408,13 @@ configuration. The provider's authenticated wagering API contract is still
 unverified: do not guess an API URL or publish rankings as live until EmpireDrop
 provides its official endpoint/authentication/field specification. See
 `docs/EMPIREDROP_INTEGRATION.md` and `docs/EMPIREDROP_VALIDATION.md`.
-```
+``````
 
 ---
 
-## `START_HERE.md`
+## START_HERE.md
 
-```markdown
+``````markdown
 # Start RedHunllef
 
 Release **2026.10.08-community-clarity7** — complete configured package.
@@ -1485,13 +1502,13 @@ RedPoints are play-only and separate from Botrix/Shuffle balances. Each round
 publishes a seed commitment and then reveals a verifiable receipt. Full rules and
 limits: `docs/REDPOINTS.md`. Setup/recovery: `README.md`. Complete code in separate
 blocks: `FILE_STRUCTURE.md`.
-```
+``````
 
 ---
 
-## `UPDATE.md`
+## UPDATE.md
 
-```markdown
+``````markdown
 # Install the complete community-clarity7 update
 
 This ZIP contains the entire configured application in redhunllef-rebuilt/.
@@ -1516,13 +1533,13 @@ Optional completeness check: `python wager_backend.py --check`.
 
 Old FULL_CODE_BLOCKS.md and MANIFEST.json are not used. Every source file is in
 its own folder, and BUILD_MANIFEST.json describes this release.
-```
+``````
 
 ---
 
-## `abuse_guard.py`
+## abuse_guard.py
 
-```python
+``````python
 """Bounded, in-memory throttles for rejected requests, separate from gameplay.
 
 Successful eligible attacks are never counted or blocked by this guard. A regular
@@ -1575,13 +1592,13 @@ class AbuseGuard:
         with self.lock:
             cutoff = time.time() - 86400
             return [dict(f) for f in self.flags if f['at'] > cutoff]
-```
+``````
 
 ---
 
-## `app.yaml`
+## app.yaml
 
-```yaml
+``````yaml
 # Replace the repository name before importing. No database component is needed.
 # App Platform local files are temporary; see README for private recovery seeds.
 name: redhunllef
@@ -1636,13 +1653,13 @@ ingress:
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
-```
+``````
 
 ---
 
-## `baccarat.py`
+## baccarat.py
 
-```python
+``````python
 """Eight-deck Punto Banco, replayed only from the committed random stream.
 
 Each round starts a fresh 416-card shoe; there are no burns or side bets.
@@ -1711,13 +1728,13 @@ def replay(draw, wager, side):
     payout = wager * RETURNS[side] // 10000 if won else wager if push else 0
     return dict(player=player, banker=banker, player_total=pt, banker_total=bt,
                 natural=natural, winner=winner, won=won, push=push, payout=payout)
-```
+``````
 
 ---
 
-## `blackjack.py`
+## blackjack.py
 
-```python
+``````python
 """Pure six-deck Blackjack replay. No storage, HTTP, clock or random source.
 
 The fairness module supplies unbiased draws from the precommitted seed.
@@ -1784,13 +1801,13 @@ def replay(draw, wager, actions):
         payout = wager * 5 // 2 if status == 'blackjack' else stake * 2 if status == 'win' else stake if status == 'push' else 0
     return dict(ended=ended, player=player, dealer=dealer, player_total=pt, dealer_total=dt,
                 player_soft=ps, dealer_soft=ds, status=status, total_wager=stake, payout=payout)
-```
+``````
 
 ---
 
-## `boss.py`
+## boss.py
 
-```python
+``````python
 """Shared community raid rules. Every hit is validated and committed server-side.
 
 The boss lives in a separate record, so attacks cannot change race settings or
@@ -2396,13 +2413,13 @@ class CommunityBoss:
                      previous['max_hp'], state['max_hp'], state['hp'], state['total_damage'])
         else:
             LOG.info("BOSS Host action: %s.", action)
-```
+``````
 
 ---
 
-## `boss_avatar.py`
+## boss_avatar.py
 
-```python
+``````python
 """Bounded PNG/JPEG/WebP uploads; store only a decoded, metadata-free PNG.
 
 The image is a separate record, so every hit does not rewrite image bytes.
@@ -2476,13 +2493,13 @@ def validate_avatar(value):
 
 def image_bytes(value):
     return base64.b64decode(value['data'])
-```
+``````
 
 ---
 
-## `boss_extras.py`
+## boss_extras.py
 
-```python
+``````python
 """Small, bounded raid additions: cosmetic rally, pace estimates and host history.
 
 These features never change damage, replenish health or limit successful hits.
@@ -2591,13 +2608,13 @@ def validate_extras(state, limit):
                     not (v is None or type(v) is bool or type(v) is int and abs(v) <= MAX_NUMBER
                          or isinstance(v, str) and len(v) <= 256)):
                     raise ValueError('Invalid boss change value.')
-```
+``````
 
 ---
 
-## `boss_progress.py`
+## boss_progress.py
 
-```python
+``````python
 """Private community names and eight persistent, server-earned raid badges.
 
 Names are self-reported, not verified Shuffle identities. Records are keyed by
@@ -2694,13 +2711,13 @@ def validate_profiles(profiles, limit, households=None):
                 or p['active_days'] > p['attacks'] or sum(p['styles'].values()) > p['attacks']):
             raise ValueError('Inconsistent achievement totals.')
     return copy.deepcopy(profiles)
-```
+``````
 
 ---
 
-## `config.py`
+## config.py
 
-```python
+``````python
 """One configuration path; saved race settings win after the first import."""
 import os
 import re
@@ -2711,7 +2728,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.29-empiredrop-independent2"
+RELEASE = "2026.10.30-empiredrop-contract-adapter3"
 INTERVAL = 60
 
 
@@ -2767,6 +2784,12 @@ class Config:
             "cursor_param": str(defaults.get("empiredrop_cursor_param", "cursor")),
             "next_cursor_field": str(defaults.get("empiredrop_next_cursor_field", "nextCursor")),
             "verified_contract": str(defaults.get("empiredrop_verified_contract", False)).lower() in ("1", "true"),
+            "auth_mode": str(defaults.get("empiredrop_auth_mode", "dual_headers")),
+            "http_method": str(defaults.get("empiredrop_http_method", "GET")),
+            "request_location": str(defaults.get("empiredrop_request_location", "query")),
+            "timestamp_format": str(defaults.get("empiredrop_timestamp_format", "unix_s")),
+            "rows_path": str(defaults.get("empiredrop_rows_path", "")),
+            "next_cursor_path": str(defaults.get("empiredrop_next_cursor_path", "")),
         }
         self.storage_mode, self.db_url = "local", ""
         self.ignored_database_url = bool(os.getenv("DATABASE_URL"))
@@ -2849,13 +2872,13 @@ class Config:
             for key, value in updates.items():
                 self.credentials[key], self.sources[key] = value, 'private/settings.json'
         return True
-```
+``````
 
 ---
 
-## `docs/COMMUNITY_BOSS(1).md`
+## docs/COMMUNITY_BOSS(1).md
 
-```markdown
+``````markdown
 # Community boss reference
 
 Run `python wager_backend.py`; the game is served at `/play`. No separate process,
@@ -2936,13 +2959,13 @@ groups Appearance, Health and Damage. Save name and Save damage independently;
 these guarded edits preserve HP and player contributions. Avatar uploads retain
 server-side image validation. Maximum HP and Current HP have separate previews
 and confirmations. Starting a new raid remains an explicit archive/reset action.
-```
+``````
 
 ---
 
-## `docs/COMMUNITY_BOSS.md`
+## docs/COMMUNITY_BOSS.md
 
-```markdown
+``````markdown
 # Community boss reference
 
 Run `python wager_backend.py`; the game is served at `/play`. No separate process,
@@ -3023,13 +3046,13 @@ groups Appearance, Health and Damage. Save name and Save damage independently;
 these guarded edits preserve HP and player contributions. Avatar uploads retain
 server-side image validation. Maximum HP and Current HP have separate previews
 and confirmations. Starting a new raid remains an explicit archive/reset action.
-```
+``````
 
 ---
 
-## `docs/COMMUNITY_UPDATE.md`
+## docs/COMMUNITY_UPDATE.md
 
-```markdown
+``````markdown
 # Community comfort update and access repair
 
 Approved scope: suggestions 2–9. Excluded: achievement-progress redesign and
@@ -3056,13 +3079,62 @@ but deploying and running the app requires only the existing Python requirements
 The player-access repair also orders browser updates by committed revision and
 discards polls started before an in-flight player write. Saving a username does
 not require resetting the boss. Identity fields never come from arbitrary IP headers.
-```
+``````
 
 ---
 
-## `docs/EMPIREDROP_INTEGRATION.md`
+## docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md
 
-```markdown
+``````markdown
+# EmpireDrop Developer Portal: configuration and validation
+
+Official portal: https://developers.empiredrop.com/
+
+**Status: API contract NOT independently verified.** The linked portal loads client-side and did not expose an accessible Swagger/OpenAPI definition in this environment on October 30, 2026. We could not identify an official authenticated affiliate-wager endpoint, auth scheme, player response schema, pagination, or rate limit. The application will not make a production request until its *verified contract* checkbox is enabled by the site operator. No undocumented endpoint, request signing or guessed path is silently enabled.
+
+## What was preserved
+
+The complete source ZIP carries forward the original `private/settings.json`, `private/admin_store.seed.json`, and `data/` contents including any historical configuration and credentials, unchanged. Do not distribute or publish the archive or upload it to public Git hosting. A ZIP is **not encrypted**. The configuration is never rendered to public clients.
+
+## Configure the endpoint (Superadmin)
+
+1. Open the official portal with your affiliate account and find a *read-only, referral-scoped wager volume/leaderboard* endpoint. Confirm that the account is entitled to access it. An affiliate commission or deposit report is NOT the same as wager volume.
+2. In Admin > EmpireDrop, enter the precise HTTPS API URL on an `empiredrop.com` subdomain, **not** the portal page.
+3. Select the portal-documented authorization type: two separately named key headers, one key header, `Authorization: Bearer ...`, or HTTP Basic key pair. If the portal requires HMAC request signing, OAuth, or different headers/body, do **not** enable: the signed request format must be implemented to that official specification first.
+4. Select HTTP GET or POST, query string or JSON parameter location, and whether timestamps are Unix seconds, Unix milliseconds, or ISO 8601 UTC. Dates are race start and current time, with independent Tuesday 6 PM ET windows. Confirm start inclusive/end semantics against the API.
+5. Map the documented data fields, optionally with dotted JSON paths (`payload.players`, `player.username`, `stats.wagered`). Only wager volume fields should be mapped. A response can include referral code `red` in every row or the endpoint must be explicitly documented as scoped to code `red`.
+6. Select already-aggregated per-player totals or uniquely identified transactions. Choose cursor pagination only when the official API documents the parameter and cursor response path.
+7. Verify and save the contract checkbox. Use **Test API connection** first (read-only; doesn't publish). Compare with the source dashboard for the exact time window, currency, and player count. Only then use **Refresh**.
+
+## Why the previous integration failed
+
+The old adapter had empty official API URL, presumed two headers, Unix-second dates, GET query parameters, and shallow data fields. Those assumptions could block a correct provider response. This version supports multiple *configurable* request/response formats, but successful live operation still requires actual documented settings. It will not invent one.
+
+## Troubleshooting
+
+- `configuration`: missing verified contract, missing required key for selected auth method, or blank endpoint.
+- `access` (401/403): key/environment mismatch, unsupported auth mode, IP allowlist, or missing API permissions. Check official contract; never put secrets in a URL.
+- `rate_limit` (429): increase poll interval if official API rate limits don't allow 60 seconds; do not retry aggressively.
+- `format`: wrong JSON rows path, field mapping, unit divisor, missing scope, incomplete pagination, or unexpected page schema. Avoid treating deposits/commission as wagers.
+- `connection`: DNS, firewall, provider outage, or outbound network issue.
+- Worker and HTTP failures do not replace previous same-period verified standings. New periods never inherit prior weeks' standings.
+
+## Deployment
+
+Build: `python -m pip install -r requirements.txt`
+
+Run: `python wager_backend.py`
+
+Health: `/healthz`
+
+Use one App Platform instance. Container-local JSON storage may be lost on redeployment; download an authenticated private recovery checkpoint and preserve it externally. Never commit private keys or state to a public repository.
+``````
+
+---
+
+## docs/EMPIREDROP_INTEGRATION.md
+
+``````markdown
 # EmpireDrop integration — independent provider release
 
 ## Run and navigate
@@ -3089,7 +3161,7 @@ Run only `python wager_backend.py` after `python -m pip install -r requirements.
 
 ## Remaining external API prerequisite
 
-**The provider's official authenticated wager API contract has not been verified.** Public EmpireDrop policy pages discuss affiliate attribution and Wager Share, but do not specify the wagering URL, authentication signature/headers, response schema or pagination. No endpoint has been guessed, and live ranking claims cannot be made. The connection is **disabled until** an administrator obtains the official provider contract and explicitly checks **I verified ...** in the admin panel. An endpoint that uses a cryptographic signature or OAuth instead of two header keys would require adapting `EmpireDropBoard.fetch` to that verified scheme before enabling it.
+**The provider's official authenticated wager API contract has not been verified.** Public EmpireDrop policy pages discuss affiliate attribution and Wager Share, but do not specify the wagering URL, authentication signature/headers, response schema or pagination. No endpoint has been guessed, and live ranking claims cannot be made. The connection is **disabled until** an administrator obtains the official provider contract and explicitly checks **I verified ...** in the admin panel. The adapter now supports two key headers, one key header, bearer, or Basic authentication; HMAC request signing or OAuth still requires implementation from the exact provider contract.
 
 Ask EmpireDrop support for: official allowed API host/path, whether the supplied public/private pair authenticates as two HTTP headers or requires signing, timestamp parameters and units, referral `red` filtering, individual vs cumulative wager values, player IDs, pagination, currency, and rate limits.
 
@@ -3115,13 +3187,13 @@ npm --prefix tests test
 Before deploying to DigitalOcean App Platform: export a private recovery checkpoint and retain it outside the container, keep private settings out of public Git hosting, and run **one** App Platform instance. App Platform's local filesystem can be replaced on deploy; local JSON changes and credentials may disappear without a saved recovery. Once authenticated data is available, compare the Top 15 with the EmpireDrop affiliate dashboard for the same date range before advertising accuracy.
 
 **Security:** The keys were provided in chat and intentionally bundled with this package. Rotate production secrets if possible and protect ZIPs, backups, and repository history.
-```
+``````
 
 ---
 
-## `docs/EMPIREDROP_VALIDATION.md`
+## docs/EMPIREDROP_VALIDATION.md
 
-```markdown
+``````markdown
 # EmpireDrop independent release — test evidence and limits
 
 - Offline EmpireDrop-specific backend tests: 13 passed (Python 3.13, synthetic requests) on 2026-10-29.
@@ -3134,13 +3206,13 @@ Before deploying to DigitalOcean App Platform: export a private recovery checkpo
 - Tests do not prove an actual provider API response exists, that the keys have required scopes, or that any wager is attributable to referral `red`.
 
 All numeric fixtures are artificial. Failure cases reject 401, 403, 429, redirects, invalid data and unexpected pagination without publishing partial standings. The source tree includes `tests/test_empiredrop.py` for full Flask integration once dependencies are installed.
-```
+``````
 
 ---
 
-## `docs/PERFORMANCE.md`
+## docs/PERFORMANCE.md
 
-```markdown
+``````markdown
 # Performance — 2026.10.08-community-clarity7
 
 These measurements are local development samples. They are not DigitalOcean
@@ -3206,13 +3278,13 @@ measurement on the real server; the new admin instruments expose that cost.
 The health panel reports recent 512-request and 256-store-operation windows.
 Its request timing includes Flask processing, not browser/network/Waitress queue
 time. Counts and samples reset when the process restarts.
-```
+``````
 
 ---
 
-## `docs/REDPOINTS.md`
+## docs/REDPOINTS.md
 
-```markdown
+``````markdown
 # RedPoints gaming
 
 Release **2026.10.08-community-clarity7**. New rounds use **redpoints-v5**. Earlier
@@ -3582,13 +3654,13 @@ The independent browser verifier matches the backend reference receipts in
 `tests/fairness_v3_vectors.json` and `tests/fairness_v4_vectors.json`. Earlier fixtures are unchanged. `tests/holdem_vectors.py` generates 88 v5 receipts,
 including all eight games, both button positions, all-ins, folds, weekly expiry
 and large exact-integer table stacks.
-```
+``````
 
 ---
 
-## `docs/VALIDATION.md`
+## docs/VALIDATION.md
 
-```markdown
+``````markdown
 # Validation — 2026.10.08-community-clarity7
 
 Tests used disposable synthetic accounts, seeds and provider replies. No live
@@ -3644,13 +3716,13 @@ requires an externally retained recovery checkpoint before replacing an App
 Platform container. Lab timings are not production guarantees or field INP
 measurements. The existing independently implemented proof verifier remains
 included; this is not a third-party fairness or comprehensive accessibility audit.
-```
+``````
 
 ---
 
-## `empiredrop.py`
+## empiredrop.py
 
-```python
+``````python
 """EmpireDrop-only, read-only affiliate standings.
 
 Important: No official EmpireDrop wagering API contract was publicly verified.
@@ -3661,7 +3733,7 @@ sends keys to redirects, scrapes the website, or fabricates results.
 from __future__ import annotations
 
 import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import hashlib
 import json
@@ -3692,9 +3764,12 @@ DEFAULTS = {
     'code_scoped': False, 'record_mode': 'player_total', 'transaction_id_field': '',
     'pagination_mode': 'none', 'cursor_param': 'cursor', 'next_cursor_field': 'nextCursor',
     'verified_contract': False,
+    'auth_mode': 'dual_headers', 'http_method': 'GET', 'request_location': 'query',
+    'timestamp_format': 'unix_s', 'rows_path': '', 'next_cursor_path': '',
 }
 EDITABLE = frozenset(DEFAULTS)
 FIELD = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,49}$')
+PATH = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,49}(?:\.[a-zA-Z][a-zA-Z0-9_-]{0,49}){0,7}$')
 HEADER = re.compile(r'^[a-zA-Z][a-zA-Z0-9-]{0,49}$')
 
 
@@ -3758,13 +3833,28 @@ def validate_settings(value):
                   'connection', 'location', 'transfer-encoding', 'proxy-authorization'}
     if any(result[k].casefold() in prohibited for k in ('public_header', 'private_header')):
         raise ValueError('Use the provider-documented API credential headers.')
-    for key in ('start_param', 'end_param', 'code_field', 'name_field', 'wager_field',
-                'cursor_param', 'next_cursor_field'):
+    for key in ('start_param', 'end_param', 'cursor_param'):
         if not FIELD.fullmatch(str(result[key])):
             raise ValueError('Invalid EmpireDrop query/response field: ' + key)
-    for key in ('code_param', 'user_id_field', 'transaction_id_field'):
+    for key in ('code_field', 'name_field', 'wager_field', 'next_cursor_field'):
+        if not PATH.fullmatch(str(result[key])):
+            raise ValueError('Invalid EmpireDrop JSON field path: ' + key)
+    for key in ('code_param',):
         if result[key] and not FIELD.fullmatch(str(result[key])):
-            raise ValueError('Invalid EmpireDrop optional field: ' + key)
+            raise ValueError('Invalid EmpireDrop query field: ' + key)
+    for key in ('user_id_field', 'transaction_id_field', 'rows_path', 'next_cursor_path'):
+        if result[key] and not PATH.fullmatch(str(result[key])):
+            raise ValueError('Invalid EmpireDrop JSON path: ' + key)
+    if result['auth_mode'] not in ('dual_headers', 'private_header', 'public_header', 'bearer_private', 'basic_pair'):
+        raise ValueError('Unsupported API authentication mode.')
+    if result['http_method'] not in ('GET', 'POST'):
+        raise ValueError('Unsupported read-only API HTTP method.')
+    if result['request_location'] not in ('query', 'json'):
+        raise ValueError('Unsupported parameter location.')
+    if result['http_method'] == 'GET' and result['request_location'] != 'query':
+        raise ValueError('GET API requests must use query parameters.')
+    if result['timestamp_format'] not in ('unix_s', 'unix_ms', 'iso8601_utc'):
+        raise ValueError('Unsupported timestamp format.')
     if len({result['start_param'], result['end_param'], result['code_param'] or '__none__'}) != 3:
         raise ValueError('Date and referral-code query parameters must differ.')
     if result['currency'] not in ('EUR', 'USD'):
@@ -3788,7 +3878,53 @@ def validate_settings(value):
     return result
 
 
-def extract_page(payload):
+def read_path(value, path):
+    """Read explicitly configured dotted JSON fields; never evaluate expressions."""
+    if not path:
+        return value
+    for part in path.split('.'):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(part)
+    return value
+
+
+def format_timestamp(seconds, mode):
+    if mode == 'unix_s':
+        return int(seconds)
+    if mode == 'unix_ms':
+        return int(seconds) * 1000
+    return datetime.fromtimestamp(int(seconds), timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
+
+
+def build_auth_headers(opts, keys):
+    mode = opts['auth_mode']
+    public, private = keys.get('empiredrop_public_key', ''), keys.get('empiredrop_private_key', '')
+    if mode == 'dual_headers':
+        if not public or not private:
+            raise ProviderError('Both EmpireDrop keys are required for the configured auth mode.', kind='configuration')
+        return {opts['public_header']: public, opts['private_header']: private}, None
+    if mode in ('private_header', 'bearer_private'):
+        if not private:
+            raise ProviderError('EmpireDrop private key is missing.', kind='configuration')
+        if mode == 'bearer_private':
+            return {'Authorization': 'Bearer ' + private}, None
+        return {opts['private_header']: private}, None
+    if mode == 'public_header':
+        if not public:
+            raise ProviderError('EmpireDrop public key is missing.', kind='configuration')
+        return {opts['public_header']: public}, None
+    if not public or not private:
+        raise ProviderError('Both EmpireDrop keys are required for Basic authentication.', kind='configuration')
+    return {}, (public, private)
+
+
+def extract_page(payload, *, rows_path=""):
+    if rows_path:
+        rows = read_path(payload, rows_path)
+        if not isinstance(rows, list):
+            raise ProviderError("EmpireDrop configured rows path is not an array.", kind="format")
+        return rows, payload if isinstance(payload, dict) else None
     """Accept known safe envelope shapes, not arbitrary nested number fields."""
     if isinstance(payload, list):
         return payload, None
@@ -3822,7 +3958,7 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
     if currency is not None: opts['currency'] = currency
     if divisor is not None: opts['wager_divisor'] = divisor
     opts = validate_settings(opts)
-    rows, _ = extract_page(payload)
+    rows, _ = extract_page(payload, rows_path=opts['rows_path'])
     if len(rows) > MAX_ROWS:
         raise ProviderError('EmpireDrop returned too many records.', kind='format')
     totals, display_names, seen_transactions = {}, {}, set()
@@ -3830,14 +3966,14 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
     for row in rows:
         if not isinstance(row, dict):
             continue
-        code = row.get(opts['code_field'])
+        code = read_path(row, opts['code_field'])
         if code is None:
             if not opts['code_scoped']:
                 continue
         elif not isinstance(code, str) or code.strip().casefold() != CODE:
             continue
         matched_code = True
-        name, amount = row.get(opts['name_field']), row.get(opts['wager_field'])
+        name, amount = read_path(row, opts['name_field']), read_path(row, opts['wager_field'])
         if not isinstance(name, str) or not name.strip() or len(name.strip()) > 64 or amount is None or isinstance(amount, bool):
             continue
         try:
@@ -3846,10 +3982,10 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
             continue
         if not wager.is_finite() or wager < 0 or wager > Decimal('1e18'):
             continue
-        user_id = row.get(opts['user_id_field']) if opts['user_id_field'] else None
+        user_id = read_path(row, opts['user_id_field']) if opts['user_id_field'] else None
         identity = str(user_id).strip() if isinstance(user_id, (str, int)) and not isinstance(user_id, bool) and str(user_id).strip() else name.strip().casefold()
         if opts['record_mode'] == 'transactions':
-            tx = row.get(opts['transaction_id_field'])
+            tx = read_path(row, opts['transaction_id_field'])
             if not isinstance(tx, (str, int)) or isinstance(tx, bool) or not str(tx).strip():
                 raise ProviderError('A transaction is missing its unique identifier.', kind='format')
             if str(tx) in seen_transactions:
@@ -3863,7 +3999,7 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
     if rows and matched_code and not valid:
         raise ProviderError('EmpireDrop red records lack valid username or wager fields.', kind='format')
     if rows and not opts['code_scoped'] and not matched_code and not any(
-            isinstance(r, dict) and opts['code_field'] in r for r in rows):
+            isinstance(r, dict) and read_path(r, opts['code_field']) is not None for r in rows):
         raise ProviderError('Referral field missing; do not show unverified referral results.', kind='format')
     symbol = '€' if opts['currency'] == 'EUR' else '$'
     winners = sorted(totals, key=lambda key: (-totals[key], display_names[key].casefold()))[:15]
@@ -3892,8 +4028,6 @@ class EmpireDropBoard:
         url = opts['api_url']
         if not url or not opts['verified_contract']:
             raise ProviderError('Official EmpireDrop wager API contract is not verified; configure and confirm it first.', kind='configuration')
-        if not keys.get('empiredrop_public_key') or not keys.get('empiredrop_private_key'):
-            raise ProviderError('EmpireDrop API keys are not configured.', kind='configuration')
         if not opts['code_param'] and not opts['code_scoped']:
             # Allowed only if the response includes a verified per-row code field.
             pass
@@ -3901,10 +4035,11 @@ class EmpireDropBoard:
         start, end = int(site['start_time']), min(int(site['end_time']), now)
         if end <= start:
             raise ProviderError('EmpireDrop race has not started.', kind='window')
-        headers = {'Accept':'application/json', 'User-Agent':'RedHunllef-EmpireDrop/2.0',
-                   opts['public_header']:keys['empiredrop_public_key'],
-                   opts['private_header']:keys['empiredrop_private_key']}
-        params = {opts['start_param']:start, opts['end_param']:end}
+        headers = {'Accept':'application/json', 'User-Agent':'RedHunllef-EmpireDrop/3.0'}
+        auth_headers, basic_auth = build_auth_headers(opts, keys)
+        headers.update(auth_headers)
+        params = {opts['start_param']:format_timestamp(start, opts['timestamp_format']),
+                  opts['end_param']:format_timestamp(end, opts['timestamp_format'])}
         if opts['code_param']:
             params[opts['code_param']] = CODE
         rows, cursor, used = [], None, set()
@@ -3914,8 +4049,19 @@ class EmpireDropBoard:
                 query[opts['cursor_param']] = cursor
             try:
                 # Never forward either credential to a redirect destination.
-                with requests.get(url, params=query, headers=headers, timeout=(5, 20),
-                                  allow_redirects=False, stream=True) as response:
+                kwargs = {'headers': headers, 'timeout': (5,20), 'allow_redirects': False,
+                          'stream': True}
+                if basic_auth:
+                    kwargs['auth'] = basic_auth
+                if opts['request_location'] == 'json':
+                    kwargs['json'] = query
+                else:
+                    kwargs['params'] = query
+                if opts['http_method'] == 'GET':
+                    response_context = requests.get(url, **kwargs)
+                else:
+                    response_context = requests.post(url, **kwargs)
+                with response_context as response:
                     status = response.status_code
                     if status in (301, 302, 303, 307, 308):
                         raise ProviderError('EmpireDrop API redirected; credentials were not forwarded.', kind='http', status=status)
@@ -3936,13 +4082,14 @@ class EmpireDropBoard:
                         raise ProviderError('EmpireDrop returned invalid JSON.', kind='format') from None
             except requests.RequestException:
                 raise ProviderError('EmpireDrop could not be reached.', kind='connection') from None
-            part, envelope = extract_page(payload)
+            part, envelope = extract_page(payload, rows_path=opts['rows_path'])
             rows.extend(part)
             if len(rows) > MAX_ROWS:
                 raise ProviderError('More than 10,000 wager records; verify pagination.', kind='format')
-            next_cursor = envelope.get(opts['next_cursor_field']) if envelope else None
+            next_cursor = (read_path(envelope, opts['next_cursor_path']) if opts['next_cursor_path']
+                           else read_path(envelope, opts['next_cursor_field'])) if envelope else None
             if next_cursor in (None, '', False):
-                return parse_rows(rows, settings=opts)
+                return parse_rows(rows, settings={**opts, "rows_path": ""})
             if opts['pagination_mode'] != 'cursor':
                 raise ProviderError('EmpireDrop returned additional pages; configure documented cursor pagination before publishing.', kind='format')
             if not isinstance(next_cursor, (str, int)) or len(str(next_cursor)) > 512 or str(next_cursor) in used:
@@ -4045,13 +4192,13 @@ class EmpireDropBoard:
         self.stop_event.set(); self.wakeup.set()
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=1)
-```
+``````
 
 ---
 
-## `fairness.py`
+## fairness.py
 
-```python
+``````python
 """Versioned RedPoints: deterministic games and exact, published payout calculations.
 
 No HTTP, player records or mutable state live here. A one-time server seed is
@@ -4320,13 +4467,13 @@ def verify(receipt, expected_commitment=None):
         return _verify(receipt, expected_commitment)
     except (KeyError, TypeError, ValueError, OverflowError):
         return False
-```
+``````
 
 ---
 
-## `gaming.py`
+## gaming.py
 
-```python
+``````python
 """Shared play-point wallets. All debits, outcomes, receipts and ranks commit once.
 
 Uses the existing JSON transaction and signed browser identity. IPs are admin-only metadata. No money, SQL,
@@ -5049,13 +5196,13 @@ class Gaming:
     def recovery(self):
         with self.store.connection() as conn:
             return copy.deepcopy(conn.get('gaming'))
-```
+``````
 
 ---
 
-## `holdem.py`
+## holdem.py
 
-```python
+``````python
 """Heads-up no-limit Hold'em, RedPoints only, with a reproducible computer seat.
 
 A hand reserves equal table stacks. Only chips actually committed count as wagers.
@@ -5335,13 +5482,13 @@ def replay(draw, buy_in, options, actions=None, ending=None):
         # An expired week never places another wager on the player's behalf.
         hand.move(dict(action='fold', amount=0))
     return hand.result(moves)
-```
+``````
 
 ---
 
-## `integrations.py`
+## integrations.py
 
-```python
+``````python
 """Official provider requests with bounded waits and secret-free failures."""
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -5473,13 +5620,13 @@ class Providers:
 
     def last_http_status(self):
         return getattr(self.local, "http_status", None)
-```
+``````
 
 ---
 
-## `poker.py`
+## poker.py
 
-```python
+``````python
 """Single-player five-card draw: 9/6 Jacks or Better, one standard deck.
 
 The committed HMAC stream deals without replacement. Holds are a later player
@@ -5553,13 +5700,13 @@ def replay(draw, wager, holds=None):
     multiplier = PAYTABLE[category]
     return dict(ended=True, initial=initial, cards=final, holds=holds,
                 category=category, multiplier=multiplier, payout=wager*multiplier)
-```
+``````
 
 ---
 
-## `presentation.py`
+## presentation.py
 
-```python
+``````python
 """Small view models for change review and private recovery status."""
 import re
 
@@ -5649,13 +5796,13 @@ def checkpoint_status(marker, admin, rows, boss, gaming=None):
                 label='Changes since last export' if notes else 'Checkpoint matches current progress',
                 details='; '.join(notes) or 'No new saved progress since this export.',
                 attacks=attacks, damage=damage, new_raid=new_raid)
-```
+``````
 
 ---
 
-## `private/admin_store.seed.json`
+## private/admin_store.seed.json
 
-```json
+``````json
 {
   "version": 6,
   "secret_key": "0f471b557fe98828d7ae45022198fe6b7f32d2f5eaa43f0d8dd2e87bd8ef7d57",
@@ -5884,13 +6031,13 @@ def checkpoint_status(marker, admin, rows, boss, gaming=None):
   },
   "updated_at": 1786043053
 }
-```
+``````
 
 ---
 
-## `private/settings.json`
+## private/settings.json
 
-```json
+``````json
 {
   "port": 8080,
   "secret_key": "0b538bc33b89488aac36aab4a797fc9791b4ad952500d099348c4f3bef2eec87",
@@ -5957,13 +6104,13 @@ def checkpoint_status(marker, admin, rows, boss, gaming=None):
   "empiredrop_wager_divisor": "1",
   "empiredrop_currency": "EUR"
 }
-```
+``````
 
 ---
 
-## `race.py`
+## race.py
 
-```python
+``````python
 """Pure race calculations: exact decimal rankings and one public projection."""
 from decimal import Decimal, localcontext
 import hashlib
@@ -6112,13 +6259,13 @@ def freshness(snapshot):
     return dict(state=state, updated_at=stamp, attempt_at=snapshot.get("attempt_at", 0),
                 label={"delayed":"Updates delayed", "waiting":"Waiting for source data", "partial":"Updated with incomplete data", "current":"Up to date"}[state],
                 warning=snapshot.get("warning", ""), error=snapshot.get("error", ""))
-```
+``````
 
 ---
 
-## `race_support.py`
+## race_support.py
 
-```python
+``````python
 """Pure validation, Eastern Time conversion, and safe JSON file operations.
 
 This module has no Flask state and makes no network requests. Decimal values
@@ -6397,13 +6544,13 @@ def read_json(path: Path) -> dict:
         return value
     except (OSError, ValueError) as exc:
         raise RuntimeError("Cannot read " + str(path) + ". The original file was left untouched. Restore a verified recovery copy.") from exc
-```
+``````
 
 ---
 
-## `release_check.py`
+## release_check.py
 
-```python
+``````python
 """Check a complete release without loading credentials or starting workers."""
 import ast
 import hashlib
@@ -6460,36 +6607,36 @@ def check_release(root=None, strict=False):
         problems.append('The templates folder is incomplete.')
     return dict(ok=not problems, problems=sorted(set(problems)), warnings=sorted(set(warnings)),
                 python_modules=len(modules), templates=len(environment.list_templates()))
-```
+``````
 
 ---
 
-## `requirements-postgres.txt`
+## requirements-postgres.txt
 
-```text
+``````text
 # Optional compatibility for an existing PostgreSQL deployment; not needed by
 # the default local-storage build. Select STORAGE_MODE=postgres explicitly.
 -r requirements.txt
 psycopg[binary]==3.3.5
-```
+``````
 
 ---
 
-## `requirements.txt`
+## requirements.txt
 
-```text
+``````text
 Flask==3.1.3
 requests==2.34.2
 waitress==3.0.2
 tzdata==2026.3
 Pillow==12.3.0
-```
+``````
 
 ---
 
-## `runtime.py`
+## runtime.py
 
-```python
+``````python
 """One runtime, independent live jobs, and cached completed-week history."""
 import copy
 from decimal import Decimal
@@ -6811,21 +6958,21 @@ class Runtime:
             event.set()
         for thread in self.threads.values():
             thread.join(timeout=1)
-```
+``````
 
 ---
 
-## `runtime.txt`
+## runtime.txt
 
-```text
+``````text
 python-3.13.12
-```
+``````
 
 ---
 
-## `static/admin-empiredrop.js`
+## static/admin-empiredrop.js
 
-```javascript
+``````javascript
 /* Protected EmpireDrop-only admin panel. No raw keys are transmitted to the browser. */
 (() => {
   'use strict';
@@ -6890,13 +7037,13 @@ python-3.13.12
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   window.setInterval(poll, 15000);
 })();
-```
+``````
 
 ---
 
-## `static/admin-feedback.js`
+## static/admin-feedback.js
 
-```javascript
+``````javascript
 /* Keep a rejected form and its selected files intact. Native forms still work.
    Preview/review workflows remain native; only a committed write redirects. */
 (() => {
@@ -7012,13 +7159,13 @@ python-3.13.12
     });
   }
 })();
-```
+``````
 
 ---
 
-## `static/admin-gaming.js`
+## static/admin-gaming.js
 
-```javascript
+``````javascript
 /* Admin-only local stats. No calls to Shuffle and no extra provider work. */
 (() => {
   "use strict";
@@ -7266,13 +7413,13 @@ python-3.13.12
   });
   void refresh();
 })();
-```
+``````
 
 ---
 
-## `static/admin-health.js`
+## static/admin-health.js
 
-```javascript
+``````javascript
 /* The minute feed owns health; the local gaming feed also updates the boss card.
    No extra polling timer or provider request is created by this controller. */
 (() => {
@@ -7460,13 +7607,13 @@ python-3.13.12
     }
   });
 })();
-```
+``````
 
 ---
 
-## `static/app.js`
+## static/app.js
 
-```javascript
+``````javascript
 /* Shared page controller. Native navigation/forms work before this file loads. */
 (() => {
   "use strict";
@@ -8307,13 +8454,13 @@ python-3.13.12
   setInterval(clock, 1000);
   poll();
 })();
-```
+``````
 
 ---
 
-## `static/boss-preview.js`
+## static/boss-preview.js
 
-```javascript
+``````javascript
 /* Local draft preview only. Uploads and edits still use the protected admin forms. */
 (() => {
   "use strict";
@@ -8402,13 +8549,13 @@ python-3.13.12
   });
   render();
 })();
-```
+``````
 
 ---
 
-## `static/boss.css`
+## static/boss.css
 
-```css
+``````css
 /* A small CSS arena using the original logo; no canvas engine or image bundle. */
 .boss-settings-grid {
   display: grid;
@@ -9655,13 +9802,13 @@ python-3.13.12
     display: none;
   }
 }
-```
+``````
 
 ---
 
-## `static/boss.js`
+## static/boss.js
 
-```javascript
+``````javascript
 /* Shared raid UI. The server owns damage, identity, cooldowns and private names.
    Polling never attacks. A failed POST keeps its receipt ID for a safe retry. */
 (() => {
@@ -10849,13 +10996,13 @@ python-3.13.12
   setInterval(tick, 1000);
   void poll();
 })();
-```
+``````
 
 ---
 
-## `static/empiredrop.css`
+## static/empiredrop.css
 
-```css
+``````css
 /* Keep RedHunllef's established charcoal/red palette, with responsive tabs. */
 .provider-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 20px; }
 .provider-tabs [role="tab"] { min-height: 44px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); }
@@ -10878,13 +11025,13 @@ python-3.13.12
 /* Only the selected provider's race schedule is visible. */
 #shuffleRaceClock[hidden], #empireRaceClock[hidden] {display:none!important}
 #empireRaceClock .clock {font-size:clamp(1.1rem,2vw,1.5rem);white-space:normal}
-```
+``````
 
 ---
 
-## `static/empiredrop.js`
+## static/empiredrop.js
 
-```javascript
+``````javascript
 /* Public EmpireDrop Top 15: no credentials and no direct provider calls.
  * Only /public-state (the server's sanitized projection) is rendered here.
  */
@@ -10972,13 +11119,13 @@ python-3.13.12
   catch { /* Keep server-rendered unavailable state if bootstrap cannot load. */ }
   select(shuffleTab);
 })();
-```
+``````
 
 ---
 
-## `static/experience.css`
+## static/experience.css
 
-```css
+``````css
 /* Shared visual contract. Game math, cards and saved state live outside CSS. */
 :root {
   --bg: #100e12;
@@ -12227,13 +12374,13 @@ b[data-tone="neutral"] {
     width: 100%;
   }
 }
-```
+``````
 
 ---
 
-## `static/experience.js`
+## static/experience.js
 
-```javascript
+``````javascript
 /* Small shared enhancements. Native links and forms still work without JS. */
 (() => {
   "use strict";
@@ -12271,13 +12418,13 @@ b[data-tone="neutral"] {
       location.assign(select.value);
   });
 })();
-```
+``````
 
 ---
 
-## `static/fairness.js`
+## static/fairness.js
 
-```javascript
+``````javascript
 /* Independent RedPoints v1–v5 verifier. Uses Web Crypto and integer arithmetic.
    No API call, wallet mutation, or provider dependency is involved. */
 (() => {
@@ -12762,13 +12909,13 @@ b[data-tone="neutral"] {
   };
   if (typeof module !== "undefined") module.exports = globalThis.RedFair;
 })();
-```
+``````
 
 ---
 
-## `static/gaming.css`
+## static/gaming.css
 
-```css
+``````css
 .gaming-page {
   padding-top: 30px;
   padding-bottom: 40px;
@@ -13751,13 +13898,13 @@ b[data-tone="neutral"] {
 }
 
 .game-art.blackjack-art { display: flex; align-items: center; justify-content: center; }
-```
+``````
 
 ---
 
-## `static/gaming.js`
+## static/gaming.js
 
-```javascript
+``````javascript
 /* Server-authoritative play points. Never generate an outcome in the UI.
    Unknown POST results keep their receipt ID so retries cannot debit twice. */
 (() => {
@@ -15136,13 +15283,13 @@ b[data-tone="neutral"] {
   }
   void start();
 })();
-```
+``````
 
 ---
 
-## `static/history.css`
+## static/history.css
 
-```css
+``````css
 /* History shares the site's red palette and works without JavaScript. */
 .history-picker {
   display: none;
@@ -15294,13 +15441,13 @@ b[data-tone="neutral"] {
     gap: 10px;
   }
 }
-```
+``````
 
 ---
 
-## `static/history.js`
+## static/history.js
 
-```javascript
+``````javascript
 /* Read the shared cache once a minute. Week links also work without scripts. */
 (() => {
   "use strict";
@@ -15487,13 +15634,13 @@ b[data-tone="neutral"] {
   });
   poll();
 })();
-```
+``````
 
 ---
 
-## `static/holdem-fairness.js`
+## static/holdem-fairness.js
 
-```javascript
+``````javascript
 /* Independent redpoints-v5 Hold'em replay. No network or wallet access.
    redbot-v1 receives only its own cards and the public betting observation.
    Keep this policy/version immutable so old receipts remain independently checkable. */
@@ -15661,13 +15808,13 @@ b[data-tone="neutral"] {
   globalThis.RedHoldemFair={VARIANT,POLICY,labels,rankFive,bestHand,validateAction,botAction,Hand,replay};
   if(typeof module!=="undefined")module.exports=globalThis.RedHoldemFair;
 })();
-```
+``````
 
 ---
 
-## `static/holdem-ui.js`
+## static/holdem-ui.js
 
-```javascript
+``````javascript
 /* Present only saved server events. Animation never decides cards, chips or wins. */
 (() => {
   "use strict";
@@ -15826,13 +15973,13 @@ b[data-tone="neutral"] {
   }
   globalThis.RedHoldemUI={create};
 })();
-```
+``````
 
 ---
 
-## `static/holdem.css`
+## static/holdem.css
 
-```css
+``````css
 /* The existing red theme, sized for a two-seat table without horizontal scrolling. */
 .gaming-page[data-game="poker"] .game-layout{grid-template-columns:minmax(180px,240px) minmax(0,1fr)}
 .holdem-table{--card-w:clamp(40px,6.5vw,67px);position:relative;background:radial-gradient(ellipse at 50% 46%,#49242b 0,#24161c 60%,#181117 100%);border:1px solid #72404b;border-radius:26px;padding:20px;box-shadow:inset 0 0 0 6px #ffffff03,0 12px 32px #0003;overflow:hidden}
@@ -15872,13 +16019,13 @@ b[data-tone="neutral"] {
 .holdem-table [hidden]{display:none!important}
 @media(max-width:760px){.gaming-page[data-game="poker"] .game-layout{grid-template-columns:1fr}.gaming-page[data-game="poker"] .bet-controls{padding:15px}.holdem-table{padding:14px 10px;--card-w:clamp(34px,12vw,60px)}.holdem-table .playing-card{padding:5px}.holdem-hole,.holdem-board{gap:5px}.holdem-topline .eyebrow{font-size:.65rem}.holdem-topline .small{font-size:.65rem}.holdem-seat-label{font-size:.8rem}.holdem-moves .button{font-size:.78rem;flex-basis:65px}.holdem-table{border-radius:18px}}
 @media(prefers-reduced-motion:reduce){.holdem-table *{animation:none!important;transition:none!important}}
-```
+``````
 
 ---
 
-## `static/homepage.js`
+## static/homepage.js
 
-```javascript
+``````javascript
 /* The bar and its percentage both show remaining HP and drain together.
    Five-second reads use saved anonymous state, never the affiliate providers. */
 (() => {
@@ -16083,13 +16230,13 @@ b[data-tone="neutral"] {
   }, 1000);
   poll();
 })();
-```
+``````
 
 ---
 
-## `static/plinko.js`
+## static/plinko.js
 
-```javascript
+``````javascript
 /* Receipt-driven canvas renderer, loaded only on the Plinko page. */
 (() => {
   "use strict";
@@ -16362,13 +16509,13 @@ b[data-tone="neutral"] {
   
   }};
 })();
-```
+``````
 
 ---
 
-## `static/receipt-verifier.js`
+## static/receipt-verifier.js
 
-```javascript
+``````javascript
 /* This verifier never fetches or posts. The seed is already revealed in a receipt. */
 document
   .getElementById("receiptVerifier")
@@ -16404,13 +16551,13 @@ document
       button.disabled = false;
     }
   });
-```
+``````
 
 ---
 
-## `static/style.css`
+## static/style.css
 
-```css
+``````css
 /* Logo red (#ff2d2d), warm charcoal panels, and lighter red for readable text.
    Filled action buttons use a deeper red so their white labels stay readable. */
 .play-invite img.custom-avatar {
@@ -18632,13 +18779,13 @@ details[open] > summary .expand-icon {
     padding: 2px 0;
   }
 }
-```
+``````
 
 ---
 
-## `storage.py`
+## storage.py
 
-```python
+``````python
 """Atomic UTF-8 file storage. No database service, SQL runtime, or setup command.
 
 One small JSON document holds current state. A process lock serializes writers,
@@ -18968,13 +19115,13 @@ class Store:
 
     def close(self):
         pass
-```
+``````
 
 ---
 
-## `store_schema.py`
+## store_schema.py
 
-```python
+``````python
 """Non-destructive document validation shared by startup and migration tools."""
 from __future__ import annotations
 import copy
@@ -19060,13 +19207,13 @@ def upgrade_store(value, defaults, health_defaults):
     store["version"] = STORE_VERSION
     store.setdefault("updated_at", int(time.time()))
     return store, store != original
-```
+``````
 
 ---
 
-## `telemetry.py`
+## telemetry.py
 
-```python
+``````python
 """Bounded, process-local diagnostics. Never record player names or secrets.
 
 Measurements describe this running process, not an external monitoring service.
@@ -19165,13 +19312,13 @@ def health_view(runtime, measurements, status):
                       detail=probe['message'], last_success=probe['checked_at'], action='/admin?tab=settings#recovery'))
     return dict(release=RELEASE, generated_at=int(time.time()), ready=probe['ok'], components=cards,
                 metrics={**stats, 'storage':storage}, retention='Recent 512 requests and 256 store operations; reset on restart.')
-```
+``````
 
 ---
 
-## `templates/admin.html`
+## templates/admin.html
 
-```html
+``````html
 {% extends 'base.html' %}{% from 'macros.html' import form_fields,field,player_rows,action_feedback with context %}
 {% block title %}{{ tabs[tab] }} · RedHunllef Admin{% endblock %}
 {% block attributes %}data-page="admin" data-admin-tab="{{ tab }}" data-feed="/admin/status" data-bootstrap="{{ {'server_time':data.server_time,'site':data.site}|tojson|forceescape }}"{% endblock %}
@@ -19209,13 +19356,13 @@ def health_view(runtime, measurements, status):
 <div class="admin-foot"><span id="browserCheck">Connecting to automatic updates…</span><span>Release {{ release }}</span></div>
 <noscript><p class="notice">Forms and navigation work without JavaScript. Reload for current statistics.</p></noscript></main>{% endblock %}
 {% block site_footer %}{% endblock %}
-```
+``````
 
 ---
 
-## `templates/admin_attention.html`
+## templates/admin_attention.html
 
-```html
+``````html
 {# One actionable summary; detailed errors stay inside Diagnostics. #}
 {% set issues = data.health.components|rejectattr('state','equalto','good')|list %}
 <section class="admin-attention" id="adminAttention" data-state="{{ 'warning' if issues else 'good' }}" aria-label="Service status">
@@ -19223,13 +19370,13 @@ def health_view(runtime, measurements, status):
   <ul id="adminIssueList" role="status" aria-live="polite" aria-atomic="true" {% if not issues %}hidden{% endif %}>{% for item in issues %}<li>{{ item.label }}: {{ 'Saving unavailable. Check storage before making changes.' if item.key in ['storage','games'] else 'Updates delayed. Saved results remain visible; retrying automatically.' }}</li>{% endfor %}</ul>
   <p id="networkError" class="notice warning" role="status" hidden></p>
 </section>
-```
+``````
 
 ---
 
-## `templates/admin_boss.html`
+## templates/admin_boss.html
 
-```html
+``````html
 <section class="panel form-panel" data-boss-root data-mode="admin" data-boss-bootstrap="{{ {'state':boss_data,'csrf':csrf()}|tojson|forceescape }}">
 <div class="section-title"><div><p class="eyebrow">ONE SHARED COMMUNITY RAID</p><h2 id="bossName">{{ boss_data.name }}</h2></div><a href="/play" class="button primary" target="_blank" rel="noopener">Open the arena ↗</a></div>
 <p id="bossConnection" class="muted small" role="status">Connecting to the raid…</p><p id="bossError" class="notice warning" role="alert" hidden></p>
@@ -19346,13 +19493,13 @@ def health_view(runtime, measurements, status):
 </section>
 
 {% if superadmin %}{% include "recovery_panel.html" %}{% endif %}
-```
+``````
 
 ---
 
-## `templates/admin_empiredrop.html`
+## templates/admin_empiredrop.html
 
-```html
+``````html
 {# Everything on this panel belongs to EmpireDrop. Shuffle's admin and wagers are independent. #}
 <section class="panel form-panel" aria-labelledby="empireAdminTitle">
   <p class="eyebrow">INDEPENDENT PROVIDER · EMPIREDROP</p>
@@ -19417,15 +19564,19 @@ def health_view(runtime, measurements, status):
 </section>
 <section class="panel form-panel" aria-labelledby="empireContractTitle">
   <p class="eyebrow">PROVIDER CONFIRMATION REQUIRED</p><h2 id="empireContractTitle">Verified API contract</h2>
-  <p class="notice warning">EmpireDrop publicly describes its affiliate dashboard, but its authenticated wager endpoint and signature/headers were not verified. No speculative host/path is called. Enter the values given by EmpireDrop support; confirm the API uses two key headers before enabling this connection.</p>
+  <p class="notice warning">EmpireDrop publicly describes its affiliate dashboard, but its authenticated wager endpoint and signature/headers were not verified. No speculative host/path is called. Enter the values given by EmpireDrop support; confirm the API authentication scheme before enabling this connection. Developer portal: <a href="https://developers.empiredrop.com/" target="_blank" rel="noopener noreferrer">developers.empiredrop.com</a>.</p>
   {% if superadmin %}
   {{ action_feedback('empireConfig') }}
   <form method="post" action="/admin/empiredrop/config" class="stack" data-dirty>
     <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
     <div class="form-grid">
-      {% for key,label in [('api_url','Official provider HTTPS endpoint'),('public_header','Public key HTTP header'),('private_header','Private key HTTP header'),('start_param','Start-date query field'),('end_param','End-date query field'),('code_param','Referral code query field (if applicable)'),('name_field','Username field'),('user_id_field','Stable player ID field (if available)'),('wager_field','Wager amount field'),('code_field','Referral code result field'),('wager_divisor','Units divisor'),('transaction_id_field','Unique transaction ID field (transaction mode)'),('cursor_param','Cursor request field'),('next_cursor_field','Next-cursor response field')] %}
-      <div class="field"><label for="empire-{{ key }}">{{ label }}</label><input id="empire-{{ key }}" name="{{ key }}" value="{{ empire_admin.configuration[key] }}" maxlength="350" {% if key not in ['api_url','code_param','user_id_field','transaction_id_field'] %}required{% endif %}></div>
+      {% for key,label in [('api_url','Official provider HTTPS endpoint'),('public_header','Public key HTTP header'),('private_header','Private key HTTP header'),('start_param','Start-date query field'),('end_param','End-date query field'),('code_param','Referral code query field (if applicable)'),('name_field','Username field'),('user_id_field','Stable player ID field (if available)'),('wager_field','Wager amount field'),('code_field','Referral code result field'),('wager_divisor','Units divisor'),('transaction_id_field','Unique transaction ID field (transaction mode)'),('cursor_param','Cursor request field'),('next_cursor_field','Next-cursor response field'),('rows_path','JSON array location (e.g. data.players)'),('next_cursor_path','Next-cursor JSON location (e.g. paging.next)')] %}
+      <div class="field"><label for="empire-{{ key }}">{{ label }}</label><input id="empire-{{ key }}" name="{{ key }}" value="{{ empire_admin.configuration[key] }}" maxlength="350" {% if key not in ['api_url','code_param','user_id_field','transaction_id_field','rows_path','next_cursor_path'] %}required{% endif %}></div>
       {% endfor %}
+      <div class="field"><label for="empireAuthMode">Authentication mode (verify with provider)</label><select id="empireAuthMode" name="auth_mode">{% for value,label in [('dual_headers','Both keys in separate headers'),('private_header','Private key in named header'),('public_header','Public key in named header'),('bearer_private','Bearer private key'),('basic_pair','HTTP Basic public/private pair')] %}<option value="{{ value }}" {% if empire_admin.configuration.auth_mode==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="empireHttpMethod">Provider API request method</label><select id="empireHttpMethod" name="http_method">{% for v in ['GET','POST'] %}<option value="{{ v }}" {% if empire_admin.configuration.http_method==v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="empireRequestLocation">Parameter placement</label><select id="empireRequestLocation" name="request_location">{% for v in ['query','json'] %}<option value="{{ v }}" {% if empire_admin.configuration.request_location==v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="empireTimestampFormat">Date/time encoding</label><select id="empireTimestampFormat" name="timestamp_format">{% for v,label in [('unix_s','Unix seconds'),('unix_ms','Unix milliseconds'),('iso8601_utc','ISO 8601 UTC')] %}<option value="{{ v }}" {% if empire_admin.configuration.timestamp_format==v %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
       <div class="field"><label for="empireCurrency">Currency</label><select id="empireCurrency" name="currency">{% for value in ['EUR','USD'] %}<option value="{{ value }}" {% if empire_admin.configuration.currency==value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></div>
       <div class="field"><label for="empireRecordMode">API response mode</label><select id="empireRecordMode" name="record_mode"><option value="player_total" {% if empire_admin.configuration.record_mode=='player_total' %}selected{% endif %}>Already aggregated player totals (deduplicate)</option><option value="transactions" {% if empire_admin.configuration.record_mode=='transactions' %}selected{% endif %}>Individual transactions (sum unique IDs)</option></select></div>
       <div class="field"><label for="empirePages">Pagination mode</label><select id="empirePages" name="pagination_mode"><option value="none" {% if empire_admin.configuration.pagination_mode=='none' %}selected{% endif %}>One complete page</option><option value="cursor" {% if empire_admin.configuration.pagination_mode=='cursor' %}selected{% endif %}>Provider cursor pagination</option></select></div>
@@ -19436,13 +19587,13 @@ def health_view(runtime, measurements, status):
   </form>
   {% else %}<p>Only the Superadmin can update the provider API contract.</p>{% endif %}
 </section>
-```
+``````
 
 ---
 
-## `templates/admin_gaming.html`
+## templates/admin_gaming.html
 
-```html
+``````html
 <section aria-labelledby="gamingAdminHeading" id="gamingAdmin" data-rankings="{{ data.gaming|tojson|forceescape }}">
   <div class="section-title"><div><p class="eyebrow">THIS RACE WEEK · ADMIN ONLY</p><h2 id="gamingAdminHeading">Gaming · top five per game</h2><p class="muted small">Net winnings = returned − wagered. Free points and admin grants do not count.</p></div><a class="button small" href="{{ '/admin/gaming' if tab=='overview' else '/gaming' }}">{{ 'Gaming controls →' if tab=='overview' else 'Open Gaming →' }}</a></div>
   <div class="ranking-toolbar"><p id="gamingAdminSummary" class="small">Players: {{ data.gaming.player_count }} · Rounds: {{ data.gaming.completed_rounds }} · Active hands: {{ data.gaming.active_hands }}</p><div><button id="refreshGaming" class="text-button small" type="button">Refresh stats</button><span id="gamingAdminChecked" class="small muted">Updating automatically</span></div></div>
@@ -19453,13 +19604,13 @@ def health_view(runtime, measurements, status):
   <details class="panel gaming-tools"><summary><span><strong>Player records &amp; reset schedule</strong><small>Identity, funding and connection information</small></span><span aria-hidden="true">+</span></summary><div class="details-content"><p id="gamingAdminReset" class="small muted">Weekly reset: {{ data.gaming.season.end_et }}.</p><p class="small muted">All eight games share each player's name and wallet. Shared Wi-Fi and VPN connections are allowed. Names are player-submitted; IPs do not verify a Shuffle account or restrict play. Full names and IPs are admin-only.</p><p class="small muted">A browser refresh sets that player's available balance to 100,000; a restart sets all saved wallets to 100,000. Funding is excluded from winnings. Pending card hands keep their committed stake. Weekly reset clears rankings.</p><p id="gamingIpWarning" class="notice warning" hidden>Visitor IP forwarding is not configured. Playing still works. On DigitalOcean App Platform set TRUST_APP_PLATFORM=1 to record each visitor's public IP accurately.</p><p class="small muted">Installed gaming release: <strong id="gamingInstalledRelease">{{ release }}</strong></p></div></details>
   <details class="panel gaming-tools" id="gamingLegacyPoker"><summary>Video Poker · legacy records</summary><div class="details-content"><p class="small muted">Previous Jacks or Better results keep their original rules and proofs.</p><p id="gamingCount-video_poker" class="small muted"></p><ol class="gaming-leaders" id="gamingLeaders-video_poker">{% for row in data.gaming.legacy_poker %}<li><strong>{{ row.name }}</strong> · {{ '{:+,}'.format(row.net) }} net RP</li>{% else %}<li class="muted">No legacy rounds this week.</li>{% endfor %}</ol></div></details>
 </section>
-```
+``````
 
 ---
 
-## `templates/admin_health.html`
+## templates/admin_health.html
 
-```html
+``````html
 <section class="panel health-panel" id="systemHealth" data-health="{{ data.health|tojson|forceescape }}" aria-labelledby="systemHealthHeading">
   <div class="section-title"><div><p class="eyebrow">SYSTEM HEALTH</p><h2 id="systemHealthHeading">System health</h2></div><button class="button small" id="copyHealthReport" type="button">Copy support report</button></div>
   <div class="health-grid">{% for item in data.health.components %}<article class="health-card" data-health-card="{{ item.key }}" data-state="{{ item.state }}">
@@ -19470,13 +19621,13 @@ def health_view(runtime, measurements, status):
   <details class="health-measurements"><summary>Recent measurements</summary><div class="health-metrics" id="healthMetrics"></div><p class="small muted">Recent measurements on this server. Request reports contain no player names, IPs, keys or saved game seeds.</p></details>
   <p id="healthReportFeedback" class="small" role="status" hidden></p>
 </section>
-```
+``````
 
 ---
 
-## `templates/admin_overview.html`
+## templates/admin_overview.html
 
-```html
+``````html
 <section class="stat-grid overview-stats" aria-label="Community overview">
   <article class="panel stat"><div class="row"><span class="eyebrow">RACE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><strong id="countdown" class="stat-value">{{ data.site.race_state|capitalize }}</strong><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><a class="text-link" href="/admin?tab=race">Schedule &amp; prizes →</a></article>
   <article class="panel stat" id="overviewBoss" data-boss="{{ data.boss|tojson|forceescape }}"><div class="row"><span class="eyebrow">COMMUNITY BOSS</span><span id="overviewBossStatus" class="badge">{{ data.boss.status|capitalize }}</span></div><strong class="stat-value" id="overviewBossName">{{ data.boss.name }}</strong><label class="small" for="overviewBossHP">HP remaining</label><progress id="overviewBossHP" max="{{ data.boss.max_hp }}" value="{{ data.boss.hp }}" aria-label="Boss HP remaining"></progress><p class="muted" id="overviewBossDetail">{{ '{:,}'.format(data.boss.hp) }} / {{ '{:,}'.format(data.boss.max_hp) }} HP · {{ data.boss.raiders }} raiders</p><a class="text-link" href="/admin?tab=boss">Manage boss →</a></article>
@@ -19485,25 +19636,25 @@ def health_view(runtime, measurements, status):
 <div class="admin-quick-actions" aria-label="Quick actions"><a class="button" href="/admin?tab=race">Edit race</a><a class="button" href="/admin?tab=boss">Boss controls</a><a class="button" href="/admin?tab=players">Wagerers</a><a class="button" href="/admin/gaming#gamingFunding">Give RedPoints</a>{% if superadmin %}<a class="button" href="/admin?tab=settings#recovery">Recovery</a>{% endif %}</div>
 {% if superadmin %}<aside class="recovery-reminder panel" id="recoveryReminder" {% if not data.checkpoint.changes %}hidden{% endif %}><div><strong>Recovery checkpoint needed</strong><p id="recoveryReminderDetail">{{ data.checkpoint.details }}</p></div><a class="button small" href="/admin?tab=settings#recovery">Save checkpoint →</a></aside>{% endif %}
 {% include 'admin_gaming.html' %}
-```
+``````
 
 ---
 
-## `templates/admin_players.html`
+## templates/admin_players.html
 
-```html
+``````html
 <section class="panel form-panel"><div class="section-title"><div><p class="eyebrow">YOUR COMMUNITY, UNCENSORED</p><h2>Race participants</h2></div><a id="exportLink" class="button small" href="{{ url_for('export',view=request.args.get('view','all'),q=request.args.get('q',''),sort=request.args.get('sort','rank')) }}">↓ Export this view</a></div>
 <form class="filter-bar" method="get" action="{{ url_for('login') }}"><input type="hidden" name="tab" value="players"><div class="field grow"><label for="search">Find a player</label><input id="search" name="q" value="{{ request.args.get('q','') }}" placeholder="Search full username"></div><div class="field"><label for="view">Show</label><select id="view" name="view">{% for key,label in [('all','All loaded players'),('top','Top 15'),('overrides','Adjusted players')] %}<option value="{{ key }}" {% if request.args.get('view','all')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><div class="field"><label for="sort">Sort by</label><select id="sort" name="sort">{% for key,label in [('rank','Race rank'),('name','Username'),('raw','Raw wager')] %}<option value="{{ key }}" {% if request.args.get('sort','rank')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><button class="button" type="submit">Apply</button></form>
 <p class="muted small">Up to {{ limit }} qualifying players are loaded. Search and export cover those loaded records. Original race ranks are retained.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Full race participants"><table><thead><tr><th>Rank</th><th>Player</th><th class="number">Effective weighted</th><th class="number">Original weighted</th><th class="number">Raw wager</th><th>Action</th></tr></thead><tbody id="participantsBody">{{ player_rows(participants) }}</tbody></table></div></section>
 <section class="panel form-panel" id="override">{{ action_feedback('override') }}<div class="section-title"><div><p class="eyebrow">A CLEAR AUDIT TRAIL</p><h2>Adjust a weighted total</h2></div></div><form action="/admin/action" method="post" class="filter-bar" data-dirty>{{ form_fields('override','players',revision) }}{{ field('username','Exact full username',request.args.get('edit','')) }}{{ field('amount','Replacement weighted total',admin.overrides.get(request.args.get('edit',''),''),help='Leave blank to remove the override.',required=false) }}<button class="button primary" type="submit">Save adjustment</button></form><p class="muted small">Raw and original weighted amounts remain available. An override changes the effective ranking amount.</p></section>
 <details class="panel form-panel code-red" id="codeRed" {% if request.args.get('code_red')=='1' %}open{% endif %}><summary><div><span class="eyebrow">CODE RED</span><h2>Community wagerers <span class="tag" id="redCount">{{ data.red|length }} / 100</span></h2></div><span class="expand-icon" aria-hidden="true">+</span></summary><div class="details-content"><p class="muted">The first 100 confirmed Code Red wagerers, sorted by weighted wager. Full usernames are visible only to administrators. Overrides do not change this source list.</p><p id="redMembership" class="muted small">{{ data.diagnostics.missing_campaign }} source rows have no campaign metadata; membership cannot be verified for those rows.</p><div class="field js-only"><label for="redSearch">Search these Code Red users</label><input id="redSearch" type="search" placeholder="Full username"></div><div class="table-scroll" tabindex="0" role="region" aria-label="Code Red wagerers"><table><thead><tr><th>#</th><th>Full username</th><th class="number">Weighted wager</th><th class="number">Raw wager</th></tr></thead><tbody id="redBody">{% for row in data.red %}<tr data-red-name="{{ row.username }}"><td>{{ loop.index }}</td><td><strong>{{ row.username }}</strong><button class="copy-button js-only" type="button" data-copy="{{ row.username }}">⧉</button></td><td class="number accent">{{ row.weighted }}</td><td class="number">{{ row.raw }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No confirmed Code Red wagerers for this window.</td></tr>{% endfor %}</tbody></table></div></div></details>
-```
+``````
 
 ---
 
-## `templates/admin_race.html`
+## templates/admin_race.html
 
-```html
+``````html
 <form id="raceForm" method="post" action="/admin/action" class="stack" data-dirty>{{ form_fields('save_race','race',revision) }}{{ action_feedback('raceForm') }}
 {% if confirm_race %}<input type="hidden" name="review_token" value="{{ review_token }}"><div class="notice warning"><strong>These changes are a draft. Confirm below to publish them.</strong><p>Changing the race window archives its results and resets its overrides. Changes to prizes or text keep the current race participants. Review the changes below.</p><p>The saved race stays active until you choose <strong>Confirm and publish race</strong> in the bottom save bar.</p></div>{% endif %}
 {% if change_review %}{% include "change_review.html" %}{% endif %}
@@ -19513,13 +19664,13 @@ def health_view(runtime, measurements, status):
 <section class="panel form-panel" id="prizes"><div class="section-title"><div><p class="eyebrow">REWARD THE CLIMB</p><h2>Placement prizes</h2></div><span class="badge" id="prizeTotal">{{ data.site.total_prize }} total</span></div><div class="prize-grid">{% for n in range(1,16) %}{{ field('prize_'~n,'Place '~n,form['prize_'~n],error=errors.get('prize_'~n,'')) }}{% endfor %}</div></section>
 <section class="panel form-panel"><h2>Channels &amp; links</h2><div class="form-grid">{% for key,label,type,required in [('kick_channel_slug','Kick channel name','text',true),('campaign_code_filter','Shuffle campaign code','text',false),('stream_url','Livestream link','url',true),('sponsor_name','Sponsor name','text',true),('sponsor_url','Sponsor link','url',true),('community_name','Community link label','text',false),('community_url','Community link','url',false),('responsible_gambling_url','Responsible play link','url',false)] %}{{ field(key,label,form[key],type,error=errors.get(key,''),required=required) }}{% endfor %}</div></section>
 <div class="save-bar"><div><strong id="saveLabel">{{ 'Confirmation required — not published' if confirm_race else 'Review your draft' if errors else 'All changes saved' }}</strong><span class="muted small">Live updates preserve your unfinished edits.</span></div><div class="button-row"><button class="button js-only" type="reset">Discard edits</button><button class="button primary" type="submit" {% if confirm_race %}name="confirm_race" value="yes"{% endif %}>{{ 'Confirm and publish race' if confirm_race else 'Save race settings' }}</button></div></div></form>
-```
+``````
 
 ---
 
-## `templates/admin_settings.html`
+## templates/admin_settings.html
 
-```html
+``````html
 <section class="panel form-panel"><p class="eyebrow">YOUR ACCESS</p><h2>Account security</h2>{{ action_feedback('accountSecurity') }}<form method="post" action="/admin/action" class="form-grid" data-dirty>{{ form_fields('password','settings',revision) }}{{ field('current_password','Current password',type='password') }}{{ field('new_password','New password',type='password',help='At least 12 characters.') }}{{ field('confirm_password','Confirm new password',type='password') }}<div class="field"><span>&nbsp;</span><button class="button primary" type="submit">Update password</button></div></form></section>
 {% if superadmin %}<details class="panel form-panel" open><summary><h2>Administrator accounts</h2><span aria-hidden="true">+</span></summary><div class="details-content"><p class="muted">{{ admin.superadmin }} is the protected Superadmin. Existing accounts are retained while their saved storage is available. Use the private recovery file below before redeploying with local storage.</p>{{ action_feedback('accounts') }}<div class="account-list">{% for name,record in admin.users.items() %}<div class="account-row"><div><strong>{{ name }}</strong><span class="tag">{{ 'Superadmin' if name|lower==admin.superadmin|lower else 'Admin' }}</span></div>{% if name|lower!=admin.superadmin|lower %}<form action="/admin/action" method="post" data-confirm="Remove this account and revoke its sessions?">{{ form_fields('remove_account','settings',revision) }}<input type="hidden" name="username" value="{{ name }}"><button class="button small danger" type="submit">Remove</button></form>{% endif %}</div>{% endfor %}</div><h3>Add an administrator</h3><form action="/admin/action" method="post" class="form-grid">{{ form_fields('add_account','settings',revision) }}{{ field('username','New username',prefix='add-') }}{{ field('new_password','Initial password',type='password',help='At least 12 characters.',prefix='add-') }}{{ field('confirm_password','Confirm password',type='password',prefix='add-') }}<div class="field"><span>&nbsp;</span><button class="button" type="submit">Add administrator</button></div></form>
 <details class="nested"><summary>Reset an administrator password</summary><form action="/admin/action" method="post" class="form-grid" data-confirm="Reset this password and revoke previous sessions?">{{ form_fields('reset_password','settings',revision) }}<div class="field"><label for="resetUser">Account</label><select name="username" id="resetUser">{% for name in admin.users %}<option>{{ name }}</option>{% endfor %}</select></div>{{ field('new_password','Replacement password',type='password',prefix='reset-') }}{{ field('confirm_password','Confirm replacement',type='password',prefix='reset-') }}<div class="field"><span>&nbsp;</span><button class="button" type="submit">Reset password</button></div></form></details></div></details>{% endif %}
@@ -19530,13 +19681,13 @@ def health_view(runtime, measurements, status):
 <details class="panel form-panel" id="configurationDetails"><summary><h2>Connections &amp; diagnostics</h2><span aria-hidden="true">+</span></summary><div class="details-content"><div class="diagnostic-grid">{% for key,label in [('storage','Storage'),('start_et','Race starts'),('end_et','Race ends'),('received','Source records received'),('accepted','Valid race records'),('missing_campaign','Records without campaign')] %}<div><span class="muted small">{{ label }}</span><strong data-diagnostic="{{ key }}">{{ data.diagnostics[key] }}</strong></div>{% endfor %}{% for key,value in data.diagnostics.credentials.items() %}<div><span class="muted small">{{ key|replace('_',' ')|title }}</span><strong>{{ 'Configured' if value.configured else 'Missing' }}</strong><small class="muted">{{ value.source }}</small></div>{% endfor %}</div>
 {% for name in ['shuffle','kick'] %}<div class="notice"><strong>{{ name|capitalize }}</strong><p id="{{ name }}Message">{{ data.jobs[name].error or 'Waiting for first update' }}</p><small id="{{ name }}Timing" class="muted">Automatic updates every 60 seconds</small></div>{% endfor %}<a class="button" href="/admin/diagnostics">↓ Download redacted diagnostics</a><p class="muted small">The report excludes keys, password hashes, provider response bodies, and participant usernames.</p></div></details>
 <details class="panel form-panel"><summary><h2>Access controls &amp; logs</h2><span aria-hidden="true">+</span></summary><div class="details-content"><form method="post" action="/admin/action" class="filter-bar" data-confirm="Block requests from this IP address?">{{ form_fields('ban_ip','settings',revision) }}{{ field('ip','Block an IPv4 or IPv6 address') }}<button class="button danger" type="submit">Block address</button></form><div class="button-row">{% for ip in admin.banned_ips %}<form action="/admin/action" method="post">{{ form_fields('unban_ip','settings',revision) }}<input type="hidden" name="ip" value="{{ ip }}"><button class="button small" type="submit">Unblock {{ ip }}</button></form>{% endfor %}</div>{{ action_feedback('accessControls') }}<h3>Recent access</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Address</th><th>Path</th><th>Status</th></tr></thead><tbody>{% for row in access_log %}<tr><td>{{ fmt_et(row.time) }}</td><td>{{ row.ip }}</td><td>{{ row.method }} {{ row.path }}</td><td>{{ row.status }}</td></tr>{% endfor %}</tbody></table></div><form method="post" action="/admin/action" data-confirm="Clear recent access entries?">{{ form_fields('clear_access','settings',revision) }}<button class="button small" type="submit">Clear access log</button></form><h3>Administrator activity</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Administrator</th><th>Action</th></tr></thead><tbody>{% for row in admin.audit_log|reverse %}<tr><td>{{ row.ts_et }}</td><td>{{ row.admin_user }}</td><td>{{ row.action }}</td></tr>{% endfor %}</tbody></table></div>{% if superadmin %}<form action="/admin/action" method="post" data-confirm="Clear the audit log after saving a private recovery copy?">{{ form_fields('clear_audit','settings',revision) }}<button class="button small" type="submit">Clear audit log</button></form>{% endif %}</div></details>
-```
+``````
 
 ---
 
-## `templates/admin_shuffle.html`
+## templates/admin_shuffle.html
 
-```html
+``````html
 {# Shuffle controls live here; this tab does not alter EmpireDrop. #}
 <section class="panel form-panel" aria-labelledby="shuffleAdminTitle">
   <p class="eyebrow">INDEPENDENT PROVIDER · SHUFFLE</p><h2 id="shuffleAdminTitle">Shuffle leaderboard</h2>
@@ -19552,13 +19703,13 @@ def health_view(runtime, measurements, status):
   </form>
   <p class="small muted">EmpireDrop credentials, connection status and positions are managed on their own tab.</p>
 </section>
-```
+``````
 
 ---
 
-## `templates/base.html`
+## templates/base.html
 
-```html
+``````html
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
@@ -19574,13 +19725,13 @@ def health_view(runtime, measurements, status):
 <script src="{{ url_for('static',filename='app.js',v=asset_version) }}" defer></script>
 <script src="{{ url_for('static',filename='experience.js',v=asset_version) }}" defer></script>{% block scripts %}{% endblock %}
 </body></html>
-```
+``````
 
 ---
 
-## `templates/boss.html`
+## templates/boss.html
 
-```html
+``````html
 {% extends 'base.html' %}
 {% from 'icons.html' import icon %}
 
@@ -19766,36 +19917,36 @@ def health_view(runtime, measurements, status):
 </main>
 {% endblock %}
 {% block site_footer %}{% endblock %}
-```
+``````
 
 ---
 
-## `templates/change_review.html`
+## templates/change_review.html
 
-```html
+``````html
 <section class="panel change-review" aria-labelledby="changeReviewTitle">
 <p class="eyebrow">REVIEW BEFORE PUBLISHING</p><h2 id="changeReviewTitle">Here is exactly what changes.</h2>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Current and proposed values"><table><thead><tr><th>Setting</th><th>Current</th><th>Proposed</th></tr></thead><tbody>{% for change in change_review %}<tr><th scope="row">{{ change.label }}</th><td>{{ change.before }}</td><td class="accent">{{ change.after }}</td></tr>{% endfor %}</tbody></table></div>
 <p class="small muted">Review expires after 15 minutes. Editing a reviewed value requires a fresh preview before publishing.</p>
 </section>
-```
+``````
 
 ---
 
-## `templates/error.html`
+## templates/error.html
 
-```html
+``````html
 {% extends 'base.html' %}{% block title %}{{ title }} · RedHunllef{% endblock %}
 {% block navigation %}<a href="/">View race ↗</a>{% endblock %}
 {% block content %}<main class="shell login-wrap" id="main"><section class="panel login-panel"><p class="eyebrow">REDHUNLLEF</p><h1>{{ title }}</h1><p class="muted">{{ message }}</p><a class="button primary" href="/admin">Return to admin →</a><p class="release">{{ release }}</p></section></main>{% endblock %}
 {% block footer %}RedHunllef Wager Race{% endblock %}
-```
+``````
 
 ---
 
-## `templates/gaming.html`
+## templates/gaming.html
 
-```html
+``````html
 {% extends 'base.html' %}
 {% block title %}{{ ('Texas Hold’em' if game=='poker' else game|capitalize) ~ ' · ' if game else '' }}Gaming · RedHunllef{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='gaming.css',v=asset_version) }}">{% if game=='poker' %}<link rel="stylesheet" href="{{ url_for('static',filename='holdem.css',v=asset_version) }}">{% endif %}{% endblock %}
@@ -19864,13 +20015,13 @@ def health_view(runtime, measurements, status):
 </main>
 {% endblock %}
 {% block scripts %}{% if game=='plinko' %}<script src="{{ url_for('static',filename='plinko.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='holdem-fairness.js',v=asset_version) }}" defer></script>{% if game=='poker' %}<script src="{{ url_for('static',filename='holdem-ui.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='fairness.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='gaming.js',v=asset_version) }}" defer></script>{% endblock %}
-```
+``````
 
 ---
 
-## `templates/gaming_fairness.html`
+## templates/gaming_fairness.html
 
-```html
+``````html
 {% extends 'base.html' %}
 {% block title %}Fairness &amp; verifier · RedPoints{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='gaming.css',v=asset_version) }}">{% endblock %}
@@ -19897,13 +20048,13 @@ def health_view(runtime, measurements, status):
  nonce, wager, options, block_number]</code></pre><p>Use the receipt’s <code>rules_version</code>: <code>redpoints-v5</code> for new bets. Earlier v1–v4 receipts remain verifiable. Saved Blackjack and Video Poker hands finish under their original rules; the next bet uses v5. Object keys are sorted, with no spaces around separators. Block numbers start at zero. Read the HMAC digest in four-byte big-endian integers. To choose from N outcomes, reject values at or above 2³² − (2³² mod N), then use value mod N. Consume the next four bytes for the next draw; generate the next HMAC block when necessary.</p><p>Blackjack uses options <code>{"decks":6}</code>. Start with card IDs 0–311, where an ID equals deck × 52 + suit × 13 + rank − 1. Suits are spades, hearts, clubs, diamonds; ranks are A=1 through K=13. For each draw at index i, draw j uniformly from i through 311, swap those shoe positions, and consume the card at i. Replay the saved <code>actions</code> in order against this sequence. Actions are not added to the HMAC context, so changing a decision cannot reshuffle the shoe. The completed receipt includes the decisions and total stake (including Double); net winnings equal payout minus that total stake. The browser verifies the full replay after seed reveal.</p><p>Legacy Video Poker uses options <code>{"variant":"jacks_or_better"}</code> and card IDs 0–51 with the same suit/rank encoding. Partially shuffle and consume five cards first. At Draw, iterate positions 0 through 4; retain held positions and replace each other position with the next card sampled from the remaining deck. The sorted <code>holds</code> array contains positions 0–4. Holds are not part of the HMAC context, so choosing cards never reseeds or reshuffles the committed sequence.</p><p>Baccarat uses <code>{"decks":8,"side":"banker"}</code>, where the side is player, banker or tie. Use card IDs 0–415 with the same encoding; partially shuffle by sampling j from i through 415, swap, then consume i. Deal opening cards alternately and any Player third card before Banker's. The receipt includes all cards, totals and the exact payout. Its independent verifier replays the full draw tableau.</p><p>Coinflip uses options <code>{"side":"heads"}</code> or <code>{"side":"tails"}</code>. Limbo uses <code>{"target":200}</code> for a 2.00× target; its result multiplier also uses hundredths. Legacy Video Poker result multipliers use whole units; Hold’em uses pot awards and has no paytable. Keno, Plinko and Coinflip multipliers use 1/10,000 units. Receipts are versioned so each verifier uses the correct scale.</p>
 <p class="small muted">The configured package includes <code>fairness.py</code>, the independent browser implementation <code>static/fairness.js</code>, and the optional offline verifier <code>tools/verify_redpoints.py</code>. These games have their own published rules; they do not claim compatibility with another operator's receipts or payout tables.</p></section><section id="holdem" class="panel prose"><h2>Texas Hold’em · redpoints-v5</h2><p>Poker now means heads-up no-limit Texas Hold’em against RedBot, with two equal table stacks and no rake. Archived Jacks or Better hands and receipts above continue to use their original v3/v4 rules. They never become Hold’em results.</p><p>The chosen stack is reserved from the wallet. At settlement, the entire remaining table stack returns. Net is final table stack minus starting stack. Admin wagers count only matched committed chips; returned means pot awards. Uncalled chips are refunded. Equal best five-card hands split the pot; suits never break ties. The best five can use zero, one or two hole cards.</p><p>Options are <code>{"button":"player","variant":"texas_holdem"}</code> or button computer. The button alternates with settled Hold’em hands in this week, beginning with the player. Big blind is floor(stack/50), minimum 2; small blind is floor(big blind/2), minimum 1. Minimum buy-in is 20. Both seats start each hand with the same stack, limiting loss to that stack. No daily or weekly hand limit.</p><p>Use the existing HMAC stream with version redpoints-v5. Full Fisher–Yates shuffle of IDs 0–51: for i=0 through 50, sample j=i+below(52−i), then swap. Deal alternately, big blind first: deck positions 0–3 are hole cards. Burn position 4; flop is 5–7. Burn 8; turn is 9. Burn 10; river is 11. The deck never changes after betting choices. Hole cards remain hidden until showdown; the seed reveals the full deal after any completed hand, including a fold.</p><p>The button is small blind and acts first preflop; big blind acts first after the flop. There is a big-blind option after a preflop call. Opening bet minimum is the big blind; a full raise increases the highest street contribution by at least the last full raise. Smaller increases are allowed only all-in. An all-in opponent cannot face another bet. Unmatched chips return before a showdown or fold is settled.</p><p>Player decisions are recorded as action plus amount. Amount is a total street contribution for bet or raise, zero for check/call/fold/all_in. They are excluded from the shuffle context. The independent verifier reconstructs every legal action, RedBot response, revealed street, pot and final five-card evaluation. At the weekly boundary an unfinished hand folds without spending more points, recorded as weekly_reset.</p><h3>Published opponent: redbot-v1</h3><p>RedBot receives only its two cards, visible community cards, current pot, legal bet sizes, blind size, street and its own raise count. It does not receive your cards, the seed or the remaining deck. Its exact deterministic decision function is published in holdem.py and independently in static/holdem-fairness.js. It uses made-hand strength, price thresholds and an occasional deterministic bluff. Strength scores are heuristics, not claimed win probabilities. It raises at most once per street; a player can still raise legally in response.</p><p>Receipts prove that the committed deck, published opponent policy, recorded choices and accounting agree. They do not prove optimal opponent play or stop a server from refusing a request. Retain your pre-hand commitment and receipt when auditing. <a class="text-link" href="https://www.pokerstars.com/poker/games/texas-holdem/" target="_blank" rel="noopener">Texas Hold’em rules reference ↗</a></p></section></main>{% endblock %}
 {% block scripts %}<script src="{{ url_for('static',filename='holdem-fairness.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='fairness.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='receipt-verifier.js',v=asset_version) }}" defer></script>{% endblock %}
-```
+``````
 
 ---
 
-## `templates/history.html`
+## templates/history.html
 
-```html
+``````html
 {% extends 'base.html' %}
 {% block title %}Race History · RedHunllef{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='history.css', v=asset_version) }}">{% endblock %}
@@ -19945,13 +20096,13 @@ def health_view(runtime, measurements, status):
 </main>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='history.js', v=asset_version) }}" defer></script>{% endblock %}
-```
+``````
 
 ---
 
-## `templates/holdem_table.html`
+## templates/holdem_table.html
 
-```html
+``````html
 <div id="holdemTable" class="holdem-table" aria-label="Texas Hold’em table">
   <div class="holdem-topline"><span class="eyebrow">TEXAS HOLD’EM</span><span id="holdemBlinds" class="small muted">Heads-up · No limit</span></div>
   <section class="holdem-seat" aria-label="Computer opponent">
@@ -19985,13 +20136,13 @@ def health_view(runtime, measurements, status):
   </div>
   <details class="holdem-log"><summary>Hand history</summary><ol id="holdemLog"></ol></details>
 </div>
-```
+``````
 
 ---
 
-## `templates/icons.html`
+## templates/icons.html
 
-```html
+``````html
 {% macro icon(name, size=20) -%}
 <svg class="ui-icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
 {% if name=='blade' %}<path d="m4 3 7 3 10 15-7-3L4 3ZM3 16l5 5m-4 0 4-5"/>
@@ -20001,13 +20152,13 @@ def health_view(runtime, measurements, status):
 {% elif name=='link' %}<path d="m9 15 6-6m-5-3 2-2a5 5 0 0 1 7 7l-2 2M7 11l-2 2a5 5 0 0 0 7 7l2-2"/>
 {% endif %}</svg>
 {%- endmacro %}
-```
+``````
 
 ---
 
-## `templates/index.html`
+## templates/index.html
 
-```html
+``````html
 {% extends 'base.html' %}
 {% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
@@ -20061,26 +20212,26 @@ def health_view(runtime, measurements, status):
 
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='empiredrop.css',v=asset_version) }}">{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='empiredrop.js',v=asset_version) }}" defer></script><script src="{{ url_for('static', filename='homepage.js', v=asset_version) }}" defer></script>{% endblock %}
-```
+``````
 
 ---
 
-## `templates/login.html`
+## templates/login.html
 
-```html
+``````html
 {% extends 'base.html' %}{% block title %}Sign in · RedHunllef{% endblock %}
 {% block navigation %}<a href="/">Back to the race ↗</a>{% endblock %}
 {% block content %}<main id="main" class="shell login-wrap"><section class="panel login-panel"><div class="eyebrow"><span class="dot"></span> YOUR RACE. YOUR CONTROL.</div><h1>Welcome back<span class="accent">.</span></h1><p class="muted">Sign in to manage the race and your community.</p>
 {% if error %}<p class="notice warning" role="alert">{{ error }}</p>{% endif %}
 <form action="{{ url_for('login') }}" method="post" class="stack"><input type="hidden" name="csrf" value="{{ csrf() }}"><div class="field"><label for="username">Username</label><input id="username" name="username" autocomplete="username" required autofocus maxlength="64"></div><div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"></div><button class="button primary" type="submit">Sign in <span aria-hidden="true">→</span></button></form><p class="muted small">Administration only. Public visitors do not need an account.</p><span class="release">{{ release }}</span></section></main>{% endblock %}
 {% block footer %}Private administration{% endblock %}
-```
+``````
 
 ---
 
-## `templates/macros.html`
+## templates/macros.html
 
-```html
+``````html
 {% macro form_fields(action, tab, revision=0) -%}
 <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="action" value="{{ action }}"><input type="hidden" name="tab" value="{{ tab }}"><input type="hidden" name="revision" value="{{ revision }}">
 {%- endmacro %}
@@ -20093,13 +20244,13 @@ def health_view(runtime, measurements, status):
 {% macro action_feedback(target) -%}
 {% if admin_receipt and admin_receipt.target==target %}<p id="feedback-{{ target }}" class="notice success form-feedback saved-receipt" role="status" tabindex="-1"><strong>Saved.</strong> {{ admin_receipt.message }} <small>{{ fmt_et(admin_receipt.at) }}</small></p>{% endif %}
 {%- endmacro %}
-```
+``````
 
 ---
 
-## `templates/recovery_panel.html`
+## templates/recovery_panel.html
 
-```html
+``````html
 <section class="panel form-panel" id="recovery"><p class="eyebrow">KEEP YOUR COMMUNITY'S PROGRESS</p><h2>Private recovery checkpoint</h2>
 <div class="checkpoint-status"><strong id="checkpointLabel">{{ data.checkpoint.label }}</strong><p id="checkpointDetails">{{ data.checkpoint.details }}</p><small id="checkpointTime">{{ 'Last export generated: ' ~ fmt_et(data.checkpoint.generated_at) if data.checkpoint.generated_at else 'No export generated yet.' }}</small></div>
 <p class="muted">Includes administrator accounts, password hashes, the signing key, race settings, saved standings, boss progress, uploaded boss avatar, weekly history, RedPoints wallets, statistics, and fairness receipts. Keep this file private.</p>
@@ -20109,13 +20260,13 @@ def health_view(runtime, measurements, status):
 <form method="post" action="/admin/recovery-preview" enctype="multipart/form-data" class="filter-bar"><input type="hidden" name="csrf" value="{{ csrf() }}"><div class="field grow"><label for="recoveryFile">Private recovery JSON</label><input id="recoveryFile" name="recovery" type="file" accept=".json,application/json" required></div><button type="submit" class="button">Review recovery file</button></form>
 {% if recovery_review %}<div class="recovery-review"><h3>Validated recovery file</h3><dl><dt>Race dates</dt><dd>{{ recovery_review.start }} → {{ recovery_review.end }}</dd><dt>Accounts</dt><dd>{{ recovery_review.accounts }} administrators</dd><dt>Race data</dt><dd>{{ recovery_review.rows }} saved places · {{ recovery_review.overrides }} overrides · {{ recovery_review.history }} archived races</dd><dt>Community boss</dt><dd>{% if recovery_review.game %}{{ '{:,}'.format(recovery_review.game.hp) }} / {{ '{:,}'.format(recovery_review.game.max_hp) }} HP · {{ recovery_review.game.raiders }} raiders · {{ recovery_review.game.attacks }} hits{% else %}No boss record; a fresh raid will be created on a new instance.{% endif %}</dd><dt>RedPoints</dt><dd>{{ recovery_review.redpoints }} saved wallets, including fairness seeds and recent receipts</dd><dt>Boss avatar</dt><dd>{{ 'Custom image included' if recovery_review.avatar else 'Original logo' }}</dd></dl>{% if recovery_review.comparison %}{% set c=recovery_review.comparison %}<h3>Compared with the current save</h3><div class="table-scroll"><table><thead><tr><th>Record</th><th>Current</th><th>Recovery file</th></tr></thead><tbody><tr><td>Administrator accounts</td><td>{{ c.accounts_before }}</td><td>{{ recovery_review.accounts }}</td></tr><tr><td>Player wallets</td><td>{{ c.wallets_before }}</td><td>{{ recovery_review.redpoints }}</td></tr><tr><td>Unfinished hands</td><td>{{ c.pending_before }}</td><td>{{ c.pending_after }}</td></tr></tbody></table></div><p>{{ c.wallets_added }} wallets added · {{ c.wallets_changed }} changed · {{ c.wallets_removed }} absent from this file.</p><p>{{ c.accounts_changed }} existing account records differ.{% if c.accounts_added %} Added: {{ c.accounts_added|join(', ') }}.{% endif %}{% if c.accounts_removed %} Absent: {{ c.accounts_removed|join(', ') }}.{% endif %}</p>{% endif %}<p class="small muted">This review changes nothing. To restore on a fresh deployment, place this file in <code>private/recovery.seed.json</code>. Use the separate race-backup restore form for replacing only a live race.</p></div>{% endif %}
 </details></section>
-```
+``````
 
 ---
 
-## `tests/assert_visual_pixels.py`
+## tests/assert_visual_pixels.py
 
-```python
+``````python
 """Check actual rendered red fill, rather than only a progress element's value."""
 import json
 from pathlib import Path
@@ -20136,13 +20287,13 @@ for case in json.loads((folder/'progress-measurements.json').read_text(encoding=
     expected = 100-case['percent']  # Scenario percent is damage dealt; label and red fill are HP remaining.
     assert abs(actual-expected) < 2, (case['file'], actual, expected)
 print('Eight desktop/mobile screenshots match decreasing HP fill: 100%, 75%, 25%, 0%.')
-```
+``````
 
 ---
 
-## `tests/clarity_motion.cjs`
+## tests/clarity_motion.cjs
 
-```javascript
+``````javascript
 /* Browser checks for task-specific edits, stable details, and the depleting bar. */
 const { chromium } = require("playwright"),
   { spawn } = require("node:child_process");
@@ -20352,13 +20503,13 @@ const assert = require("node:assert/strict"),
   console.error(e);
   process.exitCode = 1;
 });
-```
+``````
 
 ---
 
-## `tests/experience_motion.cjs`
+## tests/experience_motion.cjs
 
-```javascript
+``````javascript
 /* Real browser checks for the shared experience. Uses disposable local data. */
 const { chromium } = require("playwright");
 const { spawn } = require("node:child_process");
@@ -20605,13 +20756,13 @@ fs.mkdirSync(dir, { recursive: true });
   console.error(error);
   process.exitCode = 1;
 });
-```
+``````
 
 ---
 
-## `tests/fairness_v2_vectors.json`
+## tests/fairness_v2_vectors.json
 
-```json
+``````json
 [
   {
     "rules_version": "redpoints-v2",
@@ -23928,13 +24079,13 @@ fs.mkdirSync(dir, { recursive: true });
     "net": 12332655
   }
 ]
-```
+``````
 
 ---
 
-## `tests/fairness_v3_vectors.json`
+## tests/fairness_v3_vectors.json
 
-```json
+``````json
 [
   {
     "rules_version": "redpoints-v3",
@@ -27473,13 +27624,13 @@ fs.mkdirSync(dir, { recursive: true });
     "net": 12345
   }
 ]
-```
+``````
 
 ---
 
-## `tests/fairness_v4_vectors.json`
+## tests/fairness_v4_vectors.json
 
-```json
+``````json
 [
   {
     "rules_version": "redpoints-v4",
@@ -32904,13 +33055,13 @@ fs.mkdirSync(dir, { recursive: true });
     "net": -12345
   }
 ]
-```
+``````
 
 ---
 
-## `tests/fairness_vectors.json`
+## tests/fairness_vectors.json
 
-```json
+``````json
 [
   {
     "rules_version": "redpoints-v1",
@@ -34675,13 +34826,13 @@ fs.mkdirSync(dir, { recursive: true });
     "net": -100
   }
 ]
-```
+``````
 
 ---
 
-## `tests/gaming_motion.cjs`
+## tests/gaming_motion.cjs
 
-```javascript
+``````javascript
 const {chromium}=require('playwright');
 const {spawn}=require('node:child_process'),assert=require('node:assert/strict');
 const path=require('node:path'),fs=require('node:fs');
@@ -34805,13 +34956,13 @@ fs.mkdirSync(dir,{recursive:true});
   assert.deepEqual(errors,[]);console.log(JSON.stringify({eight_games_play_and_verify:true,animated_reveals_without_navigation:true,dice_drag_synced:true,overlapping_plinko_survives_resize:true,hidden_tab_exact_completion:true,holdem_cards_and_stack_persist_after_poll_and_reload:true,holdem_lost_action_recovers_once:true,admin_tracks_eight_games:true,exact_limbo_result:true,coin_face_matches_result:true,mobile_no_overflow:true,page_errors:errors}));
  }finally{if(browser)await browser.close();server.kill('SIGTERM');}
 })().catch(e=>{console.error(e);process.exitCode=1;});
-```
+``````
 
 ---
 
-## `tests/generate_fairness_vectors.py`
+## tests/generate_fairness_vectors.py
 
-```python
+``````python
 """Deterministic reference receipts: synthetic keys only, no saved accounts."""
 import json
 from pathlib import Path
@@ -34833,13 +34984,13 @@ for n,(game,options) in enumerate(cases):
     values.append(receipt)
 Path(__file__).with_name('fairness_vectors.json').write_text(json.dumps(values,indent=2)+'\n',encoding='utf-8')
 print(f'{len(values)} deterministic vectors written.')
-```
+``````
 
 ---
 
-## `tests/generate_v4_vectors.py`
+## tests/generate_v4_vectors.py
 
-```python
+``````python
 """Rebuild synthetic v4 proofs; historical v1–v3 vectors remain untouched."""
 import json
 from pathlib import Path
@@ -34868,13 +35019,13 @@ for n,(game,options) in enumerate(settings):
     vectors.append(receipt)
 (Path(__file__).parent/'fairness_v4_vectors.json').write_text(json.dumps(vectors,indent=2)+'\n',encoding='utf-8')
 print(f'{len(vectors)} v4 proof vectors written')
-```
+``````
 
 ---
 
-## `tests/holdem_motion.cjs`
+## tests/holdem_motion.cjs
 
-```javascript
+``````javascript
 /* Focused native-browser checks for new controls and an actual v4 migration. */
 const {chromium}=require('playwright');
 const {spawn}=require('node:child_process'),assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs');
@@ -34929,13 +35080,13 @@ const {spawn}=require('node:child_process'),assert=require('node:assert/strict')
   assert.deepEqual(errors,[]);console.log(JSON.stringify({raises_and_costs:true,all_in_double_click_commits_once:true,lost_nonterminal_response_recovers:true,legacy_draw_then_holdem:true,mobile_no_overflow:true,page_errors:errors}));
  }finally{if(browser)await browser.close();server.kill('SIGTERM');}
 })().catch(error=>{console.error(error);process.exitCode=1;});
-```
+``````
 
 ---
 
-## `tests/holdem_vectors.py`
+## tests/holdem_vectors.py
 
-```python
+``````python
 """Reproducible v5 reference receipts, generated instead of shipping a large fixture.
 
 The JS suite reads this program's JSON and independently replays every receipt.
@@ -34987,26 +35138,26 @@ def vectors():
 
 
 if __name__=='__main__':print(json.dumps(vectors(),separators=(',',':')))
-```
+``````
 
 ---
 
-## `tests/package.json`
+## tests/package.json
 
-```json
+``````json
 {
   "name": "redhunllef-interface-tests",
   "private": true,
   "scripts": {"test": "node --test test_*.cjs", "test:visual": "node visual_checks.cjs", "test:gaming-motion": "node gaming_motion.cjs"},
   "devDependencies": {"jsdom": "26.1.0", "playwright": "1.62.1"}
 }
-```
+``````
 
 ---
 
-## `tests/render_fixtures.py`
+## tests/render_fixtures.py
 
-```python
+``````python
 """Render real templates against synthetic data for the optional DOM test suite."""
 import json
 import os
@@ -35065,13 +35216,13 @@ def render(destination):
 
 if __name__ == "__main__":
     render(Path(sys.argv[1]))
-```
+``````
 
 ---
 
-## `tests/serve_admin_gaming_fixture.py`
+## tests/serve_admin_gaming_fixture.py
 
-```python
+``````python
 """Disposable, synthetic eight-game fixture. Never starts provider workers."""
 import json
 import os
@@ -35127,13 +35278,13 @@ if __name__ == '__main__':
         print(json.dumps({'port':server.effective_port}),flush=True)
         try:server.run()
         finally:server.close()
-```
+``````
 
 ---
 
-## `tests/serve_game_fixture.py`
+## tests/serve_game_fixture.py
 
-```python
+``````python
 """Isolated HTTP fixture for DOM integration tests; never starts provider jobs."""
 import json
 import os
@@ -35157,13 +35308,13 @@ with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {
         server.run()
     finally:
         server.close()
-```
+``````
 
 ---
 
-## `tests/serve_gaming_motion_fixture.py`
+## tests/serve_gaming_motion_fixture.py
 
-```python
+``````python
 """Temporary native-browser fixture; never loads private configuration or providers."""
 from pathlib import Path
 import json,os,sys,tempfile
@@ -35177,13 +35328,13 @@ with tempfile.TemporaryDirectory() as folder,patch.dict(os.environ,{'APP_ENV':'t
  print(json.dumps({'port':server.effective_port}),flush=True)
  try:server.run()
  finally:server.close()
-```
+``````
 
 ---
 
-## `tests/serve_gui_fixture.py`
+## tests/serve_gui_fixture.py
 
-```python
+``````python
 """Disposable localhost-only visual fixture. Never starts provider workers."""
 import json
 import os
@@ -35234,13 +35385,13 @@ if __name__ == '__main__':
             server.run()
         finally:
             server.close()
-```
+``````
 
 ---
 
-## `tests/test_admin_controls.py`
+## tests/test_admin_controls.py
 
-```python
+``````python
 """Exercise account/log controls in addition to the existing race/boss suites."""
 import copy
 import re
@@ -35306,13 +35457,13 @@ class AdminControlTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_admin_gaming_frontend.cjs`
+## tests/test_admin_gaming_frontend.cjs
 
-```javascript
+``````javascript
 /* Private dashboard regression checks using real server-rendered fixture HTML. */
 const {test,after}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {JSDOM}=require('jsdom');
@@ -35379,13 +35530,13 @@ test('unchanged rankings retain DOM nodes; changed scores retain expanded record
   assert.match(list.firstElementChild.querySelector('.player-record').textContent,/Funding adjustments.*excluded from winnings/);
  } finally {p.dom.window.close();}
 });
-```
+``````
 
 ---
 
-## `tests/test_app.py`
+## tests/test_app.py
 
-```python
+``````python
 """Real app/storage tests with synthetic provider responses; no live accounts."""
 import copy
 import io
@@ -36099,13 +36250,13 @@ class CalculationTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_baccarat.py`
+## tests/test_baccarat.py
 
-```python
+``````python
 """Baccarat tableau, exact accounting, old-hand migration and offline proofs."""
 import copy
 import json
@@ -36248,13 +36399,13 @@ class BaccaratWalletTests(unittest.TestCase):
 
 
 if __name__=='__main__': unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_blackjack.py`
+## tests/test_blackjack.py
 
-```python
+``````python
 """Blackjack rules, durable turns, hidden cards and one-time settlements."""
 import copy
 import time
@@ -36393,13 +36544,13 @@ class BlackjackWalletTests(unittest.TestCase):
         self.assertEqual(reset['stats']['blackjack']['bets'],0)
         self.assertEqual(game.view('bj','RedCard',edge+1,client_ip='192.0.2.1'),reset)
         validate_gaming(game.recovery())
-```
+``````
 
 ---
 
-## `tests/test_boss.py`
+## tests/test_boss.py
 
-```python
+``````python
 """Shared raid, HTTP, fairness, concurrency, and portable recovery regressions."""
 import copy
 from concurrent.futures import ThreadPoolExecutor
@@ -36716,13 +36867,13 @@ class BossTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_boss_admin.py`
+## tests/test_boss_admin.py
 
-```python
+``````python
 """Host edits must preserve raid progress and validate real image bytes."""
 import copy
 import io
@@ -37099,13 +37250,13 @@ class BossAdminTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_boss_frontend.cjs`
+## tests/test_boss_frontend.cjs
 
-```javascript
+``````javascript
 /* Real rendered templates; fake clock/transport exercise shared-state behavior. */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -38123,13 +38274,13 @@ test("repeated save submits one write and its success remains visible", async ()
   assert.match(notice.textContent, /Saved\. Playing as Save Once/);
   p.close();
 });
-```
+``````
 
 ---
 
-## `tests/test_clarity_update.py`
+## tests/test_clarity_update.py
 
-```python
+``````python
 """UI contract smoke tests for the central admin and provider separation.
 The original test file was not among the user's individual uploads.
 """
@@ -38156,13 +38307,13 @@ class ProviderUiContractTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_comfort_update.py`
+## tests/test_comfort_update.py
 
-```python
+``````python
 """Behavioral checks for player recovery, file durability and uncapped fairness."""
 import copy
 import hashlib
@@ -38407,13 +38558,13 @@ class ComfortTests(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_community.py`
+## tests/test_community.py
 
-```python
+``````python
 """Regressions for community polish, reviewed publication and recovery metadata."""
 import copy
 import io
@@ -38585,13 +38736,13 @@ class CommunityTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_empiredrop.py`
+## tests/test_empiredrop.py
 
-```python
+``````python
 """No live EmpireDrop API calls. Tests use synthetic referral and wager data."""
 import copy
 import unittest
@@ -38693,13 +38844,13 @@ class EmpireDropAppTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_empiredrop_contract.py`
+## tests/test_empiredrop_contract.py
 
-```python
+``````python
 """No Flask, no live provider access: reproducible EmpireDrop isolation tests."""
 import copy
 from datetime import datetime
@@ -38854,6 +39005,56 @@ class EmpireDropContractTests(unittest.TestCase):
                 with self.assertRaises(ProviderError) as raised:board.fetch(schedule(store.doc))
                 self.assertEqual(raised.exception.kind,kind)
 
+    def test_nested_response_paths_and_millisecond_requests(self):
+        c, db = FakeConfig(), FakeStore()
+        c.empiredrop.update(rows_path='payload.players', name_field='player.display',
+                           code_field='meta.code', wager_field='metrics.volume',
+                           user_id_field='player.id', timestamp_format='unix_ms',
+                           next_cursor_path='paging.next')
+        board = EmpireDropBoard(c,db)
+        calls=[]
+        def request(url, **kw):
+            calls.append(kw)
+            return MockResponse({'payload':{'players':[{'player':{'id':7,'display':'Nested'},
+                       'metrics':{'volume':'12.25'}, 'meta':{'code':'red'}}]},
+                       'paging':{'next':None}})
+        with patch('empiredrop.requests.get',side_effect=request):
+            result = board.fetch(schedule(db.doc))
+        self.assertEqual(result[0]['username'],'Nested')
+        self.assertEqual(result[0]['wager'],'€12.25')
+        self.assertIsInstance(calls[0]['params']['startTime'],int)
+        self.assertGreater(calls[0]['params']['startTime'],10**12)
+
+    def test_post_json_bearer_auth_with_iso_dates(self):
+        c, db = FakeConfig(), FakeStore()
+        c.empiredrop.update(auth_mode='bearer_private',http_method='POST',
+                           request_location='json',timestamp_format='iso8601_utc')
+        board=EmpireDropBoard(c,db)
+        called=[]
+        def post(url, **kw):
+            called.append(kw)
+            return MockResponse([{'username':'Poster','referralCode':'red','totalWagered':5}])
+        with patch('empiredrop.requests.post',side_effect=post):
+            result=board.fetch(schedule(db.doc))
+        self.assertEqual(result[0]['username'],'Poster')
+        self.assertTrue(called[0]['headers']['Authorization'].startswith('Bearer '))
+        self.assertTrue(called[0]['json']['startTime'].endswith('Z'))
+        self.assertNotIn('params',called[0])
+
+    def test_wrong_or_unverified_configuration_never_contacts_provider(self):
+        for bad in ({'auth_mode':'unknown'},{'http_method':'DELETE'},
+                    {'http_method':'GET','request_location':'json'},
+                    {'rows_path':'results.__class__[0]'},
+                    {'timestamp_format':'local'}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                validate_settings(bad)
+        c, db = FakeConfig(), FakeStore()
+        c.empiredrop.update(verified_contract=False,auth_mode='bearer_private')
+        with patch('empiredrop.requests.post',side_effect=AssertionError('network')), \
+             patch('empiredrop.requests.get',side_effect=AssertionError('network')):
+            with self.assertRaises(ProviderError):
+                EmpireDropBoard(c,db).fetch(schedule(db.doc))
+
     def test_private_settings_key_replace_is_atomic_and_persistent(self):
         from config import Config
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {}, clear=True):
@@ -38885,13 +39086,13 @@ class EmpireDropContractTests(unittest.TestCase):
 
 
 if __name__ == '__main__':unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_empiredrop_frontend.cjs`
+## tests/test_empiredrop_frontend.cjs
 
-```javascript
+``````javascript
 /* Node-native test: no browser or live provider is required. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -38952,13 +39153,13 @@ test('independent provider tabs swap panels and render only EmpireDrop slots', (
   handlers['shuffleTab:click']();
   assert.equal(elements.shuffleBoard.hidden, false);
 });
-```
+``````
 
 ---
 
-## `tests/test_extra_games.py`
+## tests/test_extra_games.py
 
-```python
+``````python
 """Seven-game accounting, commitment compatibility and real Poker decisions."""
 import copy
 import time
@@ -39150,13 +39351,13 @@ class ExtraWalletTests(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_fairness_frontend.cjs`
+## tests/test_fairness_frontend.cjs
 
-```javascript
+``````javascript
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const vectors = [
@@ -39208,13 +39409,13 @@ test("v2 edge payouts and doubled Blackjack stake are verified exactly", async (
   assert.equal(await fair.verify(doubled), true);
   assert.equal(await fair.verify({ ...doubled, actions: ["stand"] }), false);
 });
-```
+``````
 
 ---
 
-## `tests/test_frontend.cjs`
+## tests/test_frontend.cjs
 
-```javascript
+``````javascript
 /* Optional development checks. The deployed app does not use Node or jsdom. */
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
@@ -39471,13 +39672,13 @@ test('source success and last content change have separate labels',async()=>{
   assert.match(value,/Last successful check:/);assert.match(value,/Content last changed:/);
   assert.ok(p.window.document.getElementById('shuffleProgress'));p.close();
 });
-```
+``````
 
 ---
 
-## `tests/test_gaming_ip.py`
+## tests/test_gaming_ip.py
 
-```python
+``````python
 from config import RELEASE
 """Shared connections, private rankings and backwards-compatible RedPoints saves."""
 import copy
@@ -39760,13 +39961,13 @@ class GamingIPTests(unittest.TestCase):
             self.assertEqual(saved['counts'][item],dict(players=7,rounds=7))
             self.assertTrue(all(row['ips'] and row['bets']==1 for row in saved['games'][item]))
         self.assertEqual(RELEASE,saved['release'])
-```
+``````
 
 ---
 
-## `tests/test_gui_update.py`
+## tests/test_gui_update.py
 
-```python
+``````python
 """Anonymous fast updates and server-confirmed admin receipts."""
 import unittest
 import test_app
@@ -39843,13 +40044,13 @@ class GuiUpdateTests(unittest.TestCase):
         self.assertIsNotNone(public.json['boss']['health_change'])
         self.assertNotIn('VisibleToAdminsOnly',public.text)
         self.assertNotIn('SecretAdmin',public.text)
-```
+``````
 
 ---
 
-## `tests/test_health_release.py`
+## tests/test_health_release.py
 
-```python
+``````python
 """Readiness, private diagnostics, consistent recovery and community load."""
 from concurrent.futures import ThreadPoolExecutor
 import copy
@@ -39967,13 +40168,13 @@ class PackageTests(unittest.TestCase):
             result=check_release(root)
             self.assertFalse(result['ok'])
             self.assertIn('index.html requires missing static/missing.js', result['problems'])
-```
+``````
 
 ---
 
-## `tests/test_history_frontend.cjs`
+## tests/test_history_frontend.cjs
 
-```javascript
+``````javascript
 /* Optional development tests; Node/jsdom are not runtime dependencies. */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -40123,13 +40324,13 @@ test("weekly rollover rebuilds four links and follows the selected period", asyn
   assert.match(p.calls.at(-1).url, /week=2030-01-01/);
   p.close();
 });
-```
+``````
 
 ---
 
-## `tests/test_holdem.py`
+## tests/test_holdem.py
 
-```python
+``````python
 """Hold'em rules, accounting, privacy, recovery, and atomic action regressions."""
 import copy
 from concurrent.futures import ThreadPoolExecutor
@@ -40326,13 +40527,13 @@ class HoldemWalletTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_homepage_frontend.cjs`
+## tests/test_homepage_frontend.cjs
 
-```javascript
+``````javascript
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -40518,13 +40719,13 @@ test("connection failure retains confirmed progress and hostile boss names stay 
   assert.equal(p.w.document.querySelector("#inviteError").hidden, false);
   p.close();
 });
-```
+``````
 
 ---
 
-## `tests/test_player_access.py`
+## tests/test_player_access.py
 
-```python
+``````python
 """Real HTTP regressions for community access and persistent player names."""
 from concurrent.futures import ThreadPoolExecutor
 import copy
@@ -40676,13 +40877,13 @@ class PlayerAccessTests(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_raid_update.py`
+## tests/test_raid_update.py
 
-```python
+``````python
 """Requested gameplay changes, identity boundaries and additive save upgrades."""
 import copy
 import json
@@ -40917,13 +41118,13 @@ class RaidUpdateTests(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_redpoints.py`
+## tests/test_redpoints.py
 
-```python
+``````python
 """Real wallet/API tests; synthetic seeds and players, never live providers."""
 import copy
 from concurrent.futures import ThreadPoolExecutor
@@ -41205,13 +41406,13 @@ class FairMathTests(unittest.TestCase):
                 else:self.assertTrue(0<=result['roll']<10000)
 
 if __name__=='__main__':unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_username_http.cjs`
+## tests/test_username_http.cjs
 
-```javascript
+``````javascript
 /* Real page + both shipped scripts + HTTP + cookie jar. No mocked save API. */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -41417,13 +41618,13 @@ test("username saves through the actual website and persists with real cookies",
   assert.equal(confirmed.doc.querySelector("#playerIdentity").hidden, false);
   assert.equal(confirmed.doc.querySelector("#playerNameForm").hidden, true);
 });
-```
+``````
 
 ---
 
-## `tests/test_username_save.py`
+## tests/test_username_save.py
 
-```python
+``````python
 """Username form, cookie ownership and real persistence regressions."""
 from html.parser import HTMLParser
 import secrets
@@ -41590,13 +41791,13 @@ class UsernameSaveTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/test_weekly_history.py`
+## tests/test_weekly_history.py
 
-```python
+``````python
 """Calendar, public privacy and persistence tests; never contacts live accounts."""
 import copy
 from datetime import datetime
@@ -41849,13 +42050,13 @@ class HistoryRecoveryTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```
+``````
 
 ---
 
-## `tests/visual_checks.cjs`
+## tests/visual_checks.cjs
 
-```javascript
+``````javascript
 /* Real Chromium layout checks + reproducible screenshots, using synthetic data.
    Optional developer check; neither Node nor Chromium is needed in production. */
 const { chromium } = require("playwright");
@@ -42198,13 +42399,13 @@ const flush = (ms) => new Promise((r) => setTimeout(r, ms));
   console.error(error);
   process.exitCode = 1;
 });
-```
+``````
 
 ---
 
-## `tools/verify_redpoints.py`
+## tools/verify_redpoints.py
 
-```python
+``````python
 """Optional offline audit, not a server launcher: python tools/verify_redpoints.py receipts.json"""
 import argparse
 import json
@@ -42233,13 +42434,13 @@ if __name__ == '__main__':
         label = value.get('request_id', f'receipt-{index}') if isinstance(value, dict) else f'receipt-{index}'
         print(('PASS' if passed else 'FAIL') + ' ' + str(label))
     raise SystemExit(0 if all(checks) else 1)
-```
+``````
 
 ---
 
-## `wager_backend.py`
+## wager_backend.py
 
-```python
+``````python
 """RedHunllef's sole launch command: python wager_backend.py.
 
 App construction has no provider requests or hidden worker startup. The main
@@ -43501,13 +43702,13 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-```
+``````
 
 ---
 
-## `weekly_history.py`
+## weekly_history.py
 
-```python
+``````python
 """Four completed Eastern-time weeks, cached in the existing JSON save.
 
 Only the automatic worker contacts Shuffle. Page views read the cache, so traffic
@@ -43842,4 +44043,4 @@ class WeeklyHistory:
         self.wake_event.set()
         if self.thread:
             self.thread.join(timeout=1)
-```
+``````

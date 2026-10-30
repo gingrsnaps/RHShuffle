@@ -1,39 +1,23 @@
-# Changes in 2026.10.08-community-clarity7
+# RedHunllef Release Notes — October 30, 2026
 
-1. Restored the community boss above the homepage leaderboard, after the hero.
-2. Changed all boss health labels/previews to remaining HP. Bar and percentage
-   drain together; the combat engine and no-regeneration rule are retained.
-3. Simplified the boss invitation and public update messages.
-4. Reorganized the admin overview around race, boss, players and quick actions.
-5. Grouped connections/history/performance inside expandable Diagnostics and
-   consolidated routine connection warnings into one actionable summary.
-6. Kept all eight Top 5 game lists visible, with full names and net winnings.
-   Player IPs, balances, detailed totals and funding expand on demand.
-7. Preserved expanded records and keyboard focus when rankings change, and
-   skipped rebuilding unchanged rows. Removed duplicate minute-feed rankings.
-8. Reused the five-second local gaming feed for the overview boss summary.
-9. Split name and damage saves into guarded partial edits. Health and unrelated
-   settings stay intact; existing combined-settings requests remain compatible.
-10. Fixed fragment-only admin redirects: consecutive saves now reload confirmed
-    values, current edit revisions and the correct success receipt.
-11. Improved name/recovery links, initial Gaming confirmation text, attack states,
-    unsaved upload detection, accessible feedback and mobile spacing.
-12. Added regression coverage for partial-edit authorization, stale edits,
-    conditional feeds, details/focus retention and real-browser repeated saves.
+## EmpireDrop API integration update
 
-The complete package retains original private provider settings/account seed,
-logos, single Python launch, all games/proofs and existing runtime-state format.
-Keep newer deployed configuration and saved data when upgrading. See README.md
-for App Platform recovery instructions and docs/VALIDATION.md for test limits.
+- Preserved the prior project's **original** `private/settings.json`, `private/admin_store.seed.json` and all `data/` files, including credentials and account history. This archive is **not encrypted**. Keep private.
+- Kept the independent EmpireDrop referral `red` leaderboard, the Tuesday 6 PM Eastern schedule, automatic 60-second refresh, separate admin panels, public masked names, and isolation from Shuffle ranking/prizes.
+- Added configurable HTTP GET/POST transport, query/JSON parameters, five standard authentication options (two-header, private-header, public-header, bearer-private, Basic key pair), three timestamp formats (Unix seconds/milliseconds/ISO 8601 UTC) and nested JSON field mappings.
+- Retained strict HTTPS `empiredrop.com` host checking, no automatic redirects, safe HTTP errors, max body/page limits, unique transaction deduplication, referral-code gating and last-good same-period result protection.
+- Expanded administrator configuration UI, and added offline unit tests for new auth, data, timestamp and request-body paths.
+- Added `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md` with a step-by-step source-of-truth configuration workflow.
 
+### Still required to enable live EmpireDrop results
 
-## 2026-10-29 · EmpireDrop independence and diagnostics
+`https://developers.empiredrop.com/` loads client-side and no official authenticated affiliate-wager OpenAPI contract was retrievable in the available tooling on October 30, 2026. **No official endpoint, auth scheme, request signing method or wager response field can be claimed as verified.** An empty official endpoint remains empty and the verified-contract safeguard remains false. This release is an improved, tested *adapter*, not proof of a working live provider API connection. Obtain the official endpoint and schema from the developer portal or EmpireDrop support, then configure and test before publishing standings.
 
-- Dedicated EmpireDrop schedule and weekly rollover (America/New_York DST).
-- Protected credential-source and masked preview, atomic private key replacement.
-- Read-only API connection test, accurate queued/running/attempt/success states.
-- Provider-contract confirmation gate, fail-closed referral filtering and pagination.
-- Transaction dedupe and aggregated player dedupe; no inferred wager amounts.
-- Preserve same-period last-good results on errors/config saves.
-- Provider-specific public hero dates/labels, without Shuffle prizes.
-- Offline contract and security unit tests, updated documentation.
+### Validation
+
+- Focused offline Python contract tests: 16 passed (synthetic responses only).
+- Frontend EmpireDrop test: 1 passed (Node.js synthetic DOM).
+- Python source compile: passed.
+- All Jinja source parse checks: completed for templates.
+- Full application suite: **not verified in this sandbox** because Flask/Werkzeug are not installed in the execution environment.
+- Live EmpireDrop requests and actual DigitalOcean deployment: not performed.

@@ -152,6 +152,56 @@ class EmpireDropContractTests(unittest.TestCase):
                 with self.assertRaises(ProviderError) as raised:board.fetch(schedule(store.doc))
                 self.assertEqual(raised.exception.kind,kind)
 
+    def test_nested_response_paths_and_millisecond_requests(self):
+        c, db = FakeConfig(), FakeStore()
+        c.empiredrop.update(rows_path='payload.players', name_field='player.display',
+                           code_field='meta.code', wager_field='metrics.volume',
+                           user_id_field='player.id', timestamp_format='unix_ms',
+                           next_cursor_path='paging.next')
+        board = EmpireDropBoard(c,db)
+        calls=[]
+        def request(url, **kw):
+            calls.append(kw)
+            return MockResponse({'payload':{'players':[{'player':{'id':7,'display':'Nested'},
+                       'metrics':{'volume':'12.25'}, 'meta':{'code':'red'}}]},
+                       'paging':{'next':None}})
+        with patch('empiredrop.requests.get',side_effect=request):
+            result = board.fetch(schedule(db.doc))
+        self.assertEqual(result[0]['username'],'Nested')
+        self.assertEqual(result[0]['wager'],'€12.25')
+        self.assertIsInstance(calls[0]['params']['startTime'],int)
+        self.assertGreater(calls[0]['params']['startTime'],10**12)
+
+    def test_post_json_bearer_auth_with_iso_dates(self):
+        c, db = FakeConfig(), FakeStore()
+        c.empiredrop.update(auth_mode='bearer_private',http_method='POST',
+                           request_location='json',timestamp_format='iso8601_utc')
+        board=EmpireDropBoard(c,db)
+        called=[]
+        def post(url, **kw):
+            called.append(kw)
+            return MockResponse([{'username':'Poster','referralCode':'red','totalWagered':5}])
+        with patch('empiredrop.requests.post',side_effect=post):
+            result=board.fetch(schedule(db.doc))
+        self.assertEqual(result[0]['username'],'Poster')
+        self.assertTrue(called[0]['headers']['Authorization'].startswith('Bearer '))
+        self.assertTrue(called[0]['json']['startTime'].endswith('Z'))
+        self.assertNotIn('params',called[0])
+
+    def test_wrong_or_unverified_configuration_never_contacts_provider(self):
+        for bad in ({'auth_mode':'unknown'},{'http_method':'DELETE'},
+                    {'http_method':'GET','request_location':'json'},
+                    {'rows_path':'results.__class__[0]'},
+                    {'timestamp_format':'local'}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                validate_settings(bad)
+        c, db = FakeConfig(), FakeStore()
+        c.empiredrop.update(verified_contract=False,auth_mode='bearer_private')
+        with patch('empiredrop.requests.post',side_effect=AssertionError('network')), \
+             patch('empiredrop.requests.get',side_effect=AssertionError('network')):
+            with self.assertRaises(ProviderError):
+                EmpireDropBoard(c,db).fetch(schedule(db.doc))
+
     def test_private_settings_key_replace_is_atomic_and_persistent(self):
         from config import Config
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {}, clear=True):

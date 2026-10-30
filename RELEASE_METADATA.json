@@ -1,0 +1,14 @@
+{
+  "release": "2026.10.30-empiredrop-contract-adapter3",
+  "origin": "RedHunllef_EmpireDrop_Independent_Complete_Project.zip",
+  "preserved_private_configuration": true,
+  "unverified_live_empiredrop_contract": true,
+  "entry_point": "python wager_backend.py",
+  "storage": "local JSON",
+  "tests": {
+    "python_contract": 16,
+    "frontend": 1,
+    "live_api": false,
+    "full_regression": false
+  }
+}

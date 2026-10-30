@@ -24,7 +24,7 @@ Run only `python wager_backend.py` after `python -m pip install -r requirements.
 
 ## Remaining external API prerequisite
 
-**The provider's official authenticated wager API contract has not been verified.** Public EmpireDrop policy pages discuss affiliate attribution and Wager Share, but do not specify the wagering URL, authentication signature/headers, response schema or pagination. No endpoint has been guessed, and live ranking claims cannot be made. The connection is **disabled until** an administrator obtains the official provider contract and explicitly checks **I verified ...** in the admin panel. An endpoint that uses a cryptographic signature or OAuth instead of two header keys would require adapting `EmpireDropBoard.fetch` to that verified scheme before enabling it.
+**The provider's official authenticated wager API contract has not been verified.** Public EmpireDrop policy pages discuss affiliate attribution and Wager Share, but do not specify the wagering URL, authentication signature/headers, response schema or pagination. No endpoint has been guessed, and live ranking claims cannot be made. The connection is **disabled until** an administrator obtains the official provider contract and explicitly checks **I verified ...** in the admin panel. The adapter now supports two key headers, one key header, bearer, or Basic authentication; HMAC request signing or OAuth still requires implementation from the exact provider contract.
 
 Ask EmpireDrop support for: official allowed API host/path, whether the supplied public/private pair authenticates as two HTTP headers or requires signing, timestamp parameters and units, referral `red` filtering, individual vs cumulative wager values, player IDs, pagination, currency, and rate limits.
 

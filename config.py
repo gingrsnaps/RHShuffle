@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.29-empiredrop-independent2"
+RELEASE = "2026.10.30-empiredrop-contract-adapter3"
 INTERVAL = 60
 
 
@@ -64,6 +64,12 @@ class Config:
             "cursor_param": str(defaults.get("empiredrop_cursor_param", "cursor")),
             "next_cursor_field": str(defaults.get("empiredrop_next_cursor_field", "nextCursor")),
             "verified_contract": str(defaults.get("empiredrop_verified_contract", False)).lower() in ("1", "true"),
+            "auth_mode": str(defaults.get("empiredrop_auth_mode", "dual_headers")),
+            "http_method": str(defaults.get("empiredrop_http_method", "GET")),
+            "request_location": str(defaults.get("empiredrop_request_location", "query")),
+            "timestamp_format": str(defaults.get("empiredrop_timestamp_format", "unix_s")),
+            "rows_path": str(defaults.get("empiredrop_rows_path", "")),
+            "next_cursor_path": str(defaults.get("empiredrop_next_cursor_path", "")),
         }
         self.storage_mode, self.db_url = "local", ""
         self.ignored_database_url = bool(os.getenv("DATABASE_URL"))

@@ -1,6 +1,8 @@
+> **October 30, 2026 update:** The EmpireDrop adapter now supports configurable API authentication, GET/POST, ISO/millisecond timestamps and nested JSON mapping. Its official wager API URL and contract remain **unverified**, so live EmpireDrop calls are not automatically enabled. Read `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`. This archive includes the original live private configuration by owner request; it is **not encrypted**.
+
 # RedHunllef
 
-**Release: 2026.10.29-empiredrop-independent2** — complete configured Python application.
+**Release: 2026.10.30-empiredrop-contract-adapter3** — complete configured Python application.
 
 Run everything through **`python wager_backend.py`**. The web server, automatic
 Shuffle/Kick checks, race history, community boss and all eight RedPoints games
