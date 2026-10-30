@@ -1,0 +1,20 @@
+# Do not accidentally publish live credentials or customer state.
+private/
+data/
+settings.json
+integrations.json
+admin_store.json
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+.DS_Store

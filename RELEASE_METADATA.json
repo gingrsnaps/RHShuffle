@@ -1,14 +1,12 @@
 {
-  "release": "2026.10.30-empiredrop-contract-adapter3",
-  "origin": "RedHunllef_EmpireDrop_Independent_Complete_Project.zip",
-  "preserved_private_configuration": true,
-  "unverified_live_empiredrop_contract": true,
+  "release": "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1",
+  "packaging": "complete configured source and historical assets",
   "entry_point": "python wager_backend.py",
-  "storage": "local JSON",
-  "tests": {
-    "python_contract": 16,
-    "frontend": 1,
-    "live_api": false,
-    "full_regression": false
-  }
+  "storage": "local JSON (ephemeral on DigitalOcean App Platform)",
+  "checks": "python wager_backend.py --check; python tools/deployment_diagnostics.py",
+  "private_config_preserved": true,
+  "live_empiredrop_contract_verified": false,
+  "python_version": "3.13.12",
+  "build_command": "automatic Python buildpack (no custom build command)",
+  "note": "The complete ZIP also contains the original sqlite artifacts, recovery history, tests and docs; secrets are plaintext in both ZIPs."
 }

@@ -1206,10 +1206,12 @@ def create_app(root=None, testing=False):
 
 
 def main():
+    boot_started = time.perf_counter()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     try:
         from release_check import check_release
         checked = check_release(strict='--check' in sys.argv)
+        preflight_seconds = time.perf_counter() - boot_started
         if not checked['ok']:
             raise RuntimeError('Release check failed: '+'; '.join(checked['problems']))
         for warning in checked['warnings']:
@@ -1218,6 +1220,7 @@ def main():
             LOG.info('RELEASE Checked %s Python modules and %s templates. No accounts or game state changed.', checked['python_modules'], checked['templates'])
             return 0
         app = create_app()
+        application_seconds = time.perf_counter() - boot_started - preflight_seconds
         config, runtime = app.extensions["settings"], app.extensions["runtime"]
         from waitress import create_server
         options = dict(host="0.0.0.0", port=config.port, threads=6, ident="RedHunllef", expose_tracebacks=False,
@@ -1228,6 +1231,9 @@ def main():
             options.update(trusted_proxy="*", trusted_proxy_count=1,
                            trusted_proxy_headers={"x-forwarded-proto", "x-forwarded-for"})
         server = create_server(app, **options)
+        listener_seconds = time.perf_counter() - boot_started - preflight_seconds - application_seconds
+        LOG.info("BOOT stages: preflight=%.3fs application=%.3fs listener=%.3fs",
+                 preflight_seconds, application_seconds, listener_seconds)
         LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
         LOG.info('HEALTH /healthz checks the process; /readyz checks local reads and writes. Provider delays appear separately in Admin Overview.')
         LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Identity and cooldowns follow signed browser cookies, never shared IPs. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
@@ -1243,6 +1249,8 @@ def main():
             raise KeyboardInterrupt
         signal.signal(signal.SIGTERM, shutdown)
         runtime.start()
+        LOG.info("BOOT ready for HTTP after %.3fs; /healthz is process health, /readyz is storage readiness",
+                 time.perf_counter() - boot_started)
         try:
             server.run()
         finally:

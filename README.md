@@ -1,3 +1,5 @@
+> **October 30, 2026 deployment update:** See `DEPLOYMENT_OPTIMIZED.md` for lean builds, exact DigitalOcean setup, and retention risks.
+
 > **October 30, 2026 update:** The EmpireDrop adapter now supports configurable API authentication, GET/POST, ISO/millisecond timestamps and nested JSON mapping. Its official wager API URL and contract remain **unverified**, so live EmpireDrop calls are not automatically enabled. Read `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`. This archive includes the original live private configuration by owner request; it is **not encrypted**.
 
 # RedHunllef
@@ -34,7 +36,7 @@ reset balances, contact providers or start a server:
 python wager_backend.py --check
 ```
 
-Normal startup checks required imports, templates and assets automatically.
+Normal startup checks required imports, templates and assets automatically. Startup timing is logged as `BOOT stages` and `BOOT ready`.
 `--check` additionally checks packaged file hashes. Intentional code edits require
 updating the build manifest before using strict verification; they do not silently
 reset data or block ordinary startup merely because a hash changed.
@@ -45,9 +47,7 @@ Use a Python **Web Service** connected to your private repository.
 
 **Build command**
 
-```bash
-python -m pip install -r requirements.txt
-```
+Leave the App Platform custom build-command field **empty**. Its Python buildpack installs `requirements.txt` automatically. For a standalone local installation only, run `python -m pip install -r requirements.txt`.
 
 **Run command**
 

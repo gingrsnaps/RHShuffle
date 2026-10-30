@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.30-empiredrop-contract-adapter3"
+RELEASE = "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1"
 INTERVAL = 60
 
 
