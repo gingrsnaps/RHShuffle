@@ -1,3 +1,14 @@
+# RedHunllef — 2026-11-02 EmpireDrop race endpoint update
+
+The EmpireDrop panel now uses the two documented race GET routes, with public-key
+race discovery, race-slug selection, configurable auth for race details,
+sanitized admin diagnostics, provider-date display and four prior race snapshots.
+The key pair is in the bundled server-side `private/settings.json` as requested.
+**Live endpoint response and monetary field mapping still require confirmation**;
+see `DEPLOYMENT_EMPIREDROP_RACES.md` and the full documentation archive.
+
+---
+
 > **October 30, 2026 deployment update:** See `DEPLOYMENT_OPTIMIZED.md` for lean builds, exact DigitalOcean setup, and retention risks.
 
 > **October 30, 2026 update:** The EmpireDrop adapter now supports configurable API authentication, GET/POST, ISO/millisecond timestamps and nested JSON mapping. Its official wager API URL and contract remain **unverified**, so live EmpireDrop calls are not automatically enabled. Read `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`. This archive includes the original live private configuration by owner request; it is **not encrypted**.

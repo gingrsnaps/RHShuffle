@@ -1,12 +1,18 @@
 {
-  "release": "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1",
-  "packaging": "complete configured source and historical assets",
+  "release": "2026.11.02-do-root-build-fix1",
   "entry_point": "python wager_backend.py",
-  "storage": "local JSON (ephemeral on DigitalOcean App Platform)",
-  "checks": "python wager_backend.py --check; python tools/deployment_diagnostics.py",
-  "private_config_preserved": true,
-  "live_empiredrop_contract_verified": false,
+  "source": "EmpireDrop documented Races GET routes",
+  "private_config_included": true,
+  "docs_verified_paths": [
+    "/api/v1/race/affiliates/{publicKey}",
+    "/api/v1/affiliate-partner/races/{slug}"
+  ],
+  "live_empiredrop_connection_verified": false,
+  "api_response_schema_verified": false,
+  "storage": "JSON (ephemeral on DigitalOcean App Platform)",
   "python_version": "3.13.12",
-  "build_command": "automatic Python buildpack (no custom build command)",
-  "note": "The complete ZIP also contains the original sqlite artifacts, recovery history, tests and docs; secrets are plaintext in both ZIPs."
+  "build_command": "automatic Python buildpack",
+  "note": "Both ZIPs contain unencrypted real credentials supplied by the user. Keep private.",
+  "packaging": "flat-root complete",
+  "deployment_fix": "Flat source root and runtime-only manifest; no duplicate build command"
 }

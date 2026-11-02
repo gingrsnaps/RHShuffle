@@ -1,3 +1,5 @@
+> **DigitalOcean App Platform:** This ZIP is flat-root. Do NOT upload the ZIP as a file in GitHub. Extract it, commit the root-level code, and read [DEPLOY_DIGITALOCEAN.md](DEPLOY_DIGITALOCEAN.md). The App Platform build command must be blank; `python -m pip install -r requirements.txt` below is for local usage only.
+
 # Start RedHunllef
 
 Release **2026.10.08-community-clarity7** — complete configured package.
@@ -55,7 +57,7 @@ TRUST_APP_PLATFORM=1
 SESSION_COOKIE_SECURE=always
 ```
 
-**Build:** `python -m pip install -r requirements.txt`
+**DigitalOcean Build Command:** leave empty (dependency install is automatic)
 
 **Run:** `python wager_backend.py`
 

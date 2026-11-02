@@ -29,7 +29,8 @@ class MockResponse:
 
 class FakeStore:
     def __init__(self):
-        self.doc = {'site_settings':{'start_time':1,'end_time':2,'campaign_code_filter':'ShuffleCampaign'}}
+        self.doc = {'site_settings':{'start_time':1,'end_time':2,'campaign_code_filter':'ShuffleCampaign'},
+                    'empiredrop_races':{'source_mode':'legacy'}}
         self.live_values = {'shuffle':{'key':'unchanged','rows':[{'username':'ShuffleExample'}]}}
     def admin(self): return 1, copy.deepcopy(self.doc)
     def live(self, service): return copy.deepcopy(self.live_values.get(service))

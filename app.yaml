@@ -1,4 +1,6 @@
-# Update the private GitHub repository name before importing.
+# REFERENCE TEMPLATE ONLY: replace github.repo before importing through doctl.
+# For an existing DigitalOcean App Platform app, edit Build/Run/Source settings
+# in the dashboard; merely uploading this file does NOT change its settings.
 # IMPORTANT: Do not configure a custom build command: the Python buildpack
 # installs requirements.txt automatically. No database service is needed.
 # App Platform local files are temporary; see README for private recovery seeds.
@@ -20,10 +22,10 @@ services:
     instance_size_slug: apps-s-1vcpu-1gb
     health_check:
       http_path: /healthz
-      initial_delay_seconds: 20
+      initial_delay_seconds: 45
       period_seconds: 15
-      timeout_seconds: 5
-      failure_threshold: 3
+      timeout_seconds: 10
+      failure_threshold: 5
     envs:
       - key: APP_ENV
         value: production
