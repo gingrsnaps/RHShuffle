@@ -1,91 +1,62 @@
-"""Validate the App Platform source layout without printing secrets.
-
-Use `python tools/deployment_diagnostics.py` after extracting the ZIP.
-Use `--archive /path/to/file.zip` to check the archive layout before extraction.
-No Flask imports or network access are necessary for source validation.
-"""
+"""Read-only diagnostics for the deployment archive and its public health routes."""
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import sys
 import time
-import zipfile
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED_ROOT = ('wager_backend.py','requirements.txt','runtime.txt','Procfile','BUILD_MANIFEST.json')
 
 def evaluate(root=ROOT):
-    root=Path(root)
-    errors=[]
-    for name in REQUIRED_ROOT:
-        if not (root/name).is_file():errors.append('Missing at source root: '+name)
-    if not (root/'templates/index.html').is_file():errors.append('Missing templates/index.html')
-    if not (root/'static/app.js').is_file():errors.append('Missing static/app.js')
-    requirements=(root/'requirements.txt').read_text(encoding='utf-8') if (root/'requirements.txt').is_file() else ''
-    if not re.search(r'^Flask==',requirements,re.M):errors.append('Flask must be in root requirements.txt')
-    runtime=(root/'runtime.txt').read_text(encoding='utf-8').strip() if (root/'runtime.txt').is_file() else 'missing'
-    if not re.fullmatch(r'python-3\.13\.\d+',runtime):errors.append('Python version missing/unexpected: '+runtime)
-    spec=(root/'app.yaml').read_text(encoding='utf-8') if (root/'app.yaml').is_file() else ''
-    if re.search(r'^\s*build_command\s*:',spec,re.M):errors.append('Custom build_command found; buildpack installs requirements already')
-    match=re.search(r'^\s*source_dir:\s*([^\n#]+)',spec,re.M)
-    if match and match.group(1).strip() != '/':errors.append('App YAML source_dir must be / for root-flat ZIP')
-    if spec and not re.search(r'^\s*run_command:\s*python wager_backend\.py',spec,re.M):errors.append('Incorrect run command')
-    m=root/'BUILD_MANIFEST.json'
-    if m.is_file():
-        try:
-            files=json.loads(m.read_text(encoding='utf-8')).get('files',{})
-            for entry in files:
-                if entry.startswith(('private/','data/','docs/','tests/')):errors.append('Release manifest must not require optional files: '+entry)
-                if not (root/entry).is_file():errors.append('Missing manifest source: '+entry)
-        except (ValueError,TypeError) as e:errors.append('Invalid release manifest')
-    print('Source directory:',root)
-    print('Python:',runtime)
-    print('Build command: none in app.yaml; also clear existing DigitalOcean dashboard build command')
-    print('Configuration:','private files present in ZIP; Git ignores them by default' if (root/'private/settings.json').is_file() else 'private settings absent; configure encrypted App Platform environment variables')
-    print('Stored JSON:','included, snapshot may be stale' if (root/'data/state.json').is_file() else 'not bundled; restore live backup if needed')
-    if 'YOUR_GITHUB_USER/' in spec:print('Note: app.yaml has an example repo; do not import until you replace it')
-    for err in errors:print('ERROR:',err)
-    if not errors:print('PASS: source layout is ready for a Python web service')
-    return not errors
-
-def check_archive(path):
-    errors=[]
-    with zipfile.ZipFile(path) as z:
-        names=set(z.namelist())
-        for expected in REQUIRED_ROOT:
-            if expected not in names:errors.append('Archive root missing '+expected)
-        if 'redhunllef/requirements.txt' in names:errors.append('Archive has obsolete redhunllef/ wrapper directory')
-        bad=z.testzip()
-        if bad:errors.append('Corrupt ZIP entry: '+bad)
-        print('ZIP members:',len(names))
-    for err in errors:print('ERROR:',err)
-    if not errors:print('PASS: flat ZIP root; all deployment entry points found')
+    app_spec = (root/'app.yaml').read_text(encoding='utf-8')
+    requirements = (root/'requirements.txt').read_text(encoding='utf-8').splitlines()
+    errors = []
+    if re.search(r'^\s*build_command\s*:', app_spec, re.M):
+        errors.append('app.yaml has a custom build_command; remove redundant pip installs')
+    if not (root/'wager_backend.py').is_file(): errors.append('No wager_backend.py')
+    for asset in ('templates/index.html','templates/admin.html','static/app.js','runtime.txt'):
+        if not (root/asset).is_file(): errors.append('Missing '+asset)
+    if not any(line.startswith('Flask==') for line in requirements): errors.append('Flask pin missing')
+    files = [p for p in root.rglob('*') if p.is_file()]
+    print('Deployment inventory:',len(files),'files,',sum(p.stat().st_size for p in files),'bytes')
+    print('Python target:',(root/'runtime.txt').read_text(encoding='utf-8').strip())
+    print('Custom build command:', 'found' if re.search(r'^\s*build_command\s*:', app_spec, re.M) else 'none')
+    print('Private directory:', 'present (contents never printed)' if (root/'private').is_dir() else 'not included')
+    print('Saved state:', 'present' if (root/'data/state.json').is_file() else 'not included')
+    for error in errors: print('ERROR:',error)
     return not errors
 
 def probe(url):
-    if not (url.startswith('https://') or url.startswith('http://localhost') or url.startswith('http://127.0.0.1')):
-        print('ERROR: use HTTPS for a remote website');return False
-    ok=True
+    base = url.rstrip('/')
+    if not base.startswith('https://') and not base.startswith('http://localhost') and not base.startswith('http://127.0.0.1'):
+        print('ERROR: remote URL must use HTTPS',file=sys.stderr); return False
+    result = True
     for path in ('/healthz','/readyz'):
-        start=time.perf_counter()
+        started=time.perf_counter()
         try:
-            with urlopen(Request(url.rstrip('/')+path,headers={'User-Agent':'RedHunllef-deployment-check'}),timeout=10) as response:
-                print(path,response.status,'%.2fs'%(time.perf_counter()-start))
-                ok &= response.status==200
-        except (HTTPError,URLError,TimeoutError) as exc:
-            print(path,'failed:',type(exc).__name__)
-            ok=False
-    return ok
+            with urlopen(Request(base+path,headers={'User-Agent':'RedHunllef-deploy-diagnostics/1.0'}),timeout=8) as response:
+                payload = response.read(4096)
+                healthy = response.status==200
+                print(path, 'HTTP',response.status,'%.3fs'%(time.perf_counter()-started))
+                try:
+                    obj = json.loads(payload)
+                    print('  ok:',obj.get('ok'),'release:',str(obj.get('release',''))[:100])
+                except ValueError: print('  WARNING: Response was not JSON')
+                result &= healthy
+        except HTTPError as exc:
+            print(path,'HTTP',exc.code,'%.3fs'%(time.perf_counter()-started)); result=False
+        except (URLError,TimeoutError) as exc:
+            print(path,'FAILED:',type(exc).__name__,'%.3fs'%(time.perf_counter()-started)); result=False
+    return result
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
-    parser.add_argument('--archive',help='ZIP file to inspect for root nesting or corrupt members')
-    parser.add_argument('--url',help='HTTPS URL to probe after deployment')
+    parser.add_argument('--url',help='HTTPS base URL of deployed site (optional)')
     args=parser.parse_args()
-    ok=evaluate(ROOT)
-    if args.archive:ok=check_archive(args.archive) and ok
-    if args.url:ok=probe(args.url) and ok
+    ok=evaluate()
+    if args.url: ok=probe(args.url) and ok
     raise SystemExit(0 if ok else 1)

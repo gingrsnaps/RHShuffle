@@ -44,7 +44,6 @@ from storage import Conflict, StoreError
 from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
 from empiredrop import validate_settings, EDITABLE, schedule as empire_schedule, CODE as EMPIRE_CODE
-from empiredrop_races import RACE_EDITABLE, validate_race_settings
 from integrations import ProviderError
 from telemetry import Measurements, health_view
 
@@ -823,10 +822,7 @@ def create_app(root=None, testing=False):
         if not g.superadmin:
             abort(403)
         try:
-            if runtime.empiredrop._race_settings()['source_mode'] == 'races':
-                rows, _ = runtime.empiredrop._fetch_races(empire_schedule(g.admin))
-            else:
-                rows = runtime.empiredrop.fetch(empire_schedule(g.admin))
+            rows = runtime.empiredrop.fetch(empire_schedule(g.admin))
         except ProviderError as exc:
             # Only our own short safe exception text is exposed; no response body or keys.
             result = {'ok': False, 'kind': exc.kind, 'message': str(exc)[:220]}
@@ -836,54 +832,6 @@ def create_app(root=None, testing=False):
                       'qualified_players': len(rows)}
             status = 200
         return jsonify(result), status
-
-    @app.post('/admin/empiredrop/discover')
-    @protected
-    def empire_admin_discover():
-        """Read public-key race catalog; never return credentials or player PII."""
-        require_csrf()
-        if not g.superadmin: abort(403)
-        try:
-            return jsonify({'ok':True, **runtime.empiredrop.discover_races()})
-        except ProviderError as exc:
-            return jsonify({'ok':False, 'kind':exc.kind, 'message':str(exc)[:220]}), 422
-
-    @app.post('/admin/empiredrop/probe')
-    @protected
-    def empire_admin_probe():
-        """Return only JSON field names/types to aid correct field mapping."""
-        require_csrf()
-        if not g.superadmin: abort(403)
-        try:
-            # The slug can be left empty to use the uniquely active provider race.
-            slug = str((request.get_json(silent=True) or {}).get('slug', '')).strip()
-            if len(slug) > 100: raise ValueError('Invalid slug length.')
-            return jsonify({'ok':True, **runtime.empiredrop.probe_race(slug)})
-        except (ProviderError, ValueError) as exc:
-            return jsonify({'ok':False, 'kind':getattr(exc,'kind','input'), 'message':str(exc)[:220]}), 422
-
-    @app.post('/admin/empiredrop/races/config')
-    @protected
-    def empire_admin_race_config():
-        """Persist race API settings independently of Shuffle and legacy mode."""
-        require_csrf()
-        if not g.superadmin: abort(403)
-        try:
-            expected = int(request.form.get('revision', '-1'))
-            if expected != g.revision: raise Conflict('Settings changed. Reload and try again.')
-            values = {key: request.form.get(key, '').strip()
-                      for key in RACE_EDITABLE - {'auto_select','race_verified_fields'}}
-            values['auto_select'] = request.form.get('auto_select') == 'yes'
-            values['race_verified_fields'] = request.form.get('race_verified_fields') == 'yes'
-            candidate = copy.deepcopy(g.admin)
-            candidate['empiredrop_races'] = validate_race_settings(values)
-            runtime.commit(candidate, expected)
-            runtime.empiredrop.request_refresh()
-            return admin_saved('EmpireDrop race API settings saved; a refresh was queued. Verify results before publishing.',
-                               'empiredrop', 'empireRaces')
-        except (ValueError, Conflict) as exc:
-            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
-                                status=409 if isinstance(exc, Conflict) else 422)
 
     @app.post('/admin/empiredrop/schedule')
     @protected

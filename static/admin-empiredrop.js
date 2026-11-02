@@ -8,8 +8,6 @@
   const render = data => {
     if (expired) return;
     id('empireAdminStatus').textContent = data.label || 'Awaiting verified EmpireDrop data';
-    if (id('empireRaceSlug')) id('empireRaceSlug').textContent = data.race_meta?.slug || 'Not discovered';
-    if (id('empireRaceMode')) id('empireRaceMode').textContent = (data.source_mode || 'races').toUpperCase();
     id('empireAdminConfirmed').textContent = fmt(data.updated_at);
     id('empireAdminAttempted').textContent = fmt(data.attempt_at);
     id('empireAdminChecking').textContent = data.checking ? 'Checking provider' : data.queued_at > data.attempt_at ? 'Refresh queued' : 'Idle';
@@ -61,33 +59,6 @@
     } catch { id('empireTestResult').textContent = 'Unable to complete the test.'; }
     finally { test.disabled = false; }
   });
-  // Diagnostic requests only return race IDs and field *names*, not player values
-  // or API credentials. They use the same CSRF/session protections as admin.
-  async function inspectRace(buttonId, path, payload = null) {
-    const button = id(buttonId), panel = id('empireRaceDiagnostics');
-    if (!button || !panel) return;
-    button.disabled = true;
-    panel.textContent = 'Contacting the EmpireDrop races API…';
-    try {
-      const response = await fetch(path, {
-        method: 'POST', credentials: 'same-origin', cache: 'no-store',
-        headers: {'Accept':'application/json', 'Content-Type':'application/json',
-                  'X-CSRF-Token': button.dataset.csrf},
-        body: JSON.stringify(payload || {})
-      });
-      if (response.status === 401 || response.status === 403) { clear(); return; }
-      const body = await response.json();
-      // Never interpolate response data as HTML; textContent prevents injection.
-      panel.textContent = JSON.stringify(body, null, 2);
-    } catch {
-      panel.textContent = 'Race endpoint request failed. See server logs for a safe error classification.';
-    } finally { button.disabled = false; }
-  }
-  id('empireDiscover')?.addEventListener('click', () =>
-    inspectRace('empireDiscover', '/admin/empiredrop/discover'));
-  id('empireProbe')?.addEventListener('click', () =>
-    inspectRace('empireProbe', '/admin/empiredrop/probe',
-                {slug: id('empireRaceSlugInput')?.value?.trim() || ''}));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   window.setInterval(poll, 15000);
 })();

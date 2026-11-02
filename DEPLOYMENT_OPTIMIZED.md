@@ -1,6 +1,6 @@
 # Optimized deployment — RedHunllef / EmpireDrop
 
-Release: **2026-11-02 EmpireDrop Races integration + deployment optimization**. The existing application and
+Release: **2026-10-30 deployment optimization**. The existing application and
 previously bundled private configuration are preserved. There are **two ZIPs**:
 
 - **Complete archive**: all original private settings, seeded administrator accounts,
@@ -93,9 +93,8 @@ optimization improved overall elapsed time.
 
 ## EmpireDrop status
 
-The two Races GET endpoints from the developer portal are now implemented and
-connected to the worker. Authentication and JSON wager fields still require a
-live response and provider confirmation. From Admin → EmpireDrop, discover your
-races, inspect field names, choose a race slug and verify amounts before enabling
-public totals. See `DEPLOYMENT_EMPIREDROP_RACES.md` and the full archive's
-`docs/EMPIREDROP_RACES_INTEGRATION_2026-11-02.md`.
+No live EmpireDrop endpoint, authentication contract, or active referral statistics
+have been independently verified; the new adapter still requires the documented
+provider contract in Admin → EmpireDrop. Deployment optimization does not claim
+that the unavailable provider integration has been fixed. See the complete
+archive's `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`.

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.02-do-root-build-fix1"
+RELEASE = "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1"
 INTERVAL = 60
 
 
@@ -41,8 +41,9 @@ class Config:
             self.credentials[key], self.sources[key] = value, source
         # This build deliberately uses only local JSON. Old database variables
         # cannot make startup depend on a removed service.
-        # The documented EmpireDrop Races routes are implemented separately.
-        # Legacy generic wager API settings are retained for compatibility.
+        # EmpireDrop's API contract is not publicly documented. The endpoint,
+        # auth header names, wager unit and time parameters are explicit here,
+        # never guessed by the application or sent to the browser.
         self.empiredrop = {
             "api_url": str(os.getenv("EMPIREDROP_API_URL", defaults.get("empiredrop_api_url", ""))),
             "public_header": str(defaults.get("empiredrop_public_header", "X-Public-Key")),

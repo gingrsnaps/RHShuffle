@@ -21,9 +21,6 @@ from urllib.parse import urlsplit
 import requests
 
 from integrations import ProviderError
-from empiredrop_races import (RaceAPI, RACE_DEFAULTS, validate_race_settings,
-                              select_race, normalize_race, keys_only,
-                              extract_race_rows, time_value)
 from race_support import EASTERN, fmt_et, local_input
 
 LOG = logging.getLogger('redhunllef.empiredrop')
@@ -297,67 +294,6 @@ class EmpireDropBoard:
         _, admin = self.store.admin()
         return validate_settings({**self.config.empiredrop, **admin.get('empiredrop_api', {})})
 
-    def _race_settings(self):
-        """Read the race-specific, non-secret configuration from administrator JSON."""
-        _, admin = self.store.admin()
-        return validate_race_settings(admin.get('empiredrop_races', {}))
-
-    def _race_api(self):
-        """Keys come from server configuration; they never go to the client."""
-        return RaceAPI(self._race_settings(), self.config.credentials)
-
-    def discover_races(self):
-        """Safe admin-only race catalog and schema metadata (no private key used)."""
-        races, shape = self._race_api().discover()
-        return {'races': races, 'response_shape': shape, 'count': len(races)}
-
-    def probe_race(self, slug=''):
-        """Inspect sanitized field *names* without publishing unverified totals."""
-        api = self._race_api()
-        races, _ = api.discover()
-        selected = select_race(races, api.settings) if not slug else next(
-            (r for r in races if r['slug'] == slug), None)
-        if selected is None:
-            raise ProviderError('Race slug is absent from the affiliate race catalog.', kind='scope')
-        result = api.probe(selected['slug'])
-        result['race'] = selected
-        result['fields_verified'] = api.settings['race_verified_fields']
-        return result
-
-    def _scope(self, site):
-        """A race change invalidates a snapshot even within the same local week."""
-        settings = self._race_settings()
-        if settings['source_mode'] == 'legacy':
-            return scope_id(site)
-        payload = [scope_id(site), settings['source_mode'], settings['race_slug'],
-                   settings['api_base_url'], settings['race_window_policy']]
-        return hashlib.sha256(json.dumps(payload).encode('utf-8')).hexdigest()[:24]
-
-    def _fetch_races(self, site):
-        """Read official race endpoints, then normalize only verified wager fields."""
-        api = self._race_api()
-        catalog, _ = api.discover()
-        race = select_race(catalog, api.settings)
-        payload = api.details(race['slug'])
-        # Provider date bounds are reporting metadata; we never treat them as
-        # evidence of wagering amounts without verified response field mapping.
-        meta = {'slug': race['slug'], 'name': race['name'],
-                'start_time': race['start_time'], 'end_time': race['end_time'],
-                'date_policy': api.settings['race_window_policy'],
-                'currency': api.settings['race_currency']}
-        if api.settings['race_window_policy'] == 'local':
-            if (race['start_time'] is None or race['end_time'] is None or
-                (race['start_time'], race['end_time']) != (site['start_time'], site['end_time'])):
-                raise ProviderError('The provider race does not match the local weekly dates. Select provider race dates or the matching race.', kind='window')
-        elif race['start_time'] is None or race['end_time'] is None:
-            # Dates may be exposed by the details endpoint instead of discovery.
-            from empiredrop_races import path
-            for key, name in [('start_time', 'race_start_field'), ('end_time', 'race_end_field')]:
-                raw = path(payload, api.settings[name])
-                meta[key] = time_value(raw)
-        rows = normalize_race(payload, api.settings)
-        return rows, meta
-
     def _schedule(self, now=None):
         _, admin = self.store.admin()
         return schedule(admin, now)
@@ -440,44 +376,25 @@ class EmpireDropBoard:
     def check(self):
         now = int(time.time())
         site = self._schedule(now)
-        scope = self._scope(site)
+        scope = scope_id(site)
         with self.lock:
             self.checking = True
         try:
-            previous = self.store.live('empiredrop') or {}
-            old = previous
+            old = self.store.live('empiredrop') or {}
             if old.get('scope') != scope:
                 old = {'scope':scope, 'rows':[], 'updated_at':0}
             try:
-                race_config = self._race_settings()
-                if race_config['source_mode'] == 'races':
-                    rows, race_meta = self._fetch_races(site)
-                else:
-                    rows, race_meta = self.fetch(site), {}
+                rows = self.fetch(site)
             except ProviderError as error:
                 next_value = {**old, 'attempt_at':now, 'error':str(error)[:220], 'error_kind':error.kind}
                 LOG.warning('EmpireDrop check did not finish (%s).', error.kind)
             else:
                 next_value = {'scope':scope, 'rows':rows, 'updated_at':now,
-                              'attempt_at':now, 'error':'', 'error_kind':'', 'race_meta':race_meta}
+                              'attempt_at':now, 'error':'', 'error_kind':''}
             # Do not overwrite a newly changed schedule while HTTP was in flight.
-            if self._scope(self._schedule()) != scope:
+            if scope_id(self._schedule()) != scope:
                 return old
             with self.lock:
-                # Keep the last four *verified* previous race snapshots locally.
-                # Failed or partially mapped responses are never archived.
-                if (not next_value.get('error') and previous.get('updated_at') and
-                    (previous.get('scope') != next_value.get('scope') or
-                     (previous.get('race_meta') or {}).get('slug') !=
-                     (next_value.get('race_meta') or {}).get('slug'))):
-                    history = self.store.live('empiredrop_history') or []
-                    if not isinstance(history, list): history = []
-                    entry = {k:copy.deepcopy(previous.get(k)) for k in
-                             ('scope', 'rows', 'updated_at', 'race_meta')}
-                    history = [entry] + [v for v in history if
-                        isinstance(v, dict) and (v.get('scope'), (v.get('race_meta') or {}).get('slug')) !=
-                        (entry['scope'], (entry.get('race_meta') or {}).get('slug'))]
-                    self.store.publish('empiredrop_history', history[:4])
                 self.store.publish('empiredrop', next_value)
                 self.saved = next_value
             return next_value
@@ -488,7 +405,7 @@ class EmpireDropBoard:
     def _visible(self, site):
         with self.lock:
             value = copy.deepcopy(self.saved)
-        if value.get('scope') != self._scope(site):
+        if value.get('scope') != scope_id(site):
             value = {'rows':[], 'updated_at':0, 'attempt_at':0, 'error':'', 'error_kind':''}
         return value
 
@@ -500,23 +417,10 @@ class EmpireDropBoard:
         label = ('Updates delayed · last verified results' if error and rows else
                  'Source unavailable · ' + error if error else
                  'Updated' if saved.get('updated_at') else 'Awaiting verified EmpireDrop data')
-        race_settings = self._race_settings()
-        display_schedule = {k:site[k] for k in ('start_time','end_time','start_et','end_et','mode')}
-        meta = saved.get('race_meta') or {}
-        if (race_settings['source_mode'] == 'races' and
-            race_settings['race_window_policy'] == 'provider'):
-            # Do not display Shuffle's weekly schedule as if EmpireDrop owns it.
-            valid_dates = bool(meta.get('start_time') and meta.get('end_time'))
-            display_schedule = dict(mode='provider',
-                start_time=meta['start_time'] if valid_dates else 0,
-                end_time=meta['end_time'] if valid_dates else 0,
-                start_et=fmt_et(meta['start_time']) if valid_dates else 'Provider race dates not yet confirmed',
-                end_et=fmt_et(meta['end_time']) if valid_dates else '')
         return {'rows':[{'rank':r['rank'], 'username':r['username'][:2]+'******', 'wager':r['wager']} for r in rows],
                 'label':label[:260], 'updated_at':saved.get('updated_at',0),
-                'currency':race_settings['race_currency'] if race_settings['source_mode'] == 'races' else self._settings()['currency'], 'referral_url':REFERRAL_URL,
-                'race_meta':meta, 'source_mode':race_settings['source_mode'],
-                'schedule':display_schedule,
+                'currency':self._settings()['currency'], 'referral_url':REFERRAL_URL,
+                'schedule':{k:site[k] for k in ('start_time','end_time','start_et','end_et','mode')},
                 'code':CODE}
 
     def private_status(self, unused_shuffle_site=None):

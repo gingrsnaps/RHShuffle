@@ -64,7 +64,7 @@ class EmpireDropAppTests(unittest.TestCase):
         site = runtime.admin['site_settings']
         board = runtime.empiredrop
         with board.lock:
-            board.saved = dict(scope=board._scope(schedule(runtime.admin)), rows=[{'rank':1,'username':'RealEmpireName', 'wager':'€500.00'}], updated_at=12345, attempt_at=12345, error='')
+            board.saved = dict(scope=scope_id(schedule(runtime.admin)), rows=[{'rank':1,'username':'RealEmpireName', 'wager':'€500.00'}], updated_at=12345, attempt_at=12345, error='')
         public = board.public(site)
         private = self.client.get('/admin/empiredrop/status')
         self.assertEqual(private.status_code, 200)

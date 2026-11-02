@@ -17,7 +17,7 @@
   function setHero() {
     if (isEmpire()) {
       if (title) title.textContent = 'EmpireDrop Wager Race';
-      if (description) description.textContent = latest?.race_meta?.name ? `EmpireDrop race: ${latest.race_meta.name}` : 'Top 15 EmpireDrop wagers from players referred with code red.';
+      if (description) description.textContent = 'Top 15 EmpireDrop wagers from players referred with code red.';
     } else {
       if (title) title.textContent = shuffleTitle;
       if (description) description.textContent = shuffleDescription;
@@ -73,7 +73,7 @@
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
     if (id('empireChecked')) id('empireChecked').textContent = board.updated_at ? 'Last verified: '+date(board.updated_at) : 'Not yet verified';
     if (board.schedule) {
-      if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'provider' ? 'EmpireDrop official race' : board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
+      if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
       if (id('empireRaceWindow')) id('empireRaceWindow').textContent = (board.schedule.start_et || '')+' → '+(board.schedule.end_et || '');
     }
     // /public-state refreshes the main hero for Shuffle; restore EmpireDrop's

@@ -1,8 +1,3 @@
-> **Update — November 2, 2026:** This older generic-endpoint guide is retained
-> for historical reference. The new integration uses EmpireDrop's documented
-> race discovery and race detail GET paths. Read
-> `EMPIREDROP_RACES_INTEGRATION_2026-11-02.md` first.
-
 # EmpireDrop Developer Portal: configuration and validation
 
 Official portal: https://developers.empiredrop.com/
