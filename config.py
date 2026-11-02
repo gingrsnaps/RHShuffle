@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.02-empiredrop-race-endpoints1"
+RELEASE = "2026.11.02-do-root-build-fix1"
 INTERVAL = 60
 
 

@@ -1,3 +1,7 @@
+**DigitalOcean deployment correction (2026-11-02):** This new full ZIP has
+no nested `redhunllef/` directory. Extract the archive and upload its contents
+to the Git repository root; Source Directory is `/`. See `DEPLOY_DIGITALOCEAN.md`.
+
 # Fast deployment — EmpireDrop Races (2026-11-02)
 
 Use `RedHunllef_EmpireDrop_Races_FastDeploy_Private_2026-11-02.zip` for

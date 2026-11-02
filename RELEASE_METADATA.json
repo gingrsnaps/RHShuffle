@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.02-empiredrop-races1",
+  "release": "2026.11.02-do-root-build-fix1",
   "entry_point": "python wager_backend.py",
   "source": "EmpireDrop documented Races GET routes",
   "private_config_included": true,
@@ -13,5 +13,6 @@
   "python_version": "3.13.12",
   "build_command": "automatic Python buildpack",
   "note": "Both ZIPs contain unencrypted real credentials supplied by the user. Keep private.",
-  "packaging": "complete"
+  "packaging": "flat-root complete",
+  "deployment_fix": "Flat source root and runtime-only manifest; no duplicate build command"
 }
