@@ -38,7 +38,7 @@ RACE_DEFAULTS = {
     'race_name_field': 'username',
     'race_user_id_field': '',
     'race_wager_field': 'wagered',
-    'race_currency': 'EUR',
+    'race_currency': 'USD',
     'race_wager_divisor': '1',
     'race_window_policy': 'provider',  # Display provider race times when supplied.
     'race_start_field': 'startTime',
