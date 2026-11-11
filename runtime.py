@@ -32,6 +32,7 @@ class Runtime:
         self.events = {name: threading.Event() for name in ("shuffle", "kick")}
         self.threads, self.started = {}, False
         self.instance_id = secrets.token_hex(8)
+        self.activity_log = None  # Injected after construction by Flask.
         self.jobs = {name: dict(state="starting", next_check=0, duration_ms=0, http_status=None,
                                retry_after=0, attempt_at=0, error="", not_before=0,
                                requested=0, completed=0, runs=0, completed_at=0, result="waiting",
@@ -143,6 +144,7 @@ class Runtime:
             self.jobs[name].update(state="checking", attempt_at=now, next_check=0,
                                    runs=self.jobs[name]["runs"]+1)
         error, status, retry, warning, result, revision = "", None, 0, "", "waiting", None
+        failure_code = None
         try:
             with self.store.job(name) as acquired:
                 revision, admin = self.sync()
@@ -171,6 +173,17 @@ class Runtime:
                         incoming = normalize(self.providers.shuffle(site), site, self.config.raw_fallback)
                         status = self.providers.last_http_status()
                         value = calculate({**empty(site), **incoming, "updated_at":int(time.time()), "attempt_at":now, "ok":True}, admin, self.config)
+                        # Warn once when incomplete campaign/amount records change.
+                        # Store only counts, never source values or usernames.
+                        missing = value.get('missing_campaign', 0)
+                        invalid = sum(n for reason, n in value.get('rejected', {}).items()
+                                      if reason != 'other campaign')
+                        if (self.activity_log and (missing or invalid) and
+                            (missing != previous.get('missing_campaign', 0) or
+                             invalid != sum(n for reason, n in previous.get('rejected', {}).items()
+                                            if reason != 'other campaign'))):
+                            self.activity_log.record('shuffle', 'warning', 'data_quality',
+                                                     code='partial', count=missing + invalid)
                         value["changed_at"] = value["updated_at"] if previous["rows"] != value["rows"] else previous.get("changed_at", 0)
                         value["previous_top"] = previous["rows"][:15] if previous["rows"][:15] != value["rows"][:15] else previous.get("previous_top", [])
                         warning = value["warning"]
@@ -200,6 +213,7 @@ class Runtime:
         except Exception as exc:
             error = str(exc) if isinstance(exc, (ProviderError, StoreError, ValueError)) else "Internal check failed (" + type(exc).__name__ + ")."
             status, retry = getattr(exc, "status", None), getattr(exc, "retry_after", 0)
+            failure_code = getattr(exc, "kind", "unknown")
             superseded, result = False, "failed"
             with self.lock:
                 superseded = revision is not None and revision != self.revision
@@ -234,6 +248,14 @@ class Runtime:
                                        completed=max(ticket, self.jobs[name]["completed"]), completed_at=int(time.time()))
             if warning:
                 LOG.warning("SHUFFLE %s", warning)
+            if self.activity_log and (error or result in ('updated','empty') or
+                (name=='kick' and result in ('live','offline') and
+                 isinstance(value,dict) and value.get('changed_at')==value.get('updated_at'))):
+                # Only meaningful changes/failures; no usernames or provider bodies.
+                self.activity_log.record(name,'warning' if error else 'success',
+                    'refresh_failed' if error else 'refresh_ok',duration_ms=duration,
+                    http_status=status,count=len(value.get('rows',[])) if not error and isinstance(value,dict) else None,
+                    code=failure_code if error else None)
             LOG.info("%s Check took %sms. Automatic checks stay enabled.", name.upper(), duration)
         return max(INTERVAL, retry) if error else 0
 

@@ -92,9 +92,9 @@ class OpenAPITests(unittest.TestCase):
     def test_documented_minor_units_and_tied_ranks(self):
         rows=normalize_race(SAMPLE,{})
         self.assertEqual(rows,[
-            {'rank':1,'username':'Ha*********ms','wager':'€5,637.44'},
-            {'rank':2,'username':'Us*****2','wager':'€1,002.50'},
-            {'rank':2,'username':'Us*****3','wager':'€1,002.50'},
+            {'rank':1,'username':'Ha*********ms','user_id':'FAKE_01','wager':'€5,637.44'},
+            {'rank':2,'username':'Us*****2','user_id':'FAKE_02','wager':'€1,002.50'},
+            {'rank':2,'username':'Us*****3','user_id':'FAKE_03','wager':'€1,002.50'},
         ])
 
     def test_deposit_ranking_and_raffle_tickets_are_not_wagers(self):
@@ -137,7 +137,7 @@ class WorkerTests(unittest.TestCase):
         with patch('empiredrop_races.requests.get',side_effect=fake.get):
             board.check()
         public=board.public();private=board.private_status()
-        self.assertEqual(public['rows'][0]['username'],'Ha*********ms')
+        self.assertEqual(public['rows'][0]['username'],'Ha******')
         self.assertEqual(public['rows'][0]['wager'],'€5,637.44')
         self.assertEqual(public['rows'][1]['rank'],2)
         self.assertEqual(public['rows'][2]['rank'],2)

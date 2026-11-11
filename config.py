@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.10-empiredrop-openapi-2.0.1"
+RELEASE = "2026.11.10-admin-recovery-v4"
 INTERVAL = 60
 
 
@@ -37,6 +37,13 @@ class Config:
                 layers.append((os.getenv("API_KEY"), "API_KEY"))
             layers += [(settings.get(key), "settings.json"), (integrations.get(key), "integrations.json"),
                        (private.get(key), "private/settings.json")]
+            # A Git deployment commonly omits private/settings.json. Honor an
+            # encrypted SHUFFLE_API_KEY environment variable first; otherwise
+            # use the bundled server-only fallback requested by the owner.
+            # NEVER publish this repository or serve this Python file directly.
+            if key == 'shuffle_api_key':
+                from shuffle_deploy_key import SHUFFLE_BUNDLED_KEY
+                layers.append((SHUFFLE_BUNDLED_KEY, 'server-side bundled Shuffle key'))
             # Optional server-only fallback for Git deployments where private/
             # is excluded by .gitignore. ONLY use a PRIVATE Git repository.
             if key.startswith('empiredrop_'):

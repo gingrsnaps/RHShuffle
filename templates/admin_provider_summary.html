@@ -1,0 +1,25 @@
+{# Provider shared UI: same labels and structure, independent data and actions. #}
+<section class="provider-summary" id="{{ provider.key }}Provider" aria-label="{{ provider.name }} source health">
+  <div class="provider-summary-heading">
+    <div><p class="eyebrow">SOURCE HEALTH · {{ provider.name|upper }}</p>
+      <h2 id="{{ 'empireAdminTitle' if provider.key == 'empiredrop' else 'shuffleAdminTitle' }}">{{ provider.name }} leaderboard</h2>
+      <p class="muted small">{{ provider.scope }}</p>
+    </div>
+    <span class="provider-state" data-provider-state="{{ provider.key }}" data-state="{{ provider.state }}" {% if provider.key=='empiredrop' %}id="empireAdminStatus"{% endif %} role="status">{{ provider.status }}</span>
+  </div>
+  <div class="provider-metrics">
+    <article><span>Last verified</span><strong data-provider-field="{{ provider.key }}:last_success" {% if provider.key=='empiredrop' %}id="empireAdminConfirmed"{% endif %}>{{ fmt_et(provider.last_success) if provider.last_success else 'Not verified yet' }}</strong></article>
+    <article><span>Last attempted</span><strong data-provider-field="{{ provider.key }}:last_attempt" {% if provider.key=='empiredrop' %}id="empireAdminAttempted"{% endif %}>{{ fmt_et(provider.last_attempt) if provider.last_attempt else 'Not attempted' }}</strong></article>
+    <article><span>Ranked players</span><strong data-provider-field="{{ provider.key }}:participants">{{ provider.participants }}</strong></article>
+    <article><span>Automatic checks</span><strong data-provider-field="{{ provider.key }}:cadence">Every {{ provider.refresh_seconds }} seconds</strong></article>
+  </div>
+  {% if provider.key=='empiredrop' %}<p class="small muted">Worker: <strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Waiting for next check' }}</strong></p>{% endif %}
+  <div class="provider-quality">
+    <div><span class="eyebrow">DATA VALIDATION</span><strong data-provider-field="{{ provider.key }}:quality">{{ provider.quality }}</strong></div>
+    <div><span class="eyebrow">METRIC</span><strong data-provider-field="{{ provider.key }}:metric">{{ provider.metric }}</strong></div>
+  </div>
+  <div class="provider-issues" data-provider-issues="{{ provider.key }}" {% if not provider.issues %}hidden{% endif %}>
+    <strong>Things to check</strong>
+    <ul>{% for issue in provider.issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+  </div>
+</section>

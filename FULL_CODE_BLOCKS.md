@@ -1,77 +1,11 @@
-# RedHunllef — Complete Source Code Reference
-
-This reference reproduces the runtime source, templates, frontend files and source tests in the archive. **Private credentials, account seeds, stored player data and recovery snapshots are intentionally excluded from this Markdown reference**. The complete ZIP still contains those original files, unchanged.
-
-For authoritative code, use the individual files in this archive.
-
-## `.gitignore`
-
-```text
-# Do not accidentally publish live credentials or customer state.
-private/
-data/
-settings.json
-integrations.json
-admin_store.json
-.env
-.env.*
-!.env.example
-*.sqlite3
-*.sqlite3-wal
-*.sqlite3-shm
-*.log
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.venv/
-venv/
-node_modules/
-.DS_Store
-```
-
-## `MANIFEST.json`
-
-```json
-{
-  "release": "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1",
-  "packaging": "complete configured source and historical assets",
-  "entry_point": "python wager_backend.py",
-  "storage": "local JSON (ephemeral on DigitalOcean App Platform)",
-  "checks": "python wager_backend.py --check; python tools/deployment_diagnostics.py",
-  "private_config_preserved": true,
-  "live_empiredrop_contract_verified": false,
-  "python_version": "3.13.12",
-  "build_command": "automatic Python buildpack (no custom build command)",
-  "note": "The complete ZIP also contains the original sqlite artifacts, recovery history, tests and docs; secrets are plaintext in both ZIPs."
-}
-```
-
-## `Procfile`
-
-```text
-web: python wager_backend.py
-```
-
-## `RELEASE_METADATA.json`
-
-```json
-{
-  "release": "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1",
-  "packaging": "complete configured source and historical assets",
-  "entry_point": "python wager_backend.py",
-  "storage": "local JSON (ephemeral on DigitalOcean App Platform)",
-  "checks": "python wager_backend.py --check; python tools/deployment_diagnostics.py",
-  "private_config_preserved": true,
-  "live_empiredrop_contract_verified": false,
-  "python_version": "3.13.12",
-  "build_command": "automatic Python buildpack (no custom build command)",
-  "note": "The complete ZIP also contains the original sqlite artifacts, recovery history, tests and docs; secrets are plaintext in both ZIPs."
-}
-```
+# RedHunllef — complete source reference (server secrets excluded)
+The ZIP includes original private settings and server-side fallback key modules.
+Secrets are deliberately not repeated in this document.
+See `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md` for the change log.
 
 ## `abuse_guard.py`
 
-```python
+```py
 """Bounded, in-memory throttles for rejected requests, separate from gameplay.
 
 Successful eligible attacks are never counted or blocked by this guard. A regular
@@ -124,12 +58,15 @@ class AbuseGuard:
         with self.lock:
             cutoff = time.time() - 86400
             return [dict(f) for f in self.flags if f['at'] > cutoff]
+
 ```
 
 ## `app.yaml`
 
 ```yaml
-# Update the private GitHub repository name before importing.
+# REFERENCE TEMPLATE ONLY: replace github.repo before importing through doctl.
+# For an existing DigitalOcean App Platform app, edit Build/Run/Source settings
+# in the dashboard; merely uploading this file does NOT change its settings.
 # IMPORTANT: Do not configure a custom build command: the Python buildpack
 # installs requirements.txt automatically. No database service is needed.
 # App Platform local files are temporary; see README for private recovery seeds.
@@ -151,10 +88,10 @@ services:
     instance_size_slug: apps-s-1vcpu-1gb
     health_check:
       http_path: /healthz
-      initial_delay_seconds: 20
+      initial_delay_seconds: 45
       period_seconds: 15
-      timeout_seconds: 5
-      failure_threshold: 3
+      timeout_seconds: 10
+      failure_threshold: 5
     envs:
       - key: APP_ENV
         value: production
@@ -184,11 +121,12 @@ ingress:
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
+
 ```
 
 ## `baccarat.py`
 
-```python
+```py
 """Eight-deck Punto Banco, replayed only from the committed random stream.
 
 Each round starts a fresh 416-card shoe; there are no burns or side bets.
@@ -257,11 +195,12 @@ def replay(draw, wager, side):
     payout = wager * RETURNS[side] // 10000 if won else wager if push else 0
     return dict(player=player, banker=banker, player_total=pt, banker_total=bt,
                 natural=natural, winner=winner, won=won, push=push, payout=payout)
+
 ```
 
 ## `blackjack.py`
 
-```python
+```py
 """Pure six-deck Blackjack replay. No storage, HTTP, clock or random source.
 
 The fairness module supplies unbiased draws from the precommitted seed.
@@ -328,11 +267,12 @@ def replay(draw, wager, actions):
         payout = wager * 5 // 2 if status == 'blackjack' else stake * 2 if status == 'win' else stake if status == 'push' else 0
     return dict(ended=ended, player=player, dealer=dealer, player_total=pt, dealer_total=dt,
                 player_soft=ps, dealer_soft=ds, status=status, total_wager=stake, payout=payout)
+
 ```
 
 ## `boss.py`
 
-```python
+```py
 """Shared community raid rules. Every hit is validated and committed server-side.
 
 The boss lives in a separate record, so attacks cannot change race settings or
@@ -938,11 +878,12 @@ class CommunityBoss:
                      previous['max_hp'], state['max_hp'], state['hp'], state['total_damage'])
         else:
             LOG.info("BOSS Host action: %s.", action)
+
 ```
 
 ## `boss_avatar.py`
 
-```python
+```py
 """Bounded PNG/JPEG/WebP uploads; store only a decoded, metadata-free PNG.
 
 The image is a separate record, so every hit does not rewrite image bytes.
@@ -1016,11 +957,12 @@ def validate_avatar(value):
 
 def image_bytes(value):
     return base64.b64decode(value['data'])
+
 ```
 
 ## `boss_extras.py`
 
-```python
+```py
 """Small, bounded raid additions: cosmetic rally, pace estimates and host history.
 
 These features never change damage, replenish health or limit successful hits.
@@ -1129,11 +1071,12 @@ def validate_extras(state, limit):
                     not (v is None or type(v) is bool or type(v) is int and abs(v) <= MAX_NUMBER
                          or isinstance(v, str) and len(v) <= 256)):
                     raise ValueError('Invalid boss change value.')
+
 ```
 
 ## `boss_progress.py`
 
-```python
+```py
 """Private community names and eight persistent, server-earned raid badges.
 
 Names are self-reported, not verified Shuffle identities. Records are keyed by
@@ -1230,11 +1173,12 @@ def validate_profiles(profiles, limit, households=None):
                 or p['active_days'] > p['attacks'] or sum(p['styles'].values()) > p['attacks']):
             raise ValueError('Inconsistent achievement totals.')
     return copy.deepcopy(profiles)
+
 ```
 
 ## `config.py`
 
-```python
+```py
 """One configuration path; saved race settings win after the first import."""
 import os
 import re
@@ -1245,7 +1189,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.10.30-empiredrop-contract-adapter3-deploy-optimized1"
+RELEASE = "2026.11.10-admin-recovery-v4"
 INTERVAL = 60
 
 
@@ -1274,13 +1218,24 @@ class Config:
                 layers.append((os.getenv("API_KEY"), "API_KEY"))
             layers += [(settings.get(key), "settings.json"), (integrations.get(key), "integrations.json"),
                        (private.get(key), "private/settings.json")]
+            # A Git deployment commonly omits private/settings.json. Honor an
+            # encrypted SHUFFLE_API_KEY environment variable first; otherwise
+            # use the bundled server-only fallback requested by the owner.
+            # NEVER publish this repository or serve this Python file directly.
+            if key == 'shuffle_api_key':
+                from shuffle_deploy_key import SHUFFLE_BUNDLED_KEY
+                layers.append((SHUFFLE_BUNDLED_KEY, 'server-side bundled Shuffle key'))
+            # Optional server-only fallback for Git deployments where private/
+            # is excluded by .gitignore. ONLY use a PRIVATE Git repository.
+            if key.startswith('empiredrop_'):
+                from empiredrop_deploy_keys import EMPIREDROP_KEYS
+                layers.append((EMPIREDROP_KEYS.get(key), 'server-side bundled EmpireDrop keys'))
             value, source = next(((str(v).strip(), source) for v, source in layers if v and str(v).strip()), ("", "missing"))
             self.credentials[key], self.sources[key] = value, source
         # This build deliberately uses only local JSON. Old database variables
         # cannot make startup depend on a removed service.
-        # EmpireDrop's API contract is not publicly documented. The endpoint,
-        # auth header names, wager unit and time parameters are explicit here,
-        # never guessed by the application or sent to the browser.
+        # The documented EmpireDrop Races routes are implemented separately.
+        # Legacy generic wager API settings are retained for compatibility.
         self.empiredrop = {
             "api_url": str(os.getenv("EMPIREDROP_API_URL", defaults.get("empiredrop_api_url", ""))),
             "public_header": str(defaults.get("empiredrop_public_header", "X-Public-Key")),
@@ -1389,17 +1344,18 @@ class Config:
             for key, value in updates.items():
                 self.credentials[key], self.sources[key] = value, 'private/settings.json'
         return True
+
 ```
 
 ## `empiredrop.py`
 
-```python
+```py
 """EmpireDrop-only, read-only affiliate standings.
 
-Important: No official EmpireDrop wagering API contract was publicly verified.
-The endpoint, authentication headers, fields, scope, units and pagination MUST be
-confirmed by EmpireDrop before enabling it. This module never guesses URLs,
-sends keys to redirects, scrapes the website, or fabricates results.
+The modern EmpireDrop Races path follows the user-supplied OpenAPI 2.0.1.
+Legacy generic wagering code remains for old configuration compatibility only.
+Official races use EmpireDrop's dates; custom/weekly windows opt in to the
+deprecated timestamp endpoint. Currency/unit and tied ranks remain authoritative.
 """
 from __future__ import annotations
 
@@ -1417,7 +1373,11 @@ from urllib.parse import urlsplit
 import requests
 
 from integrations import ProviderError
+from empiredrop_races import (RaceAPI, RACE_DEFAULTS, validate_race_settings,
+                              select_race, normalize_race, keys_only,
+                              extract_race_rows, time_value, normalize_legacy_window)
 from race_support import EASTERN, fmt_et, local_input
+from empiredrop_features import (validate_rewards, rewards_public, payout_for_rows, mask_public_username)
 
 LOG = logging.getLogger('redhunllef.empiredrop')
 CODE = 'red'
@@ -1678,17 +1638,139 @@ def parse_rows(payload, *, settings=None, currency=None, divisor=None):
             for i, key in enumerate(winners, 1)]
 
 
+def meta_is_closed(saved):
+    meta = saved.get('race_meta') or {}
+    return meta.get('is_active') is False
+
+
 class EmpireDropBoard:
     def __init__(self, config, store):
         self.config, self.store = config, store
         self.lock, self.stop_event, self.wakeup = threading.RLock(), threading.Event(), threading.Event()
-        self.thread, self.interval = None, 60
+        self.thread, self.interval = None, 300  # Provider example: race.cache_duration=300s
         self.saved = store.live('empiredrop') or {}
         self.last_manual, self.queued_at, self.checking = 0.0, 0, False
+        self.next_allowed = 0.0
+        self.events = None  # Assigned by the app; no sensitive provider payloads are recorded.
 
     def _settings(self):
         _, admin = self.store.admin()
         return validate_settings({**self.config.empiredrop, **admin.get('empiredrop_api', {})})
+
+    def _race_settings(self):
+        """Read the race-specific, non-secret configuration from administrator JSON."""
+        _, admin = self.store.admin()
+        return validate_race_settings(admin.get('empiredrop_races', {}))
+
+    def _race_api(self):
+        """Keys come from server configuration; they never go to the client."""
+        return RaceAPI(self._race_settings(), self.config.credentials)
+
+    def discover_races(self):
+        """Safe admin-only race catalog and schema metadata (no private key used)."""
+        races, shape = self._race_api().discover()
+        return {'races': races, 'response_shape': shape, 'count': len(races)}
+
+    def probe_race(self, slug=''):
+        """Inspect sanitized field *names* without publishing unverified totals."""
+        api = self._race_api()
+        # Direct slug inspection also works for scheduled/finished races, which
+        # are intentionally absent from EmpireDrop's running-races listing.
+        if slug:
+            selected = {'slug': slug, 'name': slug}
+        else:
+            races, _ = api.discover()
+            selected = select_race(races, api.settings)
+        result = api.probe(selected['slug'])
+        result['race'] = selected
+        result['fields_verified'] = api.settings['race_verified_fields']
+        return result
+
+    def _scope(self, site):
+        """A race change invalidates a snapshot even within the same local week."""
+        settings = self._race_settings()
+        if settings['source_mode'] in ('legacy', 'legacy_window'):
+            return scope_id(site) + '-' + settings['source_mode']
+        # Provider-managed races must NOT reset just because Shuffle/local
+        # Tuesday's week changes. A manual slug change still resets the scope.
+        payload = [settings['source_mode'], settings['race_slug'],
+                   settings['api_base_url'], settings['race_window_policy']]
+        return hashlib.sha256(json.dumps(payload).encode('utf-8')).hexdigest()[:24]
+
+    def _fetch_races(self, site):
+        """Read documented list/detail API; let EmpireDrop define the race.
+
+        The list contains running races only. A configured slug is fetched
+        directly so admins can inspect historical and scheduled races too.
+        """
+        api = self._race_api()
+        if api.settings['race_slug']:
+            selected = {'slug': api.settings['race_slug']}
+        else:
+            catalog, _ = api.discover()
+            selected = select_race(catalog, api.settings)
+        payload = api.details(selected['slug'])
+        race = payload.get('race')
+        if not isinstance(race, dict) or race.get('slug') != selected['slug']:
+            raise ProviderError('EmpireDrop race detail slug does not match selection.', kind='scope')
+        start, end = time_value(race.get('start_date')), time_value(race.get('end_date'))
+        if not start or not end or start >= end:
+            raise ProviderError('Race has invalid documented start_date/end_date.', kind='format')
+        if api.settings['race_window_policy'] == 'local':
+            # Local schedule may be contiguous [start,end), while EmpireDrop's
+            # end_date is inclusive (23:59:59). Accept the 1s boundary difference.
+            if start != site['start_time'] or abs(end - site['end_time']) > 1:
+                raise ProviderError('EmpireDrop race dates differ from local Tuesday schedule.', kind='window')
+        # The OpenAPI says ranking[] is not available for closed races. Empty
+        # rankings are valid initially and must not erase a saved closed race.
+        rows = normalize_race(payload, api.settings)
+        ttl = race.get('cache_duration')
+        if type(ttl) is not int or not 0 < ttl <= 86400:
+            raise ProviderError('Invalid race.cache_duration from provider.', kind='format')
+        engine, category = race.get('engine'), race.get('type')
+        metric = 'Tickets' if engine == 'RAFFLE' else ('Deposited' if category == 'DEPOSIT' else 'Wagered')
+        meta = {
+            'slug': race['slug'], 'name': str(race.get('name') or race['slug'])[:90],
+            'start_time': start, 'end_time': end,
+            'date_policy': api.settings['race_window_policy'],
+            'currency': race['currency'],
+            'unit': 'TICKETS' if engine == 'RAFFLE' else race['currency'],
+            'engine': engine, 'type': category, 'metric': metric,
+            'is_active': race.get('is_active') is True,
+            'is_locked': payload.get('is_locked') is True,
+            'cache_duration': ttl, 'ranks_limit': race.get('ranks_limit'),
+            'prize_count': len(payload.get('prizes', [])) if isinstance(payload.get('prizes'), list) else 0,
+            'winners_count': len(payload.get('winners', [])) if isinstance(payload.get('winners'), list) else 0,
+        }
+        # Do not hammer a provider endpoint while its ranking cache is hot.
+        self.interval = min(3600, max(60, ttl))
+        return rows, meta
+
+    def _fetch_window(self, site):
+        """Explicit date-range mode through the documented *deprecated* API.
+
+        Unlike modern races, this route supports arbitrary Unix UTC windows,
+        but EmpireDrop may remove it. A retired endpoint produces a visible
+        error while preserving any last verified result for this window.
+        """
+        start = int(site['start_time'])
+        end = min(int(site['end_time']), int(time.time()))
+        if end <= start:
+            raise ProviderError('Custom EmpireDrop race has not started.',kind='window')
+        payload = self._race_api().legacy_window(start,end)
+        rows, info = normalize_legacy_window(payload,start,end)
+        ttl = info['cache_duration']
+        if type(ttl) is not int or not 0 < ttl <= 86400:
+            raise ProviderError('Invalid EmpireDrop cache duration.',kind='format')
+        self.interval = min(3600,max(60,ttl))
+        meta = {'slug':'date-window','name':'Custom EmpireDrop wager race',
+                'start_time':start,'end_time':int(site['end_time']),
+                'currency':info['currency'],'unit':info['currency'],
+                'engine':'RANKING','type':'WAGER','metric':'Wagered',
+                'is_active':int(time.time()) < int(site['end_time']),
+                'cache_duration':ttl,'ranks_limit':len(rows),
+                'legacy_window':True, 'date_policy':'custom'}
+        return rows, meta
 
     def _schedule(self, now=None):
         _, admin = self.store.admin()
@@ -1770,27 +1852,69 @@ class EmpireDropBoard:
         raise ProviderError('EmpireDrop pagination exceeded the configured safety limit.', kind='format')
 
     def check(self):
+        began = time.monotonic()
         now = int(time.time())
         site = self._schedule(now)
-        scope = scope_id(site)
+        scope = self._scope(site)
         with self.lock:
             self.checking = True
         try:
-            old = self.store.live('empiredrop') or {}
+            previous = self.store.live('empiredrop') or {}
+            old = previous
             if old.get('scope') != scope:
                 old = {'scope':scope, 'rows':[], 'updated_at':0}
             try:
-                rows = self.fetch(site)
+                race_config = self._race_settings()
+                if race_config['source_mode'] == 'races':
+                    rows, race_meta = self._fetch_races(site)
+                elif race_config['source_mode'] == 'legacy_window':
+                    rows, race_meta = self._fetch_window(site)
+                else:
+                    rows, race_meta = self.fetch(site), {}
             except ProviderError as error:
                 next_value = {**old, 'attempt_at':now, 'error':str(error)[:220], 'error_kind':error.kind}
+                # 429 signals our poll frequency exceeded the provider's policy.
+                if error.kind == 'rate_limit':
+                    self.interval = min(3600, max(600, self.interval * 2))
                 LOG.warning('EmpireDrop check did not finish (%s).', error.kind)
+                if self.events:
+                    self.events.record('empiredrop','warning' if error.kind=='rate_limit' else 'error',
+                                       'api_rate_limited' if error.kind=='rate_limit' else 'refresh_failed',
+                                       http_status=error.status, code=error.kind,
+                                       duration_ms=round((time.monotonic()-began)*1000))
             else:
+                # A closed race stops returning ranking[]. Keep its last
+                # verified standings, avoiding a false blank board at close.
+                if (not rows and race_meta and not race_meta.get('is_active', True)
+                    and (old.get('race_meta') or {}).get('slug') == race_meta.get('slug')
+                    and old.get('rows')):
+                    rows = old['rows']
+                if self.events:
+                    self.events.record('empiredrop','success','refresh_ok',count=len(rows),
+                                       http_status=200, duration_ms=round((time.monotonic()-began)*1000))
                 next_value = {'scope':scope, 'rows':rows, 'updated_at':now,
-                              'attempt_at':now, 'error':'', 'error_kind':''}
+                              'attempt_at':now, 'error':'', 'error_kind':'',
+                              'race_meta':race_meta, 'rewards':self._rewards()}
             # Do not overwrite a newly changed schedule while HTTP was in flight.
-            if scope_id(self._schedule()) != scope:
+            if self._scope(self._schedule()) != scope:
                 return old
             with self.lock:
+                # Keep the last four *verified* previous race snapshots locally.
+                # Failed or partially mapped responses are never archived.
+                if (not next_value.get('error') and previous.get('updated_at') and
+                    (previous.get('scope') != next_value.get('scope') or
+                     (previous.get('race_meta') or {}).get('slug') !=
+                     (next_value.get('race_meta') or {}).get('slug'))):
+                    history = self.store.live('empiredrop_history') or []
+                    if not isinstance(history, list): history = []
+                    # Preserve the payout snapshot from the *previous* race,
+                    # not whatever the administrator configured for the new one.
+                    entry = {k:copy.deepcopy(previous.get(k)) for k in
+                             ('scope', 'rows', 'updated_at', 'race_meta','rewards')}
+                    history = [entry] + [v for v in history if
+                        isinstance(v, dict) and (v.get('scope'), (v.get('race_meta') or {}).get('slug')) !=
+                        (entry['scope'], (entry.get('race_meta') or {}).get('slug'))]
+                    self.store.publish('empiredrop_history', history[:4])
                 self.store.publish('empiredrop', next_value)
                 self.saved = next_value
             return next_value
@@ -1801,29 +1925,75 @@ class EmpireDropBoard:
     def _visible(self, site):
         with self.lock:
             value = copy.deepcopy(self.saved)
-        if value.get('scope') != scope_id(site):
+        if value.get('scope') != self._scope(site):
             value = {'rows':[], 'updated_at':0, 'attempt_at':0, 'error':'', 'error_kind':''}
         return value
 
+    def _rewards(self):
+        _, admin = self.store.admin()
+        return rewards_public(admin.get('empiredrop_rewards', {}))
+
+    def public_history(self):
+        """Four independent, sanitized, previously verified race snapshots."""
+        archive = self.store.live('empiredrop_history') or []
+        result = []
+        for item in archive[:4] if isinstance(archive,list) else []:
+            if not isinstance(item,dict): continue
+            meta = item.get('race_meta') or {}
+            frozen = item.get('rewards') or {}
+            try: rewards = rewards_public(frozen)
+            except ValueError: rewards = rewards_public({})
+            rows = item.get('rows') or []
+            visible = [dict(rank=x['rank'],username=mask_public_username(x['username']),wager=x['wager'])
+                       for x in rows[:15] if isinstance(x,dict) and all(k in x for k in ('rank','username','wager'))]
+            result.append({'name':str(meta.get('name') or meta.get('slug') or 'Previous race')[:90],
+                           'slug':str(meta.get('slug') or '')[:100],
+                           'start_time':meta.get('start_time') or 0,
+                           'end_time':meta.get('end_time') or 0,
+                           'updated_at':item.get('updated_at') or 0,
+                           'rows':list(payout_for_rows(visible,rewards)),
+                           'prizes':{'enabled':rewards['enabled'],'total':rewards['total']}})
+        return result
+
     def public(self, unused_shuffle_site=None):
+        """Allowlisted public projection: independent prizes and name masking."""
         site = self._schedule()
         saved = self._visible(site)
         rows = saved.get('rows', [])[:15]
         error = saved.get('error', '')
         label = ('Updates delayed · last verified results' if error and rows else
+                 'Race ended · last verified standings (not a payout confirmation)' if rows and meta_is_closed(saved) else
                  'Source unavailable · ' + error if error else
-                 'Updated' if saved.get('updated_at') else 'Awaiting verified EmpireDrop data')
-        return {'rows':[{'rank':r['rank'], 'username':r['username'][:2]+'******', 'wager':r['wager']} for r in rows],
+                 'Updated · EmpireDrop race' if saved.get('updated_at') else
+                 'Awaiting EmpireDrop race standings')
+        race_settings = self._race_settings()
+        source = race_settings['source_mode']
+        meta = saved.get('race_meta') or {}
+        display_schedule = {k:site[k] for k in ('start_time','end_time','start_et','end_et','mode')}
+        if source == 'races' and race_settings['race_window_policy'] == 'provider':
+            valid = bool(meta.get('start_time') and meta.get('end_time'))
+            display_schedule = dict(mode='provider',
+                start_time=meta['start_time'] if valid else 0,
+                end_time=meta['end_time'] if valid else 0,
+                start_et=fmt_et(meta['start_time']) if valid else 'Race dates not yet confirmed',
+                end_et=fmt_et(meta['end_time']) if valid else '')
+        rewards = self._rewards()
+        visible = [dict(rank=r['rank'], username=mask_public_username(r['username']),wager=r['wager']) for r in rows]
+        visible = list(payout_for_rows(visible,rewards))
+        return {'rows':visible, 'prizes':rewards,
                 'label':label[:260], 'updated_at':saved.get('updated_at',0),
-                'currency':self._settings()['currency'], 'referral_url':REFERRAL_URL,
-                'schedule':{k:site[k] for k in ('start_time','end_time','start_et','end_et','mode')},
-                'code':CODE}
+                'currency':meta.get('currency',race_settings['race_currency']) if source!='legacy' else self._settings()['currency'],
+                'referral_url':REFERRAL_URL, 'race_meta':meta, 'source_mode':source,
+                'schedule':display_schedule, 'code':CODE,
+                'refresh_interval':self.interval, 'history':self.public_history()}
 
     def private_status(self, unused_shuffle_site=None):
         site, opts = self._schedule(), self._settings()
         snapshot = self._visible(site)
         state = self.public()
-        state.update(rows=[{'rank':r['rank'], 'username':r['username'], 'wager':r['wager']} for r in snapshot.get('rows',[])],
+        state.update(rows=list(payout_for_rows(
+                         [dict(rank=r['rank'], username=r['username'], user_id=r.get('user_id',''), wager=r['wager']) for r in snapshot.get('rows',[])],
+                         self._rewards())),
                      attempt_at=snapshot.get('attempt_at',0), error=snapshot.get('error',''),
                      error_kind=snapshot.get('error_kind',''), configuration=opts,
                      schedule={**state['schedule'], 'start_input':site['start_input'], 'end_input':site['end_input']},
@@ -1831,6 +2001,13 @@ class EmpireDropBoard:
                                       'source':self.config.sources.get(key,'missing'),
                                       'masked':('••••'+self.config.credentials[key][-4:] if self.config.credentials.get(key) else '')}
                                  for key in ('empiredrop_public_key','empiredrop_private_key')},
+                     # These were missing in the previous package, even
+                     # though the Jinja template required them. A missing
+                     # race_configuration caused admin page rendering errors.
+                     race_configuration=self._race_settings(),
+                     race_history=(self.store.live('empiredrop_history') or [])[:4],
+                     private_rewards=self._rewards(),
+                     refresh_interval=self.interval,
                      running=bool(self.thread and self.thread.is_alive()),
                      checking=self.checking, queued_at=self.queued_at)
         return state
@@ -1844,12 +2021,21 @@ class EmpireDropBoard:
             return True
 
     def _loop(self):
+        # Manual refreshes coalesce, and do NOT bypass the provider's cached
+        # minimum interval. This prevents repeated API calls with identical data.
         while not self.stop_event.is_set():
+            remaining = max(0.0, self.next_allowed - time.monotonic())
+            if remaining:
+                self.wakeup.wait(min(remaining, 5))
+                self.wakeup.clear()
+                continue
             try:
                 self.check()
             except Exception:
                 LOG.exception('EmpireDrop local worker failure (no credential data logged).')
-            self.wakeup.wait(self.interval)
+            self.next_allowed = time.monotonic() + max(60,self.interval)
+            # A manual wakeup will be processed when the cache interval elapses.
+            self.wakeup.wait(min(self.interval,5))
             self.wakeup.clear()
 
     def start(self):
@@ -1863,11 +2049,456 @@ class EmpireDropBoard:
         self.stop_event.set(); self.wakeup.set()
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=1)
+
+```
+
+## `empiredrop_features.py`
+
+```py
+"""Independent EmpireDrop rewards and public-name presentation.
+
+These are *advertised local prizes*, not confirmed provider payouts or
+payment instructions. Shuffle's settings are never copied implicitly.
+"""
+from collections import Counter, defaultdict
+from decimal import Decimal, InvalidOperation
+import re
+
+DEFAULT_REWARDS = {'currency': 'EUR', 'enabled': False,
+                   'prizes': {str(i): '0.00' for i in range(1, 16)}}
+CURRENCY_SIGNS = {'EUR': '€', 'USD': '$'}
+_AMOUNT = re.compile(r'^(?:\d{1,7})(?:\.\d{1,2})?$')
+
+
+def validate_rewards(value):
+    """Reject negative/oversized/ambiguous payouts before saving any state."""
+    if not isinstance(value, dict) or set(value) - {'currency', 'enabled', 'prizes'}:
+        raise ValueError('Invalid EmpireDrop payout settings.')
+    currency = value.get('currency', 'EUR')
+    if currency not in CURRENCY_SIGNS:
+        raise ValueError('Choose EUR or USD for EmpireDrop rewards.')
+    prizes = value.get('prizes', DEFAULT_REWARDS['prizes'])
+    if not isinstance(prizes, dict) or set(prizes) != set(DEFAULT_REWARDS['prizes']):
+        raise ValueError('Provide a payout for every position from 1 to 15.')
+    result = {}
+    for key in DEFAULT_REWARDS['prizes']:
+        val = str(prizes[key]).strip()
+        if not _AMOUNT.fullmatch(val):
+            raise ValueError('Place ' + key + ': use a non-negative amount with at most two decimal places.')
+        amt = Decimal(val)
+        if amt > Decimal('1000000'):
+            raise ValueError('Place ' + key + ': payout cannot exceed 1,000,000.')
+        result[key] = f'{amt:.2f}'
+    return {'currency': currency, 'enabled': value.get('enabled') is True, 'prizes': result}
+
+
+def format_reward(value, currency):
+    return CURRENCY_SIGNS[currency] + f'{Decimal(str(value)):,.2f}'
+
+
+def rewards_public(raw):
+    """Only prize amounts and currency are public, never admin metadata."""
+    value = validate_rewards(raw if raw else {})
+    pool = sum((Decimal(v) for v in value['prizes'].values()), Decimal(0))
+    return {**value, 'total': format_reward(pool, value['currency']),
+            'formatted': {k: format_reward(v, value['currency']) for k, v in value['prizes'].items()}}
+
+
+def payout_for_rows(rows, rewards):
+    """Per-player advertised reward by *provider rank*, split evenly on ties.
+
+    EmpireDrop's ranking may skip ranks after ties. We do not renumber its
+    official results, and we do not imply that a prize has been paid.
+    """
+    count = Counter(row.get('rank') for row in rows)
+    observed = defaultdict(int)
+    for row in rows:
+        rank = row.get('rank')
+        val = rewards['prizes'].get(str(rank))
+        if rewards['enabled'] and val is not None and count[rank] > 0:
+            # Divide *integer cents* and distribute any leftover cents in
+            # provider order, so displayed shares always sum to the rank prize.
+            cents = int(Decimal(val) * 100)
+            base, extra = divmod(cents, count[rank])
+            share = base + int(observed[rank] < extra)
+            observed[rank] += 1
+            yield {**row, 'prize': format_reward(Decimal(share) / 100, rewards['currency'])}
+        else:
+            yield {**row, 'prize': '—'}
+
+
+def mask_public_username(name):
+    """Consistent two visible characters and six literal asterisks.
+
+    EmpireDrop already anonymizes names. This is additional *presentation*
+    masking, not deanonymization; the provider string stays in Admin.
+    """
+    clean = str(name or '').strip()
+    return (clean[:2] if clean else '') + '******'
+
+```
+
+## `empiredrop_races.py`
+
+```py
+"""Official EmpireDrop Partner Public API v2.0.1.
+
+Source of truth: ``openapi.yaml`` supplied with this release.
+Production host: https://api.empiredrop.com
+GET /api/v1/affiliate-partner/races         -> currently running races, NO ranking
+GET /api/v1/affiliate-partner/races/{slug}  -> race + ranking + prizes/winners
+
+Every current request requires BOTH X-Public-Key and X-Private-Key. The
+legacy /api/v1/race/affiliates/{publicKey} route is DEPRECATED and not used.
+No browser code should call these endpoints or receive API credentials.
+"""
+from __future__ import annotations
+
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
+import json
+import logging
+import re
+import time
+from urllib.parse import quote
+
+import requests
+from integrations import ProviderError
+
+LOG = logging.getLogger('redhunllef.empiredrop.races')
+API_ORIGIN = 'https://api.empiredrop.com'
+LIST_PATH = '/api/v1/affiliate-partner/races'
+DETAIL_PATH = '/api/v1/affiliate-partner/races/{slug}'
+LEGACY_PATH = '/api/v1/race/affiliates/{publicKey}'  # Deprecated: explicit dates only
+# Compatibility alias for historical code/tests. Never used as discovery.
+DISCOVER_PATH = LIST_PATH
+SLUG = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$')
+ISO_CURRENCY = re.compile(r'^[A-Z]{3}$')
+
+# The former admin settings assumed an undocumented response shape. These
+# settings now reflect the exact OpenAPI request/response schema, and old saved
+# values are migrated in memory on read (no live JSON account data is erased).
+RACE_DEFAULTS = {
+    'source_mode': 'races',
+    'api_base_url': API_ORIGIN,
+    'race_slug': '',
+    'auto_select': True,
+    'race_auth_mode': 'dual_headers',
+    'race_private_header': 'X-Private-Key',
+    'race_public_header': 'X-Public-Key',
+    'race_rows_path': 'ranking',
+    'race_name_field': 'user.name',
+    'race_user_id_field': 'user.hash_id',
+    'race_wager_field': 'total',
+    'race_currency': 'EUR',  # Actual unit comes from race.currency / ranking[].unit.
+    'race_wager_divisor': '100',  # Minor units for EUR and USD (not raffle tickets).
+    'race_window_policy': 'provider',
+    'race_start_field': 'race.start_date',
+    'race_end_field': 'race.end_date',
+    'race_verified_fields': True,  # Checked against the supplied OpenAPI spec.
+}
+RACE_EDITABLE = frozenset(RACE_DEFAULTS)
+# ISO 4217 minor-unit exceptions used to avoid pretending all currencies have 2 decimals.
+# Add currencies only after verifying the provider's supported currency list.
+CURRENCY_DECIMALS = {'EUR': 2, 'USD': 2, 'GBP': 2, 'CAD': 2, 'AUD': 2,
+                     'JPY': 0, 'KRW': 0, 'KWD': 3, 'BHD': 3}
+CURRENCY_SYMBOLS = {'EUR': '€', 'USD': '$', 'GBP': '£', 'CAD': 'CA$', 'AUD': 'A$'}
+
+
+def validate_race_settings(candidate):
+    """Migrate old admin mapping/auth settings to the documented contract.
+
+    The only meaningful race controls are source mode, slug, active-race auto
+    selection and reporting-period policy. Old 'none' authentication cannot
+    override the mandatory dual-header OpenAPI security scheme.
+    """
+    if not isinstance(candidate, dict) or set(candidate) - RACE_EDITABLE:
+        raise ValueError('Unexpected EmpireDrop race configuration setting.')
+    settings = dict(RACE_DEFAULTS)
+    for key in ('source_mode', 'race_slug', 'auto_select', 'race_window_policy'):
+        if key in candidate:
+            settings[key] = candidate[key]
+    settings['source_mode'] = str(settings['source_mode']).lower()
+    if settings['source_mode'] not in ('races', 'legacy', 'legacy_window'):
+        raise ValueError('Choose the official race API or legacy integration.')
+    settings['race_slug'] = str(settings['race_slug']).strip()
+    if settings['race_slug'] and not SLUG.fullmatch(settings['race_slug']):
+        raise ValueError('Race slug contains unsupported characters.')
+    settings['auto_select'] = settings['auto_select'] is True
+    if settings['race_window_policy'] not in ('provider', 'local'):
+        raise ValueError('Choose provider or local date matching.')
+    return settings
+
+
+def time_value(value):
+    """Convert the documented UTC ISO 8601 race dates into Unix seconds."""
+    if not isinstance(value, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        return int(dt.timestamp()) if dt.tzinfo else None
+    except (ValueError, OverflowError):
+        return None
+
+
+def keys_only(value, depth=0):
+    """Describe nested schema without disclosing player values or secrets."""
+    if depth >= 5:
+        return {'type': type(value).__name__}
+    if isinstance(value, list):
+        return {'type': 'array', 'items': len(value),
+                'first': keys_only(value[0], depth + 1) if value else None}
+    if isinstance(value, dict):
+        return {'type': 'object', 'fields': {
+            str(k)[:70]: keys_only(v, depth + 1)
+            for k, v in list(value.items())[:40]}}
+    return {'type': type(value).__name__}
+
+
+def race_catalog(payload):
+    """Parse the documented {"races": [Race,...]} *running races* list."""
+    if not isinstance(payload, dict) or not isinstance(payload.get('races'), list):
+        raise ProviderError('EmpireDrop race list must contain races[].', kind='format')
+    items = payload['races']
+    if len(items) > 500:
+        raise ProviderError('EmpireDrop returned too many races.', kind='format')
+    output, slugs = [], set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        slug = item.get('slug')
+        if not isinstance(slug, str) or not SLUG.fullmatch(slug) or slug in slugs:
+            continue
+        slugs.add(slug)
+        output.append({
+            'slug': slug,
+            'name': str(item.get('name') or slug)[:90],
+            'start_time': time_value(item.get('start_date')),
+            'end_time': time_value(item.get('end_date')),
+            'is_active': item.get('is_active') is True,
+            'type': item.get('type'),
+            'engine': item.get('engine'),
+            'currency': item.get('currency'),
+            'cache_duration': item.get('cache_duration'),
+            'ranks_limit': item.get('ranks_limit'),
+        })
+    if items and not output:
+        raise ProviderError('Race list contains no valid race slugs.', kind='format')
+    return output
+
+
+def select_race(races, options, now=None):
+    """Select the sole running race unless an explicit slug is configured.
+
+    The running-races API does *not* list completed/scheduled races, so an
+    explicit slug may be fetched directly from the detail endpoint.
+    """
+    settings = validate_race_settings(options)
+    if settings['race_slug']:
+        return next((race for race in races if race['slug'] == settings['race_slug']),
+                    {'slug': settings['race_slug'], 'name': settings['race_slug']})
+    if not settings['auto_select']:
+        raise ProviderError('Select an EmpireDrop race slug or enable automatic selection.', kind='selection')
+    running = [item for item in races if item['is_active']]
+    if len(running) != 1:
+        message = ('No running EmpireDrop races are available.' if not running else
+                   'Multiple EmpireDrop races are running; select a slug in Admin.')
+        raise ProviderError(message, kind='selection')
+    return running[0]
+
+
+def extract_race_rows(payload, unused_path=''):
+    """Current API: ranking[] only. Empty lists are legitimate for new/closed races."""
+    if not isinstance(payload, dict) or not isinstance(payload.get('ranking'), list):
+        raise ProviderError('EmpireDrop race detail must contain ranking[].', kind='format')
+    return payload['ranking']
+
+
+def _amount(value, currency):
+    """Convert integer minor units, not a formatted total_value string."""
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0 or value > 10**18:
+        raise ProviderError('Invalid ranking total: expected nonnegative integer minor units.', kind='format')
+    if currency not in CURRENCY_DECIMALS:
+        raise ProviderError('Unknown currency minor-unit precision: ' + str(currency)[:8], kind='format')
+    places = CURRENCY_DECIMALS[currency]
+    val = Decimal(value) / (Decimal(10) ** places)
+    symbol = CURRENCY_SYMBOLS.get(currency, currency + ' ')
+    return symbol + format(val, ',.' + str(places) + 'f')
+
+
+def normalize_race(payload, settings=None):
+    """Translate the OpenAPI RaceDetail ranking, including provider tie ranks.
+
+    RANKING + WAGER => money wagered; RANKING + DEPOSIT => money deposited;
+    RAFFLE => tickets, *not* currency. No invented wager weighting is applied.
+    """
+    validate_race_settings(settings or {})  # retained as an API compatibility check
+    if not isinstance(payload, dict) or not isinstance(payload.get('race'), dict):
+        raise ProviderError('EmpireDrop detail is missing race{}.', kind='format')
+    race = payload['race']
+    engine, category = race.get('engine'), race.get('type')
+    currency = race.get('currency')
+    if engine not in ('RANKING', 'RAFFLE') or category not in ('WAGER', 'DEPOSIT'):
+        raise ProviderError('Unrecognized EmpireDrop race engine/type.', kind='format')
+    if not isinstance(currency, str) or not ISO_CURRENCY.fullmatch(currency):
+        raise ProviderError('Invalid EmpireDrop race currency.', kind='format')
+    rows = extract_race_rows(payload)
+    if len(rows) > 10000:
+        raise ProviderError('Too many ranked players.', kind='format')
+    output, seen = [], set()
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get('user'), dict):
+            raise ProviderError('Malformed EmpireDrop ranking entry.', kind='format')
+        user = row['user']
+        user_id, username = user.get('hash_id'), user.get('name')
+        rank, total, unit = row.get('rank'), row.get('total'), row.get('unit')
+        if not isinstance(username, str) or not username.strip() or len(username) > 100:
+            raise ProviderError('Missing EmpireDrop ranked display name.', kind='format')
+        if not isinstance(user_id, str) or not user_id.strip():
+            raise ProviderError('Missing stable EmpireDrop user.hash_id.', kind='format')
+        if type(rank) is not int or rank < 1:
+            raise ProviderError('Invalid EmpireDrop rank.', kind='format')
+        if user_id in seen:
+            raise ProviderError('Repeated EmpireDrop user in ranking.', kind='format')
+        seen.add(user_id)
+        if engine == 'RAFFLE':
+            if unit != 'TICKETS' or type(total) is not int or total < 0:
+                raise ProviderError('Expected TICKETS unit and integer ticket total.', kind='format')
+            display = f'{total:,} tickets'
+        else:
+            if unit != currency:
+                raise ProviderError('Ranking unit differs from race.currency.', kind='format')
+            display = _amount(total, currency)
+        # The provider already anonymizes user.name. Never show Steam IDs.
+        # Public projections strip user_id; it remains valuable to admins
+        # because EmpireDrop anonymizes the name before sending it.
+        output.append({'rank': rank, 'username': username.strip(), 'user_id':user_id, 'wager': display})
+    limit = race.get('ranks_limit')
+    if type(limit) is int and limit >= 0 and len(output) > limit:
+        raise ProviderError('Ranking contains more players than race.ranks_limit.', kind='format')
+    return output[:15]
+
+
+class RaceAPI:
+    """Read-only HTTP client with mandatory two-key auth and no redirects."""
+    def __init__(self, options, credentials, requester=None):
+        self.settings = validate_race_settings(options)
+        self.credentials = credentials
+        self.requester = requester or requests
+
+    def _get(self, suffix, *, params=None, deprecated=False):
+        public = str(self.credentials.get('empiredrop_public_key') or '').strip()
+        secret = str(self.credentials.get('empiredrop_private_key') or '').strip()
+        if not public or not secret:
+            raise ProviderError('Both EmpireDrop production keys are required.', kind='configuration')
+        headers = {
+            'Accept': 'application/json',
+            'User-Agent': 'RedHunllef-EmpireDrop-OpenAPI-2.0.1',
+            'X-Private-Key': secret,
+        }
+        # OpenAPI marks the deprecated path as ApiKeyAuth (private header only).
+        # The identifier is already in that endpoint's URL path.
+        if not deprecated:
+            headers['X-Public-Key'] = public
+        try:
+            # Only hard-coded provider origin and path prefixes can receive keys.
+            with self.requester.get(API_ORIGIN + suffix, headers=headers, params=params,
+                                    timeout=(5, 20), stream=True,
+                                    allow_redirects=False) as response:
+                code = response.status_code
+                if code in (301, 302, 303, 307, 308):
+                    raise ProviderError('EmpireDrop redirected an authenticated request; refused.', kind='redirect', status=code)
+                if code == 401:
+                    raise ProviderError('EmpireDrop 401: both API keys must be present.', kind='access', status=code)
+                if code == 403:
+                    raise ProviderError('EmpireDrop 403: invalid key pair or disallowed server outbound IP.', kind='access', status=code)
+                if code == 404:
+                    raise ProviderError('EmpireDrop 404: race slug not found or not owned by partner.', kind='scope', status=code)
+                if code == 429:
+                    raise ProviderError('EmpireDrop 429: rate limit; respect race.cache_duration.', kind='rate_limit', status=code)
+                if code != 200:
+                    raise ProviderError('EmpireDrop race API returned HTTP ' + str(code), kind='http', status=code)
+                body = bytearray()
+                for block in response.iter_content(65536):
+                    body.extend(block)
+                    if len(body) > 4 * 1024 * 1024:
+                        raise ProviderError('EmpireDrop response exceeds the 4 MB limit.', kind='format')
+                try:
+                    result = json.loads(body)
+                except (ValueError, UnicodeError, TypeError):
+                    raise ProviderError('EmpireDrop returned invalid JSON.', kind='format') from None
+                if not isinstance(result, dict):
+                    raise ProviderError('EmpireDrop returned a non-object JSON response.', kind='format')
+                return result
+        except requests.RequestException:
+            # Do not include exception URLs/headers; they can leak API metadata.
+            raise ProviderError('EmpireDrop network connection failed.', kind='connection') from None
+
+    def discover(self):
+        payload = self._get(LIST_PATH)
+        return race_catalog(payload), keys_only(payload)
+
+    def details(self, slug):
+        if not isinstance(slug, str) or not SLUG.fullmatch(slug):
+            raise ProviderError('Invalid race slug.', kind='configuration')
+        return self._get(DETAIL_PATH.format(slug=quote(slug, safe='')))
+
+    def probe(self, slug):
+        payload = self.details(slug)
+        rows = extract_race_rows(payload)
+        return {
+            'race_slug': slug,
+            'structure': keys_only(payload),
+            'sample_row_fields': keys_only(rows[0]) if rows else None,
+            'participant_rows': len(rows),
+            'race': keys_only(payload.get('race', {})),
+            'mapping_warning': '',
+        }
+
+    def legacy_window(self, start, end):
+        """Deprecated endpoint: explicitly scoped Unix UTC timestamp window.
+
+        Current slug-based races cannot change their official dates. This is
+        provided as an opt-in compatibility path for custom/weekly schedules.
+        Do not mistake the returned rankings for official active race results.
+        """
+        public = str(self.credentials.get('empiredrop_public_key') or '').strip()
+        if not public or not 0 < int(start) < int(end):
+            raise ProviderError('A public key and valid start/end dates are required.',kind='configuration')
+        return self._get(LEGACY_PATH.format(publicKey=quote(public, safe='')),
+                         params={'start_timestamp': int(start), 'end_timestamp': int(end)},
+                         deprecated=True)
+
+
+def normalize_legacy_window(payload, start, end):
+    """Normalize the documented deprecated ranking[].currency shape.
+
+    rank/total/user are identical to the modern ranking shape, except for
+    currency instead of unit. Retain the provider's displayed rank and avoid
+    guessing monetary units from total_value (which is formatted text).
+    """
+    if not isinstance(payload,dict) or not isinstance(payload.get('ranking'),list):
+        raise ProviderError('Deprecated race API must return ranking[].',kind='format')
+    ranking = payload['ranking']
+    units = {r.get('currency') for r in ranking if isinstance(r,dict)}
+    if len(units)>1:
+        raise ProviderError('Deprecated ranking contains mixed currencies.',kind='format')
+    currency = next(iter(units),'EUR')
+    if currency not in CURRENCY_DECIMALS:
+        raise ProviderError('Unsupported currency in deprecated ranking.',kind='format')
+    translated = [{**r,'unit':r.get('currency')} for r in ranking]
+    race = {'name':'Custom EmpireDrop wager race','slug':'date-window',
+            'engine':'RANKING','type':'WAGER','currency':currency,
+            'ranks_limit':max(15,len(translated)),
+            'cache_duration':payload.get('cache_duration',300),
+            'is_active':True}
+    return normalize_race({'race':race,'ranking':translated}),race
+
 ```
 
 ## `fairness.py`
 
-```python
+```py
 """Versioned RedPoints: deterministic games and exact, published payout calculations.
 
 No HTTP, player records or mutable state live here. A one-time server seed is
@@ -2136,11 +2767,12 @@ def verify(receipt, expected_commitment=None):
         return _verify(receipt, expected_commitment)
     except (KeyError, TypeError, ValueError, OverflowError):
         return False
+
 ```
 
 ## `gaming.py`
 
-```python
+```py
 """Shared play-point wallets. All debits, outcomes, receipts and ranks commit once.
 
 Uses the existing JSON transaction and signed browser identity. IPs are admin-only metadata. No money, SQL,
@@ -2863,11 +3495,12 @@ class Gaming:
     def recovery(self):
         with self.store.connection() as conn:
             return copy.deepcopy(conn.get('gaming'))
+
 ```
 
 ## `holdem.py`
 
-```python
+```py
 """Heads-up no-limit Hold'em, RedPoints only, with a reproducible computer seat.
 
 A hand reserves equal table stacks. Only chips actually committed count as wagers.
@@ -3147,11 +3780,12 @@ def replay(draw, buy_in, options, actions=None, ending=None):
         # An expired week never places another wager on the player's behalf.
         hand.move(dict(action='fold', amount=0))
     return hand.result(moves)
+
 ```
 
 ## `integrations.py`
 
-```python
+```py
 """Official provider requests with bounded waits and secret-free failures."""
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -3182,6 +3816,26 @@ def retry_delay(value):
             return 0
 
 
+def classify_shuffle_bad_request(response):
+    """Classify a Shuffle 400 without logging or returning its raw response.
+
+    The API's error body can contain arbitrary user-controlled text. We only
+    inspect up to 4 KiB for fixed date parameter names; other HTTP 400s are
+    deliberately called bad_request, not misdiagnosed as date errors.
+    """
+    try:
+        fragment = next(iter(response.iter_content(4096)), b'')[:4096]
+        # Strings are used ONLY for allowlisted evidence, never displayed.
+        content = fragment.decode('utf-8', errors='ignore').lower()
+        if any(mark in content for mark in (
+                'starttime', 'endtime', 'start_time', 'end_time',
+                'timestamp', 'date range', 'date_window', 'invalid date')):
+            return 'window'
+    except (TypeError, ValueError, RuntimeError):
+        pass
+    return 'bad_request'
+
+
 class Providers:
     def __init__(self, config):
         self.config, self.local = config, threading.local()
@@ -3206,8 +3860,17 @@ class Providers:
                 if code in (401, 403):
                     raise ProviderError(f"{service} rejected the credentials or access permissions (HTTP {code}).", status=code, kind="access")
                 if not 200 <= code < 300:
-                    message = "Shuffle rejected the saved race window; check its dates and affiliate configuration." if service == "Shuffle" and code == 400 else f"{service} returned HTTP {code}."
-                    raise ProviderError(message, status=code, kind="window" if code == 400 else "http")
+                    if service == "Shuffle" and code == 400:
+                        category = classify_shuffle_bad_request(response)
+                        # Never surface provider response bodies, request URLs,
+                        # keys, or user-specific fields in errors or logs.
+                        explanation = (
+                            "Shuffle rejected the request's date parameters (HTTP 400). Review the saved race window."
+                            if category == 'window' else
+                            "Shuffle rejected a request parameter (HTTP 400). Check the date range and configured affiliate endpoint."
+                        )
+                        raise ProviderError(explanation, status=400, kind=category)
+                    raise ProviderError(f"{service} returned HTTP {code}.", status=code, kind="http")
                 body = bytearray()
                 deadline = time.monotonic() + max(30, read_timeout)
                 for chunk in response.iter_content(65536):
@@ -3283,11 +3946,128 @@ class Providers:
 
     def last_http_status(self):
         return getattr(self.local, "http_status", None)
+
+```
+
+## `operations_log.py`
+
+```py
+"""Small, bounded, structured operational events for RedHunllef admins.
+
+This is intentionally NOT a raw request logger. Payloads, usernames, player
+identifiers, passwords, session cookies, API keys, IPs and provider URLs are
+never accepted as log fields. A caller may supply only allowlisted event codes
+and bounded numeric facts. Logs are process-local and reset on restart.
+"""
+from collections import Counter, deque
+from datetime import datetime, timezone
+from threading import RLock
+import time
+
+_ALLOWED_SERVICE = {'empiredrop', 'shuffle', 'kick', 'admin', 'system', 'storage'}
+_ALLOWED_LEVEL = {'success', 'info', 'warning', 'error'}
+_ALLOWED_EVENT = {
+    'refresh_ok', 'refresh_failed', 'refresh_queued', 'settings_saved',
+    'connection_test', 'backup_export', 'storage_warning', 'server_error',
+    'worker_started', 'api_rate_limited', 'data_quality',
+}
+# Explanatory categories, NOT free-form provider error text.
+_ALLOWED_CODE = {
+    'access', 'rate_limit', 'format', 'scope', 'selection', 'window', 'bad_request',
+    'configuration', 'connection', 'connect_timeout', 'timeout', 'http',
+    'upstream', 'response_limit', 'redirect', 'credentials', 'partial',
+    'storage', 'unknown', 'empire_settings', 'empire_rewards',
+    'empire_schedule', 'shuffle_settings', 'none',
+}
+
+
+def _bounded(value, maximum):
+    if isinstance(value, bool):
+        return None
+    try:
+        n = int(value)
+        return n if 0 <= n <= maximum else None
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+class ActivityLog:
+    def __init__(self, maxlen=300):
+        self.events, self.lock, self.sequence = deque(maxlen=maxlen), RLock(), 0
+
+    def record(self, service, level, event, *, duration_ms=None, http_status=None,
+               count=None, code=None):
+        if (service not in _ALLOWED_SERVICE or level not in _ALLOWED_LEVEL or
+                event not in _ALLOWED_EVENT):
+            raise ValueError('Unsupported log event.')
+        if code is not None and code not in _ALLOWED_CODE:
+            # Never store an exception string masquerading as an error code.
+            code = 'unknown'
+        with self.lock:
+            now = int(time.time())
+            status = _bounded(http_status, 599)
+            duration = _bounded(duration_ms, 600000)
+            # Collapse repeated identical warnings rather than presenting a
+            # separate alarm every minute. Each event retains its last-seen
+            # timestamp and a bounded repetition count.
+            if level in ('warning', 'error') and self.events:
+                last = self.events[0]
+                if (last['service'], last['level'], last['event'],
+                        last['code'], last['http_status']) == (service, level, event, code, status) \
+                        and now - last['at'] <= 300:
+                    last['at'] = now
+                    last['duration_ms'] = duration
+                    last['occurrences'] = min(100000, last.get('occurrences', 1) + 1)
+                    return dict(last)
+            self.sequence += 1
+            item = {
+                'id': self.sequence, 'at': now,
+                'service': service, 'level': level, 'event': event,
+                'code': code, 'duration_ms': duration,
+                'http_status': status, 'count': _bounded(count, 100000),
+                'occurrences': 1,
+            }
+            self.events.appendleft(item)
+            return dict(item)
+
+    def list(self, service='all', level='all', limit=100):
+        if service not in _ALLOWED_SERVICE | {'all'} or level not in _ALLOWED_LEVEL | {'all'}:
+            raise ValueError('Invalid log filter.')
+        try:
+            limit = max(1, min(300, int(limit)))
+        except (ValueError, TypeError, OverflowError):
+            limit = 100
+        with self.lock:
+            return [dict(x) for x in self.events if
+                    (service == 'all' or x['service'] == service) and
+                    (level == 'all' or x['level'] == level)][:limit]
+
+    def summary(self, service='all', level='all'):
+        """Counters for the currently selected filters, not global totals."""
+        rows = self.list(service, level, 300)
+        counts = Counter(row['level'] for row in rows)
+        failures = [row for row in rows if row['level'] in ('error', 'warning')]
+        return {
+            'total': len(rows),
+            'levels': {name: counts[name] for name in ('success','info','warning','error')},
+            'latest_at': rows[0]['at'] if rows else 0,
+            'latest_issue_at': failures[0]['at'] if failures else 0,
+        }
+
+    def export(self, service='all', level='all'):
+        return {
+            'format': 'redhunllef-operations-2',
+            'generated_at': datetime.now(timezone.utc).isoformat(),
+            'retention': 'Last 300 process-local events; clears after restart',
+            'summary': self.summary(service,level),
+            'events': self.list(service,level,300),
+        }
+
 ```
 
 ## `poker.py`
 
-```python
+```py
 """Single-player five-card draw: 9/6 Jacks or Better, one standard deck.
 
 The committed HMAC stream deals without replacement. Holds are a later player
@@ -3361,11 +4141,12 @@ def replay(draw, wager, holds=None):
     multiplier = PAYTABLE[category]
     return dict(ended=True, initial=initial, cards=final, holds=holds,
                 category=category, multiplier=multiplier, payout=wager*multiplier)
+
 ```
 
 ## `presentation.py`
 
-```python
+```py
 """Small view models for change review and private recovery status."""
 import re
 
@@ -3455,11 +4236,144 @@ def checkpoint_status(marker, admin, rows, boss, gaming=None):
                 label='Changes since last export' if notes else 'Checkpoint matches current progress',
                 details='; '.join(notes) or 'No new saved progress since this export.',
                 attacks=attacks, damage=damage, new_raid=new_raid)
+
+```
+
+## `provider_admin.py`
+
+```py
+"""Safe, provider-agnostic data-quality summaries for the administration UI.
+
+This module never calls a remote API. It reads already-verified local snapshots
+and emits only operational metadata; names, player IDs and credentials stay out.
+Neither provider's amounts are converted, inferred, or combined here.
+"""
+
+from race_support import fmt_et
+import time
+
+_ERROR_HELP = {
+    'access': 'Check the API key pair and the server outbound IP allowlist.',
+    'rate_limit': 'Provider rate limit reached. Leave automatic retry enabled.',
+    'format': 'The provider response did not match the documented data format.',
+    'scope': 'Check that the selected race belongs to this affiliate account.',
+    'selection': 'Select a race slug, or enable auto-select for one running race.',
+    'window': 'Check the saved race dates and whether the provider accepts this period.',
+    'bad_request': 'Shuffle rejected a request parameter. Review race dates and affiliate endpoint settings.',
+    'configuration': 'Review the race mode, slug, and API configuration.',
+    'connection': 'Check outbound network connectivity from the application.',
+    'http': 'Check the provider status and retry later.',
+}
+
+
+def _int(value):
+    return value if type(value) is int and 0 <= value <= 10 ** 12 else 0
+
+
+def _component(health, key):
+    return next((x for x in (health or {}).get('components', [])
+                 if isinstance(x, dict) and x.get('key') == key), {})
+
+
+def summarize_providers(status, empire):
+    """Return two uniform cards with explicit source-quality indicators.
+
+    status: output of Runtime.status() (admin only)
+    empire: output of EmpireDropBoard.private_status() (admin only)
+    Every displayed field is operational or aggregated, never a credential.
+    """
+    health = status.get('health') or {}
+    jobs = status.get('jobs') or {}
+    shuffle = jobs.get('shuffle') or {}
+    quality = status.get('diagnostics') or {}
+    s_health = _component(health, 'shuffle')
+    e_health = _component(health, 'empiredrop')
+    received = _int(quality.get('received'))
+    accepted = _int(quality.get('accepted'))
+    missing = _int(quality.get('missing_campaign'))
+    rejected = quality.get('rejected') or {}
+    rejected_total = sum(_int(n) for n in rejected.values()) if isinstance(rejected, dict) else 0
+    s_issues = []
+    if not _int(shuffle.get('last_success')):
+        s_issues.append('No verified Shuffle response yet.')
+    if missing:
+        s_issues.append(f'{missing:,} record(s) lack campaign metadata; verify campaign scoping before relying on totals.')
+    if rejected_total:
+        s_issues.append(f'{rejected_total:,} record(s) were excluded by validation or campaign filtering.')
+    if shuffle.get('error'):
+        http_status = shuffle.get('http_status')
+        s_issues.append(
+            'Latest request returned HTTP 400. Review the saved race window and endpoint; this does not prove the API key is invalid.'
+            if http_status == 400 else
+            'Latest check failed. Previous verified results are retained.'
+        )
+    site = status.get('site') or {}
+    end_time = _int(site.get('end_time'))
+    if end_time and end_time < time.time() - 86400:
+        s_issues.append(
+            'The saved Shuffle race ended on ' + fmt_et(end_time) +
+            '. This is a historical window. Open Schedule & prizes to prepare a current race; changes require confirmation.'
+        )
+    rows = status.get('rows') or []
+    s_card = {
+        'key': 'shuffle', 'name': 'Shuffle',
+        'state': s_health.get('state', 'warning'),
+        'status': s_health.get('status', 'Waiting for source'),
+        'last_success': _int(shuffle.get('last_success')),
+        'last_attempt': _int(shuffle.get('attempt_at')),
+        'refresh_seconds': 60,
+        'participants': _int(status.get('count')),
+        'loaded': len(rows) if isinstance(rows, list) else 0,
+        'metric': 'Weighted wager',
+        'scope': ('Shuffle window: ' + str((status.get('site') or {}).get('start_et') or 'Not configured') + ' → ' +
+                  str((status.get('site') or {}).get('end_et') or 'Not configured')),
+        'quality': f'{accepted:,} accepted / {received:,} received' if received else 'Waiting for source records',
+        'issues': s_issues, 'action': '/admin?tab=shuffle',
+        'details': '/admin?tab=players',
+    }
+    meta = empire.get('race_meta') or {}
+    erows = empire.get('rows') or []
+    mode = empire.get('source_mode') or 'races'
+    engine, kind = meta.get('engine'), meta.get('type')
+    metric = ('Tickets' if engine == 'RAFFLE' else
+              'Deposited' if kind == 'DEPOSIT' else 'Wagered')
+    e_issues = []
+    if not _int(empire.get('updated_at')):
+        e_issues.append('No verified EmpireDrop race response yet.')
+    kind_error = empire.get('error_kind')
+    if kind_error:
+        e_issues.append(_ERROR_HELP.get(kind_error, 'Check the selected race and provider connection.'))
+    if meta.get('is_active') is False:
+        e_issues.append('This race has closed. The provider may return an empty live ranking.')
+    if engine == 'RAFFLE':
+        e_issues.append('Raffle totals represent tickets, not wagered currency.')
+    if kind == 'DEPOSIT' and engine != 'RAFFLE':
+        e_issues.append('This race ranks deposits, not wagers.')
+    e_card = {
+        'key': 'empiredrop', 'name': 'EmpireDrop',
+        'state': e_health.get('state', 'warning'),
+        'status': e_health.get('status', 'Waiting for source'),
+        'last_success': _int(empire.get('updated_at')),
+        'last_attempt': _int(empire.get('attempt_at')),
+        'refresh_seconds': max(60, min(86400, _int(empire.get('refresh_interval')) or 300)),
+        'participants': len(erows) if isinstance(erows, list) else 0,
+        'loaded': len(erows) if isinstance(erows, list) else 0,
+        'metric': metric,
+        'scope': ('Official race: ' + str(meta.get('slug') or 'Not selected')[:100]) if mode == 'races' else
+                 ('Custom date window (deprecated API)' if mode == 'legacy_window' else 'Legacy adapter'),
+        'quality': (f'{len(erows):,} verified position(s) / provider cap {meta["ranks_limit"]}'
+                    if isinstance(erows, list) and type(meta.get('ranks_limit')) is int
+                    else 'Awaiting provider ranking confirmation'),
+        'issues': e_issues, 'action': '/admin?tab=empiredrop',
+        'details': '/admin?tab=empiredrop#empireRaceDetails',
+    }
+    return {'shuffle': s_card, 'empiredrop': e_card}
+
 ```
 
 ## `race.py`
 
-```python
+```py
 """Pure race calculations: exact decimal rankings and one public projection."""
 from decimal import Decimal, localcontext
 import hashlib
@@ -3608,11 +4522,12 @@ def freshness(snapshot):
     return dict(state=state, updated_at=stamp, attempt_at=snapshot.get("attempt_at", 0),
                 label={"delayed":"Updates delayed", "waiting":"Waiting for source data", "partial":"Updated with incomplete data", "current":"Up to date"}[state],
                 warning=snapshot.get("warning", ""), error=snapshot.get("error", ""))
+
 ```
 
 ## `race_support.py`
 
-```python
+```py
 """Pure validation, Eastern Time conversion, and safe JSON file operations.
 
 This module has no Flask state and makes no network requests. Decimal values
@@ -3891,11 +4806,13 @@ def read_json(path: Path) -> dict:
         return value
     except (OSError, ValueError) as exc:
         raise RuntimeError("Cannot read " + str(path) + ". The original file was left untouched. Restore a verified recovery copy.") from exc
+
+
 ```
 
 ## `release_check.py`
 
-```python
+```py
 """Check a complete release without loading credentials or starting workers."""
 import ast
 import hashlib
@@ -3952,30 +4869,12 @@ def check_release(root=None, strict=False):
         problems.append('The templates folder is incomplete.')
     return dict(ok=not problems, problems=sorted(set(problems)), warnings=sorted(set(warnings)),
                 python_modules=len(modules), templates=len(environment.list_templates()))
-```
 
-## `requirements-postgres.txt`
-
-```text
-# Optional compatibility for an existing PostgreSQL deployment; not needed by
-# the default local-storage build. Select STORAGE_MODE=postgres explicitly.
--r requirements.txt
-psycopg[binary]==3.3.5
-```
-
-## `requirements.txt`
-
-```text
-Flask==3.1.3
-requests==2.34.2
-waitress==3.0.2
-tzdata==2026.3
-Pillow==12.3.0
 ```
 
 ## `runtime.py`
 
-```python
+```py
 """One runtime, independent live jobs, and cached completed-week history."""
 import copy
 from decimal import Decimal
@@ -4010,6 +4909,7 @@ class Runtime:
         self.events = {name: threading.Event() for name in ("shuffle", "kick")}
         self.threads, self.started = {}, False
         self.instance_id = secrets.token_hex(8)
+        self.activity_log = None  # Injected after construction by Flask.
         self.jobs = {name: dict(state="starting", next_check=0, duration_ms=0, http_status=None,
                                retry_after=0, attempt_at=0, error="", not_before=0,
                                requested=0, completed=0, runs=0, completed_at=0, result="waiting",
@@ -4121,6 +5021,7 @@ class Runtime:
             self.jobs[name].update(state="checking", attempt_at=now, next_check=0,
                                    runs=self.jobs[name]["runs"]+1)
         error, status, retry, warning, result, revision = "", None, 0, "", "waiting", None
+        failure_code = None
         try:
             with self.store.job(name) as acquired:
                 revision, admin = self.sync()
@@ -4149,6 +5050,17 @@ class Runtime:
                         incoming = normalize(self.providers.shuffle(site), site, self.config.raw_fallback)
                         status = self.providers.last_http_status()
                         value = calculate({**empty(site), **incoming, "updated_at":int(time.time()), "attempt_at":now, "ok":True}, admin, self.config)
+                        # Warn once when incomplete campaign/amount records change.
+                        # Store only counts, never source values or usernames.
+                        missing = value.get('missing_campaign', 0)
+                        invalid = sum(n for reason, n in value.get('rejected', {}).items()
+                                      if reason != 'other campaign')
+                        if (self.activity_log and (missing or invalid) and
+                            (missing != previous.get('missing_campaign', 0) or
+                             invalid != sum(n for reason, n in previous.get('rejected', {}).items()
+                                            if reason != 'other campaign'))):
+                            self.activity_log.record('shuffle', 'warning', 'data_quality',
+                                                     code='partial', count=missing + invalid)
                         value["changed_at"] = value["updated_at"] if previous["rows"] != value["rows"] else previous.get("changed_at", 0)
                         value["previous_top"] = previous["rows"][:15] if previous["rows"][:15] != value["rows"][:15] else previous.get("previous_top", [])
                         warning = value["warning"]
@@ -4178,6 +5090,7 @@ class Runtime:
         except Exception as exc:
             error = str(exc) if isinstance(exc, (ProviderError, StoreError, ValueError)) else "Internal check failed (" + type(exc).__name__ + ")."
             status, retry = getattr(exc, "status", None), getattr(exc, "retry_after", 0)
+            failure_code = getattr(exc, "kind", "unknown")
             superseded, result = False, "failed"
             with self.lock:
                 superseded = revision is not None and revision != self.revision
@@ -4212,6 +5125,14 @@ class Runtime:
                                        completed=max(ticket, self.jobs[name]["completed"]), completed_at=int(time.time()))
             if warning:
                 LOG.warning("SHUFFLE %s", warning)
+            if self.activity_log and (error or result in ('updated','empty') or
+                (name=='kick' and result in ('live','offline') and
+                 isinstance(value,dict) and value.get('changed_at')==value.get('updated_at'))):
+                # Only meaningful changes/failures; no usernames or provider bodies.
+                self.activity_log.record(name,'warning' if error else 'success',
+                    'refresh_failed' if error else 'refresh_ok',duration_ms=duration,
+                    http_status=status,count=len(value.get('rows',[])) if not error and isinstance(value,dict) else None,
+                    code=failure_code if error else None)
             LOG.info("%s Check took %sms. Automatic checks stay enabled.", name.upper(), duration)
         return max(INTERVAL, retry) if error else 0
 
@@ -4297,27 +5218,24 @@ class Runtime:
             event.set()
         for thread in self.threads.values():
             thread.join(timeout=1)
-```
 
-## `runtime.txt`
-
-```text
-python-3.13.12
 ```
 
 ## `static/admin-empiredrop.js`
 
-```javascript
+```js
 /* Protected EmpireDrop-only admin panel. No raw keys are transmitted to the browser. */
 (() => {
   'use strict';
   if (!document.getElementById('empireAdminTitle')) return;
   const id = x => document.getElementById(x);
   let pending = false, expired = false;
-  const fmt = t => t ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'}).format(new Date(t*1000)) + ' ET' : 'Not yet verified';
+  const fmt = t => t ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short'}).format(new Date(t*1000)) : 'Not yet verified';
   const render = data => {
     if (expired) return;
     id('empireAdminStatus').textContent = data.label || 'Awaiting verified EmpireDrop data';
+    if (id('empireRaceSlug')) id('empireRaceSlug').textContent = data.race_meta?.slug || 'Not discovered';
+    if (id('empireRaceMode')) id('empireRaceMode').textContent = (data.source_mode || 'races').toUpperCase();
     id('empireAdminConfirmed').textContent = fmt(data.updated_at);
     id('empireAdminAttempted').textContent = fmt(data.attempt_at);
     id('empireAdminChecking').textContent = data.checking ? 'Checking provider' : data.queued_at > data.attempt_at ? 'Refresh queued' : 'Idle';
@@ -4326,16 +5244,17 @@ python-3.13.12
     const body = document.createDocumentFragment();
     (Array.isArray(data.rows) ? data.rows.slice(0,15) : []).forEach(r => {
       const tr = document.createElement('tr');
-      for (const v of [String(r.rank).padStart(2,'0'), r.username, r.wager]) {
+      for (const v of [String(r.rank).padStart(2,'0'), r.username, r.user_id || '—', r.wager, r.prize || '—']) {
         const td = document.createElement('td'); td.textContent = String(v ?? ''); tr.appendChild(td);
       }
       body.appendChild(tr);
     });
     if (!body.childNodes.length) {
-      const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 3;
-      td.textContent = 'No verified EmpireDrop wagers for the selected period.'; tr.appendChild(td); body.appendChild(tr);
+      const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 5;
+      td.textContent = 'No ranked players returned for this race. A closed race or a new race may return an empty ranking.'; tr.appendChild(td); body.appendChild(tr);
     }
     id('empireAdminRows').replaceChildren(body);
+    filterEmpirePlayers();
   };
   const clear = () => {
     expired = true; id('empireAdminRows').replaceChildren();
@@ -4369,14 +5288,74 @@ python-3.13.12
     } catch { id('empireTestResult').textContent = 'Unable to complete the test.'; }
     finally { test.disabled = false; }
   });
+  // Diagnostic requests only return race IDs and field *names*, not player values
+  // or API credentials. They use the same CSRF/session protections as admin.
+  async function inspectRace(buttonId, path, payload = null) {
+    const button = id(buttonId), panel = id('empireRaceDiagnostics');
+    if (!button || !panel) return;
+    button.disabled = true;
+    panel.textContent = 'Contacting the EmpireDrop races API…';
+    try {
+      const response = await fetch(path, {
+        method: 'POST', credentials: 'same-origin', cache: 'no-store',
+        headers: {'Accept':'application/json', 'Content-Type':'application/json',
+                  'X-CSRF-Token': button.dataset.csrf},
+        body: JSON.stringify(payload || {})
+      });
+      if (response.status === 401 || response.status === 403) { clear(); return; }
+      const body = await response.json();
+      // Never interpolate response data as HTML; textContent prevents injection.
+      panel.textContent = JSON.stringify(body, null, 2);
+    } catch {
+      panel.textContent = 'Race endpoint request failed. See server logs for a safe error classification.';
+    } finally { button.disabled = false; }
+  }
+  id('empireDiscover')?.addEventListener('click', () =>
+    inspectRace('empireDiscover', '/admin/empiredrop/discover'));
+  id('empireProbe')?.addEventListener('click', () =>
+    inspectRace('empireProbe', '/admin/empiredrop/probe',
+                {slug: id('empireRaceSlugInput')?.value?.trim() || ''}));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   window.setInterval(poll, 15000);
 })();
+
+/* Prize preview is purely client-side: saving still validates all 15 amounts server-side. */
+(() => {
+  const form = document.querySelector('form[action="/admin/empiredrop/rewards"]');
+  if (!form) return;
+  const output = document.getElementById('empireRewardTotal');
+  function preview() {
+    let total = 0;
+    for (let i=1;i<=15;i++) {
+      const input = form.querySelector(`[name="prize_${i}"]`);
+      const n = Number(input?.value);
+      if (!Number.isFinite(n) || n<0) { output.textContent = 'Check amount for place '+i;return; }
+      total += n;
+    }
+    const currency = form.querySelector('[name="currency"]').value;
+    output.textContent = new Intl.NumberFormat('en-US', {style:'currency',currency}).format(total);
+  }
+  form.addEventListener('input',preview);form.addEventListener('change',preview);preview();
+})();
+
+/* Local search over the admin-only provider names and stable public IDs. */
+function filterEmpirePlayers() {
+  const input = document.getElementById('empireAdminSearch');
+  const body = document.getElementById('empireAdminRows');
+  if (!input || !body) return;
+  const q = input.value.trim().toLocaleLowerCase();
+  for (const tr of body.querySelectorAll('tr')) {
+    tr.hidden = q !== '' && !tr.textContent.toLocaleLowerCase().includes(q);
+  }
+}
+// The common admin-providers.js controller attaches the input event.
+// filterEmpirePlayers() is still used after each live table refresh.
+
 ```
 
 ## `static/admin-feedback.js`
 
-```javascript
+```js
 /* Keep a rejected form and its selected files intact. Native forms still work.
    Preview/review workflows remain native; only a committed write redirects. */
 (() => {
@@ -4492,11 +5471,12 @@ python-3.13.12
     });
   }
 })();
+
 ```
 
 ## `static/admin-gaming.js`
 
-```javascript
+```js
 /* Admin-only local stats. No calls to Shuffle and no extra provider work. */
 (() => {
   "use strict";
@@ -4744,11 +5724,12 @@ python-3.13.12
   });
   void refresh();
 })();
+
 ```
 
 ## `static/admin-health.js`
 
-```javascript
+```js
 /* The minute feed owns health; the local gaming feed also updates the boss card.
    No extra polling timer or provider request is created by this controller. */
 (() => {
@@ -4936,11 +5917,176 @@ python-3.13.12
     }
   });
 })();
+
+```
+
+## `static/admin-logs.js`
+
+```js
+/* Text-only operational log viewer. Never render provider messages as HTML.
+   This calls the local ADMIN endpoint only; provider APIs are not polled here. */
+(() => {
+  'use strict';
+  const wrap=document.getElementById('adminOperations');
+  if (!wrap) return;
+  const id=name=>document.getElementById(name);
+  const names={
+    refresh_ok:'Source data confirmed',refresh_failed:'Source refresh failed',
+    refresh_queued:'Manual refresh queued',settings_saved:'Settings saved',
+    connection_test:'API connection tested',backup_export:'Backup downloaded',
+    storage_warning:'State storage warning',server_error:'Server request failed',
+    worker_started:'Automatic worker started',api_rate_limited:'Rate limit reached',
+    data_quality:'Source data quality warning'
+  };
+  const advice={
+    access:'Check credentials and permitted server IP addresses.',
+    rate_limit:'The provider is limiting requests; automatic retries are scheduled.',
+    format:'The provider response format did not match the expected schema.',
+    scope:'The selected race is unavailable to this affiliate account.',
+    selection:'Choose a race slug when more than one race is running.',
+    window:'The provider identified a date parameter problem. Review the saved race window.',
+    bad_request:'Shuffle rejected a request parameter (HTTP 400). Verify the dates and affiliate endpoint.',
+    configuration:'Review the provider connection settings.',
+    connection:'Check the server’s outgoing network connection.',
+    connect_timeout:'The provider connection timed out.',
+    timeout:'The provider did not answer before the timeout.',
+    http:'The provider returned a non-success status.',
+    upstream:'The provider’s service is temporarily unavailable.',
+    response_limit:'The provider response exceeded limits.',
+    redirect:'The provider redirected the request; credentials were not forwarded.',
+    credentials:'A required server credential is missing.',
+    partial:'Some source rows were incomplete.',
+    storage:'Saved data could not be written.',
+    empire_settings:'EmpireDrop race connection settings updated.',
+    empire_rewards:'EmpireDrop prizes updated.',
+    empire_schedule:'EmpireDrop dates updated.',
+    shuffle_settings:'Shuffle configuration updated.',
+  };
+  const when=value=>new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',timeZoneName:'short'
+  }).format(new Date(Number(value)*1000));
+  let busy=false, lastEvents=[], lastSummary=null;
+  const select=()=>new URLSearchParams({service:id('opsSource').value,level:id('opsLevel').value,limit:'300'});
+  const query=()=>select().toString();
+  const downloads=()=>{
+    id('opsExport').href='/admin/operations/export?'+query();
+    id('opsExportTxt').href='/admin/operations/export?'+query()+'&format=txt';
+  };
+  function text(node,value){node.textContent=String(value);return node;}
+  function make(tag,className,value) {
+    const node=document.createElement(tag);
+    if(className) node.className=className;
+    if(value!==undefined) text(node,value);
+    return node;
+  }
+  function draw(events,summary){
+    lastEvents=events;lastSummary=summary;
+    for (const level of ['success','info','warning','error'])
+      text(id('opsTotal'+level.charAt(0).toUpperCase()+level.slice(1)),summary?.levels?.[level]??0);
+    text(id('opsTotalEvents'),summary?.total??events.length);
+    const term=id('opsSearch').value.trim().toLocaleLowerCase();
+    const rows=events.filter(entry=>!term||[entry.event,entry.service,entry.level,entry.code||'',
+      String(entry.http_status||'')].join(' ').toLocaleLowerCase().includes(term));
+    const out=id('opsEvents');out.replaceChildren();
+    for(const item of rows){
+      const article=make('article','operations-entry');article.role='listitem';article.dataset.severity=item.level;
+      const severity=make('span','operations-severity',item.level.toUpperCase());
+      const body=make('div','operations-entry-main');
+      const heading=make('div','operations-entry-heading');
+      heading.append(make('strong','',names[item.event]||'Operational activity'),
+        make('time','',when(item.at)));
+      const extras=[item.service.charAt(0).toUpperCase()+item.service.slice(1)];
+      if(item.http_status!=null) extras.push('HTTP '+item.http_status);
+      if(item.duration_ms!=null) extras.push(item.duration_ms+' ms');
+      if(item.count!=null) extras.push(item.count+' records');
+      if(Number(item.occurrences)>1) extras.push('Repeated '+item.occurrences+' times');
+      body.append(heading,make('small','operations-details',extras.join(' · ')));
+      if(item.code&&advice[item.code])body.append(make('p','operations-advice',advice[item.code]));
+      article.append(severity,body);out.append(article);
+    }
+    text(id('opsMessage'),rows.length ? `Showing ${rows.length} of ${events.length} matching stored events.` :
+      'No matching events. Try another filter.');
+  }
+  async function load(){
+    if(busy||!wrap.open||document.hidden)return;
+    busy=true;downloads();text(id('opsMessage'),'Loading recent events…');
+    try{
+      const response=await fetch('/admin/operations/events?'+query(),{
+        credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}
+      });
+      if([401,403].includes(response.status))throw new Error('Session expired. Sign in again.');
+      if(!response.ok)throw new Error('Activity could not be loaded. Check the server status.');
+      const payload=await response.json();
+      draw(Array.isArray(payload.events)?payload.events:[],payload.summary);
+    }catch(err){text(id('opsMessage'),err.message||'Logs are unavailable.');}
+    finally{busy=false;}
+  }
+  wrap.addEventListener('toggle',load);
+  for(const el of [id('opsSource'),id('opsLevel')])el.addEventListener('change',load);
+  id('opsSearch').addEventListener('input',()=>draw(lastEvents,lastSummary));
+  id('opsReload').addEventListener('click',load);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&wrap.open)load();});
+  window.setInterval(()=>{if(wrap.open&&!document.hidden)load();},30000);
+  downloads();if(wrap.open)load();
+})();
+
+```
+
+## `static/admin-providers.js`
+
+```js
+/* Shared admin source cards. Status comes from the existing /admin/status feed;
+   this file NEVER makes additional Shuffle or EmpireDrop API requests. */
+(() => {
+  'use strict';
+  const fmt = timestamp => Number(timestamp) > 0
+    ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York',year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(timestamp*1000))
+    : 'Not verified yet';
+  const set = (selector, value) => {
+    for (const node of document.querySelectorAll(selector)) node.textContent = String(value);
+  };
+  function render(payload) {
+    if (!payload?.providers) return;
+    for (const name of ['shuffle','empiredrop']) {
+      const item = payload.providers[name];
+      if (!item) continue;
+      for (const node of document.querySelectorAll(`[data-provider-state="${name}"]`)) {
+        node.dataset.state = item.state;
+        node.textContent = item.status;
+      }
+      const fields = {last_success:fmt(item.last_success),last_attempt:item.last_attempt ? fmt(item.last_attempt) : 'Not attempted',
+        participants:item.participants,quality:item.quality,metric:item.metric,cadence:`Every ${item.refresh_seconds} seconds`};
+      for (const [key,value] of Object.entries(fields))
+        set(`[data-provider-field="${name}:${key}"]`, value);
+      const wrapper = document.querySelector(`[data-provider-issues="${name}"]`);
+      if (wrapper) {
+        const issues = Array.isArray(item.issues) ? item.issues : [];
+        wrapper.hidden = issues.length === 0;
+        const list = wrapper.querySelector('ul');
+        if (list) list.replaceChildren(...issues.map(message=>{
+          const row=document.createElement('li'); row.textContent=message; return row;
+        }));
+      }
+    }
+  }
+  // Table searches filter only the visible loaded records, not the entire provider.
+  document.querySelectorAll('[data-provider-search]').forEach(input => {
+    const body = document.getElementById(input.dataset.providerSearch);
+    if (!body) return;
+    input.addEventListener('input', () => {
+      const query=input.value.trim().toLocaleLowerCase();
+      for (const row of body.querySelectorAll('tr'))
+        row.hidden = Boolean(query && !row.textContent.toLocaleLowerCase().includes(query));
+    });
+  });
+  globalThis.RedProviderCards = {render};
+})();
+
 ```
 
 ## `static/app.js`
 
-```javascript
+```js
 /* Shared page controller. Native navigation/forms work before this file loads. */
 (() => {
   "use strict";
@@ -5077,6 +6223,26 @@ python-3.13.12
     d.setUTCDate(d.getUTCDate() + days);
     return d.toISOString().slice(0, 16);
   }
+  // Construct the current Tuesday 6 PM -> Tuesday 6 PM window in Eastern
+  // *wall time*, not UTC. The Python server resolves EST/EDT at save time,
+  // avoiding a one-hour drift when daylight saving changes.
+  function currentEasternWeek() {
+    const current = new Date(easternInput(Date.now()) + "Z");
+    const start = new Date(current);
+    const elapsed = (current.getUTCDay() - 2 + 7) % 7;
+    start.setUTCDate(start.getUTCDate() - elapsed);
+    start.setUTCHours(18, 0, 0, 0);
+    if (start > current) start.setUTCDate(start.getUTCDate() - 7);
+    const startText = start.toISOString().slice(0, 16);
+    return [startText, daysAfter(startText, 7)];
+  }
+  id("currentWeek")?.addEventListener("click", () => {
+    const [start, end] = currentEasternWeek();
+    id("f-start_et").value = start;
+    id("f-end_et").value = end;
+    id("f-start_et").dispatchEvent(new Event("input", { bubbles: true }));
+    toast("Current Eastern Time week prepared. Review and confirm before publishing.");
+  });
   id("startNow")?.addEventListener("click", () => {
     id("f-start_et").value = easternInput(Date.now());
     id("f-end_et").value = daysAfter(id("f-start_et").value, 7);
@@ -5091,7 +6257,14 @@ python-3.13.12
         (new Date(end.value + "Z") - new Date(start.value + "Z")) / 86400000,
       ) || 7,
     );
-    start.value = end.value || easternInput(Date.now());
+    const now = easternInput(Date.now());
+    if (!end.value || end.value < now) {
+      // Avoid generating another already-expired race from an old backup.
+      const [, currentEnd] = currentEasternWeek();
+      start.value = currentEnd;
+    } else {
+      start.value = end.value;
+    }
     end.value = daysAfter(start.value, duration);
     start.dispatchEvent(new Event("input", { bubbles: true }));
     toast("Draft prepared. Review the dates before saving.");
@@ -5446,6 +6619,7 @@ python-3.13.12
     if (isAdmin) {
       jobs = value.jobs || {};
       if (value.health) globalThis.RedHealth?.render(value.health);
+      if (value.providers) globalThis.RedProviderCards?.render(value);
       if (value.boss) globalThis.RedHealth?.renderBoss(value.boss);
       if (value.checkpoint && id("recoveryReminder")) {
         id("recoveryReminder").hidden = !value.checkpoint.changes;
@@ -5781,11 +6955,12 @@ python-3.13.12
   setInterval(clock, 1000);
   poll();
 })();
+
 ```
 
 ## `static/boss-preview.js`
 
-```javascript
+```js
 /* Local draft preview only. Uploads and edits still use the protected admin forms. */
 (() => {
   "use strict";
@@ -5874,6 +7049,7 @@ python-3.13.12
   });
   render();
 })();
+
 ```
 
 ## `static/boss.css`
@@ -7125,11 +8301,12 @@ python-3.13.12
     display: none;
   }
 }
+
 ```
 
 ## `static/boss.js`
 
-```javascript
+```js
 /* Shared raid UI. The server owns damage, identity, cooldowns and private names.
    Polling never attacks. A failed POST keeps its receipt ID for a safe retry. */
 (() => {
@@ -8317,6 +9494,7 @@ python-3.13.12
   setInterval(tick, 1000);
   void poll();
 })();
+
 ```
 
 ## `static/empiredrop.css`
@@ -8329,7 +9507,7 @@ python-3.13.12
 .provider-tabs [role="tab"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .empire-sponsor .sponsor-symbol { color: #ffb6bf; background: #361622; }
 .empire-podium { margin-top: 20px; }
-.empire-podium .podium-values { grid-template-columns: 1fr; }
+.empire-podium .podium-values { grid-template-columns: 1fr 1fr; }
 .empire-podium .podium-name { min-height: 1.2em; }
 #empireBoard .section-title { margin-top: 20px; }
 #empireBoard .leaderboard-foot { margin-bottom: 30px; }
@@ -8344,11 +9522,22 @@ python-3.13.12
 /* Only the selected provider's race schedule is visible. */
 #shuffleRaceClock[hidden], #empireRaceClock[hidden] {display:none!important}
 #empireRaceClock .clock {font-size:clamp(1.1rem,2vw,1.5rem);white-space:normal}
+
+/* EmpireDrop now mirrors Shuffle's two-column wager/prize presentation. */
+#empireBoard .public-table td:last-child {font-variant-numeric:tabular-nums}
+#empireBoard .podium-values small {line-height:1.2}
+#empireBoard .podium-values strong {overflow-wrap:anywhere}
+@media (max-width:520px){.empire-podium .podium-values{grid-template-columns:1fr 1fr}}
+
+.empire-history-list{display:grid;gap:8px}
+.empire-history-row{padding:12px;border:1px solid var(--line);border-radius:10px;display:grid;gap:5px}
+.empire-history-row small{color:var(--muted)}
+
 ```
 
 ## `static/empiredrop.js`
 
-```javascript
+```js
 /* Public EmpireDrop Top 15: no credentials and no direct provider calls.
  * Only /public-state (the server's sanitized projection) is rendered here.
  */
@@ -8358,6 +9547,7 @@ python-3.13.12
   const shuffleTab = id('shuffleTab'), empireTab = id('empireTab');
   if (!shuffleTab || !empireTab) return;
   let latest = null;
+  let dateOffset = 0;
   const tabs = [shuffleTab, empireTab];
   const title = id('raceTitle'), description = id('raceDescription');
   // The old hero title belongs to Shuffle only.
@@ -8367,8 +9557,8 @@ python-3.13.12
   const isEmpire = () => empireTab.getAttribute('aria-selected') === 'true';
   function setHero() {
     if (isEmpire()) {
-      if (title) title.textContent = 'EmpireDrop Wager Race';
-      if (description) description.textContent = 'Top 15 EmpireDrop wagers from players referred with code red.';
+      if (title) title.textContent = 'EmpireDrop ' + (latest?.race_meta?.engine === 'RAFFLE' ? 'Raffle' : latest?.race_meta?.type === 'DEPOSIT' ? 'Deposit' : 'Wager') + ' Race';
+      if (description) description.textContent = latest?.race_meta?.name ? `EmpireDrop race: ${latest.race_meta.name}` : 'EmpireDrop partner race standings, updated from the official API.';
     } else {
       if (title) title.textContent = shuffleTitle;
       if (description) description.textContent = shuffleDescription;
@@ -8413,29 +9603,81 @@ python-3.13.12
       shuffleTitle = String(board.shuffle_site.race_title || shuffleTitle);
       shuffleDescription = String(board.shuffle_site.race_description || shuffleDescription);
     }
-    const rows = new Map(board.rows.map(item => [Number(item.rank), item]));
+    // Standings are ordered by the provider. Two users can share the same
+    // rank; map by displayed POSITION rather than rank, or ties disappear.
+    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 15) : [];
+    const metric = board.race_meta?.metric || 'Wagered';
+    document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
+      node.textContent = 'EmpireDrop ' + metric.toLowerCase();
+    });
     for (let rank=1; rank<=15; rank++) {
-      const r = rows.get(rank);
+      const r = rows[rank - 1];
       const name = document.querySelector(rank<=3 ? `[data-empire-name="${rank}"]` : `[data-empire-row-name="${rank}"]`);
       const amount = document.querySelector(rank<=3 ? `[data-empire-wager="${rank}"]` : `[data-empire-row-wager="${rank}"]`);
       if (name) name.textContent = r?.username || 'Open position';
+      const place = id('empireBoard')?.querySelector?.(`[data-empire-place="${rank}"]`);
+      if (place) place.textContent = String(r?.rank || rank).padStart(2, '0');
       if (amount) amount.textContent = r?.wager || '—';
+      const prize = document.querySelector(rank<=3 ? `[data-empire-prize="${rank}"]` : `[data-empire-row-prize="${rank}"]`);
+      if (prize) prize.textContent = r?.prize && r.prize !== '—' ? r.prize :
+        configured ? (rewards.formatted?.[String(rank)] || '—') : 'Not announced';
     }
+    // Independent site-managed EmpireDrop payout pool, never Shuffle's.
+    const rewards = board.prizes || {};
+    const configured = rewards.enabled === true;
+    if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
     if (id('empireChecked')) id('empireChecked').textContent = board.updated_at ? 'Last verified: '+date(board.updated_at) : 'Not yet verified';
     if (board.schedule) {
-      if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
+      if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'provider' ? 'EmpireDrop official race' : board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
       if (id('empireRaceWindow')) id('empireRaceWindow').textContent = (board.schedule.start_et || '')+' → '+(board.schedule.end_et || '');
+    }
+    const showClock = () => {
+      const node = id('empireCountdown');
+      if (!node) return;
+      const sch = latest?.schedule || {};
+      const now = Math.floor(Date.now()/1000) + dateOffset;
+      const start = Number(sch.start_time), end = Number(sch.end_time);
+      if (!start || !end || !Number.isFinite(start) || !Number.isFinite(end)) {
+        node.textContent = 'Race schedule pending'; return;
+      }
+      if (now >= end) { node.textContent = 'Race ended'; return; }
+      const future = now < start;
+      let seconds = Math.max(0, (future ? start : end) - now);
+      const d = Math.floor(seconds/86400); seconds%=86400;
+      const h = Math.floor(seconds/3600); seconds%=3600;
+      const m = Math.floor(seconds/60), sec = seconds%60;
+      node.textContent = `${future ? 'Starts in ' : ''}${d ? d+'d ' : ''}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    };
+    showClock();
+    const history = id('empireHistoryList');
+    if (history) {
+      const snapshots = Array.isArray(board.history) ? board.history.slice(0,4) : [];
+      history.replaceChildren();
+      if (!snapshots.length) {
+        const note=document.createElement('p');note.className='small muted';
+        note.textContent='No completed race snapshots saved yet.';history.append(note);
+      } else for (const item of snapshots) {
+        const row=document.createElement('article');row.className='empire-history-row';
+        const name=document.createElement('strong');name.textContent=item.name||'Previous race';
+        const info=document.createElement('small');
+        info.textContent='Last verified '+date(item.updated_at)+' · '+
+          (item.rows?.length||0)+' saved players · '+
+          (item.prizes?.enabled?'Pool '+item.prizes.total:'Prizes not announced');
+        row.append(name,info);history.append(row);
+      }
     }
     // /public-state refreshes the main hero for Shuffle; restore EmpireDrop's
     // provider-specific title whenever it is selected.
     setHero();
   }
   document.addEventListener('empiredrop:update', event => render(event.detail));
+  if (typeof setInterval === 'function') setInterval(() => { if (!latest || !id('empireCountdown')) return; const sch=latest.schedule||{}; const n=Math.floor(Date.now()/1000); const start=Number(sch.start_time),end=Number(sch.end_time); const box=id('empireCountdown'); if(!start||!end){box.textContent='Race schedule pending';return;} if(n>=end){box.textContent='Race ended';return;} let s=Math.max(0,(n<start?start:end)-n);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;box.textContent=(n<start?'Starts in ':'')+(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); },1000);
   try { render(JSON.parse(document.body.dataset.bootstrap || '{}').empiredrop); }
   catch { /* Keep server-rendered unavailable state if bootstrap cannot load. */ }
   select(shuffleTab);
 })();
+
 ```
 
 ## `static/experience.css`
@@ -9689,11 +10931,12 @@ b[data-tone="neutral"] {
     width: 100%;
   }
 }
+
 ```
 
 ## `static/experience.js`
 
-```javascript
+```js
 /* Small shared enhancements. Native links and forms still work without JS. */
 (() => {
   "use strict";
@@ -9731,11 +10974,12 @@ b[data-tone="neutral"] {
       location.assign(select.value);
   });
 })();
+
 ```
 
 ## `static/fairness.js`
 
-```javascript
+```js
 /* Independent RedPoints v1–v5 verifier. Uses Web Crypto and integer arithmetic.
    No API call, wallet mutation, or provider dependency is involved. */
 (() => {
@@ -10220,6 +11464,7 @@ b[data-tone="neutral"] {
   };
   if (typeof module !== "undefined") module.exports = globalThis.RedFair;
 })();
+
 ```
 
 ## `static/gaming.css`
@@ -11207,11 +12452,12 @@ b[data-tone="neutral"] {
 }
 
 .game-art.blackjack-art { display: flex; align-items: center; justify-content: center; }
+
 ```
 
 ## `static/gaming.js`
 
-```javascript
+```js
 /* Server-authoritative play points. Never generate an outcome in the UI.
    Unknown POST results keep their receipt ID so retries cannot debit twice. */
 (() => {
@@ -12590,6 +13836,7 @@ b[data-tone="neutral"] {
   }
   void start();
 })();
+
 ```
 
 ## `static/history.css`
@@ -12746,11 +13993,12 @@ b[data-tone="neutral"] {
     gap: 10px;
   }
 }
+
 ```
 
 ## `static/history.js`
 
-```javascript
+```js
 /* Read the shared cache once a minute. Week links also work without scripts. */
 (() => {
   "use strict";
@@ -12937,11 +14185,12 @@ b[data-tone="neutral"] {
   });
   poll();
 })();
+
 ```
 
 ## `static/holdem-fairness.js`
 
-```javascript
+```js
 /* Independent redpoints-v5 Hold'em replay. No network or wallet access.
    redbot-v1 receives only its own cards and the public betting observation.
    Keep this policy/version immutable so old receipts remain independently checkable. */
@@ -13109,11 +14358,12 @@ b[data-tone="neutral"] {
   globalThis.RedHoldemFair={VARIANT,POLICY,labels,rankFive,bestHand,validateAction,botAction,Hand,replay};
   if(typeof module!=="undefined")module.exports=globalThis.RedHoldemFair;
 })();
+
 ```
 
 ## `static/holdem-ui.js`
 
-```javascript
+```js
 /* Present only saved server events. Animation never decides cards, chips or wins. */
 (() => {
   "use strict";
@@ -13272,6 +14522,7 @@ b[data-tone="neutral"] {
   }
   globalThis.RedHoldemUI={create};
 })();
+
 ```
 
 ## `static/holdem.css`
@@ -13316,11 +14567,12 @@ b[data-tone="neutral"] {
 .holdem-table [hidden]{display:none!important}
 @media(max-width:760px){.gaming-page[data-game="poker"] .game-layout{grid-template-columns:1fr}.gaming-page[data-game="poker"] .bet-controls{padding:15px}.holdem-table{padding:14px 10px;--card-w:clamp(34px,12vw,60px)}.holdem-table .playing-card{padding:5px}.holdem-hole,.holdem-board{gap:5px}.holdem-topline .eyebrow{font-size:.65rem}.holdem-topline .small{font-size:.65rem}.holdem-seat-label{font-size:.8rem}.holdem-moves .button{font-size:.78rem;flex-basis:65px}.holdem-table{border-radius:18px}}
 @media(prefers-reduced-motion:reduce){.holdem-table *{animation:none!important;transition:none!important}}
+
 ```
 
 ## `static/homepage.js`
 
-```javascript
+```js
 /* The bar and its percentage both show remaining HP and drain together.
    Five-second reads use saved anonymous state, never the affiliate providers. */
 (() => {
@@ -13525,11 +14777,12 @@ b[data-tone="neutral"] {
   }, 1000);
   poll();
 })();
+
 ```
 
 ## `static/plinko.js`
 
-```javascript
+```js
 /* Receipt-driven canvas renderer, loaded only on the Plinko page. */
 (() => {
   "use strict";
@@ -13802,11 +15055,12 @@ b[data-tone="neutral"] {
   
   }};
 })();
+
 ```
 
 ## `static/receipt-verifier.js`
 
-```javascript
+```js
 /* This verifier never fetches or posts. The seed is already revealed in a receipt. */
 document
   .getElementById("receiptVerifier")
@@ -13842,6 +15096,7 @@ document
       button.disabled = false;
     }
   });
+
 ```
 
 ## `static/style.css`
@@ -16068,11 +17323,113 @@ details[open] > summary .expand-icon {
     padding: 2px 0;
   }
 }
+/* Accessible, responsive operational event viewer (independent of browser logs). */
+.operations-panel{border-top:1px solid var(--line);padding-top:14px;margin-top:20px}
+.operations-panel summary{cursor:pointer;padding:9px 0}
+.operations-panel .form-grid{margin-top:12px}
+.operations-events{display:grid;gap:8px;max-height:460px;overflow:auto;margin:12px 0}
+.operations-entry{display:flex;align-items:start;gap:12px;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px}
+.operations-entry > div{display:grid;gap:4px;min-width:0}
+.operations-entry small{color:var(--muted);line-height:1.4}
+.operations-severity{font-size:.67rem;font-weight:750;letter-spacing:.04em;padding:5px 6px;border-radius:6px;background:#293328;color:#8ce6a0}
+.operations-entry[data-severity="warning"] .operations-severity{background:#473622;color:#f7c47e}
+.operations-entry[data-severity="error"] .operations-severity{background:#4c222b;color:#ff9ea7}
+.operations-entry[data-severity="info"] .operations-severity{background:#2d3448;color:#b0c5ff}
+@media(max-width:520px){.operations-entry{padding:9px;gap:8px}.operations-panel .form-grid{grid-template-columns:1fr}}
+
+/* 2026-11-10 admin refresh: common, responsive components for BOTH sources.
+   The server owns all values; these styles never change rankings or numbers. */
+.provider-panel .section-title {gap:16px;align-items:flex-start}
+.provider-summary {display:grid;gap:18px}
+.provider-summary-heading{display:flex;gap:16px;justify-content:space-between;align-items:flex-start}
+.provider-summary-heading h2{font-size:1.55rem;letter-spacing:-.025em;margin:4px 0 8px}
+.provider-summary-heading p{margin:0}
+.provider-state{display:inline-flex;align-items:center;gap:7px;border:1px solid #577861;background:#192b22;color:#b8ecd0;border-radius:100px;padding:7px 11px;font-size:.72rem;font-weight:750;white-space:nowrap}
+.provider-state::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor}
+.provider-state[data-state="warning"]{border-color:#94704e;background:#382617;color:#ffd096}
+.provider-state[data-state="error"]{border-color:#945265;background:#361824;color:#ffbbc5}
+.provider-state[data-state="waiting"]{border-color:#626078;background:#252133;color:#c7b9dd}
+.provider-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.provider-metrics article,.provider-quality>div,.provider-quality-grid>div{
+  border:1px solid var(--line);border-radius:12px;background:linear-gradient(155deg,#24151e,#1a1018);
+  padding:15px;display:flex;flex-direction:column;gap:7px;min-width:0
+}
+.provider-metrics article>span,.provider-quality-grid>div>span{color:var(--muted);font-size:.72rem;font-weight:600}
+.provider-metrics article>strong{font-size:.87rem;line-height:1.45;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.provider-quality{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.provider-quality strong{font-size:.87rem;line-height:1.45;overflow-wrap:anywhere}
+.provider-issues{padding:14px 17px;border:1px solid #91673d;background:rgba(116,67,18,.15);border-radius:12px;color:#ffe1b9}
+.provider-issues[hidden]{display:none}
+.provider-issues>strong{font-size:.82rem}
+.provider-issues ul{margin:9px 0 0;padding-left:21px;font-size:.77rem;line-height:1.65}
+.provider-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:18px 0 13px}
+.provider-actions form{margin:0}
+.provider-actions .button{white-space:normal}
+.provider-panel .table-scroll{margin-top:12px}
+.provider-panel .field{margin:17px 0 0;max-width:560px}
+.provider-quality-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.provider-quality-grid strong{font-size:1.32rem;font-variant-numeric:tabular-nums}
+.provider-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.provider-overview-tile{color:var(--text);text-decoration:none;background:linear-gradient(150deg,#271720,#1a1019);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-content:start;min-width:0}
+.provider-overview-tile:hover,.provider-overview-tile:focus-visible{border-color:var(--accent);outline-offset:3px}
+.provider-overview-tile>span:first-child{font-size:1rem;font-weight:800}
+.provider-overview-tile>strong{grid-column:1/-1;font-size:1.45rem}
+.provider-overview-tile>small{grid-column:1/-1;color:var(--muted);overflow-wrap:anywhere}
+.provider-advanced{padding:9px 0}
+.provider-advanced summary{cursor:pointer;font-weight:700;color:var(--text)}
+.admin-activity-page .health-panel{border:0;padding:0;margin:0;background:transparent;box-shadow:none}
+.admin-activity-page .section-title{margin-bottom:23px}
+.ops-summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:16px}
+.ops-summary-grid>div{display:grid;gap:6px;background:#20141d;border:1px solid var(--line);border-radius:10px;padding:14px}
+.ops-summary-grid span{font-size:.69rem;color:var(--muted)}
+.ops-summary-grid strong{font-size:1.32rem;font-variant-numeric:tabular-nums}
+.ops-filters{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:12px;align-items:end;margin-top:18px}
+.ops-filters .field{min-width:0}
+.ops-buttons{margin-top:15px}
+.operations-panel{border-top:1px solid var(--line);margin:25px 0 0;padding-top:16px}
+.operations-panel[open]>summary{margin-bottom:9px}
+.operations-panel summary{display:flex;gap:10px;justify-content:space-between;align-items:center;font-size:.92rem;cursor:pointer}
+.operations-entry{display:flex;align-items:flex-start;gap:13px;border:1px solid var(--line);border-radius:12px;padding:15px;background:linear-gradient(145deg,#22141c,#1a1118)}
+.operations-entry-main{display:grid;gap:5px;min-width:0;flex:1}
+.operations-entry-heading{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.operations-entry-heading strong{font-size:.87rem}
+.operations-entry-heading time{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.operations-details{font-size:.74rem;color:var(--muted)}
+.operations-advice{font-size:.76rem;line-height:1.5;margin:3px 0 0;color:#f2d2dc}
+.operations-severity{font-size:.67rem;font-weight:750;letter-spacing:.03em;padding:6px 8px;border-radius:6px;background:#203329;color:#aee5c0}
+.operations-entry[data-severity="warning"] .operations-severity{background:#473622;color:#ffd091}
+.operations-entry[data-severity="error"] .operations-severity{background:#4c222b;color:#ffb0c2}
+.operations-entry[data-severity="info"] .operations-severity{background:#292d42;color:#b8c7fb}
+.operations-events{max-height:620px;overflow:auto;display:grid;gap:9px;margin:15px 0;scrollbar-color:#6c3545 #221721}
+.tabs a[aria-current="page"]{font-weight:800}
+.admin-main .tabs{scrollbar-width:thin}
+@media(max-width:1100px){.provider-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.provider-quality-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .provider-overview-grid,.provider-quality{grid-template-columns:1fr}
+ .ops-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .ops-filters{grid-template-columns:1fr 1fr}
+ .ops-filters .field:last-child{grid-column:1/-1}
+ .provider-summary-heading{flex-wrap:wrap}
+}
+@media(max-width:520px){
+ .provider-metrics,.provider-quality-grid{grid-template-columns:1fr 1fr;gap:8px}
+ .provider-metrics article,.provider-quality>div,.provider-quality-grid>div{padding:12px}
+ .provider-metrics article>strong{font-size:.76rem}
+ .provider-summary-heading h2{font-size:1.22rem}
+ .ops-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ops-filters{grid-template-columns:1fr}
+ .ops-filters .field:last-child{grid-column:auto}
+ .operations-entry{flex-direction:column;gap:8px;padding:12px}
+ .operations-entry-heading{display:grid;gap:5px}
+ .provider-actions .button{width:100%;text-align:center}
+ .provider-actions form{width:100%}
+}
+
 ```
 
 ## `storage.py`
 
-```python
+```py
 """Atomic UTF-8 file storage. No database service, SQL runtime, or setup command.
 
 One small JSON document holds current state. A process lock serializes writers,
@@ -16402,11 +17759,12 @@ class Store:
 
     def close(self):
         pass
+
 ```
 
 ## `store_schema.py`
 
-```python
+```py
 """Non-destructive document validation shared by startup and migration tools."""
 from __future__ import annotations
 import copy
@@ -16492,11 +17850,12 @@ def upgrade_store(value, defaults, health_defaults):
     store["version"] = STORE_VERSION
     store.setdefault("updated_at", int(time.time()))
     return store, store != original
+
 ```
 
 ## `telemetry.py`
 
-```python
+```py
 """Bounded, process-local diagnostics. Never record player names or secrets.
 
 Measurements describe this running process, not an external monitoring service.
@@ -16586,6 +17945,19 @@ def health_view(runtime, measurements, status):
                           last_success=last, last_check=job.get('attempt_at', 0),
                           last_change=job.get('changed_at', 0), next_check=job.get('next_check', 0),
                           action='/admin?tab=settings#diagnostics'))
+    # EmpireDrop is an independent source with provider-controlled cache TTL.
+    empire = runtime.empiredrop.private_status()
+    age = time.time() - (empire.get('updated_at') or 0) if empire.get('updated_at') else None
+    interval = max(60, int(empire.get('refresh_interval') or 300))
+    failed = bool(empire.get('error')) or not empire.get('running')
+    state = 'warning' if failed or age is None or age > interval*2+60 else 'good'
+    cards.append(dict(key='empiredrop',label='EmpireDrop',state=state,
+                      status='Connected' if state=='good' else 'Needs attention',
+                      detail=('Latest verified ranking is delayed; the last good board stays visible.' if state=='warning'
+                              else 'Provider cache respected; automatic race updates running.'),
+                      last_success=empire.get('updated_at') or 0,
+                      last_check=empire.get('attempt_at') or 0,
+                      action='/admin?tab=empiredrop'))
     cards.append(dict(key='games', label='Games', state='good' if probe['ok'] else 'error',
                       status='Ready to save play' if probe['ok'] else 'Saving unavailable',
                       detail='Results are acknowledged after their save completes. Retry receipts prevent duplicate bets.',
@@ -16595,6 +17967,7 @@ def health_view(runtime, measurements, status):
                       detail=probe['message'], last_success=probe['checked_at'], action='/admin?tab=settings#recovery'))
     return dict(release=RELEASE, generated_at=int(time.time()), ready=probe['ok'], components=cards,
                 metrics={**stats, 'storage':storage}, retention='Recent 512 requests and 256 store operations; reset on restart.')
+
 ```
 
 ## `templates/admin.html`
@@ -16604,10 +17977,10 @@ def health_view(runtime, measurements, status):
 {% block title %}{{ tabs[tab] }} · RedHunllef Admin{% endblock %}
 {% block attributes %}data-page="admin" data-admin-tab="{{ tab }}" data-feed="/admin/status" data-bootstrap="{{ {'server_time':data.server_time,'site':data.site}|tojson|forceescape }}"{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='gaming.css',v=asset_version) }}">{% if tab=='boss' %}<link rel="stylesheet" href="{{ url_for('static',filename='boss.css',v=asset_version) }}">{% endif %}{% endblock %}
-{% block scripts %}<script src="{{ url_for('static',filename='admin-health.js',v=asset_version) }}" defer></script>{% if tab=='empiredrop' %}<script src="{{ url_for('static',filename='admin-empiredrop.js',v=asset_version) }}" defer></script>{% endif %}{% if tab in ['overview','gaming'] %}<script src="{{ url_for('static',filename='admin-gaming.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='admin-feedback.js',v=asset_version) }}" defer></script>{% if tab=='boss' %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='boss-preview.js',v=asset_version) }}" defer></script>{% endif %}{% endblock %}
+{% block scripts %}<script src="{{ url_for('static',filename='admin-health.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='admin-logs.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='admin-providers.js',v=asset_version) }}" defer></script>{% if tab=='empiredrop' %}<script src="{{ url_for('static',filename='admin-empiredrop.js',v=asset_version) }}" defer></script>{% endif %}{% if tab in ['overview','gaming'] %}<script src="{{ url_for('static',filename='admin-gaming.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='admin-feedback.js',v=asset_version) }}" defer></script>{% if tab=='boss' %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='boss-preview.js',v=asset_version) }}" defer></script>{% endif %}{% endblock %}
 {% block navigation %}<a class="button small" href="/admin/gaming">Gaming top 5</a><a href="/" target="_blank" rel="noopener">View website ↗</a><form method="post" action="/admin/logout"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="text-button" type="submit">Sign out</button></form>{% endblock %}
-{% block content %}<main id="main" class="shell admin-main"><div class="admin-heading"><div><p class="eyebrow">CONTROL CENTER</p><h1>{{ 'Community overview' if tab=='overview' else tabs[tab] }}<span class="accent">.</span></h1><p class="muted">Welcome, {{ user }} <span class="tag">{{ 'Superadmin' if superadmin else 'Admin' }}</span></p></div><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<button type="submit" class="button primary">↻ Refresh data</button></form></div>
-<nav class="tabs" aria-label="Administration">{% for key,label in tabs.items() %}<a href="{{ url_for('login',tab=key) }}" {% if tab==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}<span class="auto-label"><span class="dot"></span> {{ 'Boss · 5 sec / Sources · 60 sec' if tab=='boss' else 'Gaming · 5 sec / Sources · 60 sec' if tab in ['overview','gaming'] else 'Automatic · 60 sec' }}</span></nav>
+{% block content %}<main id="main" class="shell admin-main"><div class="admin-heading"><div><p class="eyebrow">REDHUNLLEF · CONTROL CENTER</p><h1>{{ 'Community overview' if tab=='overview' else tabs[tab] }}<span class="accent">.</span></h1><p class="muted">Signed in as {{ user }} <span class="tag">{{ 'Superadmin' if superadmin else 'Admin' }}</span></p></div>{% if tab in ['overview','shuffle','race','players'] %}<form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<button type="submit" class="button primary">↻ Refresh Shuffle &amp; Kick</button></form>{% else %}<a class="button" href="/admin?tab=activity">View activity</a>{% endif %}</div>
+<nav class="tabs" aria-label="Administration">{% for key,label in tabs.items() %}<a href="{{ url_for('login',tab=key) }}" {% if tab==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}<span class="auto-label"><span class="dot"></span> {{ 'Boss · 5 sec / Sources · 60 sec' if tab=='boss' else 'Gaming · 5 sec / Sources · 60 sec' if tab in ['overview','gaming'] else 'Sources update automatically' }}</span></nav>
 {% if hosted_local and tab=='settings' %}<p class="notice warning">Local storage is active. On App Platform, saved changes can be lost when the app is redeployed or replaced. {% if superadmin %}<a class="text-link" href="/admin?tab=settings#recovery">Save a private recovery file →</a>{% else %}Ask the Superadmin to save a private recovery file after important changes.{% endif %}</p>{% endif %}
 {% with messages=get_flashed_messages() %}{% for message in messages %}<p class="notice success" role="status">{{ message }}</p>{% endfor %}{% endwith %}
 {% if errors %}<div class="notice warning" role="alert"><strong>Review before saving.</strong><ul>{% for key,message in errors.items() %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
@@ -16615,13 +17988,13 @@ def health_view(runtime, measurements, status):
 {% include 'admin_attention.html' %}
 {% if tab in ['overview','race','players'] %}<div id="endedNotice" class="notice ended-notice" {% if data.site.race_state!='ended' %}hidden{% endif %}><div><strong>This saved race has ended.</strong><span>New wagers outside its dates do not count toward these results.</span></div><a class="button small" href="{{ url_for('login',tab='race') }}">Prepare next race →</a></div>{% endif %}
 {% include 'admin_' ~ tab ~ '.html' %}
-<details class="panel admin-diagnostics" id="diagnostics" {% if admin_receipt and admin_receipt.target=='historyConnection' %}open{% endif %}>
+<details class="panel admin-diagnostics" id="diagnostics" {% if tab=='activity' %}hidden{% endif %} {% if admin_receipt and admin_receipt.target=='historyConnection' %}open{% endif %}>
 <summary><span><strong>Diagnostics</strong><small>Connections, history checks &amp; performance</small></span><span aria-hidden="true">+</span></summary>
 <div class="diagnostics-content">
-{% include 'admin_health.html' %}
+{% if tab!='activity' %}{% include 'admin_health.html' %}{% endif %}
 <p id="sourceWarning" class="notice warning" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <details class="panel refresh-progress" id="connectionDetails" >
-<summary class="connection-summary"><span><strong>Live connections</strong><span class="connection-chips"><span id="shuffleSummary">Shuffle · {{ 'Needs attention' if data.jobs.shuffle.error else 'Checking automatically' }}</span><span id="kickSummary">Kick · {{ 'Needs attention' if data.jobs.kick.error else 'Checking automatically' }}</span></span></span><span class="small muted">Details <span aria-hidden="true">⌄</span></span></summary>
+<summary class="connection-summary"><span><strong>Live connections</strong><span class="connection-chips"><span id="shuffleSummary">Shuffle · {{ 'Needs attention' if data.jobs.shuffle.error else 'Checking automatically' }}</span><span id="kickSummary">Kick · {{ 'Needs attention' if data.jobs.kick.error else 'Checking automatically' }}</span><span>EmpireDrop · <a href="/admin?tab=empiredrop">Manage race</a></span></span></span><span class="small muted">Details <span aria-hidden="true">⌄</span></span></summary>
 <div class="connection-details"><div class="progress-heading"><p id="publishedWindow" class="muted small">Published window: {{ data.site.start_et }} → {{ data.site.end_et }}</p><a class="text-link" href="/admin/diagnostics">Download diagnostics</a></div>
 <div class="progress-services">{% for name,label in [('shuffle','Shuffle · Leaderboard'),('kick','Kick · Stream status')] %}<div><strong>{{ label }}</strong><p id="{{ name }}Freshness" class="small muted"></p><p id="{{ name }}Progress" role="status">{{ data.jobs[name].error or 'Automatic check queued.' }}</p><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<input type="hidden" name="service" value="{{ name }}"><button class="text-button small" type="submit">Check {{ name|capitalize }} now</button></form></div>{% endfor %}</div></div>
 </details>
@@ -16637,6 +18010,20 @@ def health_view(runtime, measurements, status):
 <div class="admin-foot"><span id="browserCheck">Connecting to automatic updates…</span><span>Release {{ release }}</span></div>
 <noscript><p class="notice">Forms and navigation work without JavaScript. Reload for current statistics.</p></noscript></main>{% endblock %}
 {% block site_footer %}{% endblock %}
+
+```
+
+## `templates/admin_activity.html`
+
+```html
+{# The central view is purpose-built for nontechnical admins. No provider calls. #}
+<section class="panel form-panel admin-activity-page">
+  <div class="section-title"><div><p class="eyebrow">ADMINISTRATION · OPERATIONS</p><h2>Activity &amp; diagnostics</h2><p class="muted">See when sources last worked, what changed, and what needs attention.</p></div>
+  <a class="button small" href="/admin/diagnostics">Download source report</a></div>
+  {% include 'admin_health.html' %}
+  <p class="small muted">Reports are server-generated and contain only operational status and counters. Provider payloads, credentials and player names are excluded.</p>
+</section>
+
 ```
 
 ## `templates/admin_attention.html`
@@ -16645,10 +18032,11 @@ def health_view(runtime, measurements, status):
 {# One actionable summary; detailed errors stay inside Diagnostics. #}
 {% set issues = data.health.components|rejectattr('state','equalto','good')|list %}
 <section class="admin-attention" id="adminAttention" data-state="{{ 'warning' if issues else 'good' }}" aria-label="Service status">
-  <div class="attention-heading"><strong id="attentionSummary">{{ 'Needs attention' if issues else 'Everything is connected' }}</strong><a class="text-link small" href="#diagnostics">View diagnostics →</a></div>
+  <div class="attention-heading"><strong id="attentionSummary">{{ 'Needs attention' if issues else 'Everything is connected' }}</strong><a class="text-link small" href="/admin?tab=activity">View activity &amp; diagnostics →</a></div>
   <ul id="adminIssueList" role="status" aria-live="polite" aria-atomic="true" {% if not issues %}hidden{% endif %}>{% for item in issues %}<li>{{ item.label }}: {{ 'Saving unavailable. Check storage before making changes.' if item.key in ['storage','games'] else 'Updates delayed. Saved results remain visible; retrying automatically.' }}</li>{% endfor %}</ul>
   <p id="networkError" class="notice warning" role="status" hidden></p>
 </section>
+
 ```
 
 ## `templates/admin_boss.html`
@@ -16770,41 +18158,40 @@ def health_view(runtime, measurements, status):
 </section>
 
 {% if superadmin %}{% include "recovery_panel.html" %}{% endif %}
+
 ```
 
 ## `templates/admin_empiredrop.html`
 
 ```html
-{# Everything on this panel belongs to EmpireDrop. Shuffle's admin and wagers are independent. #}
-<section class="panel form-panel" aria-labelledby="empireAdminTitle">
-  <p class="eyebrow">INDEPENDENT PROVIDER · EMPIREDROP</p>
-  <h2 id="empireAdminTitle">EmpireDrop administration</h2>
-  <p>Affiliate code <strong>red</strong> · <a class="text-link" href="https://empiredrop.com/c/red" rel="noopener noreferrer sponsored" target="_blank">EmpireDrop referral link ↗</a></p>
-  <p class="small muted">Separate Top 15, separate schedule, separate stored data, and separate refresh worker. EmpireDrop does not inherit Shuffle's ranking weights, prizes or dates.</p>
-  <div class="health-grid" aria-label="EmpireDrop connection details">
-    <article class="health-card"><span class="eyebrow">CONNECTION</span><strong id="empireAdminStatus" role="status">{{ empire_admin.label }}</strong><small>{{ 'Worker active' if empire_admin.running else 'Worker not started' }}</small></article>
-    <article class="health-card"><span class="eyebrow">CONFIRMED UPDATE</span><strong id="empireAdminConfirmed">{{ fmt_et(empire_admin.updated_at) if empire_admin.updated_at else 'Not yet verified' }}</strong></article>
-    <article class="health-card"><span class="eyebrow">LAST ATTEMPT</span><strong id="empireAdminAttempted">{{ fmt_et(empire_admin.attempt_at) if empire_admin.attempt_at else 'Not attempted' }}</strong></article>
-    <article class="health-card"><span class="eyebrow">REFERRAL</span><strong>red</strong><small>{{ empire_admin.currency }} wagering totals</small></article>
-    <article class="health-card"><span class="eyebrow">CHECK STATUS</span><strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Idle' }}</strong><small>Automatic checks every 60 seconds</small></article>
+{# Shared presentation layer, independent provider behavior. #}
+{% set provider = data.providers.empiredrop %}
+<section class="panel form-panel provider-panel" aria-labelledby="empireAdminTitle">
+  {% include 'admin_provider_summary.html' %}
+  <div class="provider-actions">
+    <form method="post" action="/admin/empiredrop/refresh"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="button primary" type="submit">Request EmpireDrop refresh</button></form>
+    {% if superadmin %}<button type="button" id="testEmpireConnection" class="button" data-csrf="{{ csrf() }}">Test API connection</button>{% endif %}
+    <a class="button" href="#empireRaceDetails">Race API &amp; selection</a>
+    <a class="button" href="#empireRewards">Schedule &amp; prizes</a>
+    <a class="button" href="/admin?tab=activity">Activity &amp; logs</a>
   </div>
+  <p class="small muted">EmpireDrop automatically respects the race's cache duration. Refresh requests do not bypass the provider's cache or rate limits.</p>
   <p id="empireError" class="notice warning" role="status" {% if not empire_admin.error %}hidden{% endif %}>{{ empire_admin.error }}</p>
   {{ action_feedback('empireRefresh') }}
-  <div class="button-row">
-    <form method="post" action="/admin/empiredrop/refresh"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="button primary" type="submit">Request EmpireDrop refresh</button></form>
-    {% if superadmin %}<button type="button" id="testEmpireConnection" class="button" data-csrf="{{ csrf() }}">Test API connection (no changes)</button>{% endif %}
-  </div>
   <p id="empireTestResult" class="small muted" role="status" aria-live="polite"></p>
-  <h3>EmpireDrop Top 15 · full names (admin only)</h3>
-  <p class="small muted">These are verified provider wager totals for the EmpireDrop period below. Public usernames are always masked.</p>
-  <div class="table-scroll" tabindex="0" role="region" aria-label="Private EmpireDrop Top 15">
-    <table><thead><tr><th>Place</th><th>Player</th><th class="number">Wager total ({{ empire_admin.currency }})</th></tr></thead>
-    <tbody id="empireAdminRows">{% for row in empire_admin.rows %}<tr><td>{{ '%02d'|format(row.rank) }}</td><td>{{ row.username }}</td><td class="number">{{ row.wager }}</td></tr>{% else %}<tr><td colspan="3">No verified EmpireDrop wagers in this period.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel form-panel provider-panel" aria-labelledby="empirePlayersHeading">
+  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · PROVIDER RANKS</p><h2 id="empirePlayersHeading">Current Top 15</h2><p class="muted">Names are already anonymized by EmpireDrop. Public IDs help identify the same player between updates.</p></div><span class="tag">{{ empire_admin.private_rewards.total if empire_admin.private_rewards.enabled else 'Prizes not announced' }}</span></div>
+  <div class="field"><label for="empireAdminSearch">Find a player or public ID</label><input id="empireAdminSearch" data-provider-search="empireAdminRows" type="search" placeholder="Filter the returned rankings" autocomplete="off"><small>Search covers only positions returned by the provider.</small></div>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="EmpireDrop ranked players">
+    <table><thead><tr><th>Rank</th><th>Player (provider masked)</th><th>Public player ID</th><th class="number">{{ empire_admin.race_meta.get('metric') or 'Race total' }}</th><th class="number">Advertised prize</th></tr></thead>
+    <tbody id="empireAdminRows">{% for row in empire_admin.rows %}<tr><td class="rank">{{ row.rank }}</td><td><strong>{{ row.username }}</strong></td><td class="small">{{ row.user_id or '—' }}</td><td class="number">{{ row.wager }}</td><td class="number">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No ranked players returned. This can be normal before a race starts or after it closes.</td></tr>{% endfor %}</tbody></table>
   </div>
+  <p class="small muted">Official ranks (including ties) are preserved. Deposit races and raffles are labeled correctly; we never present their totals as wagered currency.</p>
 </section>
 <section class="panel form-panel" aria-labelledby="empireDatesTitle">
   <p class="eyebrow">EMPIREDROP ONLY</p><h2 id="empireDatesTitle">Independent race dates</h2>
-  <p>Currently selected: <strong>{{ 'Automatic Tuesday 6 PM ET weekly race' if empire_admin.schedule.mode == 'weekly' else 'Custom race dates' }}</strong>.</p>
+  <p>Local schedule: <strong>{{ 'Automatic Tuesday 6 PM Eastern' if empire_admin.schedule.mode == 'weekly' else 'Custom dates' }}</strong>.</p>
   <p class="muted">{{ empire_admin.schedule.start_et }} → {{ empire_admin.schedule.end_et }}. Daylight saving is handled automatically.</p>
   {% if superadmin %}
   {{ action_feedback('empireSchedule') }}
@@ -16815,10 +18202,42 @@ def health_view(runtime, measurements, status):
       <div class="field"><label for="empireStart">Custom start · Eastern</label><input id="empireStart" name="start_et" type="datetime-local" value="{{ empire_admin.schedule.start_input }}"></div>
       <div class="field"><label for="empireEnd">Custom end · Eastern</label><input id="empireEnd" name="end_et" type="datetime-local" value="{{ empire_admin.schedule.end_input }}"></div>
     </div>
-    <p class="small muted">Changing this window changes only EmpireDrop's visible board. Old saved data is not overwritten. Shuffle's dates remain unchanged.</p>
+    <p class="notice warning">Official partner races use the dates configured on EmpireDrop. To use the date range above, select <strong>Weekly/custom date window (deprecated endpoint)</strong> in the API section below. EmpireDrop may retire that endpoint; the website will preserve its last verified results if that happens.</p><p class="small muted">Only EmpireDrop is affected. Shuffle's dates, rankings and prize amounts stay unchanged.</p>
     <button class="button primary" type="submit">Save EmpireDrop schedule</button>
   </form>
   {% else %}<p class="small muted">Only the Superadmin may change race dates.</p>{% endif %}
+</section>
+<section class="panel form-panel" id="empireRewards" aria-labelledby="empireRewardsTitle">
+  <p class="eyebrow">INDEPENDENT · EMPIREDROP</p>
+  <h2 id="empireRewardsTitle">Weekly payouts and prize pool</h2>
+  {% set rewards = empire_admin.private_rewards %}
+  <p>Current advertised pool: <strong class="accent">{{ rewards.total if rewards.enabled else 'Not announced' }}</strong>.</p>
+  <p class="small muted">Set a local prize for each rank, just like Shuffle. These values are independent of Shuffle, are not payments, and do not change the payouts EmpireDrop shows on its own site. Ties share the configured prize for that rank.</p>
+  {% if superadmin %}
+  {{ action_feedback('empireRewards') }}
+  <form method="post" action="/admin/empiredrop/rewards" class="stack" data-dirty>
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
+    <div class="form-grid"><div class="field"><label for="empireRewardsCurrency">Prize currency</label><select id="empireRewardsCurrency" name="currency"><option value="EUR" {% if rewards.currency=='EUR' %}selected{% endif %}>EUR (€)</option><option value="USD" {% if rewards.currency=='USD' %}selected{% endif %}>USD ($)</option></select></div>
+    <div class="field"><label><input type="checkbox" name="enabled" value="yes" {% if rewards.enabled %}checked{% endif %}> Show this payout schedule publicly</label><small>Off = prizes marked “Not announced” for players.</small></div></div>
+    <div class="prize-grid">{% for n in range(1,16) %}<div class="field"><label for="empirePrize{{ n }}">Place {{ n }}</label><input id="empirePrize{{ n }}" name="prize_{{ n }}" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" required value="{{ rewards.prizes[n|string] }}"></div>{% endfor %}</div>
+    <p class="small muted">Prize pool preview: <strong id="empireRewardTotal">{{ rewards.total }}</strong> · Changes only this board.</p>
+    <button type="submit" class="button primary">Save EmpireDrop payouts</button>
+  </form>
+  {% else %}<p class="small muted">Only the Superadmin can change payout amounts.</p>{% endif %}
+</section>
+<section class="panel form-panel" id="empireBackup" aria-labelledby="empireBackupTitle">
+  <p class="eyebrow">SAFE RECOVERY · EMPIREDROP ONLY</p><h2 id="empireBackupTitle">Settings backup</h2>
+  <p class="small muted">Export or restore the EmpireDrop race slug, schedule and local prizes. This file contains no API keys or player accounts. To back up saved standings and all accounts, download a full private recovery export under Settings.</p>
+  {% if superadmin %}
+  {{ action_feedback('empireBackup') }}
+  <a class="button" href="/admin/empiredrop/settings-backup">Download EmpireDrop settings</a>
+  <form method="post" action="/admin/empiredrop/settings-restore" enctype="multipart/form-data" class="stack" data-dirty>
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
+    <div class="field"><label for="empireRestoreFile">Restore settings from JSON</label><input id="empireRestoreFile" type="file" accept=".json,application/json" name="settings_file" required></div>
+    <div class="field"><label><input type="checkbox" name="confirm" value="yes" required> Replace my current EmpireDrop schedule and payout settings</label></div>
+    <button class="button" type="submit">Restore EmpireDrop settings</button>
+  </form>
+  {% else %}<p class="small muted">Only the Superadmin can export or restore these settings.</p>{% endif %}
 </section>
 <section class="panel form-panel" aria-labelledby="empireKeysTitle">
   <p class="eyebrow">SERVER CONFIGURATION</p><h2 id="empireKeysTitle">Public and private API keys</h2>
@@ -16837,9 +18256,49 @@ def health_view(runtime, measurements, status):
   </form>
   {% else %}<p class="small muted">Credential replacement is Superadmin-only.</p>{% endif %}
 </section>
-<section class="panel form-panel" aria-labelledby="empireContractTitle">
-  <p class="eyebrow">PROVIDER CONFIRMATION REQUIRED</p><h2 id="empireContractTitle">Verified API contract</h2>
-  <p class="notice warning">EmpireDrop publicly describes its affiliate dashboard, but its authenticated wager endpoint and signature/headers were not verified. No speculative host/path is called. Enter the values given by EmpireDrop support; confirm the API authentication scheme before enabling this connection. Developer portal: <a href="https://developers.empiredrop.com/" target="_blank" rel="noopener noreferrer">developers.empiredrop.com</a>.</p>
+{# Races API: these are two specific documented GET paths, distinct from the legacy wager adapter. #}
+<section class="panel form-panel" id="empireRaceDetails" aria-labelledby="empireRacesTitle">
+  <p class="eyebrow">OFFICIAL DEVELOPER ROUTES · EMPIREDROP</p>
+  <h2 id="empireRacesTitle">Race API &amp; selection</h2>
+  <p class="small muted">OpenAPI v2.0.1: <code>GET https://api.empiredrop.com/api/v1/affiliate-partner/races</code> lists currently running races; <code>GET /api/v1/affiliate-partner/races/{slug}</code> returns ranking[]. Both use mandatory X-Public-Key and X-Private-Key headers. The old /race/affiliates/{publicKey} endpoint is deprecated.</p>
+  <div class="health-grid" aria-label="EmpireDrop race API health">
+    <article class="health-card"><span class="eyebrow">DATA SOURCE</span><strong id="empireRaceMode">{{ empire_admin.source_mode|upper }}</strong></article>
+    <article class="health-card"><span class="eyebrow">ACTIVE SLUG</span><strong id="empireRaceSlug">{{ empire_admin.race_meta.slug or 'Not discovered' }}</strong></article>
+    <article class="health-card"><span class="eyebrow">DATA WINDOW</span><strong id="empireRaceWindow">{{ 'Provider race' if empire_admin.race_configuration.race_window_policy=='provider' else 'Local schedule' }}</strong></article>
+  </div>
+  {% if superadmin %}
+  {{ action_feedback('empireRaces') }}
+  <div class="button-row">
+    <button type="button" class="button" id="empireDiscover" data-csrf="{{ csrf() }}">Discover affiliate races</button>
+    <button type="button" class="button" id="empireProbe" data-csrf="{{ csrf() }}">Inspect selected race fields</button>
+  </div>
+  <pre id="empireRaceDiagnostics" class="small muted" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto" role="status" aria-live="polite">Not tested in this session. Run discovery to see available race slugs.</pre>
+  <form method="post" action="/admin/empiredrop/races/config" class="stack" data-dirty>
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
+    {% set rc = empire_admin.race_configuration %}
+    <div class="form-grid">
+      <div class="field"><label for="empireSourceMode">Leaderboard source</label><select name="source_mode" id="empireSourceMode"><option value="races" {% if rc.source_mode=='races' %}selected{% endif %}>Official EmpireDrop race · provider-controlled dates (recommended)</option><option value="legacy_window" {% if rc.source_mode=='legacy_window' %}selected{% endif %}>Weekly/custom dates · deprecated time-range API</option><option value="legacy" {% if rc.source_mode=='legacy' %}selected{% endif %}>Old advanced adapter (compatibility only)</option></select></div>
+      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = select the only running race"><small>For a finished or scheduled race, enter its slug from your EmpireDrop dashboard.</small></div>
+      <div class="field"><label for="empireRacePolicy">Race reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Official EmpireDrop start_date / end_date (recommended)</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Require a match with local Tuesday 6 PM ET</option></select></div>
+      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is running</label></div>
+    </div>
+    <p class="small muted">Official race dates cannot be edited here. To run a different official week, create/select the corresponding race in EmpireDrop and enter its slug. Custom date windows use the documented but deprecated API; it may stop working. The API returns up to race.ranks_limit places, which may be fewer than 15.</p>
+    <button type="submit" class="button primary">Save race API connection</button>
+  </form>
+  {% else %}<p class="small muted">Race API diagnostics are available to the Superadmin only.</p>{% endif %}
+  <h3>Recent verified EmpireDrop races</h3>
+  <p class="small muted">The last four completed snapshots are retained in local JSON. The current live race is displayed above. Back up JSON state before deploying; App Platform storage is ephemeral.</p>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Completed EmpireDrop races">
+    <table><thead><tr><th>Race slug</th><th>Last confirmed update</th></tr></thead><tbody>
+    {% for item in empire_admin.race_history %}<tr><td>{{ item.race_meta.slug or 'Legacy race' }}</td><td>{{ fmt_et(item.updated_at) if item.updated_at else 'Not recorded' }}</td></tr>
+    {% else %}<tr><td colspan="2">No completed EmpireDrop snapshots saved yet.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  <p class="small muted">References: <a href="https://developers.empiredrop.com/#tag/Races/paths/~1api~1v1~1race~1affiliates~1%7BpublicKey%7D/get" target="_blank" rel="noopener noreferrer">Deprecated custom-date standings</a> · <a href="https://developers.empiredrop.com/#tag/Races/paths/~1api~1v1~1affiliate-partner~1races~1%7Bslug%7D/get" target="_blank" rel="noopener noreferrer">Race details</a>.</p>
+</section>
+<section class="panel form-panel" aria-labelledby="empireContractTitle" {% if empire_admin.race_configuration.source_mode != 'legacy' %}hidden{% endif %}>
+  <p class="eyebrow">LEGACY ADAPTER · ADVANCED ONLY</p><h2 id="empireContractTitle">Verified API contract</h2>
+  <p class="notice warning">This is an older generic adapter that is not used for official races. Prefer the documented partner-races API above. Use these settings only when you have a separately verified provider contract. Developer portal: <a href="https://developers.empiredrop.com/" target="_blank" rel="noopener noreferrer">developers.empiredrop.com</a>.</p>
   {% if superadmin %}
   {{ action_feedback('empireConfig') }}
   <form method="post" action="/admin/empiredrop/config" class="stack" data-dirty>
@@ -16862,6 +18321,7 @@ def health_view(runtime, measurements, status):
   </form>
   {% else %}<p>Only the Superadmin can update the provider API contract.</p>{% endif %}
 </section>
+
 ```
 
 ## `templates/admin_gaming.html`
@@ -16877,6 +18337,7 @@ def health_view(runtime, measurements, status):
   <details class="panel gaming-tools"><summary><span><strong>Player records &amp; reset schedule</strong><small>Identity, funding and connection information</small></span><span aria-hidden="true">+</span></summary><div class="details-content"><p id="gamingAdminReset" class="small muted">Weekly reset: {{ data.gaming.season.end_et }}.</p><p class="small muted">All eight games share each player's name and wallet. Shared Wi-Fi and VPN connections are allowed. Names are player-submitted; IPs do not verify a Shuffle account or restrict play. Full names and IPs are admin-only.</p><p class="small muted">A browser refresh sets that player's available balance to 100,000; a restart sets all saved wallets to 100,000. Funding is excluded from winnings. Pending card hands keep their committed stake. Weekly reset clears rankings.</p><p id="gamingIpWarning" class="notice warning" hidden>Visitor IP forwarding is not configured. Playing still works. On DigitalOcean App Platform set TRUST_APP_PLATFORM=1 to record each visitor's public IP accurately.</p><p class="small muted">Installed gaming release: <strong id="gamingInstalledRelease">{{ release }}</strong></p></div></details>
   <details class="panel gaming-tools" id="gamingLegacyPoker"><summary>Video Poker · legacy records</summary><div class="details-content"><p class="small muted">Previous Jacks or Better results keep their original rules and proofs.</p><p id="gamingCount-video_poker" class="small muted"></p><ol class="gaming-leaders" id="gamingLeaders-video_poker">{% for row in data.gaming.legacy_poker %}<li><strong>{{ row.name }}</strong> · {{ '{:+,}'.format(row.net) }} net RP</li>{% else %}<li class="muted">No legacy rounds this week.</li>{% endfor %}</ol></div></details>
 </section>
+
 ```
 
 ## `templates/admin_health.html`
@@ -16890,8 +18351,28 @@ def health_view(runtime, measurements, status):
     {% if item.action %}<a class="text-link small" href="{{ item.action }}">{{ 'Recovery & storage' if item.key=='storage' else 'View games' if item.key=='games' else 'Connection details' }} →</a>{% endif %}
   </article>{% endfor %}</div>
   <details class="health-measurements"><summary>Recent measurements</summary><div class="health-metrics" id="healthMetrics"></div><p class="small muted">Recent measurements on this server. Request reports contain no player names, IPs, keys or saved game seeds.</p></details>
+  <details class="operations-panel" id="adminOperations" {% if tab=='activity' %}open{% endif %}>
+    <summary><strong>Operational activity</strong> <span class="small muted">Search, filter and export recent provider events</span></summary>
+    <p class="small muted">Recorded events contain only service, time, severity, HTTP status, duration and counts. Logs are held in memory and reset after restart. They are not a permanent audit trail.</p>
+    <div class="ops-summary-grid" aria-label="Recent event totals">
+      <div><span>All events</span><strong id="opsTotalEvents">0</strong></div>
+      <div><span>Successful</span><strong id="opsTotalSuccess">0</strong></div>
+      <div><span>Informational</span><strong id="opsTotalInfo">0</strong></div>
+      <div><span>Warnings</span><strong id="opsTotalWarning">0</strong></div>
+      <div><span>Errors</span><strong id="opsTotalError">0</strong></div>
+    </div>
+    <div class="ops-filters">
+      <div class="field"><label for="opsSource">Service</label><select id="opsSource"><option value="all">All services</option><option value="shuffle">Shuffle</option><option value="empiredrop">EmpireDrop</option><option value="kick">Kick</option><option value="admin">Admin</option><option value="system">System</option><option value="storage">Storage</option></select></div>
+      <div class="field"><label for="opsLevel">Severity</label><select id="opsLevel"><option value="all">All levels</option><option value="success">Success</option><option value="info">Information</option><option value="warning">Warnings</option><option value="error">Errors</option></select></div>
+      <div class="field"><label for="opsSearch">Search visible events</label><input type="search" id="opsSearch" placeholder="Source, HTTP code or event type" autocomplete="off"></div>
+    </div>
+    <div class="button-row ops-buttons"><button type="button" class="button small" id="opsReload">Refresh activity</button><a id="opsExport" class="button small" href="/admin/operations/export">Export JSON</a><a id="opsExportTxt" class="button small" href="/admin/operations/export?format=txt">Export TXT</a></div>
+    <p id="opsMessage" class="small muted" role="status" aria-live="polite">Open this section to load recent activity.</p>
+    <div id="opsEvents" class="operations-events" role="list" aria-label="Recent operational events"></div>
+  </details>
   <p id="healthReportFeedback" class="small" role="status" hidden></p>
 </section>
+
 ```
 
 ## `templates/admin_overview.html`
@@ -16904,7 +18385,11 @@ def health_view(runtime, measurements, status):
 </section>
 <div class="admin-quick-actions" aria-label="Quick actions"><a class="button" href="/admin?tab=race">Edit race</a><a class="button" href="/admin?tab=boss">Boss controls</a><a class="button" href="/admin?tab=players">Wagerers</a><a class="button" href="/admin/gaming#gamingFunding">Give RedPoints</a>{% if superadmin %}<a class="button" href="/admin?tab=settings#recovery">Recovery</a>{% endif %}</div>
 {% if superadmin %}<aside class="recovery-reminder panel" id="recoveryReminder" {% if not data.checkpoint.changes %}hidden{% endif %}><div><strong>Recovery checkpoint needed</strong><p id="recoveryReminderDetail">{{ data.checkpoint.details }}</p></div><a class="button small" href="/admin?tab=settings#recovery">Save checkpoint →</a></aside>{% endif %}
+<section class="panel form-panel" aria-label="Leaderboard sources"><div class="section-title"><div><p class="eyebrow">BOTH PROVIDERS</p><h2>Leaderboard health</h2><p class="muted">Each platform keeps its own race, participants, and prize schedule.</p></div><a class="button small" href="/admin?tab=activity">Activity &amp; logs</a></div><div class="provider-overview-grid">{% for key in ['shuffle','empiredrop'] %}{% set provider=data.providers[key] %}<a class="provider-overview-tile" href="{{ provider.action }}"><span>{{ provider.name }}</span><span class="provider-state" data-state="{{ provider.state }}">{{ provider.status }}</span><strong>{{ provider.participants }} ranked</strong><small>Last verified: {{ fmt_et(provider.last_success) if provider.last_success else 'Not verified yet' }}</small><small>{{ provider.quality }}</small></a>{% endfor %}</div></section>
+
 {% include 'admin_gaming.html' %}
+
+
 ```
 
 ## `templates/admin_players.html`
@@ -16915,6 +18400,38 @@ def health_view(runtime, measurements, status):
 <p class="muted small">Up to {{ limit }} qualifying players are loaded. Search and export cover those loaded records. Original race ranks are retained.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Full race participants"><table><thead><tr><th>Rank</th><th>Player</th><th class="number">Effective weighted</th><th class="number">Original weighted</th><th class="number">Raw wager</th><th>Action</th></tr></thead><tbody id="participantsBody">{{ player_rows(participants) }}</tbody></table></div></section>
 <section class="panel form-panel" id="override">{{ action_feedback('override') }}<div class="section-title"><div><p class="eyebrow">A CLEAR AUDIT TRAIL</p><h2>Adjust a weighted total</h2></div></div><form action="/admin/action" method="post" class="filter-bar" data-dirty>{{ form_fields('override','players',revision) }}{{ field('username','Exact full username',request.args.get('edit','')) }}{{ field('amount','Replacement weighted total',admin.overrides.get(request.args.get('edit',''),''),help='Leave blank to remove the override.',required=false) }}<button class="button primary" type="submit">Save adjustment</button></form><p class="muted small">Raw and original weighted amounts remain available. An override changes the effective ranking amount.</p></section>
 <details class="panel form-panel code-red" id="codeRed" {% if request.args.get('code_red')=='1' %}open{% endif %}><summary><div><span class="eyebrow">CODE RED</span><h2>Community wagerers <span class="tag" id="redCount">{{ data.red|length }} / 100</span></h2></div><span class="expand-icon" aria-hidden="true">+</span></summary><div class="details-content"><p class="muted">The first 100 confirmed Code Red wagerers, sorted by weighted wager. Full usernames are visible only to administrators. Overrides do not change this source list.</p><p id="redMembership" class="muted small">{{ data.diagnostics.missing_campaign }} source rows have no campaign metadata; membership cannot be verified for those rows.</p><div class="field js-only"><label for="redSearch">Search these Code Red users</label><input id="redSearch" type="search" placeholder="Full username"></div><div class="table-scroll" tabindex="0" role="region" aria-label="Code Red wagerers"><table><thead><tr><th>#</th><th>Full username</th><th class="number">Weighted wager</th><th class="number">Raw wager</th></tr></thead><tbody id="redBody">{% for row in data.red %}<tr data-red-name="{{ row.username }}"><td>{{ loop.index }}</td><td><strong>{{ row.username }}</strong><button class="copy-button js-only" type="button" data-copy="{{ row.username }}">⧉</button></td><td class="number accent">{{ row.weighted }}</td><td class="number">{{ row.raw }}</td></tr>{% else %}<tr><td colspan="4" class="empty">No confirmed Code Red wagerers for this window.</td></tr>{% endfor %}</tbody></table></div></div></details>
+
+```
+
+## `templates/admin_provider_summary.html`
+
+```html
+{# Provider shared UI: same labels and structure, independent data and actions. #}
+<section class="provider-summary" id="{{ provider.key }}Provider" aria-label="{{ provider.name }} source health">
+  <div class="provider-summary-heading">
+    <div><p class="eyebrow">SOURCE HEALTH · {{ provider.name|upper }}</p>
+      <h2 id="{{ 'empireAdminTitle' if provider.key == 'empiredrop' else 'shuffleAdminTitle' }}">{{ provider.name }} leaderboard</h2>
+      <p class="muted small">{{ provider.scope }}</p>
+    </div>
+    <span class="provider-state" data-provider-state="{{ provider.key }}" data-state="{{ provider.state }}" {% if provider.key=='empiredrop' %}id="empireAdminStatus"{% endif %} role="status">{{ provider.status }}</span>
+  </div>
+  <div class="provider-metrics">
+    <article><span>Last verified</span><strong data-provider-field="{{ provider.key }}:last_success" {% if provider.key=='empiredrop' %}id="empireAdminConfirmed"{% endif %}>{{ fmt_et(provider.last_success) if provider.last_success else 'Not verified yet' }}</strong></article>
+    <article><span>Last attempted</span><strong data-provider-field="{{ provider.key }}:last_attempt" {% if provider.key=='empiredrop' %}id="empireAdminAttempted"{% endif %}>{{ fmt_et(provider.last_attempt) if provider.last_attempt else 'Not attempted' }}</strong></article>
+    <article><span>Ranked players</span><strong data-provider-field="{{ provider.key }}:participants">{{ provider.participants }}</strong></article>
+    <article><span>Automatic checks</span><strong data-provider-field="{{ provider.key }}:cadence">Every {{ provider.refresh_seconds }} seconds</strong></article>
+  </div>
+  {% if provider.key=='empiredrop' %}<p class="small muted">Worker: <strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Waiting for next check' }}</strong></p>{% endif %}
+  <div class="provider-quality">
+    <div><span class="eyebrow">DATA VALIDATION</span><strong data-provider-field="{{ provider.key }}:quality">{{ provider.quality }}</strong></div>
+    <div><span class="eyebrow">METRIC</span><strong data-provider-field="{{ provider.key }}:metric">{{ provider.metric }}</strong></div>
+  </div>
+  <div class="provider-issues" data-provider-issues="{{ provider.key }}" {% if not provider.issues %}hidden{% endif %}>
+    <strong>Things to check</strong>
+    <ul>{% for issue in provider.issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+  </div>
+</section>
+
 ```
 
 ## `templates/admin_race.html`
@@ -16923,12 +18440,13 @@ def health_view(runtime, measurements, status):
 <form id="raceForm" method="post" action="/admin/action" class="stack" data-dirty>{{ form_fields('save_race','race',revision) }}{{ action_feedback('raceForm') }}
 {% if confirm_race %}<input type="hidden" name="review_token" value="{{ review_token }}"><div class="notice warning"><strong>These changes are a draft. Confirm below to publish them.</strong><p>Changing the race window archives its results and resets its overrides. Changes to prizes or text keep the current race participants. Review the changes below.</p><p>The saved race stays active until you choose <strong>Confirm and publish race</strong> in the bottom save bar.</p></div>{% endif %}
 {% if change_review %}{% include "change_review.html" %}{% endif %}
-<section class="panel form-panel"><div class="section-title"><div><p class="eyebrow">THE NEXT CHAPTER</p><h2>Schedule &amp; details</h2></div><div class="button-row js-only"><button class="button small" type="button" id="startNow">Start now</button><button class="button small" type="button" id="nextRace">Prepare next race</button></div></div>
+<section class="panel form-panel"><div class="section-title"><div><p class="eyebrow">THE NEXT CHAPTER</p><h2>Schedule &amp; details</h2></div><div class="button-row js-only"><button class="button small" type="button" id="startNow">Start now</button><button class="button small" type="button" id="currentWeek">Use current week</button><button class="button small" type="button" id="nextRace">Prepare next race</button></div></div>
 <div class="form-grid">{{ field('start_et','Starts · Eastern Time',form.start_et,'datetime-local',error=errors.get('start_et','')) }}{{ field('end_et','Ends · Eastern Time',form.end_et,'datetime-local',error=errors.get('end_et','')) }}</div><p class="muted small">Eastern Time includes daylight saving. Preparing a schedule creates a draft; saving a new window requires confirmation.</p>
 <div class="form-grid">{{ field('site_name','Website name',form.site_name) }}{{ field('race_title','Race title',form.race_title) }}</div>{{ field('race_description','Short description',form.race_description,'textarea',required=false) }}</section>
 <section class="panel form-panel" id="prizes"><div class="section-title"><div><p class="eyebrow">REWARD THE CLIMB</p><h2>Placement prizes</h2></div><span class="badge" id="prizeTotal">{{ data.site.total_prize }} total</span></div><div class="prize-grid">{% for n in range(1,16) %}{{ field('prize_'~n,'Place '~n,form['prize_'~n],error=errors.get('prize_'~n,'')) }}{% endfor %}</div></section>
 <section class="panel form-panel"><h2>Channels &amp; links</h2><div class="form-grid">{% for key,label,type,required in [('kick_channel_slug','Kick channel name','text',true),('campaign_code_filter','Shuffle campaign code','text',false),('stream_url','Livestream link','url',true),('sponsor_name','Sponsor name','text',true),('sponsor_url','Sponsor link','url',true),('community_name','Community link label','text',false),('community_url','Community link','url',false),('responsible_gambling_url','Responsible play link','url',false)] %}{{ field(key,label,form[key],type,error=errors.get(key,''),required=required) }}{% endfor %}</div></section>
 <div class="save-bar"><div><strong id="saveLabel">{{ 'Confirmation required — not published' if confirm_race else 'Review your draft' if errors else 'All changes saved' }}</strong><span class="muted small">Live updates preserve your unfinished edits.</span></div><div class="button-row"><button class="button js-only" type="reset">Discard edits</button><button class="button primary" type="submit" {% if confirm_race %}name="confirm_race" value="yes"{% endif %}>{{ 'Confirm and publish race' if confirm_race else 'Save race settings' }}</button></div></div></form>
+
 ```
 
 ## `templates/admin_settings.html`
@@ -16944,26 +18462,49 @@ def health_view(runtime, measurements, status):
 <details class="panel form-panel" id="configurationDetails"><summary><h2>Connections &amp; diagnostics</h2><span aria-hidden="true">+</span></summary><div class="details-content"><div class="diagnostic-grid">{% for key,label in [('storage','Storage'),('start_et','Race starts'),('end_et','Race ends'),('received','Source records received'),('accepted','Valid race records'),('missing_campaign','Records without campaign')] %}<div><span class="muted small">{{ label }}</span><strong data-diagnostic="{{ key }}">{{ data.diagnostics[key] }}</strong></div>{% endfor %}{% for key,value in data.diagnostics.credentials.items() %}<div><span class="muted small">{{ key|replace('_',' ')|title }}</span><strong>{{ 'Configured' if value.configured else 'Missing' }}</strong><small class="muted">{{ value.source }}</small></div>{% endfor %}</div>
 {% for name in ['shuffle','kick'] %}<div class="notice"><strong>{{ name|capitalize }}</strong><p id="{{ name }}Message">{{ data.jobs[name].error or 'Waiting for first update' }}</p><small id="{{ name }}Timing" class="muted">Automatic updates every 60 seconds</small></div>{% endfor %}<a class="button" href="/admin/diagnostics">↓ Download redacted diagnostics</a><p class="muted small">The report excludes keys, password hashes, provider response bodies, and participant usernames.</p></div></details>
 <details class="panel form-panel"><summary><h2>Access controls &amp; logs</h2><span aria-hidden="true">+</span></summary><div class="details-content"><form method="post" action="/admin/action" class="filter-bar" data-confirm="Block requests from this IP address?">{{ form_fields('ban_ip','settings',revision) }}{{ field('ip','Block an IPv4 or IPv6 address') }}<button class="button danger" type="submit">Block address</button></form><div class="button-row">{% for ip in admin.banned_ips %}<form action="/admin/action" method="post">{{ form_fields('unban_ip','settings',revision) }}<input type="hidden" name="ip" value="{{ ip }}"><button class="button small" type="submit">Unblock {{ ip }}</button></form>{% endfor %}</div>{{ action_feedback('accessControls') }}<h3>Recent access</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Address</th><th>Path</th><th>Status</th></tr></thead><tbody>{% for row in access_log %}<tr><td>{{ fmt_et(row.time) }}</td><td>{{ row.ip }}</td><td>{{ row.method }} {{ row.path }}</td><td>{{ row.status }}</td></tr>{% endfor %}</tbody></table></div><form method="post" action="/admin/action" data-confirm="Clear recent access entries?">{{ form_fields('clear_access','settings',revision) }}<button class="button small" type="submit">Clear access log</button></form><h3>Administrator activity</h3><div class="table-scroll"><table><thead><tr><th>Time</th><th>Administrator</th><th>Action</th></tr></thead><tbody>{% for row in admin.audit_log|reverse %}<tr><td>{{ row.ts_et }}</td><td>{{ row.admin_user }}</td><td>{{ row.action }}</td></tr>{% endfor %}</tbody></table></div>{% if superadmin %}<form action="/admin/action" method="post" data-confirm="Clear the audit log after saving a private recovery copy?">{{ form_fields('clear_audit','settings',revision) }}<button class="button small" type="submit">Clear audit log</button></form>{% endif %}</div></details>
+
 ```
 
 ## `templates/admin_shuffle.html`
 
 ```html
-{# Shuffle controls live here; this tab does not alter EmpireDrop. #}
-<section class="panel form-panel" aria-labelledby="shuffleAdminTitle">
-  <p class="eyebrow">INDEPENDENT PROVIDER · SHUFFLE</p><h2 id="shuffleAdminTitle">Shuffle leaderboard</h2>
-  <p>Code Red · weighted wagers · 15 paid positions. These rankings use only Shuffle's feed and the existing Shuffle race rules.</p>
-  <p><strong>Connection:</strong> {{ 'Check delayed' if data.jobs.shuffle.error else 'Automatic checks enabled' }}.
-    <strong>Last successful update:</strong> {{ fmt_et(data.jobs.shuffle.last_success) }}</p>
-  <p class="muted">{{ data.leaderboard_message or data.freshness.label }}</p>
-  <form method="post" action="/admin/action">
-    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="tab" value="shuffle"><input type="hidden" name="action" value="refresh"><input type="hidden" name="service" value="shuffle">
-    <button class="button primary" type="submit">Request Shuffle refresh</button>
-    <a class="button" href="/admin?tab=players">Manage Shuffle participants</a>
-    <a class="button" href="/admin?tab=race">Shuffle race schedule &amp; prizes</a>
-  </form>
-  <p class="small muted">EmpireDrop credentials, connection status and positions are managed on their own tab.</p>
+{# The two provider tabs intentionally share admin_provider_summary.html. #}
+{% set provider = data.providers.shuffle %}
+<section class="panel form-panel provider-panel" aria-labelledby="shuffleActionsHeading">
+  {% include 'admin_provider_summary.html' %}
+  <div class="provider-actions" id="shuffleActionsHeading">
+    <form method="post" action="/admin/action" data-refresh>
+      {{ form_fields('refresh','shuffle',revision) }}<input type="hidden" name="service" value="shuffle">
+      <button class="button primary" type="submit">Request Shuffle refresh</button>
+    </form>
+    <a class="button" href="/admin?tab=race">Edit schedule &amp; prizes</a>
+    <a class="button" href="/admin?tab=players">View all participants</a>
+    <a class="button" href="/admin?tab=activity">Activity &amp; logs</a>
+  </div>
+  <p class="small muted">Shuffle refreshes independently every 60 seconds. A request queues a check; it doesn't confirm new data until the provider responds. For an expired race window or HTTP 400, use <a class="text-link" href="/admin?tab=race">Schedule &amp; prizes</a> to review the saved dates before requesting another check.</p>
+  <p class="notice warning" {% if not data.freshness.warning and not data.jobs.shuffle.error %}hidden{% endif %} role="status">{{ data.freshness.warning or 'Shuffle updates are delayed; the previous verified board is preserved.' }}</p>
 </section>
+<section class="panel form-panel provider-panel" aria-labelledby="shufflePlayersHeading">
+  <div class="section-title"><div><p class="eyebrow">SHUFFLE · VERIFIED RANKINGS</p><h2 id="shufflePlayersHeading">Current Top 15</h2><p class="muted">Full usernames and raw totals are administrator-only. Public names remain masked.</p></div><span class="tag">{{ data.site.total_prize }} prize pool</span></div>
+  <div class="field"><label for="shuffleTopSearch">Find a player</label><input type="search" id="shuffleTopSearch" data-provider-search="shuffleAdminRows" placeholder="Filter the visible Top 15" autocomplete="off"></div>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Shuffle verified top fifteen"><table><thead><tr><th>Rank</th><th>Full username</th><th class="number">Weighted</th><th class="number">Raw</th><th class="number">Advertised prize</th></tr></thead><tbody id="shuffleAdminRows">
+    {% for row in data.rows[:15] %}<tr><td class="rank">{{ row.rank }}</td><td><strong>{{ row.username }}</strong>{% if row.source=='override' %} <span class="tag">Adjusted</span>{% endif %}</td><td class="number">{{ row.wager }}</td><td class="number">{{ row.raw_wager_str }}</td><td class="number">{{ money(data.site.prizes.get(row.rank|string,0)) }}</td></tr>
+    {% else %}<tr><td colspan="5" class="empty">No verified Shuffle results for this race window.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="small muted">Shuffle's rank calculation includes the configured weighting and administrator adjustments. Open <a class="text-link" href="/admin?tab=players">Players</a> for source totals, campaign membership and edits.</p>
+</section>
+<section class="panel form-panel provider-panel" aria-labelledby="shuffleQualityHeading">
+  <div class="section-title"><div><p class="eyebrow">DATA RECONCILIATION</p><h2 id="shuffleQualityHeading">Source record checks</h2></div><a class="text-link" href="/admin/diagnostics">Download diagnostic summary</a></div>
+  <div class="provider-quality-grid">
+    <div><span>Records returned</span><strong>{{ data.diagnostics.received }}</strong></div>
+    <div><span>Records included</span><strong>{{ data.diagnostics.accepted }}</strong></div>
+    <div><span>Campaign unverified</span><strong>{{ data.diagnostics.missing_campaign }}</strong></div>
+    <div><span>Ranked players</span><strong>{{ data.count }}</strong></div>
+  </div>
+  <p class="small muted">The counts refer to source records, not necessarily distinct players. A missing campaign field does not prove referral membership; verify the scope of your Shuffle affiliate feed before using those records for payouts.</p>
+  {% if data.diagnostics.rejected %}<details class="provider-advanced"><summary>Excluded source records</summary><ul>{% for reason,number in data.diagnostics.rejected.items() %}<li>{{ reason }}: {{ number }}</li>{% endfor %}</ul></details>{% endif %}
+</section>
+
 ```
 
 ## `templates/base.html`
@@ -16984,6 +18525,7 @@ def health_view(runtime, measurements, status):
 <script src="{{ url_for('static',filename='app.js',v=asset_version) }}" defer></script>
 <script src="{{ url_for('static',filename='experience.js',v=asset_version) }}" defer></script>{% block scripts %}{% endblock %}
 </body></html>
+
 ```
 
 ## `templates/boss.html`
@@ -17174,6 +18716,7 @@ def health_view(runtime, measurements, status):
 </main>
 {% endblock %}
 {% block site_footer %}{% endblock %}
+
 ```
 
 ## `templates/change_review.html`
@@ -17184,6 +18727,7 @@ def health_view(runtime, measurements, status):
 <div class="table-scroll" tabindex="0" role="region" aria-label="Current and proposed values"><table><thead><tr><th>Setting</th><th>Current</th><th>Proposed</th></tr></thead><tbody>{% for change in change_review %}<tr><th scope="row">{{ change.label }}</th><td>{{ change.before }}</td><td class="accent">{{ change.after }}</td></tr>{% endfor %}</tbody></table></div>
 <p class="small muted">Review expires after 15 minutes. Editing a reviewed value requires a fresh preview before publishing.</p>
 </section>
+
 ```
 
 ## `templates/error.html`
@@ -17193,6 +18737,7 @@ def health_view(runtime, measurements, status):
 {% block navigation %}<a href="/">View race ↗</a>{% endblock %}
 {% block content %}<main class="shell login-wrap" id="main"><section class="panel login-panel"><p class="eyebrow">REDHUNLLEF</p><h1>{{ title }}</h1><p class="muted">{{ message }}</p><a class="button primary" href="/admin">Return to admin →</a><p class="release">{{ release }}</p></section></main>{% endblock %}
 {% block footer %}RedHunllef Wager Race{% endblock %}
+
 ```
 
 ## `templates/gaming.html`
@@ -17266,6 +18811,7 @@ def health_view(runtime, measurements, status):
 </main>
 {% endblock %}
 {% block scripts %}{% if game=='plinko' %}<script src="{{ url_for('static',filename='plinko.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='holdem-fairness.js',v=asset_version) }}" defer></script>{% if game=='poker' %}<script src="{{ url_for('static',filename='holdem-ui.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='fairness.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='gaming.js',v=asset_version) }}" defer></script>{% endblock %}
+
 ```
 
 ## `templates/gaming_fairness.html`
@@ -17297,6 +18843,7 @@ def health_view(runtime, measurements, status):
  nonce, wager, options, block_number]</code></pre><p>Use the receipt’s <code>rules_version</code>: <code>redpoints-v5</code> for new bets. Earlier v1–v4 receipts remain verifiable. Saved Blackjack and Video Poker hands finish under their original rules; the next bet uses v5. Object keys are sorted, with no spaces around separators. Block numbers start at zero. Read the HMAC digest in four-byte big-endian integers. To choose from N outcomes, reject values at or above 2³² − (2³² mod N), then use value mod N. Consume the next four bytes for the next draw; generate the next HMAC block when necessary.</p><p>Blackjack uses options <code>{"decks":6}</code>. Start with card IDs 0–311, where an ID equals deck × 52 + suit × 13 + rank − 1. Suits are spades, hearts, clubs, diamonds; ranks are A=1 through K=13. For each draw at index i, draw j uniformly from i through 311, swap those shoe positions, and consume the card at i. Replay the saved <code>actions</code> in order against this sequence. Actions are not added to the HMAC context, so changing a decision cannot reshuffle the shoe. The completed receipt includes the decisions and total stake (including Double); net winnings equal payout minus that total stake. The browser verifies the full replay after seed reveal.</p><p>Legacy Video Poker uses options <code>{"variant":"jacks_or_better"}</code> and card IDs 0–51 with the same suit/rank encoding. Partially shuffle and consume five cards first. At Draw, iterate positions 0 through 4; retain held positions and replace each other position with the next card sampled from the remaining deck. The sorted <code>holds</code> array contains positions 0–4. Holds are not part of the HMAC context, so choosing cards never reseeds or reshuffles the committed sequence.</p><p>Baccarat uses <code>{"decks":8,"side":"banker"}</code>, where the side is player, banker or tie. Use card IDs 0–415 with the same encoding; partially shuffle by sampling j from i through 415, swap, then consume i. Deal opening cards alternately and any Player third card before Banker's. The receipt includes all cards, totals and the exact payout. Its independent verifier replays the full draw tableau.</p><p>Coinflip uses options <code>{"side":"heads"}</code> or <code>{"side":"tails"}</code>. Limbo uses <code>{"target":200}</code> for a 2.00× target; its result multiplier also uses hundredths. Legacy Video Poker result multipliers use whole units; Hold’em uses pot awards and has no paytable. Keno, Plinko and Coinflip multipliers use 1/10,000 units. Receipts are versioned so each verifier uses the correct scale.</p>
 <p class="small muted">The configured package includes <code>fairness.py</code>, the independent browser implementation <code>static/fairness.js</code>, and the optional offline verifier <code>tools/verify_redpoints.py</code>. These games have their own published rules; they do not claim compatibility with another operator's receipts or payout tables.</p></section><section id="holdem" class="panel prose"><h2>Texas Hold’em · redpoints-v5</h2><p>Poker now means heads-up no-limit Texas Hold’em against RedBot, with two equal table stacks and no rake. Archived Jacks or Better hands and receipts above continue to use their original v3/v4 rules. They never become Hold’em results.</p><p>The chosen stack is reserved from the wallet. At settlement, the entire remaining table stack returns. Net is final table stack minus starting stack. Admin wagers count only matched committed chips; returned means pot awards. Uncalled chips are refunded. Equal best five-card hands split the pot; suits never break ties. The best five can use zero, one or two hole cards.</p><p>Options are <code>{"button":"player","variant":"texas_holdem"}</code> or button computer. The button alternates with settled Hold’em hands in this week, beginning with the player. Big blind is floor(stack/50), minimum 2; small blind is floor(big blind/2), minimum 1. Minimum buy-in is 20. Both seats start each hand with the same stack, limiting loss to that stack. No daily or weekly hand limit.</p><p>Use the existing HMAC stream with version redpoints-v5. Full Fisher–Yates shuffle of IDs 0–51: for i=0 through 50, sample j=i+below(52−i), then swap. Deal alternately, big blind first: deck positions 0–3 are hole cards. Burn position 4; flop is 5–7. Burn 8; turn is 9. Burn 10; river is 11. The deck never changes after betting choices. Hole cards remain hidden until showdown; the seed reveals the full deal after any completed hand, including a fold.</p><p>The button is small blind and acts first preflop; big blind acts first after the flop. There is a big-blind option after a preflop call. Opening bet minimum is the big blind; a full raise increases the highest street contribution by at least the last full raise. Smaller increases are allowed only all-in. An all-in opponent cannot face another bet. Unmatched chips return before a showdown or fold is settled.</p><p>Player decisions are recorded as action plus amount. Amount is a total street contribution for bet or raise, zero for check/call/fold/all_in. They are excluded from the shuffle context. The independent verifier reconstructs every legal action, RedBot response, revealed street, pot and final five-card evaluation. At the weekly boundary an unfinished hand folds without spending more points, recorded as weekly_reset.</p><h3>Published opponent: redbot-v1</h3><p>RedBot receives only its two cards, visible community cards, current pot, legal bet sizes, blind size, street and its own raise count. It does not receive your cards, the seed or the remaining deck. Its exact deterministic decision function is published in holdem.py and independently in static/holdem-fairness.js. It uses made-hand strength, price thresholds and an occasional deterministic bluff. Strength scores are heuristics, not claimed win probabilities. It raises at most once per street; a player can still raise legally in response.</p><p>Receipts prove that the committed deck, published opponent policy, recorded choices and accounting agree. They do not prove optimal opponent play or stop a server from refusing a request. Retain your pre-hand commitment and receipt when auditing. <a class="text-link" href="https://www.pokerstars.com/poker/games/texas-holdem/" target="_blank" rel="noopener">Texas Hold’em rules reference ↗</a></p></section></main>{% endblock %}
 {% block scripts %}<script src="{{ url_for('static',filename='holdem-fairness.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='fairness.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='receipt-verifier.js',v=asset_version) }}" defer></script>{% endblock %}
+
 ```
 
 ## `templates/history.html`
@@ -17343,6 +18890,7 @@ def health_view(runtime, measurements, status):
 </main>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='history.js', v=asset_version) }}" defer></script>{% endblock %}
+
 ```
 
 ## `templates/holdem_table.html`
@@ -17381,6 +18929,7 @@ def health_view(runtime, measurements, status):
   </div>
   <details class="holdem-log"><summary>Hand history</summary><ol id="holdemLog"></ol></details>
 </div>
+
 ```
 
 ## `templates/icons.html`
@@ -17395,6 +18944,7 @@ def health_view(runtime, measurements, status):
 {% elif name=='link' %}<path d="m9 15 6-6m-5-3 2-2a5 5 0 0 1 7 7l-2 2M7 11l-2 2a5 5 0 0 0 7 7l2-2"/>
 {% endif %}</svg>
 {%- endmacro %}
+
 ```
 
 ## `templates/index.html`
@@ -17408,9 +18958,10 @@ def health_view(runtime, measurements, status):
 <aside id="shuffleRaceClock" class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside>
 <aside id="empireRaceClock" class="race-clock panel" hidden aria-label="EmpireDrop race schedule">
   <div class="row"><span class="eyebrow">EMPIREDROP · CODE RED</span><span class="badge">Independent race</span></div>
-  <p class="clock" id="empireRaceMode">{{ 'Weekly · Tuesday 6 PM ET' if data.empiredrop.schedule.mode == 'weekly' else 'Custom race' }}</p>
+  <p class="small muted" id="empireRaceMode">{{ 'Official EmpireDrop race' if data.empiredrop.schedule.mode == 'provider' else 'Weekly · Tuesday 6 PM ET' if data.empiredrop.schedule.mode == 'weekly' else 'Custom race' }}</p>
+  <div class="clock" id="empireCountdown" aria-live="off">—</div>
   <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
-  <div class="clock-footer"><span>15 leaderboard positions</span><span>No announced prize schedule</span></div>
+  <div class="clock-footer"><span>EmpireDrop reward pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>15 places</span></div>
 </aside></section>
 
 <section class="play-invite panel" id="communityBoss" aria-labelledby="inviteTitle">
@@ -17432,20 +18983,21 @@ def health_view(runtime, measurements, status):
 <p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
 <p id="networkError" class="notice warning" role="status" hidden></p>
-<div class="podium">{% for n in [2,1,3] %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<article class="podium-card place-{{ n }}" data-rank="{{ n }}"><div class="podium-top"><span class="placement">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span><span class="podium-symbol" aria-hidden="true">{{ '♜' if n==1 else '✦' }}</span></div><strong class="podium-name" data-name>{{ r.username if r else 'Open position' }}</strong><div class="podium-values"><div><small>WEIGHTED WAGER</small><strong data-wager>{{ r.wager if r else '$0.00' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-prize>{{ money(data.site.prizes[n|string]) }}</strong></div></div></article>{% endfor %}</div>
+<div class="podium">{% for n in [2,1,3] %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<article class="podium-card place-{{ n }}" data-rank="{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span><span class="podium-symbol" aria-hidden="true">{{ '♜' if n==1 else '✦' }}</span></div><strong class="podium-name" data-name>{{ r.username if r else 'Open position' }}</strong><div class="podium-values"><div><small>WEIGHTED WAGER</small><strong data-wager>{{ r.wager if r else '$0.00' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-prize>{{ money(data.site.prizes[n|string]) }}</strong></div></div></article>{% endfor %}</div>
 <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="Leaderboard places four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Weighted wager</th><th class="number">Prize</th></tr></thead><tbody>{% for n in range(4,16) %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<tr data-rank="{{ n }}"><td class="rank">{{ '%02d'|format(n) }}</td><td><strong data-name>{{ r.username if r else 'Open position' }}</strong></td><td class="number" data-wager>{{ r.wager if r else '$0.00' }}</td><td class="number accent" data-prize>{{ money(data.site.prizes[n|string]) }}</td></tr>{% endfor %}</tbody></table></div>
 <div class="leaderboard-foot"><span>Usernames protected · weighted affiliate data</span><span>Automatic updates every 60 seconds</span></div>
 <details class="panel explanation"><summary>How weighted wagers are counted <span aria-hidden="true">+</span></summary><div class="weighting-grid">{% for rule in weighting %}<div><strong>{{ rule.range }}</strong><p>{{ rule.counts }}</p></div>{% endfor %}</div><p class="muted small">Rankings cover the saved race window. Results and prizes may be reviewed or adjusted. Independently operated; not affiliated with Shuffle.com.</p></details>
 </div>
 <div id="empireBoard" role="tabpanel" aria-labelledby="empireTab" hidden>
   <div class="section-title"><div><p class="eyebrow">EMPIREDROP · CODE RED</p><h3>EmpireDrop leaderboard<span class="accent">.</span></h3></div><a class="button" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">Join with code Red ↗</a></div>
-  <p class="small muted">Separate EmpireDrop wagers. Shuffle rankings and prize amounts do not transfer to this board.</p>
-  <p id="empireMessage" class="notice" role="status">{{ data.empiredrop.label }}</p>
+  <p class="small muted">Each site has its own race, standings, and prizes.</p>
+  <p id="empireMessage" class="notice" role="status">{{ data.empiredrop.label }}</p><p id="empirePrizeNote" class="small muted">Prize amounts are set by the site administrator. A listed prize is not a payment confirmation. Tied players share the prize assigned to their rank.</p>
   <div class="empire-podium podium" id="empirePodium" aria-label="EmpireDrop top three">
-  {% for n in [2,1,3] %}<article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">Open position</strong><div class="podium-values"><div><small>EMPIREDROP WAGER</small><strong data-empire-wager="{{ n }}">—</strong></div></div></article>{% endfor %}
+  {% for n in [2,1,3] %}<article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">Open position</strong><div class="podium-values"><div><small><span data-empire-metric>EMPIREDROP WAGER</span></small><strong data-empire-wager="{{ n }}">—</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ data.empiredrop.prizes.formatted[n|string] if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></div></div></article>{% endfor %}
   </div>
-  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">EmpireDrop wager</th></tr></thead><tbody id="empireRows">{% for n in range(4,16) %}<tr><td class="rank">{{ '%02d'|format(n) }}</td><td data-empire-row-name="{{ n }}">Open position</td><td class="number" data-empire-row-wager="{{ n }}">—</td></tr>{% endfor %}</tbody></table></div>
-  <p class="leaderboard-foot">Usernames protected · updates every 60 seconds · <span id="empireChecked">Waiting for a confirmed update</span></p>
+  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,16) %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</td><td data-empire-row-name="{{ n }}">Open position</td><td class="number" data-empire-row-wager="{{ n }}">—</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ data.empiredrop.prizes.formatted[n|string] if data.empiredrop.prizes.enabled else 'Not announced' }}</td></tr>{% endfor %}</tbody></table></div>
+  <p class="leaderboard-foot">Names masked · updates follow EmpireDrop's API cache · <span id="empireChecked">Waiting for a confirmed update</span></p>
+  <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><p class="small muted">Saved snapshots from this server, not official payout confirmations. Four completed races maximum.</p><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
 </div>
 <noscript><p class="notice">Live screen updates require JavaScript. Reload to see the latest saved results.</p></noscript>
 </section></main>
@@ -17453,6 +19005,7 @@ def health_view(runtime, measurements, status):
 
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='empiredrop.css',v=asset_version) }}">{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='empiredrop.js',v=asset_version) }}" defer></script><script src="{{ url_for('static', filename='homepage.js', v=asset_version) }}" defer></script>{% endblock %}
+
 ```
 
 ## `templates/login.html`
@@ -17464,6 +19017,7 @@ def health_view(runtime, measurements, status):
 {% if error %}<p class="notice warning" role="alert">{{ error }}</p>{% endif %}
 <form action="{{ url_for('login') }}" method="post" class="stack"><input type="hidden" name="csrf" value="{{ csrf() }}"><div class="field"><label for="username">Username</label><input id="username" name="username" autocomplete="username" required autofocus maxlength="64"></div><div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"></div><button class="button primary" type="submit">Sign in <span aria-hidden="true">→</span></button></form><p class="muted small">Administration only. Public visitors do not need an account.</p><span class="release">{{ release }}</span></section></main>{% endblock %}
 {% block footer %}Private administration{% endblock %}
+
 ```
 
 ## `templates/macros.html`
@@ -17481,6 +19035,7 @@ def health_view(runtime, measurements, status):
 {% macro action_feedback(target) -%}
 {% if admin_receipt and admin_receipt.target==target %}<p id="feedback-{{ target }}" class="notice success form-feedback saved-receipt" role="status" tabindex="-1"><strong>Saved.</strong> {{ admin_receipt.message }} <small>{{ fmt_et(admin_receipt.at) }}</small></p>{% endif %}
 {%- endmacro %}
+
 ```
 
 ## `templates/recovery_panel.html`
@@ -17495,8107 +19050,12 @@ def health_view(runtime, measurements, status):
 <form method="post" action="/admin/recovery-preview" enctype="multipart/form-data" class="filter-bar"><input type="hidden" name="csrf" value="{{ csrf() }}"><div class="field grow"><label for="recoveryFile">Private recovery JSON</label><input id="recoveryFile" name="recovery" type="file" accept=".json,application/json" required></div><button type="submit" class="button">Review recovery file</button></form>
 {% if recovery_review %}<div class="recovery-review"><h3>Validated recovery file</h3><dl><dt>Race dates</dt><dd>{{ recovery_review.start }} → {{ recovery_review.end }}</dd><dt>Accounts</dt><dd>{{ recovery_review.accounts }} administrators</dd><dt>Race data</dt><dd>{{ recovery_review.rows }} saved places · {{ recovery_review.overrides }} overrides · {{ recovery_review.history }} archived races</dd><dt>Community boss</dt><dd>{% if recovery_review.game %}{{ '{:,}'.format(recovery_review.game.hp) }} / {{ '{:,}'.format(recovery_review.game.max_hp) }} HP · {{ recovery_review.game.raiders }} raiders · {{ recovery_review.game.attacks }} hits{% else %}No boss record; a fresh raid will be created on a new instance.{% endif %}</dd><dt>RedPoints</dt><dd>{{ recovery_review.redpoints }} saved wallets, including fairness seeds and recent receipts</dd><dt>Boss avatar</dt><dd>{{ 'Custom image included' if recovery_review.avatar else 'Original logo' }}</dd></dl>{% if recovery_review.comparison %}{% set c=recovery_review.comparison %}<h3>Compared with the current save</h3><div class="table-scroll"><table><thead><tr><th>Record</th><th>Current</th><th>Recovery file</th></tr></thead><tbody><tr><td>Administrator accounts</td><td>{{ c.accounts_before }}</td><td>{{ recovery_review.accounts }}</td></tr><tr><td>Player wallets</td><td>{{ c.wallets_before }}</td><td>{{ recovery_review.redpoints }}</td></tr><tr><td>Unfinished hands</td><td>{{ c.pending_before }}</td><td>{{ c.pending_after }}</td></tr></tbody></table></div><p>{{ c.wallets_added }} wallets added · {{ c.wallets_changed }} changed · {{ c.wallets_removed }} absent from this file.</p><p>{{ c.accounts_changed }} existing account records differ.{% if c.accounts_added %} Added: {{ c.accounts_added|join(', ') }}.{% endif %}{% if c.accounts_removed %} Absent: {{ c.accounts_removed|join(', ') }}.{% endif %}</p>{% endif %}<p class="small muted">This review changes nothing. To restore on a fresh deployment, place this file in <code>private/recovery.seed.json</code>. Use the separate race-backup restore form for replacing only a live race.</p></div>{% endif %}
 </details></section>
-```
 
-## `tests/assert_visual_pixels.py`
-
-```python
-"""Check actual rendered red fill, rather than only a progress element's value."""
-import json
-from pathlib import Path
-import sys
-from PIL import Image
-
-folder = Path(sys.argv[1])
-for case in json.loads((folder/'progress-measurements.json').read_text(encoding='utf-8')):
-    image = Image.open(folder/case['file']).convert('RGB')
-    box = case['bar']
-    left, width = round(box['x']), round(box['width'])
-    middle = round(box['y']+box['height']/2)
-    red = 0
-    for x in range(left, left+width):
-        r, g, b = image.getpixel((x, middle))
-        red += r > 100 and r > g*1.4
-    actual = red/width*100
-    expected = 100-case['percent']  # Scenario percent is damage dealt; label and red fill are HP remaining.
-    assert abs(actual-expected) < 2, (case['file'], actual, expected)
-print('Eight desktop/mobile screenshots match decreasing HP fill: 100%, 75%, 25%, 0%.')
-```
-
-## `tests/clarity_motion.cjs`
-
-```javascript
-/* Browser checks for task-specific edits, stable details, and the depleting bar. */
-const { chromium } = require("playwright"),
-  { spawn } = require("node:child_process");
-const assert = require("node:assert/strict"),
-  path = require("node:path"),
-  fs = require("node:fs");
-(async () => {
-  const server = spawn(process.env.RH_TEST_PYTHON || "python3", [
-    path.join(__dirname, "serve_gui_fixture.py"),
-  ]);
-  let out = "",
-    browser;
-  server.stdout.on("data", (c) => (out += c));
-  server.stderr.on("data", (c) => process.stderr.write(c));
-  const folder = process.env.RH_SCREENSHOTS || require("node:os").tmpdir();
-  fs.mkdirSync(folder, { recursive: true });
-  try {
-    for (let n = 0; n < 100 && !out.includes("\n"); n++)
-      await new Promise((r) => setTimeout(r, 50));
-    const base = "http://127.0.0.1:" + JSON.parse(out.split("\n")[0]).port;
-    browser = await chromium.launch({
-      headless: true,
-      executablePath: process.env.RH_CHROMIUM || undefined,
-      args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-    });
-    const ctx = await browser.newContext({
-        viewport: { width: 1440, height: 1000 },
-        reducedMotion: "reduce",
-      }),
-      page = await ctx.newPage(),
-      errors = [];
-    page.on("pageerror", (e) => errors.push(e.message));
-    page.setDefaultTimeout(10000);
-    for (const percent of [0, 25, 75, 100]) {
-      await ctx.request.post(base + "/__fixture__/progress/" + percent);
-      await page.goto(base + "/");
-      assert.equal(
-        await page
-          .locator("#inviteHealth")
-          .evaluate((n) => (100 * n.value) / n.max),
-        100 - percent,
-      );
-      assert.equal(
-        await page.locator("#invitePercent").textContent(),
-        (100 - percent).toFixed(2) + "% remaining",
-      );
-    }
-    await ctx.request.post(base + "/__fixture__/progress/25");
-    await page.goto(base + "/");
-    await page.evaluate(() => { document.activeElement?.blur(); scrollTo({top:0,behavior:"instant"}); });
-    await page.screenshot({
-      path: path.join(folder, "home-desktop.png"),
-      fullPage: true,
-    });
-    await page.goto(base + "/play");
-    await page.locator("#playerUsername").fill("Clarity Player");
-    await page.locator("#playerNameForm button[type=submit]").first().click();
-    await page.locator("#playerIdentity").waitFor();
-    await page.locator("#attackButton").click();
-    await page.locator("#hitResult").filter({ hasText: "hit for" }).waitFor();
-    assert.match(
-      await page.locator("#attackButton").textContent(),
-      /Next attack/,
-    );
-    await page.reload();
-    assert.equal(
-      await page.locator("#playingAs").textContent(),
-      "Clarity Player",
-    );
-    await page.goto(base + "/gaming");
-    assert.equal(
-      await page.locator("#gamingUsername").inputValue(),
-      "Clarity Player",
-    );
-    await page.locator("#gamingNameForm button").click();
-    await page.locator("#gamingIdentity").waitFor();
-    assert.equal(
-      await page.locator("#gamingPlayerName").textContent(),
-      "Clarity Player",
-    );
-    await page
-      .locator("#gamingIdentity a")
-      .filter({ hasText: "Edit name" })
-      .click();
-    await page.locator("#playerNameForm").waitFor();
-    await page.goto(base + "/admin");
-    await page.locator("#username").fill("gingrsnaps");
-    await page.locator("#password").fill("visual-fixture-password");
-    await page.locator("form button[type=submit]").click();
-    await page.locator("#gamingAdmin").waitFor();
-    assert.equal(
-      await page.locator("#diagnostics").evaluate((n) => n.open),
-      false,
-    );
-    await page.evaluate(() => { document.activeElement?.blur(); scrollTo({top:0,behavior:"instant"}); });
-    await page.screenshot({
-      path: path.join(folder, "overview-desktop.png"),
-      fullPage: true,
-    });
-    await page.goto(base + "/admin?tab=boss");
-    await page.locator("#bossNameForm").waitFor();
-    const before = (
-      await (await ctx.request.get(base + "/admin/boss/status")).json()
-    ).state;
-    await page.locator("#bossNameInput").fill("Ruby Clarity");
-    await page.locator("#bossNameForm button").click();
-    await page.locator("#feedback-bossNameHeading").waitFor();
-    let after = (
-      await (await ctx.request.get(base + "/admin/boss/status")).json()
-    ).state;
-    assert.equal(after.name, "Ruby Clarity");
-    assert.equal(after.hp, before.hp);
-    assert.equal(after.rules.damage, before.rules.damage);
-    await page.locator("#bossBaseDamage").fill("777");
-    await page.locator("#bossSettingsForm button").click();
-    await page.locator("#feedback-bossSettingsHeading").waitFor();
-    after = (await (await ctx.request.get(base + "/admin/boss/status")).json())
-      .state;
-    assert.equal(after.rules.damage, 777);
-    assert.equal(after.name, "Ruby Clarity");
-    assert.equal(after.hp, before.hp);
-    // A background state response must not overwrite an in-progress form.
-    await page.locator("#bossBaseDamage").fill("888");
-    await page.waitForTimeout(5300);
-    assert.equal(await page.locator("#bossBaseDamage").inputValue(), "888");
-    await page.locator("#bossBaseDamage").fill("777");
-    await page.locator("#bossNameInput").fill("Preview only");
-    await page.locator(".boss-home-preview summary").click();
-    assert.equal(
-      await page.locator("#bossPreviewName").textContent(),
-      "Preview only",
-    );
-    assert.equal(
-      (await (await ctx.request.get(base + "/admin/boss/status")).json()).state
-        .name,
-      "Ruby Clarity",
-    );
-    await page.locator("#bossNameInput").fill("Ruby Clarity");
-    await page.evaluate(() => { document.activeElement?.blur(); scrollTo({top:0,behavior:"instant"}); });
-    await page.screenshot({
-      path: path.join(folder, "boss-controls-desktop.png"),
-      fullPage: true,
-    });
-    for (const width of [320, 390]) {
-      await page.setViewportSize({ width, height: 844 });
-      for (const route of [
-        "/admin?tab=boss",
-        "/admin/gaming",
-        "/admin",
-        "/play",
-      ]) {
-        await page.goto(base + route);
-        if (!await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)) {
-          console.log(JSON.stringify(await page.evaluate(() => [...document.querySelectorAll('main *')].filter(n => n.getBoundingClientRect().right > innerWidth+1).map(n => ({tag:n.tagName,id:n.id,cls:n.className,right:n.getBoundingClientRect().right})).slice(0,24))));
-          await page.evaluate(() => { document.activeElement?.blur(); scrollTo({top:0,behavior:"instant"}); });
-    await page.screenshot({path:path.join(folder,'overflow.png'),fullPage:true});
-        }
-        assert.equal(
-          await page.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-          true,
-          route + " " + width,
-        );
-      }
-    }
-    await page.goto(base + "/admin?tab=boss");
-    await page.evaluate(() => { document.activeElement?.blur(); scrollTo({top:0,behavior:"instant"}); });
-    await page.screenshot({
-      path: path.join(folder, "boss-controls-mobile.png"),
-      fullPage: true,
-    });
-    await page.goto(base + "/admin");
-    await page.evaluate(() => { document.activeElement?.blur(); scrollTo({top:0,behavior:"instant"}); });
-    await page.screenshot({
-      path: path.join(folder, "overview-mobile.png"),
-      fullPage: true,
-    });
-    await page.goto(base + "/admin/gaming#gamingFunding");
-    assert.equal(
-      await page.locator("#gamingFunding").evaluate((n) => n.open),
-      true,
-    );
-    await page.locator("#grantGamingButton").click();
-    await page
-      .locator("#gamingGrantMessage")
-      .filter({ hasText: /Granted.*100,000/ })
-      .waitFor();
-    assert.deepEqual(errors, []);
-    console.log(
-      JSON.stringify({
-        depleting_hp: true,
-        name_saved_across_pages: true,
-        separate_admin_saves: true,
-        polls_keep_drafts: true,
-        local_preview_only: true,
-        mobile_no_overflow: true,
-        deep_link_and_points_grant: true,
-        browser_errors: errors,
-      }),
-    );
-  } finally {
-    if (browser) await browser.close();
-    server.kill("SIGTERM");
-  }
-})().catch((e) => {
-  console.error(e);
-  process.exitCode = 1;
-});
-```
-
-## `tests/experience_motion.cjs`
-
-```javascript
-/* Real browser checks for the shared experience. Uses disposable local data. */
-const { chromium } = require("playwright");
-const { spawn } = require("node:child_process");
-const assert = require("node:assert/strict"),
-  path = require("node:path"),
-  fs = require("node:fs");
-const dir = process.env.RH_SCREENSHOTS || require("node:os").tmpdir();
-fs.mkdirSync(dir, { recursive: true });
-(async () => {
-  const server = spawn(process.env.RH_TEST_PYTHON || "python3", [
-    path.join(__dirname, "serve_gui_fixture.py"),
-  ]);
-  let out = "",
-    browser;
-  server.stdout.on("data", (chunk) => (out += chunk));
-  server.stderr.on("data", (chunk) => process.stderr.write(chunk));
-  try {
-    for (let n = 0; n < 100 && !out.includes("\n"); n++)
-      await new Promise((r) => setTimeout(r, 50));
-    const base = "http://127.0.0.1:" + JSON.parse(out.split("\n")[0]).port;
-    browser = await chromium.launch({
-      executablePath: process.env.RH_CHROMIUM || undefined,
-      headless: true,
-      args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-    });
-    const ctx = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-      reducedMotion: "reduce",
-      permissions: ["clipboard-read", "clipboard-write"],
-    });
-    const page = await ctx.newPage(),
-      errors = [];
-    page.on("pageerror", (error) => errors.push(error.message));
-    page.setDefaultTimeout(12000);
-    await page.goto(base + "/");
-    for (const name of [
-      "Leaderboard",
-      "History",
-      "Boss fight",
-      "Gaming",
-      "Points Shop",
-      "Red Community",
-      "Watch on Kick",
-    ])
-      assert.equal(
-        await page
-          .locator(".site-header a")
-          .filter({ hasText: name })
-          .isVisible(),
-        true,
-        name,
-      );
-    const first = await page.locator("#leaderboard").boundingBox(),
-      boss = await page.locator(".play-invite").boundingBox();
-    assert.ok(boss.y < first.y, "Community boss above standings");
-    for (const width of [320, 390, 768, 1440]) {
-      await page.setViewportSize({ width, height: 900 });
-      await page.goto(base + "/");
-      assert.equal(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-        true,
-        "home " + width,
-      );
-    }
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(base + "/gaming/coinflip");
-    await page.locator("#gamingUsername").fill("Experience Player");
-    await page.locator("#gamingNameForm button").click();
-    await page.locator("#gamingIdentity").waitFor();
-    for (let n = 0; n < 7; n++) {
-      await page.locator("#betButton").click();
-      await page.locator("#betProof").filter({ hasText: "Verified" }).waitFor();
-      await page.waitForFunction(
-        () => !document.querySelector("#betButton").disabled,
-      );
-    }
-    await page.goto(base + "/gaming");
-    assert.equal(await page.locator("#betHistory tr:visible").count(), 5);
-    await page.locator("#historyToggle").click();
-    assert.equal(await page.locator("#betHistory tr:visible").count(), 7);
-    await page.locator("#betHistory button").first().focus();
-    await page.waitForTimeout(5300);
-    assert.equal(
-      await page.evaluate(
-        () =>
-          document.activeElement?.dataset.receipt ===
-          document.querySelector("#betHistory button").dataset.receipt,
-      ),
-      true,
-      "poll retains receipt focus",
-    );
-    await page.locator("#gameSelect").selectOption("/gaming/poker");
-    await page.waitForURL("**/gaming/poker");
-    await page.locator("#betButton").click();
-    await page.locator("#holdemControls").waitFor();
-    await page.waitForFunction(
-      () => !document.querySelector("#holdemRaise").disabled,
-    );
-    await page.locator("#holdemRaise").fill("80");
-    await page.waitForTimeout(5300);
-    assert.equal(
-      await page.locator("#holdemRaise").inputValue(),
-      "80",
-      "poll retains raise draft",
-    );
-    assert.equal(await page.locator("#pointsInPlay").textContent(), "1,000");
-    assert.equal(await page.locator("#betForm").isHidden(), true);
-    await page.evaluate(() => {
-      document.activeElement?.blur();
-      scrollTo({ top: 0, behavior: "instant" });
-    });
-    await page.screenshot({
-      path: path.join(dir, "polish-holdem-mobile.png"),
-      fullPage: true,
-    });
-    await page.goto(base + "/admin");
-    await page.locator("#username").fill("gingrsnaps");
-    await page.locator("#password").fill("visual-fixture-password");
-    await page.locator("form button[type=submit]").click();
-    await page.locator("#gamingAdmin").waitFor();
-    assert.equal(
-      await page.locator("#diagnostics").evaluate((node) => node.open),
-      false,
-    );
-    await page.locator('a[href="#diagnostics"]').click();
-    await page.locator("#systemHealth").waitFor();
-    assert.equal(await page.locator("[data-health-card]").count(), 5);
-    await page.locator("#copyHealthReport").click();
-    await page
-      .locator("#healthReportFeedback")
-      .filter({ hasText: "copied" })
-      .waitFor();
-    const report = JSON.parse(
-      await page.evaluate(() => navigator.clipboard.readText()),
-    );
-    assert.equal(report.ready, true);
-    assert.ok(!JSON.stringify(report).includes("Experience Player"));
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
-    await page.screenshot({
-      path: path.join(dir, "polish-admin-desktop.png"),
-      fullPage: true,
-    });
-    await page.setViewportSize({ width: 390, height: 844 });
-    assert.equal(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-      true,
-      "admin mobile",
-    );
-    await page.screenshot({
-      path: path.join(dir, "polish-admin-mobile.png"),
-      fullPage: true,
-    });
-    // Capture laboratory loading data, not a claim about real-user p75 INP.
-    const lab = await browser.newContext({
-        viewport: { width: 390, height: 844 },
-      }),
-      sample = await lab.newPage(),
-      cdp = await lab.newCDPSession(sample),
-      measurements = [];
-    await cdp.send("Network.enable");
-    await cdp.send("Network.emulateNetworkConditions", {
-      offline: false,
-      latency: 150,
-      downloadThroughput: 200000,
-      uploadThroughput: 80000,
-    });
-    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-    await sample.addInitScript(() => {
-      globalThis.lab = { lcp_ms: 0, cls: 0 };
-      new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) lab.lcp_ms = entry.startTime;
-      }).observe({ type: "largest-contentful-paint", buffered: true });
-      new PerformanceObserver((list) => {
-        for (const entry of list.getEntries())
-          if (!entry.hadRecentInput) lab.cls += entry.value;
-      }).observe({ type: "layout-shift", buffered: true });
-    });
-    for (const route of ["/", "/gaming", "/gaming/dice", "/play", "/history"]) {
-      await cdp.send("Network.clearBrowserCache");
-      await sample.goto(base + route);
-      await sample.waitForTimeout(1400);
-      const value = await sample.evaluate(() => ({
-        ...lab,
-        bytes: performance
-          .getEntriesByType("resource")
-          .reduce((total, item) => total + item.transferSize, 0),
-      }));
-      measurements.push({ route, ...value });
-      assert.equal(
-        await sample.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-        true,
-        route + " overflow",
-      );
-      if (route === "/" || route === "/play" || route === "/history")
-        await sample.screenshot({
-          path: path.join(
-            dir,
-            "polish-" +
-              (route === "/" ? "home" : route.slice(1)) +
-              "-mobile.png",
-          ),
-          fullPage: true,
-        });
-    }
-    fs.writeFileSync(
-      path.join(dir, "loading-measurements.json"),
-      JSON.stringify(
-        {
-          environment:
-            "Chromium, 390px, CPU 4x slowdown, 150ms latency, 200KB/s download; one cold sample per page",
-          measurements,
-        },
-        null,
-        2,
-      ),
-    );
-    assert.deepEqual(errors, []);
-    console.log(
-      JSON.stringify({
-        mobile_header_complete: true,
-        boss_first: true,
-        history_preview_and_focus: true,
-        pending_raise_preserved: true,
-        private_health_report: true,
-        overflow: false,
-        page_errors: errors,
-        lab: measurements,
-      }),
-    );
-    await ctx.close();
-    await lab.close();
-  } finally {
-    if (browser) await browser.close();
-    server.kill("SIGTERM");
-  }
-})().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
-```
-
-## `tests/gaming_motion.cjs`
-
-```javascript
-const {chromium}=require('playwright');
-const {spawn}=require('node:child_process'),assert=require('node:assert/strict');
-const path=require('node:path'),fs=require('node:fs');
-const root=path.resolve(__dirname,'..'),dir=process.env.RH_SCREENSHOTS||require('node:os').tmpdir();
-fs.mkdirSync(dir,{recursive:true});
-(async()=>{
- const server=spawn(process.env.RH_TEST_PYTHON||'python3',[path.join(__dirname,'serve_gaming_motion_fixture.py')]);let out='',browser;
- server.stdout.on('data',b=>out+=b);server.stderr.on('data',b=>process.stderr.write(b));
- try{
-  for(let n=0;n<100&&!out.includes('\n');n++)await new Promise(r=>setTimeout(r,50));
-  const base='http://127.0.0.1:'+JSON.parse(out.split('\n')[0]).port;
-  browser=await chromium.launch({executablePath:process.env.RH_CHROMIUM||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu'],headless:true,timeout:15000});
-  const ctx=await browser.newContext({viewport:{width:390,height:844},extraHTTPHeaders:{'DO-Connecting-IP':'198.51.100.88'}}),p=await ctx.newPage(),errors=[];
-  p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(12000);
-  await p.goto(base+'/gaming');assert.equal(await p.locator('.game-cards>a').count(),8);
-  await p.locator('#gamingUsername').fill('EightGamePlayer');await p.locator('#gamingNameForm button').click();await p.locator('#gamingIdentity').waitFor();
-  async function bet(){const wait=p.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));await p.locator('#betButton').click();const response=await wait,v=await response.json();assert.equal(response.status(),200,JSON.stringify(v));await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');return v;}
-  async function state(){return (await(await ctx.request.get(base+'/gaming/api/state')).json()).wallet;}
-  for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','baccarat']){
-   await p.goto(base+'/gaming/'+game);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,game+' mobile overflow');
-   if(game==='dice'){
-    const slider=p.locator('#diceBoardChance');await slider.scrollIntoViewIfNeeded();const box=await slider.boundingBox();
-    await p.mouse.move(box.x+box.width*.5,box.y+box.height/2);await p.mouse.down();
-    await p.mouse.move(box.x+box.width*.7,box.y+box.height/2,{steps:8});await p.mouse.up();
-    const chance=Number(await p.locator('#diceChance').inputValue());assert.ok(chance>60&&chance<80);
-    assert.match(await p.locator('#diceChanceLabel').textContent(),new RegExp(String(chance)));
-   }
-   if(game==='keno')await p.locator('#kenoAuto').click();
-   if(game==='limbo'){await p.locator('#limboTarget').fill('2.50');assert.match(await p.locator('#limboPayout').textContent(),/250 points/);}
-   if(game==='coinflip'){await p.locator('.coin-options label').nth(1).click();assert.equal(await p.locator('[name=coinSide][value=tails]').isChecked(),true);}
-   let navigations=0;
-   const navigation=frame=>{if(frame===p.mainFrame())navigations++;};p.on('framenavigated',navigation);
-   const watching=p.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));
-   await p.locator('#betButton').click();const response=await watching;
-   let result=await response.json();assert.equal(response.status(),200,JSON.stringify(result));
-   if(result.receipt){
-    await p.waitForFunction(()=>Boolean(document.querySelector('.gaming-page').dataset.animating));
-    assert.equal(await p.locator('#betProof').textContent(),'','proof appears after motion');
-    if(game==='keno'){
-      await p.waitForFunction(()=>document.querySelectorAll('[data-keno].drawn').length>0);
-      assert.ok(await p.locator('[data-keno].drawn').count()<10,'numbers reveal in order');
-    }
-    if(game==='baccarat'){
-      await p.waitForFunction(()=>document.querySelectorAll('.baccarat-hand [data-card]').length>0);
-      assert.ok(await p.locator('.baccarat-hand [data-card]').count()<result.receipt.result.player.length+result.receipt.result.banker.length,'cards deal in sequence');
-    }
-   }
-   await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');
-   if(result.wallet.blackjack){const wait=p.waitForResponse(r=>r.url().endsWith('/gaming/api/blackjack/action'));await p.locator('[data-blackjack=stand]').click();result=await(await wait).json();}
-   await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-   assert.equal(navigations,0,game+' must not navigate on play');p.off('framenavigated',navigation);
-   if(game==='baccarat'){
-    const r=result.receipt.result;
-    for(const side of ['player','banker']){
-     const label=side[0].toUpperCase()+side.slice(1);
-     assert.deepEqual(await p.locator('#baccarat'+label+' [data-card]').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.card))),r[side]);
-     assert.equal(await p.locator('#baccarat'+label+'Total').textContent(),String(r[side+'_total']));
-    }
-    await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/baccarat-mobile.png',fullPage:true});
-   }
-   if(game==='limbo'){await p.waitForTimeout(1100);assert.equal(await p.locator('#limboResult').textContent(),(result.receipt.result.multiplier/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'×');await p.screenshot({path:dir+'/limbo-mobile.png',fullPage:true});}
-   if(game==='coinflip'){await p.waitForTimeout(1100);assert.equal(await p.locator('#redCoin').getAttribute('aria-label'),result.receipt.result.side==='heads'?'Heads':'Tails');await p.screenshot({path:dir+'/coinflip-mobile.png',fullPage:true});}
-  }
-  // Keep overlapping drops distinct and alive when the canvas is resized.
-  await p.goto(base+'/gaming/plinko');let last;
-  for(let n=0;n<3;n++)last=await bet();
-  await p.setViewportSize({width:430,height:900});
-  await p.waitForFunction(n=>document.getElementById('betProof').textContent===`Verified · #${n}`,last.receipt.nonce);
-  assert.match(await p.locator('#plinkoResult').textContent(),new RegExp('Slot '+last.receipt.result.slot));
-  await p.setViewportSize({width:390,height:844});
-  // Hidden-tab completion cannot strand a verified round or keep Play locked.
-  await p.goto(base+'/gaming/baccarat');
-  const hiddenBet=p.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));await p.locator('#betButton').click();
-  const hiddenResult=await(await hiddenBet).json();
-  await p.waitForFunction(()=>document.querySelector('.gaming-page').dataset.animating==='baccarat');
-  await p.evaluate(()=>{Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'));});
-  await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-  assert.equal(await p.locator('#baccaratBankerTotal').textContent(),String(hiddenResult.receipt.result.banker_total));
-  await p.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
-  await p.goto(base+'/gaming/poker');let opened=await bet();assert.ok(opened.wallet.poker);const initial=opened.wallet.poker.initial;
-  assert.equal(initial.length,2);assert.deepEqual(opened.wallet.poker.computer,[null,null]);
-  assert.equal(await p.locator('#holdemComputerCards .is-hidden').count(),2);
-  await p.waitForTimeout(5200);assert.deepEqual((await state()).poker.initial,initial);
-  const refresh=p.waitForResponse(r=>r.url().endsWith('/gaming/api/refresh'));await p.reload();assert.equal((await(await refresh).json()).wallet.balance,100000);
-  assert.deepEqual((await state()).poker.initial,initial);
-  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Holdem mobile overflow');
-  await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/holdem-mobile.png',fullPage:true});
-  async function pokerMove(action){
-    const watching=p.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));
-    await p.locator('[data-holdem="'+action+'"]').click();const response=await watching,value=await response.json();assert.equal(response.status(),200,JSON.stringify(value));
-    await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');
-    return value;
-  }
-  let result=opened;
-  while(result.wallet.poker)result=await pokerMove(result.wallet.poker.legal.check?'check':'call');
-  assert.deepEqual(result.receipt.result.initial,initial);await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-  if(result.receipt.result.reason==='showdown'){
-    assert.equal(await p.locator('#holdemBoard .playing-card').count(),5);
-    assert.equal(await p.locator('#holdemComputerCards .is-hidden').count(),0);
-    assert.ok(await p.locator('.playing-card.is-winning').count()>=5);
-  }
-  await p.setViewportSize({width:1280,height:900});await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/holdem-desktop-result.png',fullPage:true});
-  // Reach the player's button. A folded computer opening hand is still a valid settled round.
-  for(let n=0;n<4;n++){
-    opened=await bet();
-    if(opened.wallet.poker?.button==='player')break;
-    while(opened.wallet.poker)opened=await pokerMove(opened.wallet.poker.legal.check?'check':'call');
-  }
-  assert.equal(opened.wallet.poker.button,'player');const prior=(await state()).stats.poker.bets;let lost=false;
-  await p.route('**/gaming/api/poker/action',async route=>{if(!lost){lost=true;await route.fetch();await route.abort('failed');}else await route.continue();});
-  await p.locator('[data-holdem=fold]').click();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor({timeout:16000});
-  const saved=await state();assert.equal(saved.stats.poker.bets,prior+1);assert.equal(saved.poker,null);assert.equal(saved.receipts[0].actions.at(-1).action,'fold');
-  await p.unroute('**/gaming/api/poker/action');
-  await p.emulateMedia({reducedMotion:'reduce'});await p.goto(base+'/gaming/baccarat');
-  result=await bet();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-  assert.equal(await p.locator('#baccaratPlayerTotal').textContent(),String(result.receipt.result.player_total));
-  await p.emulateMedia({reducedMotion:'no-preference'});
-  const admin=await ctx.newPage();admin.on('pageerror',e=>errors.push(e.message));await admin.goto(base+'/admin/gaming');await admin.locator('#username').fill('fixtureadmin');await admin.locator('#password').fill('fixture-only');await admin.locator('form button[type=submit]').click();await admin.locator('#grantGamingButton').waitFor();await admin.goto(base+'/admin/gaming');
-  for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat'])assert.match(await admin.locator('#gamingLeaders-'+game).textContent(),/EightGamePlayer/);
-  await p.goto(base+'/gaming');await p.screenshot({path:dir+'/dashboard-desktop.png',fullPage:true});
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({eight_games_play_and_verify:true,animated_reveals_without_navigation:true,dice_drag_synced:true,overlapping_plinko_survives_resize:true,hidden_tab_exact_completion:true,holdem_cards_and_stack_persist_after_poll_and_reload:true,holdem_lost_action_recovers_once:true,admin_tracks_eight_games:true,exact_limbo_result:true,coin_face_matches_result:true,mobile_no_overflow:true,page_errors:errors}));
- }finally{if(browser)await browser.close();server.kill('SIGTERM');}
-})().catch(e=>{console.error(e);process.exitCode=1;});
-```
-
-## `tests/generate_fairness_vectors.py`
-
-```python
-"""Deterministic reference receipts: synthetic keys only, no saved accounts."""
-import json
-from pathlib import Path
-import sys
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from fairness import LEGACY_VERSION, commitment, outcome
-
-cases=[('dice',dict(chance=c,side=s)) for c in (1,5,50,95) for s in ('under','over')]
-cases += [('keno',dict(picks=list(range(1,n+1)),risk=r)) for n in range(1,11) for r in ('low','medium','high')]
-cases += [('plinko',dict(rows=n,risk=r)) for n in (8,12,16) for r in ('low','medium','high')]
-values=[]
-for n,(game,options) in enumerate(cases):
-    seed=f'{n+1:064x}'
-    receipt=dict(rules_version=LEGACY_VERSION,server_seed=seed,commitment=commitment(seed),season='1790719200',
-                 client_seed='reference.seed-1',client_salt=f'{100+n:032x}',nonce=n,wager=(1,100,9999)[n%3],
-                 game=game,options=options,request_id='reference-'+str(n))
-    result=outcome(seed,receipt)
-    receipt.update(result=result,payout=result['payout'],net=result['payout']-receipt['wager'])
-    values.append(receipt)
-Path(__file__).with_name('fairness_vectors.json').write_text(json.dumps(values,indent=2)+'\n',encoding='utf-8')
-print(f'{len(values)} deterministic vectors written.')
-```
-
-## `tests/generate_v4_vectors.py`
-
-```python
-"""Rebuild synthetic v4 proofs; historical v1–v3 vectors remain untouched."""
-import json
-from pathlib import Path
-import sys
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from fairness import VERSION, commitment, outcome, verify
-
-vectors=[]
-settings=[('baccarat',dict(decks=8,side=side)) for side in ('player','banker','tie') for _ in range(48)]
-settings += [('dice',dict(chance=50,side='under')),('keno',dict(picks=list(range(1,11)),risk='high')),
-             ('plinko',dict(rows=16,risk='high')),('blackjack',dict(decks=6)),('poker',dict(variant='jacks_or_better')),
-             ('coinflip',dict(side='heads')),('limbo',dict(target=250))]
-for n,(game,options) in enumerate(settings):
-    seed=f'{n:064x}'
-    receipt=dict(rules_version=VERSION,season='1790114400',game=game,request_id=f'v4-reference-{n}',nonce=n,
-                 client_seed='independent-reference',client_salt=f'{n:032x}',wager=12345,options=options,
-                 server_seed=seed,commitment=commitment(seed))
-    if game=='blackjack':
-        receipt['actions']=[]
-        if not outcome(seed,receipt)['ended']:receipt['actions']=['stand']
-    if game=='poker':receipt['holds']=[0,2,4]
-    receipt['result']=outcome(seed,receipt)
-    receipt['payout']=receipt['result']['payout']
-    receipt['net']=receipt['payout']-receipt['result'].get('total_wager',receipt['wager'])
-    assert verify(receipt)
-    vectors.append(receipt)
-(Path(__file__).parent/'fairness_v4_vectors.json').write_text(json.dumps(vectors,indent=2)+'\n',encoding='utf-8')
-print(f'{len(vectors)} v4 proof vectors written')
-```
-
-## `tests/holdem_motion.cjs`
-
-```javascript
-/* Focused native-browser checks for new controls and an actual v4 migration. */
-const {chromium}=require('playwright');
-const {spawn}=require('node:child_process'),assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs');
-(async()=>{
- const server=spawn(process.env.RH_TEST_PYTHON||'python3',[path.join(__dirname,'serve_gaming_motion_fixture.py'),'--legacy']);
- let output='',browser;server.stdout.on('data',b=>output+=b);server.stderr.on('data',b=>process.stderr.write(b));
- try{
-  for(let n=0;n<100&&!output.includes('\n');n++)await new Promise(r=>setTimeout(r,50));
-  const fixture=JSON.parse(output.split('\n')[0]),base='http://127.0.0.1:'+fixture.port;
-  browser=await chromium.launch({executablePath:process.env.RH_CHROMIUM||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu'],headless:true});
-  const context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage(),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(12000);
-  await page.goto(base+'/gaming/poker');await page.locator('#gamingUsername').fill('Control Player');await page.locator('#gamingNameForm button').click();await page.locator('#gamingIdentity').waitFor();
-  async function ready(){await page.waitForFunction(()=>document.querySelector('#betButton').getAttribute('aria-busy')==='false');}
-  async function bet(){const waiting=page.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));await page.locator('#betButton').click();const value=await(await waiting).json();assert.ok(value.ok,JSON.stringify(value));await ready();return value;}
-  async function move(selector){const waiting=page.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));await page.locator(selector).click();const value=await(await waiting).json();assert.ok(value.ok,JSON.stringify(value));await ready();return value;}
-  async function complete(value){while(value.wallet.poker)value=await move('[data-holdem='+ (value.wallet.poker.legal.check?'check':'call')+']');await page.locator('#betProof').filter({hasText:'Verified'}).waitFor();return value;}
-  let value=await bet(),hand=value.wallet.poker;
-  assert.equal(hand.legal.min_raise_to,40);
-  await page.locator('#holdemRaise').fill('30');assert.equal(await page.locator('#holdemRaiseButton').isDisabled(),true);
-  await page.locator('[data-holdem-size=min]').click();assert.equal(await page.locator('#holdemRaise').inputValue(),'40');
-  assert.match(await page.locator('#holdemRaiseCost').textContent(),/30 more/);
-  value=await move('#holdemRaiseButton');
-  const actions=value.receipt?.actions || value.wallet.poker.actions;assert.deepEqual(actions[0],{action:'raise',amount:40});
-  await complete(value);
-  // Find the player's button so the initial move always waits for this browser.
-  for(let n=0;n<4;n++){value=await bet();if(value.wallet.poker?.button==='player')break;await complete(value);}
-  assert.equal(value.wallet.poker.button,'player');
-  let lost=false;await page.route('**/gaming/api/poker/action',async route=>{if(!lost){lost=true;await route.fetch();await route.abort('failed');}else await route.continue();});
-  await page.locator('[data-holdem=call]').click();
-  await page.waitForFunction(()=>!sessionStorage.getItem('rh.gaming.action'),{},{timeout:18000});
-  const state=await(await context.request.get(base+'/gaming/api/state')).json();assert.equal(state.wallet.poker.step,1);
-  assert.deepEqual(state.wallet.poker.actions[0],{action:'call',amount:0});await page.unroute('**/gaming/api/poker/action');
-  await complete({wallet:state.wallet});
-  for(let n=0;n<4;n++){value=await bet();if(value.wallet.poker?.button==='player')break;await complete(value);}
-  let posts=0;page.on('request',r=>{if(r.url().endsWith('/gaming/api/poker/action'))posts++;});
-  const allIn=page.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));
-  await page.locator('[data-holdem=all_in]').evaluate(button=>{button.click();button.click();});
-  value=await(await allIn).json();assert.ok(value.receipt,JSON.stringify(value));await ready();assert.equal(posts,1);assert.equal(value.receipt.actions[0].action,'all_in');
-  await page.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  const directory=process.env.RH_SCREENSHOTS;
-  if(directory){fs.mkdirSync(directory,{recursive:true});await page.evaluate(()=>{document.activeElement?.blur();scrollTo({top:0,behavior:'instant'});});await page.screenshot({path:path.join(directory,'holdem-mobile-final.png'),fullPage:true});await page.setViewportSize({width:1280,height:900});await page.screenshot({path:path.join(directory,'holdem-desktop-final.png'),fullPage:true});}
-  const legacy=await browser.newContext({viewport:{width:390,height:844}});await legacy.addCookies([{name:'rh_raider',value:fixture.legacy_cookie,url:base}]);
-  const old=await legacy.newPage();old.on('pageerror',e=>errors.push(e.message));
-  await old.goto(base+'/gaming/poker');await old.locator('#legacyPokerTable').waitFor();assert.equal(await old.locator('[data-poker-hold]').count(),5);assert.equal(await old.locator('#holdemTable').isHidden(),true);
-  await old.locator('#pokerHoldAll').click();const draw=old.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));await old.locator('#pokerDraw').click();
-  const drawn=await(await draw).json();assert.ok(drawn.ok,JSON.stringify(drawn));assert.equal(drawn.receipt.rules_version,'redpoints-v4');assert.equal(drawn.wallet.stats.poker.bets,0);assert.equal(drawn.wallet.legacy_poker.bets,1);await old.locator('#betProof').filter({hasText:'Verified'}).waitFor();
-  assert.match(await old.locator('#betHistory').textContent(),/Video Poker · legacy/);
-  const deal=old.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));await old.locator('#betButton').click();const newHand=await(await deal).json();assert.ok(newHand.ok,JSON.stringify(newHand));assert.equal(newHand.wallet.poker.variant,'texas_holdem');await old.locator('#holdemTable').waitFor();assert.equal(await old.locator('#legacyPokerTable').isHidden(),true);
-  await page.goto(base+'/gaming/fairness');assert.equal(await page.locator('#holdem').count(),1);assert.equal(await page.evaluate(()=>typeof RedHoldemFair.replay),'function');
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({raises_and_costs:true,all_in_double_click_commits_once:true,lost_nonterminal_response_recovers:true,legacy_draw_then_holdem:true,mobile_no_overflow:true,page_errors:errors}));
- }finally{if(browser)await browser.close();server.kill('SIGTERM');}
-})().catch(error=>{console.error(error);process.exitCode=1;});
-```
-
-## `tests/holdem_vectors.py`
-
-```python
-"""Reproducible v5 reference receipts, generated instead of shipping a large fixture.
-
-The JS suite reads this program's JSON and independently replays every receipt.
-Earlier v1-v4 fixture files remain immutable.
-"""
-import json
-from pathlib import Path
-import random
-import sys
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from fairness import VERSION, commitment, outcome
-from holdem import MAX_BUY_IN
-
-
-def vectors():
-    result=[]
-    settings={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='high'),
-              'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6),'limbo':dict(target=200),
-              'coinflip':dict(side='heads'),'baccarat':dict(decks=8,side='banker')}
-    for index in range(88):
-        game='poker' if index<74 else list(settings)[(index-74)%7]
-        seed=f'{index+809:064x}'
-        buy_in=(20,101,1000,20000,MAX_BUY_IN)[index%5] if game=='poker' else 100
-        opt=dict(variant='texas_holdem',button='player' if index%2==0 else 'computer') if game=='poker' else settings[game]
-        receipt=dict(rules_version=VERSION,game=game,season='1790000000',nonce=index,wager=buy_in,options=opt,
-                     client_seed='Holdem-reference',client_salt='7a'*16,server_seed=seed,commitment=commitment(seed),
-                     request_id=f'holdem-v5-fixture-{index}',actions=[])
-        state=outcome(seed,receipt)
-        if game=='blackjack' and not state['ended']:
-            receipt['actions']=['stand'];state=outcome(seed,receipt)
-        if game=='poker':
-            rng=random.Random(index)
-            if not state['ended'] and index%13==0:
-                receipt['ending']='weekly_reset';state=outcome(seed,receipt)
-            while not state['ended']:
-                legal=state['legal']
-                choices=['check' if legal['check'] else 'call']*5+['fold']
-                if legal['all_in']:choices.append('all_in')
-                if legal['can_raise'] and legal['min_raise_to']<=legal['max_raise_to']:
-                    choices+=['bet' if max(state['bets'])==0 else 'raise']*2
-                action=rng.choice(choices)
-                amount=legal['min_raise_to'] if action in ('bet','raise') else 0
-                receipt['actions'].append(dict(action=action,amount=amount))
-                state=outcome(seed,receipt)
-        stake=state.get('total_wager',buy_in) if game=='blackjack' else buy_in
-        receipt.update(result=state,payout=state['payout'],net=state['payout']-stake)
-        result.append(receipt)
-    return result
-
-
-if __name__=='__main__':print(json.dumps(vectors(),separators=(',',':')))
-```
-
-## `tests/render_fixtures.py`
-
-```python
-"""Render real templates against synthetic data for the optional DOM test suite."""
-import json
-import os
-from pathlib import Path
-import sys
-import tempfile
-import time
-from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from wager_backend import create_app
-from race import calculate, empty, normalize
-
-
-def render(destination):
-    destination.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {
-        "APP_ENV": "test", "DATABASE_URL": "", "ADMIN_BOOTSTRAP_PASS": "fixture-password-only",
-        "SUPERADMIN_USER": "gingrsnaps", "SECRET_KEY": "", "ADMIN_STORE_PATH": directory + "/none.json",
-        "ADMIN_SEED_PATH": directory + "/none-seed.json", "LOCAL_DATABASE_PATH": directory + "/test.sqlite3",
-        "SETTINGS_PATH": directory + "/none-settings.json",
-    }):
-        app = create_app(Path(directory), testing=True)
-        runtime = app.extensions["runtime"]
-        try:
-            now = int(time.time())
-            admin = runtime.admin
-            admin["site_settings"].update(start_time=now-3600, end_time=now+86400)
-            admin["overrides"]["ExamplePlayer000"] = "2000"
-            source = [{"username": f"ExamplePlayer{i:03}", "weightedWagerAmount": str(1000-i),
-                       "wagerAmount": str(3000-i), "campaignCode": "Red"} for i in range(105)]
-            source.append({"username": "<img src=x onerror=alert(1)>", "weightedWagerAmount": "99999", "campaignCode": "Red"})
-            snapshot = calculate({**empty(admin["site_settings"]), **normalize(source, admin["site_settings"]),
-                                  "updated_at": now, "ok": True}, admin, runtime.config)
-            runtime.commit(admin, runtime.revision, snapshot=snapshot)
-            with patch.object(runtime.providers, 'shuffle', return_value=source):
-                runtime.history.check()
-            client = app.test_client()
-            opening = client.get('/play/api/state').json
-            client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'FixtureRaider'}, headers={'X-CSRF-Token':opening['csrf']})
-            for name, url in {"public": "/", "login": "/admin", "error": "/missing", "play": "/play", "history": "/history"}.items():
-                (destination/(name+".html")).write_text(client.get(url).text, encoding="utf-8")
-            with client.session_transaction() as session:
-                session.update(user="gingrsnaps", auth_version=1, csrf="fixture-csrf")
-            for tab in ("overview", "race", "players", "boss", "settings"):
-                (destination/(tab+".html")).write_text(client.get("/admin?tab="+tab).text, encoding="utf-8")
-            (destination/"boss.json").write_text(json.dumps(client.get("/play/api/state").json), encoding="utf-8")
-            (destination/"boss-admin.json").write_text(json.dumps(client.get("/admin/boss/status").json), encoding="utf-8")
-            public = client.get("/public-state")
-            (destination/"public.json").write_text(json.dumps({**public.json, "server_time":float(public.headers["X-Server-Time"])}), encoding="utf-8")
-            (destination/"admin.json").write_text(json.dumps(client.get("/admin/status?code_red=1").json), encoding="utf-8")
-            (destination/"history.json").write_text(json.dumps(client.get('/history-state').json), encoding='utf-8')
-        finally:
-            runtime.store.close()
-
-
-if __name__ == "__main__":
-    render(Path(sys.argv[1]))
-```
-
-## `tests/serve_admin_gaming_fixture.py`
-
-```python
-"""Disposable, synthetic eight-game fixture. Never starts provider workers."""
-import json
-import os
-from pathlib import Path
-import sys
-import tempfile
-from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from fairness import GAMES, VERSION
-from wager_backend import create_app
-from waitress import create_server
-
-if __name__ == '__main__':
-    with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {
-        'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'fixture-only',
-        'SUPERADMIN_USER':'fixtureadmin', 'SESSION_COOKIE_SECURE':'never',
-        'TRUST_APP_PLATFORM':'1',
-    }, clear=True):
-        app = create_app(Path(folder), testing=True)
-        game = app.extensions['gaming']
-        options = dict(dice=dict(chance=50,side='under'), keno=dict(picks=list(range(1,11)),risk='medium'),
-                       plinko=dict(rows=16,risk='high'), blackjack=dict(decks=6), limbo=dict(target=200),
-                       coinflip=dict(side='heads'), poker=dict(variant='texas_holdem',button='player'), baccarat=dict(decks=8,side='banker'))
-        for index in range(7):
-            identity, name, ip = 'fixture-'+str(index), 'TestPlayer'+str(index+1), '192.0.2.'+str(index+1)
-            for item in GAMES:
-                wallet=game.view(identity,name,client_ip=ip)
-                body=dict(rules_version=VERSION, game=item, request_id=identity+'-'+item,
-                          season=wallet['season']['id'], nonce=wallet['nonce'], commitment=wallet['commitment'],
-                          client_seed='test-only', client_salt='ab'*16, wager=100, options=options[item])
-                result=game.bet(identity,name,body,client_ip=ip)
-                if not result['receipt'] and item == 'blackjack':
-                    hand=result['wallet']['blackjack']
-                    game.blackjack_action(identity,name,dict(round_id=hand['round_id'],step=0,action='stand',action_id='fixture-stand'),client_ip=ip)
-                while not result['receipt'] and item == 'poker':
-                    hand=result['wallet']['poker']
-                    result=game.poker_action(identity,name,dict(variant='texas_holdem',round_id=hand['round_id'],step=hand['step'],move=dict(action='check' if hand['legal']['check'] else 'call',amount=0),action_id='fixture-move-'+str(hand['step'])),client_ip=ip)
-        if len(sys.argv) == 3 and sys.argv[1] == '--write-fixtures':
-            # DOM tests can generate their inputs without a browser or HTTP server.
-            destination = Path(sys.argv[2])
-            destination.mkdir(parents=True, exist_ok=True)
-            client = app.test_client()
-            with client.session_transaction() as session:
-                session.update(user='fixtureadmin', auth_version=1, csrf='fixture-token')
-            page, state = client.get('/admin/gaming'), client.get('/admin/gaming/status')
-            assert page.status_code == state.status_code == 200
-            (destination/'admin.html').write_text(page.text, encoding='utf-8')
-            (destination/'state.json').write_text(json.dumps(state.json), encoding='utf-8')
-            app.extensions['runtime'].store.close()
-            raise SystemExit(0)
-        server=create_server(app,host='127.0.0.1',port=0,threads=6)
-        print(json.dumps({'port':server.effective_port}),flush=True)
-        try:server.run()
-        finally:server.close()
-```
-
-## `tests/serve_game_fixture.py`
-
-```python
-"""Isolated HTTP fixture for DOM integration tests; never starts provider jobs."""
-import json
-import os
-from pathlib import Path
-import sys
-import tempfile
-from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from wager_backend import create_app
-from waitress import create_server
-
-with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {
-    'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'fixture-only',
-    'SESSION_COOKIE_SECURE':'never',
-}, clear=True):
-    app = create_app(Path(folder), testing=True)
-    server = create_server(app, host='127.0.0.1', port=0, threads=6)
-    print(json.dumps({'port':server.effective_port}), flush=True)
-    try:
-        server.run()
-    finally:
-        server.close()
-```
-
-## `tests/serve_gaming_motion_fixture.py`
-
-```python
-"""Temporary native-browser fixture; never loads private configuration or providers."""
-from pathlib import Path
-import json,os,sys,tempfile
-from unittest.mock import patch
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from wager_backend import create_app
-from waitress import create_server
-with tempfile.TemporaryDirectory() as folder,patch.dict(os.environ,{'APP_ENV':'test','ADMIN_BOOTSTRAP_PASS':'fixture-only','SUPERADMIN_USER':'fixtureadmin','SESSION_COOKIE_SECURE':'never','TRUST_APP_PLATFORM':'1'},clear=True):
- app=create_app(Path(folder),testing=True)
- server=create_server(app,host='127.0.0.1',port=0,threads=6)
- print(json.dumps({'port':server.effective_port}),flush=True)
- try:server.run()
- finally:server.close()
-```
-
-## `tests/serve_gui_fixture.py`
-
-```python
-"""Disposable localhost-only visual fixture. Never starts provider workers."""
-import json
-import os
-from pathlib import Path
-import sys
-import tempfile
-from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from flask import jsonify
-from race import calculate, empty, normalize
-from wager_backend import create_app
-from waitress import create_server
-
-FIXED_TIME = 1791028800  # October 3, 2026, noon UTC.
-CLOCK = [FIXED_TIME]
-
-if __name__ == '__main__':
-    with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {
-        'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'visual-fixture-password',
-        'SUPERADMIN_USER':'gingrsnaps', 'SESSION_COOKIE_SECURE':'never'}, clear=True), patch('time.time', side_effect=lambda: CLOCK[0]):
-        app = create_app(Path(directory), testing=True)
-        runtime, boss = app.extensions['runtime'], app.extensions['boss']
-        admin = runtime.admin
-        admin['site_settings'].update(start_time=FIXED_TIME-86400, end_time=FIXED_TIME+4*86400, community_url='https://example.test/community')
-        rows = [dict(username='CommunityPlayer%02d'%n, weightedWagerAmount=str(150000-n*3200), campaignCode='Red') for n in range(30)]
-        snapshot = calculate({**empty(admin['site_settings']), **normalize(rows, admin['site_settings']), 'updated_at':FIXED_TIME, 'ok':True}, admin, runtime.config)
-        runtime.commit(admin, runtime.revision, snapshot=snapshot)
-        with patch.object(runtime.providers, 'shuffle', return_value=rows):
-            runtime.history.check(FIXED_TIME)
-
-        @app.post('/__fixture__/progress/<int:percent>')
-        def progress(percent):
-            if percent not in {0,25,75,100}:
-                return jsonify(error='Unsupported test state'), 400
-            state = boss.summary()
-            boss.control('remaining_health', state['raid_id'], state['max_hp']*(100-percent)//100, health_revision=state['health_revision'], actor='Visual fixture')
-            return jsonify(ok=True)
-
-        @app.post('/__fixture__/advance')
-        def advance_clock():
-            CLOCK[0] += 2
-            return jsonify(ok=True)
-
-        server = create_server(app, host='127.0.0.1', port=0, threads=6)
-        print(json.dumps({'port':server.effective_port}), flush=True)
-        try:
-            server.run()
-        finally:
-            server.close()
-```
-
-## `tests/test_admin_controls.py`
-
-```python
-"""Exercise account/log controls in addition to the existing race/boss suites."""
-import copy
-import re
-import unittest
-
-import test_app
-
-
-class AdminControlTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-    action = test_app.AppTests.action
-
-    def test_account_add_password_reset_removal_and_logout(self):
-        password = 'new-private-test-password'
-        self.assertEqual(self.action('add_account', username='helper', new_password=password, confirm_password=password).status_code, 303)
-        helper = self.app.test_client()
-        csrf = re.search('name="csrf" value="([^"]+)"', helper.get('/admin').text).group(1)
-        self.assertEqual(helper.post('/admin', data={'csrf':csrf, 'username':'helper', 'password':password}).status_code, 303)
-        for tab in ('overview','race','players','boss','settings'):
-            response = helper.get('/admin?tab='+tab)
-            self.assertEqual(response.status_code, 200)
-            self.assertIn('CONTROL CENTER', response.text)
-        self.assertEqual(helper.get('/admin/recovery-backup').status_code, 403)
-        self.assertEqual(self.action('reset_password', username='helper', new_password=password+'2', confirm_password=password+'2').status_code, 303)
-        self.assertEqual(helper.get('/admin/status').status_code, 401)
-        self.assertEqual(self.action('remove_account', username='helper').status_code, 303)
-        self.assertNotIn('helper', self.r.admin['users'])
-        self.assertEqual(self.client.post('/admin/logout', data={'csrf':'test-token'}).status_code, 303)
-        self.assertEqual(self.client.get('/admin/status').status_code, 401)
-
-    def test_ban_unban_and_clear_logs(self):
-        visitor = self.app.test_client()
-        visitor.environ_base['REMOTE_ADDR'] = '192.0.2.23'
-        self.assertEqual(self.action('ban_ip', ip='192.0.2.23').status_code, 303)
-        self.assertEqual(visitor.get('/history').status_code, 403)
-        self.assertEqual(self.action('unban_ip', ip='192.0.2.23').status_code, 303)
-        self.assertEqual(visitor.get('/history').status_code, 200)
-        for action in ('clear_access', 'clear_audit'):
-            self.assertEqual(self.action(action).status_code, 303)
-        self.assertEqual([entry['action'] for entry in self.r.admin['audit_log']], ['clear_audit'])
-
-    def test_admin_cannot_block_own_forwarded_address_on_app_platform(self):
-        self.r.config.proxy = True
-        response = self.client.post('/admin/action', data={
-            'csrf':'test-token', 'action':'ban_ip', 'ip':'192.0.2.51',
-            'tab':'settings', 'revision':self.r.revision},
-            headers={'DO-Connecting-IP':'192.0.2.51'})
-        self.assertEqual(response.status_code, 422)
-        self.assertNotIn('192.0.2.51', self.r.admin['banned_ips'])
-        self.assertIn('cannot block the address', response.text)
-
-    def test_every_general_admin_write_needs_session_and_csrf(self):
-        before = copy.deepcopy(self.r.admin)
-        guest = self.app.test_client()
-        for action in ('refresh','save_race','override','add_account','remove_account','reset_password','password','preview_restore','restore','ban_ip','unban_ip','clear_audit','clear_access'):
-            with self.subTest(action=action):
-                response = guest.post('/admin/action', data={'action':action}, headers={'Accept':'application/json'})
-                self.assertEqual(response.status_code, 401)
-                response = self.client.post('/admin/action', data={'action':action}, headers={'Accept':'application/json'})
-                self.assertEqual(response.status_code, 400)
-        self.assertEqual(self.r.admin, before)
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/test_admin_gaming_frontend.cjs`
-
-```javascript
-/* Private dashboard regression checks using real server-rendered fixture HTML. */
-const {test,after}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {JSDOM}=require('jsdom');
-const root=path.resolve(__dirname,'..');
-let directory=process.env.GAMING_ADMIN_FIXTURES;
-if(!directory){
- directory=fs.mkdtempSync(path.join(require('node:os').tmpdir(),'red-gaming-test-'));
- after(()=>fs.rmSync(directory,{recursive:true,force:true}));
- require('node:child_process').execFileSync(process.env.RH_TEST_PYTHON||'python3',
-  [path.join(__dirname,'serve_admin_gaming_fixture.py'),'--write-fixtures',directory],{stdio:'pipe'});
-}
-const code=fs.readFileSync(path.join(root,'static/admin-gaming.js'),'utf8');
-const tick=async()=>{for(let n=0;n<8;n++)await new Promise(resolve=>setImmediate(resolve));};
-function make(){
- const data=JSON.parse(fs.readFileSync(path.join(directory,'state.json'),'utf8'));
- const dom=new JSDOM(fs.readFileSync(path.join(directory,'admin.html'),'utf8'),{url:'https://example.test/admin/gaming',runScripts:'outside-only'});
- const w=dom.window,timers=new Map();let serial=0;
- Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
- w.setTimeout=(fn,delay)=>{timers.set(++serial,{fn,delay});return serial;};w.clearTimeout=id=>timers.delete(id);
- let response=()=>({ok:true,status:200,headers:new Map([['content-type','application/json'],['etag','saved']]),json:async()=>structuredClone(data)});
- w.fetch=async()=>response();w.eval(code);
- return {w,dom,data,timers,respond(fn){response=fn;}};
-}
-test('all eight top-five lists, exact full counts, IPs and no duplicate DOM IDs',async()=>{
- const p=make();await tick();
- for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat']) {
-  assert.equal(p.w.document.querySelectorAll('#gamingLeaders-'+game+' li').length,5);
-  assert.match(p.w.document.getElementById('gamingCount-'+game).textContent,/Players: 7.*rounds: 7/);
-  assert.match(p.w.document.getElementById('gamingLeaders-'+game).textContent,/192\.0\.2\./);
- }
- const ids=[...p.w.document.querySelectorAll('[id]')].map(n=>n.id);assert.equal(ids.length,new Set(ids).size);
- assert.equal(p.w.document.getElementById('gamingNoRecords').hidden,true);
- assert.ok([...p.timers.values()].some(t=>t.delay===5000));p.dom.window.close();
-});
-test('expired admin clears private rows and cannot be repopulated by a late response',async()=>{
- const p=make();await tick();p.respond(()=>({ok:false,status:401,headers:new Map()}));
- p.w.document.getElementById('refreshGaming').click();await tick();
- assert.equal(p.w.document.querySelectorAll('[id^=gamingLeaders-] li').length,0);
- assert.equal(p.w.document.getElementById('gamingAdminSession').hidden,false);
- assert.equal(p.w.document.getElementById('gamingAdmin').hasAttribute('data-rankings'),false);
- assert.equal(p.w.document.getElementById('refreshGaming').disabled,true);
- assert.doesNotMatch(p.w.document.getElementById('gamingAdmin').textContent,/TestPlayer|192\.0\.2\./);
- p.w.RedGamingAdmin.render(p.data);
- assert.equal(p.w.document.querySelectorAll('[id^=gamingLeaders-] li').length,0);p.dom.window.close();
-});
-test('mixed release reports a reload message instead of claiming a fresh update',async()=>{
- const p=make();await tick();p.respond(()=>({ok:true,status:200,headers:new Map([['content-type','application/json']]),json:async()=>({...p.data,release:'different-release'})}));
- p.w.document.getElementById('refreshGaming').click();await tick();
- assert.match(p.w.document.getElementById('gamingAdminChecked').textContent,/release changed.*Reload/);
- assert.equal(p.w.document.querySelectorAll('#gamingLeaders-blackjack li').length,5);p.dom.window.close();
-});
-
-test('unchanged rankings retain DOM nodes; changed scores retain expanded records and focus',async()=>{
- const p=make();await tick();
- try {
-  const doc=p.w.document,list=doc.getElementById('gamingLeaders-dice'),first=list.firstElementChild,detail=first.querySelector('details'),summary=first.querySelector('summary');
-  detail.open=true;summary.focus();
-  p.w.RedGamingAdmin.render(p.data);
-  assert.equal(list.firstElementChild,first,'No replacement on unchanged polls');
-  assert.equal(doc.activeElement,summary);
-  p.data.revision++;p.data.games.dice[0].net+=7;p.w.RedGamingAdmin.render(p.data);
-  assert.equal(list.firstElementChild.querySelector('details').open,true);
-  assert.equal(doc.activeElement,list.firstElementChild.querySelector('summary'));
-  assert.match(list.firstElementChild.querySelector('.player-record').textContent,/Funding adjustments.*excluded from winnings/);
- } finally {p.dom.window.close();}
-});
-```
-
-## `tests/test_app.py`
-
-```python
-"""Real app/storage tests with synthetic provider responses; no live accounts."""
-import copy
-import io
-import json
-import os
-from pathlib import Path
-import re
-import socket
-import subprocess
-import sys
-import tempfile
-import threading
-import time
-import unittest
-from unittest.mock import patch
-from urllib.request import urlopen
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from wager_backend import create_app
-from config import Config
-from integrations import ProviderError, Providers
-from race import aggregate, normalize, phase, rank
-from race_support import eastern_epoch, money_input, race_key
-from storage import Conflict, Store, StoreError
-
-ROOT = Path(__file__).resolve().parents[1]
-PASSWORD = "a-private-test-password"
-
-
-def player(name="AlphaMember", amount="100", raw="150", campaign="Red"):
-    return dict(username=name, weightedWagerAmount=amount, wagerAmount=raw, campaignCode=campaign)
-
-
-class AppTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
-        self.env = patch.dict(os.environ, {"APP_ENV":"test", "DATABASE_URL":"", "ADMIN_BOOTSTRAP_PASS":PASSWORD,
-                              "SUPERADMIN_USER":"gingrsnaps", "PORT":"8080"}, clear=True)
-        self.env.start(); self.addCleanup(self.env.stop)
-        self.app = create_app(self.root, testing=True)
-        self.r = self.app.extensions["runtime"]
-        self.addCleanup(self.r.store.close)
-        self.client = self.app.test_client()
-        self.guard = patch("requests.Session.request", side_effect=AssertionError("Unexpected live request"))
-        self.guard.start(); self.addCleanup(self.guard.stop)
-        with self.client.session_transaction() as s:
-            s.update(user="gingrsnaps", auth_version=1, csrf="test-token")
-
-    def schedule(self, start=None, end=None):
-        now = int(time.time())
-        admin = copy.deepcopy(self.r.admin)
-        admin["site_settings"].update(start_time=start or now-3600, end_time=end or now+86400)
-        from race import empty
-        self.r.commit(admin, self.r.revision, snapshot=empty(admin["site_settings"]))
-
-    def update(self, rows):
-        with patch.object(self.r.providers, "shuffle", return_value=rows):
-            self.r.check("shuffle")
-
-    def action(self, name, **values):
-        if name == 'save_race' and values.get('confirm_race') == 'yes' and 'review_token' not in values:
-            preview = self.action(name, **{k:v for k,v in values.items() if k != 'confirm_race'})
-            match = re.search('name="review_token" value="([^"]+)"', preview.text)
-            if match:
-                values['review_token'] = match.group(1)
-        return self.client.post("/admin/action", data={"csrf":"test-token", "action":name, "tab":"settings",
-                                                       "revision":self.r.revision, **values})
-
-    def form(self):
-        from race_support import local_input
-        site = copy.deepcopy(self.r.admin["site_settings"])
-        return {**site, "start_et":local_input(site["start_time"]), "end_et":local_input(site["end_time"]),
-                **{"prize_"+k:v for k,v in site["prizes"].items()}, "tab":"race"}
-
-    def test_native_login_and_all_dashboard_pages(self):
-        c=self.app.test_client()
-        page=c.get("/admin")
-        csrf=re.search('name="csrf" value="([^"]+)"',page.text).group(1)
-        response=c.post("/admin",data={"csrf":csrf,"username":"GINGRSNAPS","password":PASSWORD},follow_redirects=True)
-        self.assertEqual(response.status_code,200)
-        self.assertIn("CONTROL CENTER",response.text)
-        for tab in ("overview","race","players","boss","settings"):
-            p=c.get('/admin?tab='+tab)
-            self.assertEqual(p.status_code,200)
-            self.assertIn('aria-label="Administration"',p.text)
-
-    def test_startup_with_windows_default_encoding_preserves_existing_state(self):
-        # Use the shipped assets, including Unicode that CP1252 cannot decode.
-        # Linux normally hides this Windows startup failure with its UTF-8 locale.
-        static = self.root / "static"
-        static.mkdir()
-        for asset in (ROOT / "static").glob("*"):
-            if asset.suffix in {".css", ".js"}:
-                (static / asset.name).write_bytes(asset.read_bytes())
-        before = self.r.store.admin()
-        native_open = Path.open
-
-        def windows_open(path, mode="r", buffering=-1, encoding=None, errors=None, newline=None):
-            if "b" not in mode and encoding in (None, "locale"):
-                encoding = "cp1252"
-            return native_open(path, mode, buffering, encoding, errors, newline)
-
-        with patch.object(Path, "open", windows_open):
-            app = create_app(self.root, testing=True)
-            try:
-                client = app.test_client()
-                self.assertEqual(client.get("/healthz").status_code, 200)
-                self.assertIn("Sign in", client.get("/admin").text)
-                self.assertEqual(app.extensions["runtime"].store.admin(), before)
-            finally:
-                app.extensions["runtime"].store.close()
-
-    def test_login_csrf_is_bound_to_browser(self):
-        a,b=self.app.test_client(),self.app.test_client()
-        a.get('/admin');b.get('/admin')
-        with a.session_transaction() as s: csrf=s['csrf']
-        self.assertEqual(b.post('/admin',data={'csrf':csrf,'username':'gingrsnaps','password':PASSWORD}).status_code,400)
-
-    def test_refresh_queues_background_work_and_populates_both_boards(self):
-        self.schedule()
-        amount = {"value": "100"}
-        headers = {"Accept": "application/json"}
-
-        def wait_for_total(expected):
-            deadline = time.monotonic() + 2
-            while time.monotonic() < deadline:
-                value = self.client.get("/data").json
-                if value["rows"] and value["rows"][0]["wager"] == expected:
-                    return value
-                time.sleep(.01)
-            self.fail("Background refresh did not publish the expected leaderboard")
-
-        with patch.object(self.r.providers, "shuffle", side_effect=lambda site: [player(amount=amount["value"])]), \
-             patch.object(self.r.providers, "kick", return_value=dict(live=False, channel="redhunllef")):
-            self.r.start()
-            try:
-                wait_for_total("$100.00")
-                revision = self.r.revision
-                amount["value"] = "250"
-                response = self.client.post("/admin/action", headers=headers,
-                    data={"csrf": "test-token", "action": "refresh", "service": "shuffle"})
-                self.assertEqual(response.status_code, 202)
-                self.assertTrue(response.is_json)
-                value = wait_for_total("$250.00")
-                self.assertEqual(value["rows"][0]["username"], "Al******")
-                admin = self.client.get("/admin/status?tab=players").json
-                self.assertEqual(admin["participants"][0]["username"], "AlphaMember")
-                self.assertEqual(admin["participants"][0]["wager"], "$250.00")
-                self.assertEqual(self.r.revision, revision)
-            finally:
-                self.r.stop()
-
-    def test_refresh_invalid_csrf_returns_specific_json_without_queueing(self):
-        response = self.client.post("/admin/action", headers={"Accept": "application/json"},
-                                    data={"action": "refresh", "csrf": "expired"})
-        self.assertEqual(response.status_code, 400)
-        self.assertTrue(response.is_json)
-        self.assertIn("form expired", response.json["error"])
-        self.assertFalse(any(event.is_set() for event in self.r.events.values()))
-
-    def test_refresh_expired_login_returns_json_and_does_not_queue(self):
-        client = self.app.test_client()
-        response = client.post("/admin/action", headers={"Accept": "application/json"},
-                               data={"action": "refresh", "csrf": "test-token"})
-        self.assertEqual(response.status_code, 401)
-        self.assertTrue(response.is_json)
-        self.assertFalse(any(event.is_set() for event in self.r.events.values()))
-
-    def test_fetch_http_errors_are_json_and_native_errors_remain_html(self):
-        headers = {"Accept": "application/json"}
-        responses = [
-            (self.client.post("/[object HTMLInputElement]", headers=headers), 404),
-            (self.client.get("/admin/action", headers=headers), 405),
-            (self.client.post("/admin/action", headers=headers,
-                 data={"csrf": "test-token", "action": "refresh", "service": "invalid"}), 400),
-        ]
-        for response, status in responses:
-            self.assertEqual(response.status_code, status)
-            self.assertTrue(response.is_json)
-            self.assertEqual(response.json["status"], status)
-            self.assertIn("error", response.json)
-        native = self.client.get("/missing")
-        self.assertEqual(native.status_code, 404)
-        self.assertEqual(native.mimetype, "text/html")
-
-    def test_refresh_storage_failure_is_json(self):
-        with patch.object(self.r, "sync", side_effect=StoreError("Database temporarily unreachable")):
-            response = self.client.post("/admin/action", headers={"Accept": "application/json"},
-                data={"csrf": "test-token", "action": "refresh"})
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual(response.json["error"], "Database temporarily unreachable")
-
-    def test_refresh_unexpected_failure_has_safe_json_error(self):
-        self.app.config["PROPAGATE_EXCEPTIONS"] = False
-        with patch.object(self.r, "request_refresh", side_effect=RuntimeError("private-error-detail")):
-            response = self.client.post("/admin/action", headers={"Accept": "application/json"},
-                data={"csrf": "test-token", "action": "refresh"})
-        self.assertEqual(response.status_code, 500)
-        self.assertTrue(response.is_json)
-        self.assertNotIn("private-error-detail", response.text)
-
-    def test_empty_leaderboards_explain_waiting_empty_filtered_and_failed_sources(self):
-        self.schedule()
-        self.assertIn("first successful update", self.client.get("/data").json["leaderboard_message"])
-        self.update([])
-        self.assertIn("returned no wagers", self.client.get("/data").json["leaderboard_message"])
-        self.update([player(campaign="Other")])
-        self.assertIn("campaign filter", self.client.get("/data").json["leaderboard_message"])
-        self.update([player(amount="0")])
-        self.assertIn("$0.01", self.client.get("/data").json["leaderboard_message"])
-        with patch.object(self.r.providers, "shuffle", side_effect=ProviderError("Fixture source timeout")):
-            self.r.check("shuffle")
-        self.assertIn("delayed", self.client.get("/data").json["leaderboard_message"])
-        self.update([player()])
-        self.assertEqual(self.client.get("/data").json["leaderboard_message"], "")
-        diagnostic = self.client.get("/admin/diagnostics").json["diagnostics"]
-        self.assertEqual(diagnostic["campaign_filter"], "Red")
-        self.assertEqual(diagnostic["qualifying_players"], 1)
-
-    def test_login_rate_limit(self):
-        c=self.app.test_client();c.get('/admin')
-        with c.session_transaction() as s: csrf=s['csrf']
-        for _ in range(5):
-            self.assertEqual(c.post('/admin',data={'csrf':csrf,'username':'x','password':'wrong'}).status_code,401)
-        self.assertEqual(c.post('/admin',data={'csrf':csrf,'username':'x','password':'wrong'}).status_code,429)
-
-    def test_protected_endpoints_never_disclose_names(self):
-        self.schedule();self.update([player()])
-        public=self.app.test_client()
-        for path in ('/admin/status','/admin/export.csv','/admin/diagnostics','/admin/backup'):
-            self.assertEqual(public.get(path).status_code,401)
-        self.assertNotIn('AlphaMember',public.get('/data').text)
-        self.assertIn('Al******',public.get('/data').text)
-        for path in ('/private/settings.json','/private/admin_store.seed.json','/data/redhunllef.sqlite3','/data/state.json','/data/state.json.lock'):
-            self.assertEqual(public.get(path).status_code,404)
-
-    def test_mixed_shuffle_response_updates_and_warns(self):
-        self.schedule();self.update([player(amount='100')]);before=self.r.revision
-        self.update([player(amount='200'),player('Missing',None),None,player('BetaMember','150',campaign=' Red ')])
-        data=self.client.get('/data').json
-        self.assertEqual(data['rows'][0]['wager'],'$200.00')
-        self.assertEqual(len(data['rows']),2)
-        self.assertEqual(data['freshness']['state'],'partial')
-        self.assertEqual(self.r.revision,before,'A provider update must not rewrite admin state')
-        admin=self.client.get('/admin/status?code_red=1').json
-        self.assertEqual(len(admin['red']),2)
-        self.assertIn('AlphaMember',str(admin['participants']))
-
-    def test_invalid_response_retains_saved_results(self):
-        self.schedule();self.update([player()]);stamp=self.r.shuffle['updated_at']
-        self.update([None,player(amount='NaN')])
-        self.assertEqual(self.r.shuffle['rows'][0]['wager'],'$100.00')
-        self.assertEqual(self.r.shuffle['updated_at'],stamp)
-        self.assertEqual(self.client.get('/data').json['freshness']['state'],'delayed')
-
-    def test_valid_empty_response_clears_old_rows(self):
-        self.schedule();self.update([player()]);self.update([])
-        self.assertEqual(self.r.shuffle['rows'],[])
-        self.assertEqual(self.client.get('/data').json['freshness']['state'],'current')
-
-    def test_clean_response_clears_warning(self):
-        self.schedule();self.update([player(),None]);self.update([player()])
-        self.assertEqual(self.r.shuffle['warning'],'')
-
-    def test_missing_raw_does_not_freeze_weighted_wager(self):
-        self.schedule();self.update([player(amount='200',raw='bad')])
-        row=self.r.shuffle['rows'][0]
-        self.assertEqual(row['wager'],'$200.00');self.assertIsNone(row['raw_wager'])
-
-    def test_future_race_never_calls_shuffle(self):
-        now=int(time.time());self.schedule(now+3600,now+7200)
-        with patch.object(self.r.providers,'shuffle') as mock:
-            self.r.check('shuffle');mock.assert_not_called()
-        self.assertEqual(self.r.public()['site']['race_state'],'upcoming')
-
-    def test_kick_failure_does_not_publish_offline(self):
-        with patch.object(self.r.providers,'kick',return_value={'live':True,'channel':'redhunllef','title':'Live fixture','viewers':42}):self.r.check('kick')
-        with patch.object(self.r.providers,'kick',side_effect=ProviderError('Kick timed out')):self.r.check('kick')
-        self.assertTrue(self.r.kick['live']);self.assertFalse(self.r.public()['stream']['available'])
-
-    def test_override_retains_raw_and_original_and_can_be_removed(self):
-        self.schedule();self.update([player()])
-        self.assertEqual(self.action('override',username='AlphaMember',amount='250').status_code,303)
-        row=self.r.shuffle['rows'][0]
-        self.assertEqual((row['weighted_wager'],row['original_weighted_wager'],row['raw_wager']),('250','100','150'))
-        self.action('override',username='AlphaMember',amount='')
-        self.assertEqual(self.r.shuffle['rows'][0]['wager'],'$100.00')
-
-    def test_zero_override_stays_manageable(self):
-        self.schedule();self.update([player()]);self.action('override',username='AlphaMember',amount='0')
-        self.assertEqual(self.r.shuffle['rows'],[])
-        self.assertEqual(self.r.shuffle['edits'][0]['username'],'AlphaMember')
-
-    def test_race_change_requires_confirmation_and_archives(self):
-        self.schedule();self.update([player()]);old=copy.deepcopy(self.r.admin)
-        form={**self.form(),'start_et':'2027-01-01T18:00','end_et':'2027-01-08T18:00'}
-        response=self.action('save_race',**form)
-        self.assertEqual(response.status_code,200);self.assertEqual(self.r.admin,old)
-        self.assertEqual(self.action('save_race',confirm_race='yes',**form).status_code,303)
-        self.assertEqual(len(self.r.admin['race_history']),1)
-        self.assertEqual(self.r.admin['race_history'][0]['leaderboard_snapshots']['last_top15'][0]['username'],'AlphaMember')
-        self.assertEqual(self.r.shuffle['rows'],[])
-        self.assertEqual(self.r.admin['users'],old['users'])
-
-    def test_invalid_settings_preserve_draft(self):
-        self.schedule();before=copy.deepcopy(self.r.admin)
-        response=self.action('save_race',**{**self.form(),'race_title':'Unsaved draft','prize_2':'bad'})
-        self.assertEqual(response.status_code,422);self.assertIn('Unsaved draft',response.text)
-        self.assertEqual(self.r.admin,before)
-
-    def test_stale_revision_rejected(self):
-        self.assertEqual(self.action('override',revision=0,username='User',amount='100').status_code,409)
-
-    def test_case_insensitive_duplicate_accounts(self):
-        self.assertEqual(self.action('add_account',username='GINGRSNAPS',new_password=PASSWORD,confirm_password=PASSWORD).status_code,422)
-
-    def test_removed_account_loses_access(self):
-        self.action('add_account',username='another_admin',new_password=PASSWORD,confirm_password=PASSWORD)
-        other=self.app.test_client()
-        with other.session_transaction() as s:s.update(user='another_admin',auth_version=1,csrf='test-token')
-        self.assertEqual(other.get('/admin/status').status_code,200)
-        self.action('remove_account',username='another_admin')
-        self.assertEqual(other.get('/admin/status').status_code,401)
-
-    def test_superadmin_cannot_be_removed(self):
-        self.assertEqual(self.action('remove_account',username='GINGRSNAPS').status_code,422)
-
-    def test_non_superadmin_cannot_manage_accounts(self):
-        self.action('add_account',username='another_admin',new_password=PASSWORD,confirm_password=PASSWORD)
-        with self.client.session_transaction() as s:s.update(user='another_admin',auth_version=1)
-        self.assertEqual(self.action('remove_account',username='gingrsnaps').status_code,403)
-
-    def test_password_change_revokes_other_sessions(self):
-        other=self.app.test_client()
-        with other.session_transaction() as s:s.update(user='gingrsnaps',auth_version=1)
-        self.assertEqual(self.action('password',current_password=PASSWORD,new_password=PASSWORD+'2',confirm_password=PASSWORD+'2').status_code,303)
-        self.assertEqual(other.get('/admin/status').status_code,401)
-        self.assertEqual(self.client.get('/admin/status').status_code,200)
-
-    def test_safe_backup_and_redacted_diagnostics(self):
-        self.schedule();self.update([player()])
-        backup=self.client.get('/admin/backup').json
-        self.assertNotIn('users',backup);self.assertNotIn('secret_key',backup)
-        report=self.client.get('/admin/diagnostics').text
-        self.assertNotIn('AlphaMember',report);self.assertNotIn('pw_hash',report)
-
-    def test_restore_previews_then_preserves_accounts(self):
-        self.schedule();self.update([player()]);saved=self.client.get('/admin/backup').json
-        self.action('override',username='AlphaMember',amount='999')
-        response=self.action('preview_restore',backup=(io.BytesIO(json.dumps(saved).encode()),'backup.json'))
-        self.assertEqual(response.status_code,200);self.assertEqual(self.r.shuffle['rows'][0]['wager'],'$999.00')
-        identifier=re.search('name="restore_token" value="([^"]+)"',response.text).group(1)
-        users=copy.deepcopy(self.r.admin['users'])
-        self.assertEqual(self.action('restore',restore_token=identifier).status_code,303)
-        self.assertEqual(self.r.shuffle['rows'][0]['wager'],'$100.00');self.assertEqual(self.r.admin['users'],users)
-        with self.r.store.connection() as c:
-            self.assertGreaterEqual(len(c['recoveries']),2)
-
-    def test_bad_restore_does_not_mutate_state(self):
-        self.schedule();saved=self.client.get('/admin/backup').json;saved['site_settings']['prizes']['1']='NaN'
-        before=copy.deepcopy(self.r.admin)
-        response=self.action('preview_restore',backup=(io.BytesIO(json.dumps(saved).encode()),'backup.json'))
-        self.assertEqual(response.status_code,422);self.assertEqual(self.r.admin,before)
-
-    def test_code_red_first_100_excludes_other_and_unknown_campaigns(self):
-        self.schedule();self.update([player('User'+str(n),str(1000-n)) for n in range(130)]+[player('Unknown','100',campaign=None),player('Other','100',campaign='Other')])
-        self.assertEqual(len(self.r.shuffle['red']),100);self.assertEqual(self.r.shuffle['red_total'],130)
-        self.assertEqual(self.r.shuffle['missing_campaign'],1)
-
-    def test_csv_filter_preserves_rank_and_escapes_formula(self):
-        self.schedule();self.update([player('AlphaMember','200'),player('=cmd','100')])
-        value=self.client.get('/admin/export.csv?q=%3Dcmd').text
-        self.assertIn("'=cmd",value);self.assertIn('2,',value);self.assertNotIn('AlphaMember',value)
-
-    def test_existing_store_wins_on_restart(self):
-        self.action('add_account',username='new_admin',new_password=PASSWORD,confirm_password=PASSWORD)
-        again=Store(self.app.extensions['settings'])
-        try:self.assertIn('new_admin',again.admin()[1]['users'])
-        finally:again.close()
-
-    def test_seed_import_preserves_original_bytes_and_unknown_fields(self):
-        target=self.root/'other';target.mkdir()
-        value=copy.deepcopy(self.r.admin);value['unknown_legacy_field']={'keep':'this'}
-        raw=json.dumps(value,indent=3).encode();(target/'admin_store.json').write_bytes(raw)
-        store=Store(Config(target))
-        try:
-            self.assertEqual(store.admin()[1]['users'],value['users'])
-            self.assertEqual(store.admin()[1]['unknown_legacy_field'],value['unknown_legacy_field'])
-            self.assertEqual((target/'admin_store.json').read_bytes(),raw)
-        finally:store.close()
-
-    def test_corrupt_seed_is_never_replaced(self):
-        target=self.root/'bad';target.mkdir();(target/'admin_store.json').write_text('{broken',encoding='utf-8')
-        with self.assertRaises(RuntimeError):Store(Config(target))
-        self.assertEqual((target/'admin_store.json').read_text(encoding='utf-8'),'{broken')
-
-    def test_production_starts_locally_without_database_configuration(self):
-        # Reproduce the App Platform environment that used to stop startup.
-        with patch.dict(sys.modules,{'psycopg':None}), patch.dict(os.environ,{'APP_ENV':'production','DATABASE_URL':'${race-db.DATABASE_URL}',
-                                     'DATABASE_SSLMODE':'unused-invalid-value'}):
-            app=create_app(self.root,testing=True)
-            runtime=app.extensions['runtime']
-            try:
-                self.assertFalse(runtime.store.pg)
-                self.assertTrue(app.extensions['settings'].production)
-                client=app.test_client()
-                response=client.get('/admin',base_url='https://example.test')
-                self.assertIn('Secure',response.headers['Set-Cookie'])
-                csrf=re.search('name="csrf" value="([^"]+)"',response.text).group(1)
-                response=client.post('/admin',base_url='https://example.test',data={'csrf':csrf,'username':'gingrsnaps','password':PASSWORD},follow_redirects=True)
-                self.assertEqual(response.status_code,200)
-                self.assertIn('Local storage is active',response.text)
-                self.assertEqual(client.get('/admin/status',base_url='https://example.test').status_code,200)
-                self.assertEqual(runtime.admin['users'],self.r.admin['users'])
-            finally:runtime.store.close()
-
-    def test_private_recovery_restores_accounts_and_dates_on_a_fresh_instance(self):
-        self.schedule();self.update([player()])
-        self.action('add_account',username='retained_admin',new_password=PASSWORD+'2',confirm_password=PASSWORD+'2')
-        self.action('password',current_password=PASSWORD,new_password=PASSWORD+'3',confirm_password=PASSWORD+'3')
-        self.action('override',username='AlphaMember',amount='321')
-        response=self.client.get('/admin/recovery-backup')
-        self.assertEqual(response.status_code,200)
-        self.assertIn('no-store',response.headers['Cache-Control'])
-        self.assertIn('recovery.seed.json',response.headers['Content-Disposition'])
-        self.assertEqual(response.json['users'],self.r.admin['users'])
-        target=self.root/'fresh';(target/'private').mkdir(parents=True)
-        (target/'private/recovery.seed.json').write_bytes(response.data)
-        # Newest recovery must win over the original legacy seed on a new disk.
-        original=copy.deepcopy(response.json);original['site_settings']['race_title']='Old seed title'
-        (target/'admin_store.json').write_text(json.dumps(original),encoding='utf-8')
-        restored=create_app(target,testing=True)
-        runtime=restored.extensions['runtime']
-        try:
-            for key in ['users','site_settings','overrides','race_history','secret_key']:
-                self.assertEqual(runtime.admin[key],self.r.admin[key])
-            self.assertEqual(runtime.shuffle['rows'][0]['wager'],'$321.00')
-            client=restored.test_client();page=client.get('/admin')
-            csrf=re.search('name="csrf" value="([^"]+)"',page.text).group(1)
-            self.assertEqual(client.post('/admin',data={'csrf':csrf,'username':'gingrsnaps','password':PASSWORD+'3'}).status_code,303)
-            self.assertEqual((target/'private/recovery.seed.json').read_bytes(),response.data)
-            candidate=copy.deepcopy(runtime.admin);candidate['site_settings']['race_title']='Newer local state'
-            runtime.commit(candidate,runtime.revision)
-        finally:runtime.store.close()
-        reopened=Store(Config(target))
-        try:self.assertEqual(reopened.admin()[1]['site_settings']['race_title'],'Newer local state')
-        finally:reopened.close()
-
-    def test_private_recovery_requires_superadmin_and_is_never_public(self):
-        self.assertEqual(self.app.test_client().get('/admin/recovery-backup').status_code,401)
-        self.action('add_account',username='another_admin',new_password=PASSWORD,confirm_password=PASSWORD)
-        with self.client.session_transaction() as s:s.update(user='another_admin',auth_version=1)
-        response=self.client.get('/admin/recovery-backup')
-        self.assertEqual(response.status_code,403)
-        self.assertNotIn('pw_hash',response.text)
-        self.assertNotIn('href="/admin/recovery-backup"',self.client.get('/admin?tab=settings').text)
-        self.assertNotIn('pw_hash',self.client.get('/data').text)
-
-    def test_invalid_recovery_file_stops_import_without_resetting_accounts(self):
-        target=self.root/'invalid-recovery';(target/'private').mkdir(parents=True)
-        seed=target/'private/recovery.seed.json';seed.write_text('{broken',encoding='utf-8')
-        (target/'private/admin_store.seed.json').write_text(json.dumps(self.r.admin),encoding='utf-8')
-        with self.assertRaises(RuntimeError):Store(Config(target))
-        self.assertEqual(seed.read_text(encoding='utf-8'),'{broken')
-
-    def test_removed_database_configuration_cannot_require_a_service(self):
-        with patch.dict(os.environ, {'STORAGE_MODE':'postgres','DATABASE_URL':'postgresql://unused'}):
-            config = Config(self.root)
-            self.assertEqual(config.db_url, '')
-            self.assertEqual(config.state_path, self.root/'data/state.json')
-            store = Store(config)
-            self.assertEqual(store.admin(), self.r.store.admin())
-            self.assertFalse(store.pg)
-
-    def test_shuffle_and_kick_workers_do_not_block_each_other(self):
-        self.schedule();entered,release,kick=threading.Event(),threading.Event(),threading.Event()
-        def slow(site):entered.set();release.wait(3);return [player()]
-        def fast(site):kick.set();return dict(live=False,channel='redhunllef')
-        with patch.object(self.r.providers,'shuffle',side_effect=slow),patch.object(self.r.providers,'kick',side_effect=fast):
-            self.r.start()
-            try:
-                self.assertTrue(entered.wait(2));self.assertTrue(kick.wait(2));self.assertEqual(self.client.get('/data').status_code,200)
-            finally:release.set();self.r.stop()
-
-    def test_no_stale_publication_after_settings_change(self):
-        self.schedule()
-        def changing(site):
-            candidate=copy.deepcopy(self.r.admin);candidate['site_settings']['race_title']='Changed during fetch'
-            self.r.commit(candidate,self.r.revision)
-            return [player()]
-        with patch.object(self.r.providers,'shuffle',side_effect=changing):self.r.check('shuffle')
-        self.assertEqual(self.r.shuffle['rows'],[]);self.assertTrue(self.r.events['shuffle'].is_set())
-
-    def test_failed_old_request_does_not_poison_new_race_or_delay_its_check(self):
-        self.schedule()
-        before = self.r.revision
-        def old_request(site):
-            candidate = copy.deepcopy(self.r.admin)
-            candidate['site_settings']['start_time'] -= 86400
-            from race import empty
-            self.r.commit(candidate, before, snapshot=empty(candidate['site_settings']))
-            self.r.request_refresh('shuffle')
-            raise ProviderError('The old date range was rejected', status=400)
-        with patch.object(self.r.providers, 'shuffle', side_effect=old_request):
-            delay = self.r.check('shuffle')
-        self.assertEqual(self.r.shuffle['error'], '')
-        self.assertEqual(delay, 0)
-        self.assertTrue(self.r.events['shuffle'].is_set())
-        self.update([player(amount='350')])
-        self.assertEqual(self.client.get('/data').json['rows'][0]['wager'], '$350.00')
-
-    def test_manual_request_during_a_check_queues_one_followup(self):
-        self.r.jobs['shuffle']['state'] = 'checking'
-        self.r.request_refresh('shuffle')
-        self.r.request_refresh('shuffle')
-        self.assertTrue(self.r.events['shuffle'].is_set())
-        self.assertEqual(self.r.jobs['shuffle']['state'], 'checking')
-
-    def test_bottom_confirmation_button_actually_publishes_the_new_dates(self):
-        self.schedule()
-        form = {**self.form(), 'start_et':'2026-09-01T18:00', 'end_et':'2026-09-08T18:00'}
-        preview = self.action('save_race', **form)
-        # Submit the same visible bottom button a person uses after reviewing.
-        bottom = preview.text.split('class="save-bar"', 1)[1]
-        submitter = re.search(r'<button\b[^>]*type="submit"[^>]*>', bottom).group(0)
-        attributes = dict(re.findall(r'([\w-]+)="([^"]*)"', submitter))
-        extra = {attributes['name']:attributes.get('value', '')} if 'name' in attributes else {}
-        response = self.action('save_race', **form, **extra)
-        self.assertEqual(response.status_code, 303)
-        self.assertEqual(self.r.admin['site_settings']['start_time'], eastern_epoch(form['start_et']))
-
-    def test_date_publication_and_automatic_refresh_through_real_http_transport(self):
-        """Exercise requests/JSON/parser/worker publication against a local fixture.
-
-        The scheduling interval is shortened only inside this isolated test.
-        Real Shuffle credentials and services are never contacted.
-        """
-        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-        from urllib.parse import parse_qs, urlsplit
-        from race_support import local_input
-        import requests
-        self.schedule()
-        old_start = self.r.admin['site_settings']['start_time']
-        entered, release = threading.Event(), threading.Event()
-        fixture = {'amount':'200', 'windows':[]}
-
-        class Upstream(BaseHTTPRequestHandler):
-            def log_message(self, *_):
-                pass
-            def do_GET(self):
-                query = parse_qs(urlsplit(self.path).query)
-                window = (int(query['startTime'][0]), int(query['endTime'][0]))
-                fixture['windows'].append(window)
-                if window[0] == old_start:
-                    entered.set()
-                    release.wait(3)
-                    status, payload = 400, {'error':'old range'}
-                else:
-                    status, payload = 200, {'data':[player(amount=fixture['amount'])]}
-                body = json.dumps(payload).encode('utf-8')
-                self.send_response(status)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Content-Length', str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
-
-        server = ThreadingHTTPServer(('127.0.0.1', 0), Upstream)
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        self.guard.stop()
-        native_request = requests.Session.request
-        self.r.config.credentials['shuffle_api_key'] = 'fixture-key'
-
-        def route(session, method, url, **kwargs):
-            parsed = urlsplit(url)
-            self.assertEqual(parsed.netloc, 'affiliate.shuffle.com')
-            return native_request(session, method,
-                f'http://127.0.0.1:{server.server_port}'+parsed.path, **kwargs)
-
-        def wait_for_wager(amount):
-            deadline = time.monotonic()+3
-            while time.monotonic() < deadline:
-                value = self.client.get('/data').json
-                if value['rows'] and value['rows'][0]['wager'] == amount:
-                    return
-                time.sleep(.01)
-            self.fail('Latest source value was not automatically published')
-
-        try:
-            with patch('requests.Session.request', new=route), patch('runtime.INTERVAL', .2), \
-                 patch.object(self.r.providers, 'kick', return_value=dict(live=False, channel='redhunllef')):
-                self.r.start()
-                try:
-                    self.assertTrue(entered.wait(2))
-                    now = int(time.time())
-                    form = {**self.form(), 'start_et':local_input(now-7200), 'end_et':local_input(now+7200)}
-                    self.assertEqual(self.action('save_race', **form).status_code, 200)
-                    self.assertEqual(self.action('save_race', confirm_race='yes', **form).status_code, 303)
-                    release.set()
-                    wait_for_wager('$200.00')
-                    self.assertEqual(self.r.shuffle['error'], '')
-                    self.assertEqual(self.r.jobs['shuffle']['http_status'], 200)
-                    # The independent history worker may interleave completed-
-                    # week requests. Verify this live window, not request order.
-                    new_start = eastern_epoch(form['start_et'])
-                    self.assertTrue(any(window[0] == new_start for window in fixture['windows']))
-                    # No manual request: the next scheduled cycle must publish.
-                    fixture['amount'] = '375'
-                    wait_for_wager('$375.00')
-                    admin = self.client.get('/admin/status?tab=players').json
-                    self.assertEqual(admin['participants'][0]['wager'], '$375.00')
-                    self.assertEqual(admin['participants'][0]['username'], 'AlphaMember')
-                    self.assertGreaterEqual(sum(window[0] == new_start for window in fixture['windows']), 2)
-                finally:
-                    release.set()
-                    self.r.stop()
-        finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(timeout=2)
-
-    def test_new_dates_clear_old_soft_retry_but_preserve_provider_rate_limit(self):
-        self.schedule()
-        job = self.r.jobs['shuffle']
-        job.update(checked_scope='previous-race', not_before=time.monotonic()+60, http_status=400, retry_after=0)
-        first = self.r.request_refresh('shuffle')
-        self.assertEqual(job['not_before'], 0)
-        second = self.r.request_refresh('shuffle')
-        self.assertEqual(first['requests'], second['requests'], 'Repeated clicks should coalesce')
-        deadline = time.monotonic()+120
-        job.update(not_before=deadline, http_status=429, retry_after=120)
-        self.r.request_refresh('shuffle')
-        self.assertEqual(job['not_before'], deadline)
-
-    def test_superseded_rate_limit_still_delays_new_provider_requests(self):
-        self.schedule()
-        def limited(site):
-            candidate = copy.deepcopy(self.r.admin)
-            candidate['site_settings']['start_time'] -= 86400
-            from race import empty
-            self.r.commit(candidate, self.r.revision, snapshot=empty(candidate['site_settings']))
-            raise ProviderError('Provider rate limit', status=429, retry_after=120)
-        with patch.object(self.r.providers, 'shuffle', side_effect=limited):
-            delay = self.r.check('shuffle')
-        self.assertEqual(delay, 120)
-        self.assertEqual(self.r.shuffle['error'], '')
-        self.assertTrue(self.r.events['shuffle'].is_set())
-
-    def test_provider_envelopes_and_range_never_use_lifetime_fallback(self):
-        self.schedule();providers=self.r.providers;providers.config.credentials['shuffle_api_key']='fake-key'
-        for key in ('data','results','leaderboard','users','items'):
-            with patch.object(providers,'request',return_value={'data':None,key:[player()]}) as mock:
-                self.assertEqual(len(providers.shuffle(self.r.admin['site_settings'])),1)
-                self.assertIn('startTime',mock.call_args.kwargs['params'])
-        with patch.object(providers,'request',side_effect=ProviderError('Bad race',status=400)) as mock:
-            with self.assertRaises(ProviderError):providers.shuffle(self.r.admin['site_settings'])
-            self.assertEqual(mock.call_count,1)
-
-    def test_kick_reauthenticates_once_after_401(self):
-        providers=self.r.providers;providers.config.credentials.update(kick_client_id='fake',kick_client_secret='fake')
-        channel={'data':[{'slug':'redhunllef','stream':{'is_live':True,'viewer_count':42},'stream_title':'Fixture'}]}
-        with patch.object(providers,'request',side_effect=[{'access_token':'first'},ProviderError('expired',status=401),{'access_token':'second'},channel]) as mock:
-            value=providers.kick(self.r.admin['site_settings'])
-            self.assertEqual(mock.call_count,4);self.assertTrue(value['live']);self.assertEqual(value['viewers'],42)
-
-    def test_sole_launch_command_serves_actual_http(self):
-        with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
-        env={**os.environ,'PORT':str(port),'APP_ENV':'production','STORAGE_MODE':'local',
-             'DATABASE_URL':'${race-db.DATABASE_URL}','LOCAL_DATABASE_PATH':str(self.root/'cli.sqlite3'),'STATE_FILE':str(self.root/'cli-state.json'),
-             'SETTINGS_PATH':str(self.root/'missing-settings.json'),'ADMIN_SEED_PATH':str(self.root/'missing-seed.json'),
-             'PYTHONIOENCODING':'utf-8'}
-        log=self.root/'startup.log'
-        with log.open('w',encoding='utf-8') as stream:
-            process=subprocess.Popen([sys.executable,str(ROOT/'wager_backend.py')],env=env,stdout=stream,stderr=stream)
-            try:
-                for _ in range(60):
-                    if process.poll() is not None:self.fail(log.read_text(encoding='utf-8'))
-                    try:
-                        with urlopen(f'http://127.0.0.1:{port}/healthz',timeout=.3) as response:
-                            self.assertTrue(json.load(response)['ok']);break
-                    except OSError:time.sleep(.05)
-                else:self.fail('Server did not bind its HTTP port: '+log.read_text(encoding='utf-8'))
-                with urlopen(f'http://127.0.0.1:{port}/admin',timeout=2) as response:self.assertIn('Sign in',response.read().decode())
-            finally:process.terminate();process.wait(timeout=8)
-        self.assertIn('listening on 0.0.0.0:',log.read_text(encoding='utf-8'))
-        self.assertIn('cadence=60s',log.read_text(encoding='utf-8'))
-        self.assertIn('no external database is required',log.read_text(encoding='utf-8'))
-        self.assertNotIn('ERROR STARTUP',log.read_text(encoding='utf-8'))
-
-
-class CalculationTests(unittest.TestCase):
-    def test_timezone_boundaries(self):
-        for value in ('2026-03-08T02:30','2026-11-01T01:30'):
-            with self.assertRaises(ValueError):eastern_epoch(value)
-        self.assertEqual(time.gmtime(eastern_epoch('2026-09-21T18:00')).tm_hour,22)
-
-    def test_invalid_money(self):
-        for value in ('NaN','-5','1,23','25k'):
-            with self.assertRaises(ValueError):money_input(value)
-
-    def test_phase_boundaries(self):
-        site={'start_time':100,'end_time':200}
-        self.assertEqual([phase(site,x) for x in (99,100,199,200)],['upcoming','active','active','ended'])
-
-    def test_exact_aggregation_and_incomplete_raw_totals(self):
-        rows=[dict(username='user',weighted='0.1',raw=None,raw_invalid=True,row_count=1),dict(username='user',weighted='0.2',raw='500',row_count=1)]
-        value=aggregate(rows)['user'];self.assertEqual(value['weighted'],'0.3');self.assertIsNone(value['raw'])
-        self.assertEqual(aggregate(rows,'max')['user']['weighted'],'0.2')
-
-
-if __name__=='__main__':unittest.main()
-```
-
-## `tests/test_baccarat.py`
-
-```python
-"""Baccarat tableau, exact accounting, old-hand migration and offline proofs."""
-import copy
-import json
-from pathlib import Path
-import time
-import unittest
-from unittest.mock import patch
-
-from baccarat import banker_draws, card_value, replay, RETURNS
-from fairness import VERSION, V3_VERSION, GAMES, commitment, outcome, verify
-from gaming import Gaming, player_key, validate_gaming
-from storage import StoreError
-import test_redpoints
-
-
-class Cards:
-    """Feed selected physical cards through the public unbiased-draw interface."""
-    def __init__(self, cards):
-        self.cards, self.shoe, self.cursor = iter(cards), list(range(416)), 0
-
-    def below(self, size):
-        assert size == 416-self.cursor
-        j = self.shoe.index(next(self.cards))
-        answer = j-self.cursor
-        assert answer >= 0
-        self.shoe[self.cursor], self.shoe[j] = self.shoe[j], self.shoe[self.cursor]
-        self.cursor += 1
-        return answer
-
-
-def value_id(value, deck):
-    return deck*52+(value-1 if value else 9)
-
-
-class BaccaratRulesTests(unittest.TestCase):
-    def test_card_values_and_entire_banker_table(self):
-        self.assertEqual([card_value(n) for n in range(13)],[1,2,3,4,5,6,7,8,9,0,0,0,0])
-        expected=[set(range(10)),set(range(10)),set(range(10)),{0,1,2,3,4,5,6,7,9},
-                  {2,3,4,5,6,7},{4,5,6,7},{6,7},set()]
-        for points in range(8):
-            self.assertEqual(banker_draws(points,None), points < 6)
-            for third in range(10):
-                self.assertEqual(banker_draws(points,third),third in expected[points])
-
-    def test_all_initial_totals_and_third_card_values_with_three_bets(self):
-        draw_on=[set(range(10)),set(range(10)),set(range(10)),{0,1,2,3,4,5,6,7,9},
-                 {2,3,4,5,6,7},{4,5,6,7},{6,7},set(),set(),set()]
-        for pt in range(10):
-            for bt in range(10):
-                for third in range(10):
-                    natural = pt >= 8 or bt >= 8
-                    pdraw = not natural and pt <= 5
-                    bdraw = not natural and (third in draw_on[bt] if pdraw else bt <= 5)
-                    initial=[value_id(pt,0),value_id(bt,1),value_id(0,2),value_id(0,3)]
-                    cards=initial+([value_id(third,4)] if pdraw else [])+([value_id(7,5)] if bdraw else [])
-                    final_p=(pt+(third if pdraw else 0))%10
-                    final_b=(bt+(7 if bdraw else 0))%10
-                    winner='tie' if final_p==final_b else 'player' if final_p>final_b else 'banker'
-                    for side in ('player','banker','tie'):
-                        r=replay(Cards(cards),101,side)
-                        self.assertEqual((len(r['player']),len(r['banker'])),(2+int(pdraw),2+int(bdraw)))
-                        self.assertEqual((r['player_total'],r['banker_total'],r['winner'],r['natural']),(final_p,final_b,winner,natural))
-                        expected=101*RETURNS[side]//10000 if winner==side else 101 if winner=='tie' else 0
-                        self.assertEqual(r['payout'],expected)
-                        self.assertEqual(len(set(r['player']+r['banker'])),len(cards))
-
-    def test_proofs_and_rejection_of_tampering_or_old_baccarat_versions(self):
-        vectors=json.loads((Path(__file__).parent/'fairness_v4_vectors.json').read_text(encoding='utf-8'))
-        combos=set()
-        for receipt in vectors:
-            self.assertTrue(verify(receipt,receipt['commitment']))
-            changed=copy.deepcopy(receipt);changed['net']+=1
-            self.assertFalse(verify(changed))
-            if receipt['game']=='baccarat':
-                combos.add((receipt['options']['side'],receipt['result']['winner']))
-                changed=copy.deepcopy(receipt);changed['result']['player'][0]=(changed['result']['player'][0]+1)%416
-                self.assertFalse(verify(changed))
-                self.assertFalse(verify({**receipt,'rules_version':V3_VERSION}))
-        self.assertEqual(len(combos),9)
-
-
-class BaccaratWalletTests(unittest.TestCase):
-    setUp=test_redpoints.RedPointsTests.setUp
-    player=test_redpoints.RedPointsTests.player
-    body=test_redpoints.RedPointsTests.body
-
-    def test_saved_round_deduplicates_and_admin_tracks_exact_net_and_ip(self):
-        client,state=self.player('BaccaratPlayer');body=self.body(state['wallet'],'baccarat')
-        headers={'X-CSRF-Token':state['player_csrf']}
-        self.assertEqual(client.post('/gaming/api/bet',json=body).status_code,400)
-        result=client.post('/gaming/api/bet',json=body,headers=headers)
-        self.assertEqual(result.status_code,200,result.text)
-        receipt=result.json['receipt'];self.assertTrue(verify(receipt,body['commitment']))
-        self.assertEqual(result.json['wallet']['balance'],100000+receipt['net'])
-        self.assertTrue(client.post('/gaming/api/bet',json=body,headers=headers).json['duplicate'])
-        self.assertEqual(client.get('/admin/gaming/status').status_code,401)
-        rankings=self.client.get('/admin/gaming/status').json
-        # Public game data cannot expose private IP tracking.
-        self.assertNotIn('198.51.100.1',json.dumps(result.json))
-        self.assertIn('BaccaratPlayer',json.dumps(rankings))
-        self.assertIn('198.51.100.1',json.dumps(rankings))
-        validate_gaming(self.app.extensions['gaming'].recovery())
-
-    def test_failed_save_does_not_debit_or_rotate_commitment(self):
-        game=self.app.extensions['gaming'];wallet=game.view('failure','Failure')
-        before=game.recovery();body=self.body(wallet,'baccarat')
-        with patch('storage.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(StoreError):game.bet('failure','Failure',body)
-        self.assertEqual(game.recovery(),before)
-
-    def test_v3_pending_card_hands_keep_seed_cards_and_original_receipt_version(self):
-        for card_game in ('blackjack','poker'):
-            with self.subTest(card_game=card_game):
-                game=self.app.extensions['gaming'];identity='legacy-'+card_game
-                wallet=game.view(identity,identity);body=self.body(wallet,card_game)
-                for number in range(100):
-                    seed=f'{number:064x}'
-                    pending={**body,'rules_version':V3_VERSION,'server_seed':seed,'commitment':commitment(seed),
-                             'at':int(time.time())}
-                    pending.update({'actions':[],'action_ids':[]} if card_game=='blackjack' else {'holds':None})
-                    if not outcome(seed,pending)['ended']:break
-                with game.store.connection(transaction=True) as conn:
-                    player=conn['gaming']['players'][player_key(identity)]
-                    player['stats'].pop('baccarat')
-                    player.update(server_seed=seed,balance=99900)
-                    player[card_game]=pending
-                original=outcome(seed,pending)
-                migrated=Gaming(game.store);migrated.restart_balances()
-                self.assertEqual(migrated.recovery()['players'][player_key(identity)][card_game],pending)
-                hand=migrated.view(identity,identity)[card_game]
-                if card_game=='poker':
-                    result=migrated.poker_action(identity,identity,dict(round_id=hand['round_id'],holds=[0,2,4],action_id='migrate-draw'))
-                    self.assertEqual(result['receipt']['result']['initial'],original['initial'])
-                else:
-                    result=migrated.blackjack_action(identity,identity,dict(round_id=hand['round_id'],step=0,action='stand',action_id='migrate-stand'))
-                    self.assertEqual(result['receipt']['result']['player'],original['player'])
-                self.assertTrue(verify(result['receipt']));self.assertEqual(result['receipt']['rules_version'],V3_VERSION)
-                self.assertEqual(set(result['wallet']['stats']),set(GAMES))
-                validate_gaming(migrated.recovery())
-
-
-if __name__=='__main__': unittest.main()
-```
-
-## `tests/test_blackjack.py`
-
-```python
-"""Blackjack rules, durable turns, hidden cards and one-time settlements."""
-import copy
-import time
-import unittest
-from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import patch
-
-import test_app
-import test_redpoints as redpoints
-from blackjack import replay, total
-from fairness import VERSION, outcome, verify
-from gaming import Gaming, GamingError, player_key, season, validate_gaming
-from storage import StoreError
-
-
-class Shoe:
-    """Choose known card IDs without replacement to exercise exact rule cases."""
-    def __init__(self, cards):
-        self.cards=iter(cards);self.shoe=list(range(312));self.cursor=0
-    def below(self,size):
-        card=next(self.cards);j=self.shoe.index(card,self.cursor)
-        offset=j-self.cursor
-        self.shoe[self.cursor],self.shoe[j]=self.shoe[j],self.shoe[self.cursor]
-        self.cursor+=1
-        return offset
-
-
-class BlackjackRulesTests(unittest.TestCase):
-    def test_naturals_push_peek_soft17_double_and_bust(self):
-        cases=[
-          ([0,9,12,8],[], 'blackjack',250,21,19,100),
-          ([0,13,9,22],[], 'push',100,21,21,100),
-          ([8,0,9,12],[], 'lose',0,19,21,100),
-          ([9,0,8,5],['stand'], 'win',200,19,17,100),
-          ([5,8,4,7,9],['double'], 'win',400,21,17,200),
-          ([9,8,21,7,4],['hit'], 'lose',0,24,17,100),
-        ]
-        for cards,actions,status,payout,pt,dt,stake in cases:
-            with self.subTest(status=status,actions=actions):
-                r=replay(Shoe(cards),100,actions)
-                self.assertTrue(r['ended']);self.assertEqual(r['status'],status)
-                self.assertEqual((r['payout'],r['player_total'],r['dealer_total'],r['total_wager']),(payout,pt,dt,stake))
-    def test_aces_rounding_and_illegal_moves(self):
-        self.assertEqual(total([0,13,26,5]),(19,True))
-        self.assertEqual(total([0,9,8]),(20,False))
-        self.assertEqual(replay(Shoe([0,9,12,8]),3,[])['payout'],7)
-        with self.assertRaises(ValueError):replay(Shoe([0,9,12,8]),100,['hit'])
-        with self.assertRaises(ValueError):replay(Shoe([1,9,2,8,3]),100,['hit','double'])
-
-
-class BlackjackWalletTests(unittest.TestCase):
-    setUp=test_app.AppTests.setUp
-    body=redpoints.RedPointsTests.body
-
-    def opened(self,now=None):
-        game=self.app.extensions['gaming'];now=time.time() if now is None else now
-        wallet=game.view('bj','RedCard',now,client_ip='192.0.2.1')
-        # Pick a public, deterministic test seed with a playable opening hand.
-        for seed in range(100):
-            with game.store.connection(transaction=True) as conn:
-                conn['gaming']['players'][player_key('bj')]['server_seed']=f'{seed:064x}'
-            wallet=game.view('bj','RedCard',now,client_ip='192.0.2.1')
-            body=self.body(wallet,'blackjack')
-            result=outcome(f'{seed:064x}',{**body,'actions':[]})
-            if not result['ended'] and result['player_total']<18:break
-        opened=game.bet('bj','RedCard',body,now,client_ip='192.0.2.1')
-        return game,body,opened
-
-    def move(self,game,hand,action='stand',now=None,action_id='blackjack-move-1'):
-        body=dict(round_id=hand['round_id'],step=hand['step'],action=action,action_id=action_id)
-        return game.blackjack_action('bj','RedCard',body,now,client_ip='192.0.2.1'),body
-
-    def test_reservation_hole_card_privacy_restore_and_idempotent_settlement(self):
-        game,body,opened=self.opened();wallet=opened['wallet'];hand=wallet['blackjack']
-        self.assertIsNone(opened['receipt']);self.assertEqual(wallet['balance'],99900)
-        self.assertEqual(hand['dealer'][1],None)
-        private=game.recovery()['players'][player_key('bj')]['server_seed']
-        self.assertNotIn(private,str(opened));self.assertNotIn('server_seed',str(opened))
-        validate_gaming(game.recovery())
-        self.assertEqual(Gaming(game.store).view('bj','RedCard',client_ip='192.0.2.1'),wallet)
-        self.assertTrue(game.bet('bj','RedCard',body,client_ip='192.0.2.1')['duplicate'])
-        result,move=self.move(game,hand)
-        self.assertTrue(verify(result['receipt'],body['commitment']))
-        self.assertIsNone(result['wallet']['blackjack'])
-        self.assertEqual(result['wallet']['balance'],100000+result['receipt']['net'])
-        duplicate=game.blackjack_action('bj','RedCard',move,client_ip='192.0.2.1')
-        self.assertTrue(duplicate['duplicate']);self.assertEqual(result['wallet'],duplicate['wallet'])
-        self.assertEqual(result['wallet']['stats']['blackjack']['bets'],1)
-        validate_gaming(game.recovery())
-
-    def test_two_tabs_cannot_hit_twice_with_same_step_or_request(self):
-        game,body,opened=self.opened();hand=opened['wallet']['blackjack']
-        move=dict(round_id=hand['round_id'],step=0,action='hit',action_id='concurrent-hit')
-        with ThreadPoolExecutor(max_workers=6) as pool:
-            replies=list(pool.map(lambda _:game.blackjack_action('bj','RedCard',move,client_ip='192.0.2.1'),range(6)))
-        self.assertEqual(sum(not r['duplicate'] for r in replies),1)
-        value=game.view('bj','RedCard',client_ip='192.0.2.1')
-        hand=value['blackjack']
-        if hand:
-            self.assertEqual(hand['step'],1);self.assertEqual(len(hand['player']),3)
-            with self.assertRaises(GamingError):game.blackjack_action('bj','RedCard',{**move,'action_id':'different-hit'},client_ip='192.0.2.1')
-        validate_gaming(game.recovery())
-
-    def test_other_games_and_other_wallets_cannot_use_active_hand(self):
-        game,body,opened=self.opened();hand=opened['wallet']['blackjack']
-        with self.assertRaises(GamingError) as exc:
-            game.bet('bj','RedCard',{**self.body(opened['wallet']),'request_id':'another-game'},client_ip='192.0.2.1')
-        self.assertEqual(exc.exception.code,'active_hand')
-        game.view('other','Other',client_ip='192.0.2.2')
-        with self.assertRaises(GamingError):game.blackjack_action('other','Other',dict(round_id=hand['round_id'],step=0,action='stand',action_id='steal-hand-id'),client_ip='192.0.2.2')
-        self.assertEqual(game.view('bj','RedCard',client_ip='192.0.2.1'),opened['wallet'])
-
-    def test_double_uses_real_total_stake_for_profit_and_ranking(self):
-        game,body,opened=self.opened()
-        result,_=self.move(game,opened['wallet']['blackjack'],'double')
-        r=result['receipt'];self.assertEqual(r['result']['total_wager'],200)
-        self.assertEqual(r['net'],r['payout']-200)
-        self.assertEqual(result['wallet']['balance'],99800+r['payout'])
-        self.assertEqual(game.leaders()['games']['blackjack'][0]['wagered'],200)
-        self.assertTrue(verify(r,body['commitment']))
-        self.assertFalse(verify({**r,'actions':['stand']},body['commitment']))
-        validate_gaming(game.recovery())
-
-    def test_move_write_failure_rolls_back_cards_and_money(self):
-        game,body,opened=self.opened();before=game.recovery()
-        with patch('storage.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(StoreError):self.move(game,opened['wallet']['blackjack'],'double')
-        self.assertEqual(game.recovery(),before)
-
-    def test_weekly_cutoff_auto_stands_old_hand_once_then_resets(self):
-        edge=season()['end_time'];game,body,opened=self.opened(edge-1)
-        reset=game.view('bj','RedCard',edge,client_ip='192.0.2.1')
-        self.assertEqual(reset['balance'],100000);self.assertIsNone(reset['blackjack'])
-        r=reset['receipts'][0];self.assertEqual(r['ending'],'weekly_reset')
-        self.assertEqual(r['actions'],['stand']);self.assertTrue(verify(r,body['commitment']))
-        self.assertEqual(reset['stats']['blackjack']['bets'],0)
-        self.assertEqual(game.view('bj','RedCard',edge+1,client_ip='192.0.2.1'),reset)
-        validate_gaming(game.recovery())
-```
-
-## `tests/test_boss.py`
-
-```python
-"""Shared raid, HTTP, fairness, concurrency, and portable recovery regressions."""
-import copy
-from concurrent.futures import ThreadPoolExecutor
-import json
-import os
-from pathlib import Path
-import secrets
-import sys
-import tempfile
-import unittest
-from unittest.mock import patch
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from boss import BossError, CommunityBoss, DAY, DEFAULT_HP, fresh_raid, network_identity, validate_boss
-from storage import Store
-from wager_backend import create_app
-
-
-class BossTests(unittest.TestCase):
-    def setUp(self):
-        temp=tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
-        self.root=Path(temp.name)
-        env=patch.dict(os.environ, {'APP_ENV':'test','ADMIN_BOOTSTRAP_PASS':'test-only-password'}, clear=True)
-        env.start(); self.addCleanup(env.stop)
-        self.app=create_app(self.root, testing=True)
-        self.r=self.app.extensions['runtime']; self.b=self.app.extensions['boss']
-        self.addCleanup(self.r.store.close)
-        self.clock=patch('boss.time.time',return_value=1_800_000_000.375)
-        self.time=self.clock.start(); self.addCleanup(self.clock.stop)
-        self.start=self.time.return_value
-
-    def hit(self,guest='a',ip='192.0.2.1',style=None,request_id=None):
-        state=self.b.status(guest,ip)
-        return self.b.attack(guest,ip,style or state['weakness'],state['raid_id'],request_id or secrets.token_hex(16))
-
-    def client(self,ip='192.0.2.1'):
-        c=self.app.test_client(); c.environ_base['REMOTE_ADDR']=ip
-        state=c.get('/play/api/state').json
-        return c,state
-
-    def post(self,c,value,**extra):
-        state=value['state']
-        c.post('/play/api/profile', json={'raid_id':state['raid_id'], 'username':state['you']['name']}, headers={'X-CSRF-Token':value['csrf']})
-        return c.post('/play/api/attack',json={'raid_id':state['raid_id'],'request_id':secrets.token_hex(16),'style':state['weakness'],**extra},headers={'X-CSRF-Token':value['csrf']})
-
-    def test_two_players_share_health_and_separate_identity(self):
-        a,sa=self.client(); b,sb=self.client('192.0.2.2')
-        first=self.post(a,sa); second=self.post(b,sb)
-        self.assertEqual(first.status_code,200); self.assertEqual(second.status_code,200)
-        current=a.get('/play/api/state').json['state']
-        self.assertEqual(current['hp'],DEFAULT_HP-300)
-        self.assertEqual(current['raiders'],2)
-        self.assertEqual(current['you']['damage'],150)
-        self.assertNotEqual(sa['state']['you']['name'],sb['state']['you']['name'])
-        self.assertEqual(len(current['recent']),2)
-        html=a.get('/play').text
-        self.assertIn('id="attackButton"',html)
-        self.assertIn('id="bossHealthBar"',html)
-        self.assertNotIn('How to play together',html)
-        self.assertNotIn('id="howToPlay"',html)
-        self.assertNotIn('href="/admin"',a.get('/').text)
-        self.assertIn('Join the boss fight',a.get('/').text)
-
-    def test_simultaneous_hits_from_distinct_players_are_atomic(self):
-        def attack(i): return self.hit(str(i),f'198.51.100.{i+1}')
-        with ThreadPoolExecutor(max_workers=12) as pool:
-            hits=list(pool.map(attack,range(40)))
-        state=self.b.export()
-        self.assertEqual(state['total_attacks'],40)
-        self.assertEqual(state['hp'],DEFAULT_HP-sum(r['hit']['damage'] for r in hits))
-        validate_boss(state)
-
-    def test_same_identity_simultaneous_tabs_only_one_lands(self):
-        def attack(i):
-            try: return self.hit('same-browser')['ok']
-            except BossError as exc: return exc.code
-        with ThreadPoolExecutor(max_workers=10) as pool:
-            result=list(pool.map(attack,range(20)))
-        self.assertEqual(result.count(True),1)
-        self.assertEqual(result.count('cooldown'),19)
-
-    def test_cooldown_fractional_seconds_and_browser_limit_across_ips(self):
-        self.hit()
-        self.time.return_value=self.start+29.99
-        with self.assertRaises(BossError) as blocked:self.hit(ip='192.0.2.2')
-        self.assertEqual(blocked.exception.status,429)
-        self.time.return_value=self.start+30
-        self.assertEqual(self.hit(ip='192.0.2.2')['hit']['damage'],150)
-        validate_boss(self.b.export())
-
-    def test_unlimited_hits_and_per_player_cooldown(self):
-        for i in range(100):
-            self.time.return_value=self.start+i*30
-            self.hit()
-        self.assertEqual(self.b.status('a','192.0.2.1')['you']['attacks'],100)
-        self.assertIsNone(self.b.status('a','192.0.2.1')['you']['remaining'])
-        with self.assertRaises(BossError) as blocked:self.hit(guest='a')
-        self.assertEqual(blocked.exception.code,'cooldown')
-        self.time.return_value += 30
-        self.assertEqual(self.hit()['state']['you']['attacks'],101)
-        self.time.return_value=int(self.start)+DAY
-        self.assertEqual(self.hit()['state']['you']['attacks'],102)
-
-    def test_ipv6_normalization_and_mapped_ipv4(self):
-        self.hit(ip='2001:db8::abcd')
-        with self.assertRaises(BossError):self.hit(guest='a',ip='2001:db8::eeff')
-        self.assertTrue(self.hit(guest='new',ip='2001:db8::eeff')['ok'])
-        self.assertEqual(network_identity('::ffff:192.0.2.1'),'192.0.2.1')
-        self.assertEqual(self.hit(guest='other',ip='2001:db8:0:1::1')['hit']['damage'],150)
-
-    def test_weakness_bonus_and_tenth_hit_burst(self):
-        s=self.b.status('a','192.0.2.1')
-        wrong=next(x for x in ('blade','bow','magic') if x!=s['weakness'])
-        self.assertEqual(self.hit(style=wrong)['hit']['damage'],100)
-        for i in range(1,10):
-            self.time.return_value=self.start+i*60
-            result=self.hit()
-        self.assertEqual(result['hit']['damage'],250)
-        self.assertTrue(result['hit']['burst'])
-        self.assertEqual(result['state']['you']['burst_in'],10)
-
-    def test_receipt_retry_after_cooldown_and_victory_is_idempotent(self):
-        first=self.hit(request_id='test-receipt-001')
-        self.time.return_value+=120
-        again=self.hit(request_id='test-receipt-001')
-        self.assertTrue(again['duplicate']); self.assertEqual(first['hit'],again['hit'])
-        self.assertEqual(self.b.export()['total_attacks'],1)
-        # A tiny isolated raid verifies final damage clamping and victory receipts.
-        value=fresh_raid(health=50)
-        with self.r.store.connection(transaction=True) as conn:self.b._write(conn,value,new_raid=True)
-        self.b.loaded_at=0
-        final=self.hit(request_id='victory-receipt')
-        self.assertEqual(final['hit']['damage'],50)
-        self.assertEqual(final['state']['hp'],0)
-        self.assertTrue(self.hit(request_id='victory-receipt')['duplicate'])
-        with self.assertRaises(BossError):self.hit(guest='b',ip='192.0.2.2')
-        validate_boss(self.b.export())
-
-    def test_race_settings_and_provider_cache_untouched_by_game(self):
-        before=self.r.store.admin(); snapshot=self.r.store.live('shuffle')
-        self.hit(); self.b.control('pause',self.b.status()['raid_id'])
-        self.assertEqual(self.r.store.admin(),before)
-        self.assertEqual(self.r.store.live('shuffle'),snapshot)
-
-    def test_health_never_regenerates_during_idle_time_daily_reset_or_pause(self):
-        hit = self.hit()
-        saved = self.b.export()
-        for elapsed in (60, 601, DAY + 1, 7 * DAY):
-            self.time.return_value = self.start + elapsed
-            self.b.loaded_at = 0
-            view = self.b.status('a', '192.0.2.1')
-            self.assertEqual(view['hp'], hit['state']['hp'])
-            self.assertEqual(view['total_damage'], 150)
-            self.assertEqual(self.b.export(), saved)
-        self.assertIsNone(view['you']['remaining'])
-        self.b.control('pause', saved['id'])
-        self.time.return_value += DAY
-        self.b.control('resume', saved['id'])
-        self.assertEqual(self.b.status()['hp'], saved['hp'])
-        # Reloaded HTML must not briefly label a damaged boss as 100% health.
-        page = self.app.test_client().get('/play')
-        self.assertIn(f'id="bossPercent">{(saved["max_hp"] - saved["hp"]) / saved["max_hp"] * 100:.2f}% defeated</span>', page.text)
-
-    def test_cold_app_restart_retains_all_committed_damage(self):
-        self.hit()
-        self.time.return_value += 60
-        self.hit()
-        saved = self.b.export()
-        self.r.store.close()
-        restarted = create_app(self.root, testing=True)
-        self.addCleanup(restarted.extensions['runtime'].store.close)
-        restored = restarted.extensions['boss']
-        self.assertEqual(restored.export(), saved)
-        self.assertEqual(restored.status()['hp'], DEFAULT_HP - 300)
-
-    def test_storage_refuses_health_increases_and_implicit_new_raids(self):
-        self.hit()
-        saved = self.b.export()
-        healed = copy.deepcopy(saved)
-        healed['hp'] += 1
-        healed['total_damage'] -= 1
-        healed['version'] += 1
-        next(iter(healed['players'].values()))['damage'] -= 1
-        validate_boss(healed)  # Structurally valid, but it reverses committed damage.
-        with self.assertRaises(BossError) as rejected:
-            with self.r.store.connection(transaction=True) as conn:
-                self.b._write(conn, healed)
-        self.assertEqual(rejected.exception.code, 'progress_reversal')
-        self.assertEqual(self.b.export(), saved)
-        with self.assertRaises(BossError) as rejected:
-            with self.r.store.connection(transaction=True) as conn:
-                self.b._write(conn, fresh_raid())
-        self.assertEqual(rejected.exception.code, 'new_raid_required')
-        self.assertEqual(self.b.export(), saved)
-
-    def test_pause_resume_restart_and_stale_raid(self):
-        first=self.hit(); raid=first['state']['raid_id']
-        self.b.control('pause',raid)
-        with self.assertRaises(BossError):self.hit(guest='b',ip='192.0.2.2')
-        self.b.control('resume',raid)
-        self.assertEqual(self.hit(guest='b',ip='192.0.2.2')['state']['hp'],DEFAULT_HP-300)
-        self.b.control('restart',raid,3_000_000)
-        with self.assertRaises(BossError) as old:self.b.attack('a','192.0.2.1','blade',raid,'old-request-001')
-        self.assertEqual(old.exception.code,'new_raid')
-        state=self.b.export()
-        self.assertEqual(state['hp'],3_000_000); self.assertEqual(len(state['history']),1)
-        self.assertEqual(state['players'],{})
-
-    def test_auth_csrf_malformed_attack_and_forged_damage(self):
-        c,s=self.client()
-        self.assertEqual(c.post('/play/api/attack',json={}).status_code,400)
-        self.assertEqual(self.post(c,s,style=[]).status_code,400)
-        forged=self.post(c,s,damage=99_999_999,cooldown=0,remaining=9999)
-        self.assertEqual(forged.json['hit']['damage'],150)
-        self.assertEqual(self.post(c,s).status_code,429)
-        self.assertEqual(c.post('/admin/boss/action',data={'action':'pause'}).status_code,302)
-        self.assertEqual(c.get('/play/api/state').headers['Cache-Control'],'no-store')
-        # Public state does not reveal persisted identifiers, raw IPs or salt.
-        payload=c.get('/play/api/state').text
-        persisted=self.b.export()
-        for private in (persisted['salt'],'192.0.2.1',*persisted['players'],*persisted['networks']):
-            self.assertNotIn(private,payload)
-
-    def test_admin_controls_require_admin_and_restart_confirmation(self):
-        c,s=self.client()
-        with c.session_transaction() as sess:sess.update(user='gingrsnaps',auth_version=1)
-        form={'csrf':s['csrf'],'action':'restart','raid_id':s['state']['raid_id'],'health':'2400000'}
-        self.assertEqual(c.post('/admin/boss/action',data=form).status_code,422)
-        self.assertEqual(c.post('/admin/boss/action',data={**form,'confirm_restart':'yes'}).status_code,303)
-        self.assertIn('Pause attacks',c.get('/admin?tab=boss').text)
-        self.r.admin['users']['helper']=copy.deepcopy(self.r.admin['users']['gingrsnaps'])
-        self.r.commit(self.r.admin,self.r.revision)
-        with c.session_transaction() as sess:sess['user']='helper'
-        current=self.b.status()['raid_id']
-        self.assertEqual(c.post('/admin/boss/action',data={**form,'action':'pause','raid_id':current}).status_code,303)
-
-    def test_proxy_headers_do_not_change_identity_or_reset_cooldowns(self):
-        from flask import g
-        a, sa = self.client(); b, sb = self.client()
-        a.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.1'
-        b.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.2'
-        with self.app.test_request_context('/healthz', environ_base={'REMOTE_ADDR':'192.0.2.1'}, headers={'DO-Connecting-IP':'198.51.100.1'}):
-            self.app.preprocess_request()
-            self.assertEqual(g.client_ip, '192.0.2.1')  # Still untrusted on a direct host.
-        self.assertEqual(self.post(a, sa).status_code, 200)
-        self.assertEqual(self.post(b, sb).status_code, 200)
-        self.app.extensions['settings'].proxy = True
-        with self.app.test_request_context('/healthz', environ_base={'REMOTE_ADDR':'192.0.2.1'}, headers={'DO-Connecting-IP':'198.51.100.1'}):
-            self.app.preprocess_request()
-            self.assertEqual(g.client_ip, '198.51.100.1')
-        self.assertEqual(self.post(b, sb).status_code, 429)
-        c, sc = self.client('127.0.0.1')
-        self.assertEqual(self.post(c, sc).status_code, 200)  # No IP header needed to play.
-        c.environ_base['HTTP_DO_CONNECTING_IP'] = '198.51.100.3'
-        c.environ_base['HTTP_X_FORWARDED_FOR'] = '198.51.100.1'
-        self.assertEqual(self.post(c, sc).status_code, 429)
-
-    def test_guest_profile_survives_admin_logout(self):
-        c,s=self.client(); name=s['state']['you']['name']
-        c.post('/admin/logout',data={'csrf':s['csrf']})
-        self.assertEqual(c.get('/play/api/state').json['state']['you']['name'],name)
-
-    def test_recovery_preserves_game_identity_cooldowns_and_progress(self):
-        c,s=self.client(); self.post(c,s)
-        with c.session_transaction() as sess:sess.update(user='gingrsnaps',auth_version=1)
-        recovery=c.get('/admin/recovery-backup').json
-        self.assertEqual(recovery['community_boss'],self.b.export())
-        with tempfile.TemporaryDirectory() as directory:
-            root=Path(directory); (root/'private').mkdir()
-            (root/'private/recovery.seed.json').write_text(json.dumps(recovery))
-            restored=create_app(root,testing=True)
-            try:
-                restored_boss=restored.extensions['boss']
-                self.assertEqual(restored_boss.export(),self.b.export())
-                r=restored.test_client()
-                r.set_cookie('rh_raider',c.get_cookie('rh_raider').value)
-                current=r.get('/play/api/state').json
-                self.assertEqual(current['state']['you']['name'],s['state']['you']['name'])
-                self.assertEqual(current['state']['you']['damage'],150)
-                self.assertEqual(self.post(r,current).status_code,429)
-            finally:restored.extensions['runtime'].store.close()
-
-    def test_corrupt_game_recovery_rolls_back_account_import(self):
-        self.hit()
-        value=copy.deepcopy(self.r.admin); value['community_boss']=self.b.export()
-        value['community_boss']['hp']-=1
-        with tempfile.TemporaryDirectory() as directory:
-            root=Path(directory); (root/'private').mkdir()
-            (root/'private/recovery.seed.json').write_text(json.dumps(value))
-            with self.assertRaises(ValueError):create_app(root,testing=True)
-        bad=self.b.export(); next(iter(bad['players'].values()))['last_attack']=float('nan')
-        with self.assertRaises(ValueError):validate_boss(bad)
-
-    def test_saved_game_survives_process_reconstruction(self):
-        self.hit(); before=self.b.export()
-        store=Store(self.r.config)
-        try:self.assertEqual(CommunityBoss(store).export(),before)
-        finally:store.close()
-
-    def test_one_hundred_raiders_can_keep_attacking_without_a_daily_cap(self):
-        # 100 profiles all using weaknesses: 150 rounds defeat default HP.
-        # This deliberately verifies the faster requested uncapped balance.
-        finished = False
-        for turn in range(150):
-            self.time.return_value=self.start+turn*30
-            for player in range(100):
-                hit=self.hit(f'raider-{player}',f'203.0.113.{player+1}')
-                if hit['state']['hp']==0:
-                    finished=True; break
-            if finished: break
-        self.assertTrue(finished)
-        self.assertEqual(turn,149)
-        self.assertEqual(self.time.return_value-self.start,4470)
-
-
-if __name__=='__main__':unittest.main()
-```
-
-## `tests/test_boss_admin.py`
-
-```python
-"""Host edits must preserve raid progress and validate real image bytes."""
-import copy
-import io
-import json
-import os
-from pathlib import Path
-import tempfile
-import unittest
-from unittest.mock import patch
-
-from PIL import Image, PngImagePlugin
-
-from boss import BossError, DEFAULT_HP, fresh_raid, validate_boss
-from boss_avatar import image_bytes
-from wager_backend import create_app
-
-
-def picture(fmt='PNG', size=(900, 450)):
-    stream = io.BytesIO()
-    metadata = PngImagePlugin.PngInfo()
-    metadata.add_text('Comment', 'Private image metadata')
-    Image.new('RGB', size, '#d82832').save(stream, format=fmt, pnginfo=metadata)
-    return stream.getvalue()
-
-
-class BossAdminTests(unittest.TestCase):
-    def setUp(self):
-        directory = tempfile.TemporaryDirectory()
-        self.addCleanup(directory.cleanup)
-        self.root = Path(directory.name)
-        environment = patch.dict(os.environ, {
-            'APP_ENV': 'test', 'ADMIN_BOOTSTRAP_PASS': 'test-only-password',
-        }, clear=True)
-        environment.start()
-        self.addCleanup(environment.stop)
-        self.app = create_app(self.root, testing=True)
-        self.runtime = self.app.extensions['runtime']
-        self.boss = self.app.extensions['boss']
-        self.addCleanup(self.runtime.store.close)
-        self.client = self.app.test_client()
-        self.client.environ_base['REMOTE_ADDR'] = '192.0.2.1'
-        opening = self.client.get('/play/api/state').json
-        self.csrf = opening['csrf']
-        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
-        with self.client.session_transaction() as session:
-            session.update(user='gingrsnaps', auth_version=1)
-
-    def form(self, action, **fields):
-        state = self.boss.status()
-        return dict(csrf=self.csrf, action=action, raid_id=state['raid_id'],
-                    health_revision=str(state['health_revision']), settings_revision=str(state['settings_revision']), **fields)
-
-    def post(self, action, **fields):
-        return self.client.post('/admin/boss/action', data=self.form(action, **fields))
-
-    def upload(self, raw=None, filename='boss.png'):
-        return self.post('avatar', avatar=(io.BytesIO(raw if raw is not None else picture()), filename))
-
-    def hit(self, guest='one', ip='192.0.2.1'):
-        state = self.boss.status(guest, ip)
-        return self.boss.attack(guest, ip, state['weakness'], state['raid_id'], 'request-' + guest)
-
-    def test_png_jpg_jpeg_webp_are_decoded_resized_and_cacheable_without_metadata(self):
-        for fmt, filename in [('PNG', 'boss.png'), ('JPEG', '../../boss.JPG'), ('JPEG', 'boss.jpeg'), ('WEBP', 'boss.webp')]:
-            with self.subTest(fmt=fmt):
-                self.assertEqual(self.upload(picture(fmt), filename).status_code, 303)
-                view = self.boss.status()
-                self.assertTrue(view['avatar_custom'])
-                response = self.client.get(view['avatar_url'])
-                self.assertEqual(response.status_code, 200)
-                self.assertEqual(response.mimetype, 'image/png')
-                self.assertIn('immutable', response.headers['Cache-Control'])
-                self.assertEqual(response.headers['X-Content-Type-Options'], 'nosniff')
-                with Image.open(io.BytesIO(response.data)) as saved:
-                    self.assertEqual(saved.size, (512, 256))
-                    self.assertNotIn('Comment', saved.info)
-                    self.assertNotIn('exif', saved.info)
-                cached = self.client.get(view['avatar_url'], headers={'If-None-Match': response.headers['ETag']})
-                self.assertEqual(cached.status_code, 304)
-                self.assertEqual(cached.data, b'')
-                self.assertIn(view['avatar_url'], self.client.get('/play').text)
-                self.assertIn(view['avatar_url'], self.client.get('/').text)
-                self.assertIn(view['avatar_url'], self.client.get('/admin?tab=boss').text)
-                self.assertNotIn('community_boss_avatar', self.client.get('/play/api/state').text)
-                self.assertNotIn(self.boss.avatar_document['data'], self.client.get('/public-state').text)
-
-    def test_invalid_images_cannot_replace_existing_avatar_or_raid(self):
-        self.upload()
-        before = self.boss.recovery()
-        gif = picture('GIF', (20, 20))
-        for raw, filename in [(b'', 'boss.png'), (b'<script>alert(1)</script>', 'boss.png'),
-                              (gif, 'boss.png'), (picture()[:40], 'boss.png'),
-                              (picture(), 'boss.svg'), (b'x' * (4 * 1024 * 1024 + 1), 'boss.jpg')]:
-            with self.subTest(filename=filename, length=len(raw)):
-                self.assertEqual(self.upload(raw, filename).status_code, 422)
-                self.assertEqual(self.boss.recovery(), before)
-        with patch('boss_avatar.MAX_PIXELS', 100):
-            self.assertEqual(self.upload(picture(size=(11, 10))).status_code, 422)
-        frames = [Image.new('RGBA', (10, 10), color) for color in ('red', 'blue')]
-        animation = io.BytesIO()
-        frames[0].save(animation, format='PNG', save_all=True, append_images=frames[1:], duration=100, loop=0)
-        self.assertEqual(self.upload(animation.getvalue()).status_code, 422)
-        animation = io.BytesIO()
-        frames[0].save(animation, format='WEBP', save_all=True, append_images=frames[1:], duration=100, loop=0)
-        self.assertEqual(self.upload(animation.getvalue(), 'boss.webp').status_code, 422)
-        self.assertEqual(self.boss.recovery(), before)
-
-    def test_avatar_changes_keep_progress_accounts_and_cooldowns(self):
-        self.hit()
-        raid = self.boss.export()
-        admin = self.runtime.store.admin()
-        self.assertEqual(self.upload().status_code, 303)
-        current = self.boss.export()
-        for field in ('id', 'hp', 'max_hp', 'total_damage', 'total_attacks', 'players', 'networks'):
-            self.assertEqual(current[field], raid[field])
-        self.assertEqual(self.runtime.store.admin(), admin)
-        with self.assertRaises(BossError) as blocked:
-            self.boss.attack('one', '192.0.2.99', 'blade', current['id'], 'new-request-after-avatar')
-        self.assertEqual(blocked.exception.code, 'cooldown')
-        self.assertTrue(self.hit('two', '192.0.2.1')['ok'])
-        image_url = self.boss.status()['avatar_url']
-        self.boss.control('restart', current['id'])
-        self.boss.loaded_at = 0
-        self.assertEqual(self.boss.status()['avatar_url'], image_url)
-        self.assertEqual(self.post('avatar_reset').status_code, 303)
-        self.assertEqual(self.boss.status()['avatar_url'], '/static/redlogo.png')
-        self.assertEqual(self.client.get(image_url).status_code, 404)
-
-    def test_explicit_health_edit_uses_latest_damage_and_keeps_allowances(self):
-        self.hit()
-        form = self.form('health', health='3000000', confirm_health='yes')
-        self.hit('two', '192.0.2.2')  # A hit after the host opened the form is not lost.
-        before = self.boss.export()
-        self.assertEqual(self.client.post('/admin/boss/action', data=form).status_code, 303)
-        current = self.boss.export()
-        self.assertEqual(current['hp'], 3_000_000 - 300)
-        self.assertEqual(current['health_revision'], 1)
-        for field in ('id', 'total_damage', 'total_attacks', 'players', 'networks'):
-            self.assertEqual(current[field], before[field])
-        self.assertEqual(self.post('health', health='2000000', confirm_health='yes').status_code, 303)
-        self.assertEqual(self.boss.status()['hp'], 2_000_000 - 300)
-        with patch('boss.time.time', return_value=current['started_at'] + 7 * 86400):
-            self.boss.loaded_at = 0
-            self.assertEqual(self.boss.status()['hp'], 2_000_000 - 300)
-        validate_boss(self.boss.export())
-
-    def test_health_edit_requires_confirmation_valid_range_and_current_revision(self):
-        before = self.boss.export()
-        for fields in ({'health': '3000000'}, {'health': 'oops', 'confirm_health': 'yes'},
-                       {'health': '0', 'confirm_health': 'yes'}, {'health': str(2**53), 'confirm_health': 'yes'}):
-            self.assertEqual(self.post('health', **fields).status_code, 422)
-            self.assertEqual(self.boss.export(), before)
-        old = self.form('health', health='3000000', confirm_health='yes')
-        self.assertEqual(self.post('health', health='4000000', confirm_health='yes').status_code, 303)
-        self.assertEqual(self.client.post('/admin/boss/action', data=old).status_code, 422)
-        self.assertEqual(self.boss.status()['max_hp'], 4_000_000)
-        self.boss.control('restart', before['id'])
-        self.assertEqual(self.client.post('/admin/boss/action', data=old).status_code, 422)
-        self.assertEqual(self.boss.status()['max_hp'], DEFAULT_HP)
-
-    def test_completed_raid_only_reopens_after_explicit_health_edit(self):
-        small = fresh_raid(health=50)
-        with self.runtime.store.connection(transaction=True) as conn:
-            self.boss._write(conn, small, new_raid=True)
-        self.boss.loaded_at = 0
-        self.hit()
-        self.assertEqual(self.boss.status()['status'], 'victory')
-        self.upload()
-        self.assertEqual(self.boss.status()['hp'], 0)
-        self.assertEqual(self.post('health', health='100000', confirm_health='yes').status_code, 303)
-        self.assertEqual(self.boss.status()['hp'], 99_950)
-        self.assertEqual(self.boss.status()['status'], 'active')
-        self.assertEqual(self.boss.status()['total_damage'], 50)
-        validate_boss(self.boss.export())
-
-    def test_private_recovery_and_cold_start_keep_avatar_and_health_edits(self):
-        self.hit()
-        self.upload()
-        self.post('health', health='3000000', confirm_health='yes')
-        self.post('settings', boss_name='The Scarlet Beast', base_damage='120', weak_damage='180', burst_bonus='90')
-        saved = self.boss.recovery()
-        checkpoint = self.client.get('/admin/recovery-backup').json
-        for field in saved:
-            self.assertEqual(checkpoint[field], saved[field])
-        # Existing state takes precedence, even with a malformed new seed.
-        (self.root / 'private').mkdir(exist_ok=True)
-        (self.root / 'private/recovery.seed.json').write_text('{}', encoding='utf-8')
-        restarted = create_app(self.root, testing=True)
-        self.addCleanup(restarted.extensions['runtime'].store.close)
-        self.assertEqual(restarted.extensions['boss'].recovery(), saved)
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / 'private').mkdir()
-            (root / 'private/recovery.seed.json').write_text(json.dumps(checkpoint), encoding='utf-8')
-            restored = create_app(root, testing=True)
-            self.addCleanup(restored.extensions['runtime'].store.close)
-            self.assertEqual(restored.extensions['boss'].recovery(), saved)
-            url = restored.extensions['boss'].status()['avatar_url']
-            self.assertEqual(restored.test_client().get(url).data, image_bytes(saved['community_boss_avatar']))
-            restored.extensions['runtime'].store.close()
-        preview = self.client.post('/admin/recovery-preview', data={
-            'csrf': self.csrf, 'recovery': (io.BytesIO(json.dumps(checkpoint).encode()), 'checkpoint.json'),
-        })
-        self.assertEqual(preview.status_code, 200)
-        self.assertIn('Custom image included', preview.text)
-        checkpoint['community_boss_avatar']['sha256'] = '0' * 64
-        response = self.client.post('/admin/recovery-preview', data={
-            'csrf': self.csrf, 'recovery': (io.BytesIO(json.dumps(checkpoint).encode()), 'checkpoint.json'),
-        })
-        self.assertEqual(response.status_code, 422)
-        self.assertIn('checksum', response.text)
-        self.assertEqual(self.boss.recovery(), saved)
-
-    def test_upload_and_health_require_admin_and_csrf(self):
-        for action, fields in [('avatar', {'avatar': (io.BytesIO(picture()), 'boss.png')}),
-                               ('health', {'health': '3000000', 'confirm_health': 'yes'})]:
-            form = self.form(action, **fields)
-            form['csrf'] = 'forged'
-            self.assertEqual(self.client.post('/admin/boss/action', data=form).status_code, 400)
-        self.runtime.admin['users']['helper'] = copy.deepcopy(self.runtime.admin['users']['gingrsnaps'])
-        self.runtime.commit(self.runtime.admin, self.runtime.revision)
-        with self.client.session_transaction() as session:
-            session['user'] = 'helper'
-        self.assertIn('id="bossAvatarFile"', self.client.get('/admin?tab=boss').text)
-        self.assertEqual(self.upload().status_code, 303)
-        self.assertEqual(self.post('health', health='3000000', confirm_health='yes').status_code, 303)
-        self.assertEqual(self.client.get('/admin/recovery-backup').status_code, 403)
-        before = self.boss.recovery()
-        with self.client.session_transaction() as session:
-            session.pop('user')
-        self.assertEqual(self.upload().status_code, 302)
-        self.assertEqual(self.post('health', health='3000000', confirm_health='yes').status_code, 302)
-        self.assertEqual(self.boss.recovery(), before)
-
-    def test_every_boss_write_rejects_guests_forged_roles_and_revoked_sessions(self):
-        before = self.boss.recovery()
-        for mode in ('guest', 'unknown-account', 'revoked', 'bad-cookie', 'bad-csrf', 'missing-token', 'unicode-token'):
-            self.client.delete_cookie('session')
-            with self.client.session_transaction() as session:
-                session.update(csrf=self.csrf, is_admin=True, role='superadmin')
-                if mode != 'guest':
-                    session.update(user='missing' if mode == 'unknown-account' else 'gingrsnaps',
-                                   auth_version=0 if mode == 'revoked' else 1)
-                if mode == 'missing-token':
-                    session.pop('csrf')
-            if mode == 'bad-cookie':
-                self.client.set_cookie('session', 'forged-not-signed')
-            for action in ('avatar', 'avatar_reset', 'health', 'settings', 'pause', 'resume', 'restart'):
-                with self.subTest(mode=mode, action=action), patch('wager_backend.from_upload') as decode:
-                    form = self.form(action, health='3000000', confirm_health='yes', confirm_restart='yes',
-                                     boss_name='Unauthorized', base_damage='9000', weak_damage='9999', burst_bonus='9999',
-                                     role='superadmin', is_admin='true', user='gingrsnaps')
-                    if action == 'avatar':
-                        form['avatar'] = (io.BytesIO(picture('WEBP')), 'boss.webp')
-                    if mode == 'bad-csrf':
-                        form['csrf'] = 'forged'
-                    if mode == 'missing-token':
-                        form['csrf'] = '!'
-                    if mode == 'unicode-token':
-                        form['csrf'] = '🔥'
-                    response = self.client.post('/admin/boss/action', data=form, headers={
-                        'Accept': 'application/json', 'X-Admin': 'true', 'X-User': 'gingrsnaps',
-                    })
-                    self.assertEqual(response.status_code, 400 if mode in {'bad-csrf', 'missing-token', 'unicode-token'} else 401)
-                    decode.assert_not_called()
-                    self.assertEqual(self.boss.recovery(), before)
-
-    def test_regular_admin_can_sign_in_and_manage_boss_but_not_export_accounts(self):
-        self.runtime.admin['users']['helper'] = copy.deepcopy(self.runtime.admin['users']['gingrsnaps'])
-        self.runtime.commit(self.runtime.admin, self.runtime.revision)
-        self.client.post('/admin/logout', data={'csrf': self.csrf})
-        opening = self.client.get('/play/api/state').json
-        self.csrf = opening['csrf']
-        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
-        login = self.client.post('/admin', data={'csrf': self.csrf, 'username': 'helper', 'password': 'test-only-password'})
-        self.assertEqual(login.status_code, 303)
-        opening = self.client.get('/play/api/state').json
-        self.csrf = opening['csrf']
-        self.client.post('/play/api/profile', json={'raid_id':opening['state']['raid_id'], 'username':'TestAdminRaider'}, headers={'X-CSRF-Token':self.csrf})
-        page = self.client.get('/admin?tab=boss').text
-        self.assertIn('id="bossSettingsForm"', page)
-        self.assertIn('image/webp', page)
-        self.assertNotIn('Download private recovery file', page)
-        self.assertEqual(self.post('settings', boss_name='Ruby Colossus', base_damage='120', weak_damage='180', burst_bonus='75').status_code, 303)
-        self.assertEqual(self.upload(picture('WEBP'), 'boss.webp').status_code, 303)
-        self.assertEqual(self.post('health', health='3500000', confirm_health='yes').status_code, 303)
-        for action in ('pause', 'resume', 'avatar_reset'):
-            self.assertEqual(self.post(action).status_code, 303)
-        self.assertEqual(self.post('restart', health='2500000', confirm_restart='yes').status_code, 303)
-        self.assertEqual(self.boss.status()['name'], 'Ruby Colossus')
-        self.assertEqual(self.boss.status()['rules']['weak_damage'], 180)
-        self.assertEqual(self.client.get('/admin/recovery-backup').status_code, 403)
-        # Deleting an admin invalidates its existing browser session immediately.
-        self.runtime.admin['users'].pop('helper')
-        self.runtime.commit(self.runtime.admin, self.runtime.revision)
-        before = self.boss.export()
-        self.assertEqual(self.post('pause').status_code, 302)
-        self.assertEqual(self.boss.export(), before)
-
-    def test_damage_settings_apply_to_future_hits_and_public_forgery_has_no_effect(self):
-        self.assertEqual(self.post('settings', boss_name='Ruby Colossus', base_damage='300', weak_damage='400', burst_bonus='50').status_code, 303)
-        # Keep signed admin cookies within their real 12-hour lifetime while
-        # advancing the combat clock through ten one-minute cooldowns.
-        with patch('boss.time.time', return_value=self.boss.export()['created_at']) as clock:
-            for index in range(10):
-                clock.return_value += 60
-                state = self.boss.status('player', '192.0.2.10')
-                result = self.boss.attack('player', '192.0.2.10', state['weakness'], state['raid_id'], f'damage-hit-{index}')
-                self.assertEqual(result['hit']['damage'], 450 if index == 9 else 400)
-            saved = self.boss.export()
-            self.assertEqual(self.post('settings', boss_name='Ruby Colossus', base_damage='10', weak_damage='20', burst_bonus='0').status_code, 303)
-            after = self.boss.export()
-            for field in ('id', 'hp', 'players', 'networks', 'total_damage', 'total_attacks'):
-                self.assertEqual(after[field], saved[field])
-            retry = self.boss.attack('player', '192.0.2.10', 'blade', saved['id'], 'damage-hit-9')
-            self.assertTrue(retry['duplicate'])
-            self.assertEqual(retry['hit']['damage'], 450)
-            guest = self.app.test_client()
-            snapshot = guest.get('/play/api/state').json
-            guest.post('/play/api/profile', json={'raid_id':snapshot['state']['raid_id'], 'username':'PublicTest'}, headers={'X-CSRF-Token':snapshot['csrf']})
-            forged = guest.post('/play/api/attack', json={
-                'raid_id': snapshot['state']['raid_id'], 'style': snapshot['state']['weakness'], 'request_id': 'forged-damage-attempt',
-                'damage': 99_999_999, 'hp': 0, 'name': 'Changed', 'settings_revision': 999,
-                'settings': {'damage': 9999}, 'role': 'superadmin', 'action': 'health',
-            }, headers={'X-CSRF-Token': snapshot['csrf']})
-            self.assertEqual(forged.status_code, 200)
-            self.assertEqual(forged.json['hit']['damage'], 20)
-            self.assertEqual(self.boss.status()['name'], 'Ruby Colossus')
-            self.assertEqual(self.boss.status()['hp'], saved['hp'] - 20)
-            validate_boss(self.boss.export())  # Old 450-point receipts remain valid.
-
-    def test_name_and_damage_validation_stale_forms_and_storage_write_guard(self):
-        values = dict(boss_name='Ruby Colossus', base_damage='100', weak_damage='150', burst_bonus='100')
-        before = self.boss.export()
-        for invalid in ({'boss_name': ''}, {'boss_name': 'x' * 61}, {'boss_name': 'bad\nname'},
-                        {'base_damage': '-1'}, {'weak_damage': '-1'}, {'weak_damage': str(2**53)},
-                        {'burst_bonus': '-1'}, {'burst_bonus': '0.5'}, {'base_damage': 'true'}):
-            self.assertEqual(self.post('settings', **{**values, **invalid}).status_code, 422)
-            self.assertEqual(self.boss.export(), before)
-        stale = self.form('settings', **values)
-        self.assertEqual(self.post('settings', **values).status_code, 303)
-        self.assertEqual(self.client.post('/admin/boss/action', data=stale).status_code, 422)
-        saved = self.boss.export()
-        bypass = copy.deepcopy(saved)
-        bypass['settings']['damage'] = 10
-        with self.assertRaises(BossError) as blocked:
-            with self.runtime.store.connection(transaction=True) as conn:
-                self.boss._write(conn, bypass)
-        self.assertEqual(blocked.exception.code, 'settings_guard')
-        self.assertEqual(self.boss.export(), saved)
-        stale = self.form('settings', **values)
-        self.post('restart', confirm_restart='yes')
-        self.assertEqual(self.client.post('/admin/boss/action', data=stale).status_code, 422)
-        self.assertEqual(self.boss.status()['name'], 'Ruby Colossus')
-
-    def test_public_pages_have_no_editor_and_boss_names_render_as_text(self):
-        name = '<img src=x onerror=alert(1)>'
-        self.post('settings', boss_name=name, base_damage='100', weak_damage='150', burst_bonus='100')
-        guest = self.app.test_client()
-        for url in ('/', '/play'):
-            page = guest.get(url).text
-            self.assertIn('&lt;img', page)
-            self.assertNotIn(name, page)
-            for editor in ('bossAvatarFile', 'bossNameInput', 'bossMaxHealth', 'bossSettingsForm'):
-                self.assertNotIn('id="' + editor + '"', page)
-            self.assertNotIn('action="/admin/boss/action"', page)
-        before = self.boss.recovery()
-        self.assertEqual(guest.get('/admin/boss/action?action=health&health=0').status_code, 405)
-        self.assertEqual(guest.post('/play/api/state', json={'hp': 0}).status_code, 405)
-        self.assertEqual(guest.get('/admin?tab=boss').status_code, 200)
-        self.assertNotIn('bossSettingsForm', guest.get('/admin?tab=boss').text)
-        self.assertEqual(self.boss.recovery(), before)
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/test_boss_frontend.cjs`
-
-```javascript
-/* Real rendered templates; fake clock/transport exercise shared-state behavior. */
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const { JSDOM } = require("jsdom");
-const root = path.resolve(__dirname, ".."),
-  fixtures = process.env.DOM_FIXTURES || path.join(root, ".test-fixtures");
-const code = fs.readFileSync(path.join(root, "static/boss.js"), "utf8");
-const flush = async () => {
-  for (let i = 0; i < 8; i++) await new Promise((r) => setImmediate(r));
-};
-const response = (value, status = 200) => ({
-  ok: status < 400,
-  status,
-  headers: new Map([["content-type", "application/json"]]),
-  json: async () => structuredClone(value),
-});
-function page(name = "play", initialStyle) {
-  const dom = new JSDOM(
-    fs.readFileSync(path.join(fixtures, name + ".html"), "utf8"),
-    { url: "https://example.test/play", runScripts: "outside-only" },
-  );
-  const w = dom.window,
-    calls = [],
-    timers = new Map(),
-    intervals = new Map();
-  let clock = 0,
-    serial = 0;
-  let value = JSON.parse(
-    fs.readFileSync(
-      path.join(fixtures, name === "boss" ? "boss-admin.json" : "boss.json"),
-      "utf8",
-    ),
-  );
-  Object.defineProperty(w.performance, "now", { value: () => clock });
-  Object.defineProperty(w.document, "hidden", {
-    value: false,
-    configurable: true,
-  });
-  w.setTimeout = (fn, delay) => {
-    const id = ++serial;
-    timers.set(id, { fn, at: clock + delay });
-    return id;
-  };
-  w.clearTimeout = (id) => timers.delete(id);
-  w.setInterval = (fn) => {
-    const id = ++serial;
-    intervals.set(id, fn);
-    return id;
-  };
-  let responder = async () => response(value);
-  w.fetch = async (url, options) => {
-    calls.push({ url, options });
-    return responder(url, options);
-  };
-  if (initialStyle) w.localStorage.setItem("rh.boss.style", initialStyle);
-  w.eval(code);
-  return {
-    w,
-    dom,
-    calls,
-    value,
-    timers,
-    respond(fn) {
-      responder = fn;
-    },
-    async advance(ms) {
-      clock += ms;
-      for (const [id, t] of [...timers])
-        if (t.at <= clock) {
-          timers.delete(id);
-          t.fn();
-        }
-      for (const fn of intervals.values()) fn();
-      await flush();
-    },
-    close() {
-      dom.window.close();
-    },
-  };
-}
-test("bare game has unique IDs, working controls and no explanations or footer", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document,
-    ids = [...doc.querySelectorAll("[id]")].map((e) => e.id);
-  assert.equal(new Set(ids).size, ids.length);
-  assert.equal(doc.querySelector("#howToPlay"), null);
-  assert.equal(doc.querySelector("#bossStory"), null);
-  assert.equal(doc.querySelector("#attackHint"), null);
-  assert.equal(doc.querySelector('footer a[href="/admin"]'), null);
-  assert.equal(doc.querySelector("#attackButton").disabled, false);
-  p.close();
-});
-test("game polls every five seconds and pauses while hidden", async () => {
-  const p = page();
-  await flush();
-  assert.equal(p.calls.length, 1);
-  await p.advance(5000);
-  assert.equal(p.calls.length, 2);
-  Object.defineProperty(p.w.document, "hidden", {
-    value: true,
-    configurable: true,
-  });
-  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
-  await p.advance(10000);
-  assert.equal(p.calls.length, 2);
-  Object.defineProperty(p.w.document, "hidden", {
-    value: false,
-    configurable: true,
-  });
-  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
-  await flush();
-  assert.equal(p.calls.length, 3);
-  assert.ok(p.calls.every((x) => !x.options.method));
-  p.close();
-});
-test("attack sends only server-validated inputs and renders countdown", async () => {
-  const p = page();
-  await flush();
-  let sent;
-  p.respond(async (url, options) => {
-    if (options.method === "POST") {
-      sent = JSON.parse(options.body);
-      const s = p.value.state;
-      s.version++;
-      s.hp -= 150;
-      s.total_damage = 150;
-      s.total_attacks = 1;
-      s.you.ready_at = s.server_time + 30;
-      s.you.last_request = sent.request_id;
-      s.you.last_hit = {
-        damage: 150,
-        style: sent.style,
-        weakness: true,
-        burst: false,
-      };
-      return response({ ok: true, state: s, hit: s.you.last_hit });
-    }
-    return response(p.value);
-  });
-  p.w.document.querySelector('[data-style="bow"]').click();
-  p.w.document.querySelector("#attackButton").click();
-  await flush();
-  assert.deepEqual(Object.keys(sent).sort(), [
-    "raid_id",
-    "request_id",
-    "style",
-  ]);
-  assert.equal(sent.style, "bow");
-  const post = p.calls.find((c) => c.options.method === "POST");
-  assert.equal(
-    post.options.headers["X-CSRF-Token"],
-    p.value.player_csrf || p.value.csrf,
-  );
-  assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
-  assert.match(p.w.document.querySelector("#attackButton").textContent, /0:30/);
-  assert.match(p.w.document.querySelector("#hitResult").textContent, /150/);
-  p.close();
-});
-test("uncertain delivery keeps receipt and retry uses same ID", async () => {
-  const p = page();
-  await flush();
-  const ids = [];
-  p.respond(async (url, options) => {
-    if (options.method === "POST") {
-      ids.push(JSON.parse(options.body).request_id);
-      throw new Error("Network disconnected");
-    }
-    return response(p.value);
-  });
-  p.w.document.querySelector("#attackButton").click();
-  await flush();
-  assert.match(
-    p.w.document.querySelector("#attackButton").textContent,
-    /Retry last strike/,
-  );
-  p.w.document
-    .querySelector("#attackButton")
-    .dispatchEvent(new p.w.Event("pointerleave"));
-  p.w.document.querySelector("#attackButton").click();
-  await flush();
-  assert.equal(ids.length, 2);
-  assert.equal(ids[0], ids[1]);
-  p.close();
-});
-test("older polls cannot reverse boss damage", async () => {
-  const p = page();
-  await flush();
-  const old = structuredClone(p.value);
-  p.value.state.hp -= 250;
-  p.value.state.version++;
-  p.value.state.server_time++;
-  await p.advance(5000);
-  assert.equal(
-    p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.hp,
-  );
-  p.respond(async () => response(old));
-  await p.advance(5000);
-  assert.equal(
-    p.w.document.querySelector("#bossHealthBar").value,
-    p.value.state.hp,
-  );
-  p.close();
-});
-test("victory and paused raids stop attacks, hostile names render as text", async () => {
-  const p = page();
-  await flush();
-  p.value.state.status = "paused";
-  p.value.state.leaders = [
-    {
-      name: "<img src=x onerror=alert(1)>",
-      damage: 100,
-      attacks: 1,
-      you: false,
-    },
-  ];
-  await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#attackButton").disabled, true);
-  assert.equal(p.w.document.querySelector("#bossLeaders img"), null);
-  p.value.state.status = "victory";
-  p.value.state.hp = 0;
-  await p.advance(5000);
-  assert.match(
-    p.w.document.querySelector("#attackButton").textContent,
-    /Victory/,
-  );
-  assert.equal(p.w.document.querySelector("#victoryRecap").hidden, false);
-  p.close();
-});
-test("admin boss updates preserve difficulty draft and restart confirmation", async () => {
-  const p = page("boss");
-  await flush();
-  const input = p.w.document.querySelector("#bossHealthInput");
-  input.value = "5000000";
-  const confirm = p.w.document.querySelector('[name="confirm_restart"]');
-  confirm.checked = true;
-  await p.advance(5000);
-  assert.equal(input.value, "5000000");
-  assert.equal(confirm.checked, true);
-  assert.equal(p.w.document.querySelector("footer"), null);
-  p.close();
-});
-
-test("a successful background poll cannot erase an attack error", async () => {
-  const p = page();
-  await flush();
-  p.respond(async (url, options) =>
-    options.method === "POST"
-      ? response({ error: "Your shared connection is cooling down." }, 429)
-      : response(p.value),
-  );
-  p.w.document.querySelector("#attackButton").click();
-  await flush();
-  await p.advance(5000);
-  await p.advance(5000);
-  const error = p.w.document.querySelector("#bossError");
-  assert.equal(error.hidden, false);
-  assert.match(error.textContent, /shared connection/);
-  p.w.document.querySelector("#dismissBossError").click();
-  assert.equal(error.hidden, true);
-  p.close();
-});
-
-test("unchanged contributor rows survive polls and mobile styles share attack controls", async () => {
-  const p = page();
-  await flush();
-  p.value.state.leaders = [
-    { name: "Raider ABCDEF12", damage: 150, attacks: 1, you: false },
-  ];
-  await p.advance(5000);
-  const row = p.w.document.querySelector("#bossLeaders li");
-  await p.advance(5000);
-  assert.strictEqual(p.w.document.querySelector("#bossLeaders li"), row);
-  const style = p.w.document.querySelector("#dockStyle");
-  style.value = "magic";
-  style.dispatchEvent(new p.w.Event("change"));
-  assert.equal(
-    p.w.document
-      .querySelector('[data-style="magic"]')
-      .getAttribute("aria-pressed"),
-    "true",
-  );
-  let sent;
-  p.respond(async (url, options) => {
-    if (options.method === "POST") {
-      sent = JSON.parse(options.body);
-      return response({ error: "Fixture rejection" }, 400);
-    }
-    return response(p.value);
-  });
-  p.w.document.querySelector("#dockAttack").click();
-  await flush();
-  assert.equal(sent.style, "magic");
-  p.close();
-});
-
-test("copy link supplies selectable text if clipboard access is unavailable", async () => {
-  const p = page();
-  await flush();
-  p.w.document.querySelector("#copyRaidLink").click();
-  await flush();
-  const field = p.w.document.querySelector("#shareUrl");
-  assert.equal(field.hidden, false);
-  assert.equal(field.value, "https://example.test/play");
-  assert.equal(field.selectionEnd, field.value.length);
-  p.close();
-});
-
-test("same-raid updates cannot refill health even with a newer version or clock", async () => {
-  const p = page();
-  await flush();
-  p.value.state.hp -= 150;
-  p.value.state.total_damage = 150;
-  p.value.state.total_attacks = 1;
-  p.value.state.version++;
-  await p.advance(5000);
-  const hp = p.value.state.hp;
-  p.value.state.hp += 150;
-  p.value.state.total_damage = 0;
-  p.value.state.total_attacks = 0;
-  for (const versionBump of [0, 10]) {
-    p.value.state.version += versionBump;
-    p.value.state.server_time += 5;
-    await p.advance(5000);
-    assert.equal(
-      p.w.document.querySelector("#bossHealthBar").value,
-      hp,
-    );
-    assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
-  }
-  p.close();
-});
-
-test("health bar stays empty after victory until a different raid starts", async () => {
-  const p = page();
-  await flush();
-  p.value.state.hp = 0;
-  p.value.state.total_damage = p.value.state.max_hp;
-  p.value.state.status = "victory";
-  p.value.state.version++;
-  await p.advance(5000);
-  assert.equal(
-    p.w.document.querySelector("#bossHealthBar").value,
-    0,
-  );
-  p.value.state.hp = p.value.state.max_hp;
-  p.value.state.total_damage = 0;
-  p.value.state.status = "waiting";
-  p.value.state.version++;
-  await p.advance(5000);
-  assert.equal(
-    p.w.document.querySelector("#bossHealthBar").value,
-    0,
-  );
-  p.value.state.raid_id = "new-host-started-raid";
-  p.value.state.server_time += 10;
-  await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#bossHealthBar").value, p.value.state.max_hp);
-  p.close();
-});
-
-test("explicit host health revisions update the current raid without losing damage", async () => {
-  const p = page();
-  await flush();
-  p.value.state.hp -= 150;
-  p.value.state.total_damage = 150;
-  p.value.state.total_attacks = 1;
-  p.value.state.version++;
-  await p.advance(5000);
-  const old = structuredClone(p.value);
-  p.value.state.max_hp += 500000;
-  p.value.state.hp += 500000;
-  p.value.state.version++;
-  p.value.state.health_revision = 1;
-  await p.advance(5000);
-  const bar = p.w.document.querySelector("#bossHealthBar");
-  assert.equal(bar.value, p.value.state.hp);
-  assert.equal(bar.max, p.value.state.max_hp);
-  assert.equal(p.w.document.querySelector("#bossDamage").textContent, "150");
-  const saved = bar.value;
-  old.state.server_time += 100;
-  old.state.version += 100;
-  p.respond(async () => response(old));
-  await p.advance(5000);
-  assert.equal(bar.value, saved);
-  p.close();
-});
-
-test("avatar polls refresh the arena and admin preview while preserving host drafts", async () => {
-  for (const name of ["play", "boss"]) {
-    const p = page(name);
-    await flush();
-    const doc = p.w.document;
-    if (name === "boss") {
-      doc.querySelector("#bossMaxHealth").value = "5000000";
-      doc.querySelector('[name="confirm_health"]').checked = true;
-    }
-    const url = "/play/avatar/" + "a".repeat(64) + ".png";
-    p.value.state.avatar_url = url;
-    p.value.state.avatar_custom = true;
-    p.value.state.version++;
-    await p.advance(5000);
-    assert.equal(
-      doc.querySelector("[data-boss-avatar]").getAttribute("src"),
-      url,
-    );
-    assert.equal(
-      doc
-        .querySelector("[data-boss-avatar]")
-        .classList.contains("custom-avatar"),
-      true,
-    );
-    if (name === "boss") {
-      assert.equal(doc.querySelector("#bossMaxHealth").value, "5000000");
-      assert.equal(doc.querySelector('[name="confirm_health"]').checked, true);
-      assert.equal(doc.querySelector('[name="health_revision"]').value, "0");
-    }
-    p.close();
-  }
-});
-
-test("a revived raid refreshes its contributor recap on the next victory", async () => {
-  const p = page();
-  await flush();
-  let recaps = 0;
-  p.respond(async (url) => {
-    if (url.startsWith("/play/api/contributors")) {
-      recaps++;
-      return response({
-        raid_id: p.value.state.raid_id,
-        health_revision: p.value.state.health_revision || 0,
-        contributors: [
-          {
-            name: "Raider " + recaps,
-            attacks: recaps,
-            damage: p.value.state.total_damage,
-          },
-        ],
-      });
-    }
-    return response(p.value);
-  });
-  const s = p.value.state;
-  s.hp = 0;
-  s.total_damage = s.max_hp;
-  s.status = "victory";
-  s.version++;
-  await p.advance(5000);
-  assert.equal(recaps, 1);
-  assert.match(
-    p.w.document.querySelector("#allContributors").textContent,
-    /Raider 1/,
-  );
-  s.max_hp += 500;
-  s.hp = 500;
-  s.health_revision = 1;
-  s.status = "active";
-  s.version++;
-  await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#victoryRecap").hidden, true);
-  s.hp = 0;
-  s.total_damage += 500;
-  s.status = "victory";
-  s.version++;
-  await p.advance(5000);
-  assert.equal(recaps, 2);
-  assert.match(
-    p.w.document.querySelector("#allContributors").textContent,
-    /Raider 2/,
-  );
-  p.close();
-});
-
-test("boss name and damage updates use text and preserve admin settings drafts", async () => {
-  for (const name of ["play", "boss"]) {
-    const p = page(name);
-    await flush();
-    const doc = p.w.document;
-    if (name === "boss") {
-      doc.querySelector("#bossNameInput").value = "Unsaved boss";
-      doc.querySelector("#bossBaseDamage").value = "200";
-    }
-    p.value.state.name = "<img src=x onerror=alert(1)>";
-    p.value.state.rules.damage = 120;
-    p.value.state.rules.weak_damage = 180;
-    p.value.state.rules.burst_bonus = 80;
-    p.value.state.settings_revision = 1;
-    p.value.state.version++;
-    await p.advance(5000);
-    assert.equal(
-      doc.querySelector("#bossName").textContent,
-      p.value.state.name,
-    );
-    assert.equal(doc.querySelector("#bossName img"), null);
-    if (name === "play") {
-      assert.match(
-        doc.querySelector("#bossWeakness").textContent,
-        /180 damage/,
-      );
-      assert.match(doc.querySelector("#burstLabel").textContent, /80 damage/);
-      assert.equal(doc.querySelector(".boss-sprite").alt, p.value.state.name);
-      assert.equal(doc.querySelector("#bossNameInput"), null);
-      assert.equal(doc.querySelector("#bossAvatarFile"), null);
-    } else {
-      assert.equal(doc.querySelector("#bossNameInput").value, "Unsaved boss");
-      assert.equal(doc.querySelector("#bossBaseDamage").value, "200");
-      assert.equal(doc.querySelector('[name="settings_revision"]').value, "0");
-    }
-    p.close();
-  }
-});
-
-test("stationary clicks and the other attack button cannot bypass the pointer latch", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document,
-    attack = doc.querySelector("#attackButton"),
-    dock = doc.querySelector("#dockAttack");
-  let hits = 0;
-  p.respond(async (url, options) => {
-    if (options.method === "POST") {
-      const body = JSON.parse(options.body),
-        s = p.value.state;
-      hits++;
-      s.version++;
-      s.total_attacks++;
-      s.you.attacks++;
-      s.total_damage += 100;
-      s.hp -= 100;
-      s.you.ready_at = s.server_time + 30;
-      s.you.last_request = body.request_id;
-      s.you.last_hit = {
-        damage: 100,
-        style: body.style,
-        weakness: false,
-        burst: false,
-      };
-      return response({ ok: true, state: s, hit: s.you.last_hit });
-    }
-    return response(p.value);
-  });
-  attack.click();
-  await flush();
-  p.value.state.server_time += 30;
-  await p.advance(5000);
-  assert.equal(attack.disabled, true);
-  attack.click();
-  dock.click();
-  await flush();
-  assert.equal(hits, 1);
-  assert.match(doc.querySelector("#rearmHint").textContent, /off/);
-  // Moving outside is detected even when a native disabled button suppresses leave events.
-  attack.getBoundingClientRect = () => ({
-    left: 10,
-    right: 110,
-    top: 10,
-    bottom: 60,
-  });
-  doc.dispatchEvent(
-    new p.w.MouseEvent("pointermove", { clientX: 120, clientY: 20 }),
-  );
-  assert.equal(attack.disabled, false);
-  attack.click();
-  await flush();
-  assert.equal(hits, 2);
-  assert.equal(doc.querySelector("#yourAttacks").textContent, "2");
-  p.close();
-});
-
-test("keyboard release re-arms attacks and a held activation key cannot repeat", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document,
-    attack = doc.querySelector("#attackButton");
-  attack.dispatchEvent(
-    new p.w.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-  );
-  attack.click();
-  await flush();
-  assert.equal(attack.disabled, true);
-  const repeat = new p.w.KeyboardEvent("keydown", {
-    key: "Enter",
-    repeat: true,
-    cancelable: true,
-  });
-  attack.dispatchEvent(repeat);
-  assert.equal(repeat.defaultPrevented, true);
-  doc.dispatchEvent(
-    new p.w.KeyboardEvent("keyup", { key: "Enter", bubbles: true }),
-  );
-  assert.equal(attack.disabled, false);
-  // Space normally dispatches click after keyup: it must not remain locked.
-  attack.dispatchEvent(
-    new p.w.KeyboardEvent("keydown", { key: " ", bubbles: true }),
-  );
-  doc.dispatchEvent(
-    new p.w.KeyboardEvent("keyup", { key: " ", bubbles: true }),
-  );
-  attack.click();
-  await flush();
-  assert.equal(attack.disabled, false);
-  p.close();
-});
-
-test("touch taps remain usable after their release", async () => {
-  const p = page();
-  await flush();
-  const attack = p.w.document.querySelector("#attackButton");
-  const touch = new p.w.Event("pointerdown");
-  Object.defineProperty(touch, "pointerType", { value: "touch" });
-  attack.dispatchEvent(touch);
-  attack.click();
-  await flush();
-  assert.equal(attack.disabled, false); // fake server returns no cooldown in this gesture-only test
-  p.close();
-});
-
-test("private admin feed uses admin authentication and removes names on expiry", async () => {
-  const p = page("boss");
-  await flush();
-  assert.equal(p.calls[0].url, "/admin/boss/status");
-  p.value.state.admin_leaders = [
-    {
-      name: "<img src=x onerror=alert(1)>",
-      alias: "Raider ABCD1234",
-      damage: 500,
-      attacks: 5,
-      name_provided: true,
-    },
-  ];
-  p.value.state.version++;
-  await p.advance(5000);
-  const list = p.w.document.querySelector("#adminBossLeaders");
-  assert.match(list.textContent, /<img/);
-  assert.equal(list.querySelector("img"), null);
-  p.respond(async () => response({ error: "Session expired" }, 401));
-  await p.advance(5000);
-  assert.doesNotMatch(list.textContent, /<img/);
-  assert.match(list.textContent, /Sign in/);
-  const count = p.calls.length;
-  await p.advance(60000);
-  assert.equal(p.calls.length, count);
-  assert.equal(p.w.document.querySelector("#bossNameInput").disabled, true);
-  p.close();
-});
-
-test("name save preserves typed drafts, unlocks play, and never sends an automatic attack", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document,
-    input = doc.querySelector("#playerUsername");
-  p.value.state.you.identity_ready = false;
-  p.value.state.version++;
-  await p.advance(5000);
-  assert.equal(doc.querySelector("#attackButton").disabled, true);
-  input.value = "My full name";
-  input.dispatchEvent(new p.w.Event("input"));
-  await p.advance(5000);
-  assert.equal(input.value, "My full name");
-  p.respond(async (url, options) => {
-    if (url === "/play/api/profile") {
-      assert.equal(JSON.parse(options.body).username, "My full name");
-      p.value.state.you.display_name = "My full name";
-      p.value.state.you.identity_ready = true;
-      p.value.state.version++;
-    }
-    return response(p.value);
-  });
-  doc
-    .querySelector("#playerNameForm")
-    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  assert.equal(doc.querySelector("#attackButton").disabled, false);
-  assert.match(doc.querySelector("#playerNameResult").textContent, /Saved/);
-  assert.equal(p.calls.filter((c) => c.url === "/play/api/attack").length, 0);
-  assert.equal(doc.querySelectorAll("#yourBadges li").length, 8);
-  assert.match(
-    doc.querySelector("#bossPercent").textContent,
-    /^0.00% defeated$/,
-  );
-  p.close();
-});
-
-test("saved name collapses into an editable identity without disturbing play", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
-  assert.match(doc.querySelector("#playingAs").textContent, /FixtureRaider/);
-  doc.querySelector("#editPlayerName").click();
-  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
-  assert.equal(doc.activeElement.id, "playerUsername");
-  await p.advance(5000);
-  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
-  assert.equal(doc.querySelector("#attackButton").disabled, false);
-  p.close();
-});
-
-test("style choice persists while weakness changes independently", async () => {
-  const p = page("play", "magic");
-  await flush();
-  const doc = p.w.document;
-  assert.equal(
-    doc.querySelector('[data-style="magic"]').getAttribute("aria-pressed"),
-    "true",
-  );
-  assert.equal(doc.querySelector("#dockStyle").value, "magic");
-  doc.querySelector('[data-style="bow"]').click();
-  assert.equal(p.w.localStorage.getItem("rh.boss.style"), "bow");
-  p.value.state.weakness = "blade";
-  p.value.state.version++;
-  await p.advance(5000);
-  assert.equal(
-    doc.querySelector('[data-style="bow"]').getAttribute("aria-pressed"),
-    "true",
-  );
-  p.close();
-});
-
-test("recovery code is created only by an explicit owner action", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  assert.equal(
-    p.calls.filter((c) => c.url.includes("recovery-code")).length,
-    0,
-  );
-  p.respond(async (url, options) => {
-    if (url.endsWith("recovery-code")) {
-      assert.equal(options.method, "POST");
-      assert.ok(options.headers["X-CSRF-Token"]);
-      p.value.state.you.recovery_saved = true;
-      p.value.state.version++;
-      return response({ ...p.value, code: "private-fixture-code" });
-    }
-    return response(p.value);
-  });
-  doc.querySelector("#makeRecoveryCode").click();
-  await flush();
-  assert.equal(doc.querySelector("#recoveryCodeBox").hidden, false);
-  assert.equal(
-    doc.querySelector("#recoveryCode").value,
-    "private-fixture-code",
-  );
-  assert.equal(p.w.localStorage.getItem("private-fixture-code"), null);
-  assert.equal(p.calls.filter((c) => c.url.endsWith("/attack")).length, 0);
-  p.close();
-});
-
-test("recovery posts a private code and restores the owner view", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  p.respond(async (url, options) => {
-    if (url.endsWith("/recover")) {
-      assert.equal(JSON.parse(options.body).code, "fixture-secret");
-      p.value.state.you.display_name = "Restored raider";
-      p.value.state.version++;
-    }
-    return response(p.value);
-  });
-  doc.querySelector("#recoveryInput").value = "fixture-secret";
-  doc
-    .querySelector("#recoverPlayerForm")
-    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  assert.equal(doc.querySelector("#playingAs").textContent, "Restored raider");
-  assert.equal(doc.querySelector("#recoveryInput").value, "");
-  assert.match(
-    doc.querySelector("#recoveryResult").textContent,
-    /Player restored/,
-  );
-  p.close();
-});
-
-test("rally lights the arena without sending an attack or changing damage", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  p.value.state.rally = { goal: 15, count: 15, unlocked: true };
-  p.value.state.version++;
-  const damage = p.value.state.rules.damage;
-  await p.advance(5000);
-  assert.ok(doc.querySelector("#bossStage").classList.contains("rally-lit"));
-  assert.match(doc.querySelector("#rallyTitle").textContent, /Arena lit/);
-  assert.equal(p.value.state.rules.damage, damage);
-  assert.equal(p.calls.filter((c) => c.options.method === "POST").length, 0);
-  p.close();
-});
-
-test("host previews are exact and presets never submit a new raid", async () => {
-  const p = page("boss");
-  await flush();
-  const doc = p.w.document;
-  doc.querySelector("#bossMaxHealth").value = "1";
-  doc.querySelector("#bossMaxHealth").dispatchEvent(new p.w.Event("input"));
-  assert.match(doc.querySelector("#maxHealthPreview").textContent, /→ 1/);
-  doc.querySelector("#bossBaseDamage").value = "9007199254740991";
-  doc.querySelector("#bossBurstBonus").value = "9007199254740991";
-  doc.querySelector("#bossBaseDamage").dispatchEvent(new p.w.Event("input"));
-  assert.match(
-    doc.querySelector("#damagePreview").textContent,
-    /18,014,398,509,481,982/,
-  );
-  doc.querySelector("#raidPresets button").click();
-  assert.equal(doc.querySelector("#bossHealthInput").value, "10000000");
-  assert.equal(p.calls.filter((c) => c.options.method === "POST").length, 0);
-  p.close();
-});
-
-test("private history uses text and is cleared when the admin session expires", async () => {
-  const p = page("boss");
-  await flush();
-  const doc = p.w.document;
-  p.value.state.admin_history = [
-    {
-      action: "Boss settings",
-      actor: "Host",
-      at: 1800000000,
-      before: { name: "Old" },
-      after: { name: "<img src=x>" },
-    },
-  ];
-  p.value.state.version++;
-  await p.advance(5000);
-  assert.match(
-    doc.querySelector("#bossAdminHistory").textContent,
-    /<img src=x>/,
-  );
-  assert.equal(doc.querySelector("#bossAdminHistory img"), null);
-  p.respond(async () => response({ error: "Expired" }, 401));
-  await p.advance(5000);
-  assert.doesNotMatch(
-    doc.querySelector("#bossAdminHistory").textContent,
-    /<img src=x>/,
-  );
-  assert.match(doc.querySelector("#bossAdminHistory").textContent, /Sign in/);
-  p.close();
-});
-
-test("last checked ages between polls and exact totals remain available", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  await p.advance(2000);
-  assert.match(
-    doc.querySelector("#bossConnection").textContent,
-    /Last checked 2s ago/,
-  );
-  assert.match(doc.querySelector("#bossHealth").textContent, /2.4M/);
-  assert.match(doc.querySelector("#exactRaidTotals").textContent, /2,400,000/);
-  p.close();
-});
-
-test("a committed username revision wins over an older request timestamp", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  doc.querySelector("#editPlayerName").click();
-  doc.querySelector("#playerUsername").value = "SavedWithoutReset";
-  doc.querySelector("#playerUsername").dispatchEvent(new p.w.Event("input"));
-  p.respond(async (url) => {
-    if (url.endsWith("/profile")) {
-      p.value.state.version++;
-      p.value.state.server_time -= 1;
-      p.value.state.you.display_name = "SavedWithoutReset";
-      p.value.state.you.identity_ready = true;
-    }
-    return response(p.value);
-  });
-  doc
-    .querySelector("#playerNameForm")
-    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  assert.equal(
-    doc.querySelector("#playingAs").textContent,
-    "SavedWithoutReset",
-  );
-  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
-  assert.equal(doc.querySelector("#attackButton").disabled, false);
-  p.close();
-});
-
-test("a delayed pre-save poll cannot replace the confirmed player name", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  const old = structuredClone(p.value);
-  let release;
-  p.respond(async (url) => {
-    if (url.endsWith("/profile")) {
-      p.value.state.version++;
-      p.value.state.you.display_name = "LatestName";
-      return response(p.value);
-    }
-    return new Promise((resolve) => {
-      release = () => resolve(response(old));
-    });
-  });
-  await p.advance(5000);
-  assert.equal(typeof release, "function");
-  doc.querySelector("#editPlayerName").click();
-  doc.querySelector("#playerUsername").value = "LatestName";
-  doc
-    .querySelector("#playerNameForm")
-    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  release();
-  await flush();
-  assert.equal(doc.querySelector("#playingAs").textContent, "LatestName");
-  assert.equal(doc.querySelector("#playerNameForm").hidden, true);
-  p.close();
-});
-
-test("player writes briefly disable attacks without clearing a saved identity", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  let finish;
-  p.respond(
-    async () =>
-      new Promise((resolve) => {
-        finish = () => resolve(response(p.value));
-      }),
-  );
-  doc.querySelector("#makeRecoveryCode").click();
-  await flush();
-  assert.equal(doc.querySelector("#attackButton").disabled, true);
-  assert.match(doc.querySelector("#playingAs").textContent, /FixtureRaider/);
-  finish();
-  await flush();
-  assert.equal(doc.querySelector("#attackButton").disabled, false);
-  p.close();
-});
-
-test("rejected name stays editable with a visible message and native fallback", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  doc.querySelector("#editPlayerName").click();
-  const input = doc.querySelector("#playerUsername");
-  input.value = "Keep this draft";
-  input.dispatchEvent(new p.w.Event("input"));
-  p.respond(async (url) =>
-    url.endsWith("/profile")
-      ? response({ ok: false, error: "Save unavailable; please retry." }, 503)
-      : response(p.value),
-  );
-  doc
-    .querySelector("#playerNameForm")
-    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  await p.advance(5000);
-  assert.equal(input.value, "Keep this draft");
-  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
-  assert.match(
-    doc.querySelector("#playerNameResult").textContent,
-    /Save unavailable/,
-  );
-  assert.equal(doc.querySelector("#saveNamePage").hidden, false);
-  assert.equal(doc.querySelector("#playerNameForm").method, "post");
-  assert.ok(
-    doc.querySelector("#playerNameForm").action.endsWith("/play/profile"),
-  );
-  p.close();
-});
-
-test("an HTTP 200 without the saved name cannot display a false success", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document;
-  doc.querySelector("#editPlayerName").click();
-  doc.querySelector("#playerUsername").value = "Unconfirmed";
-  doc
-    .querySelector("#playerNameForm")
-    .dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  assert.match(
-    doc.querySelector("#playerNameResult").textContent,
-    /did not confirm/,
-  );
-  assert.equal(doc.querySelector("#playerNameForm").hidden, false);
-  assert.equal(doc.querySelector("#playerUsername").value, "Unconfirmed");
-  p.close();
-});
-
-test("repeated save submits one write and its success remains visible", async () => {
-  const p = page();
-  await flush();
-  const doc = p.w.document,
-    form = doc.querySelector("#playerNameForm");
-  doc.querySelector("#editPlayerName").click();
-  doc.querySelector("#playerUsername").value = "Save Once";
-  let finish;
-  p.respond(
-    async () =>
-      new Promise((resolve) => {
-        finish = resolve;
-      }),
-  );
-  form.dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  form.dispatchEvent(new p.w.Event("submit", { cancelable: true }));
-  await flush();
-  assert.equal(p.calls.filter((c) => c.url.endsWith("/profile")).length, 1);
-  p.value.state.you.display_name = "Save Once";
-  p.value.state.version++;
-  finish(response(p.value));
-  await flush();
-  assert.equal(form.hidden, true);
-  const notice = doc.querySelector("#playerNameResult");
-  assert.equal(form.contains(notice), false);
-  assert.match(notice.textContent, /Saved\. Playing as Save Once/);
-  p.close();
-});
-```
-
-## `tests/test_clarity_update.py`
-
-```python
-"""UI contract smoke tests for the central admin and provider separation.
-The original test file was not among the user's individual uploads.
-"""
-import unittest
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-
-
-class ProviderUiContractTests(unittest.TestCase):
-    def test_public_has_two_separate_boards(self):
-        content = (ROOT/'templates/index.html').read_text(encoding='utf-8')
-        self.assertIn('id="shuffleBoard"', content)
-        self.assertIn('id="empireBoard"', content)
-        self.assertIn('https://empiredrop.com/c/red', content)
-
-    def test_admin_has_two_independent_tabs(self):
-        for name in ('admin_shuffle.html', 'admin_empiredrop.html'):
-            self.assertTrue((ROOT/'templates'/name).is_file())
-        content = (ROOT/'wager_backend.py').read_text(encoding='utf-8')
-        self.assertIn('"shuffle":"Shuffle"', content)
-        self.assertIn('"empiredrop":"EmpireDrop"', content)
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/test_comfort_update.py`
-
-```python
-"""Behavioral checks for player recovery, file durability and uncapped fairness."""
-import copy
-import hashlib
-import json
-import os
-from pathlib import Path
-import secrets
-import sqlite3
-import tempfile
-import threading
-import unittest
-from unittest.mock import patch
-
-from boss import CommunityBoss, BossError, validate_boss
-from config import Config
-from storage import Store, StoreError
-from wager_backend import create_app
-
-
-class ComfortTests(unittest.TestCase):
-    def setUp(self):
-        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
-        self.root = Path(temp.name)
-        env = patch.dict(os.environ, {'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'test-password'}, clear=True)
-        env.start(); self.addCleanup(env.stop)
-        self.app = create_app(self.root, testing=True)
-        self.r, self.b = self.app.extensions['runtime'], self.app.extensions['boss']
-        clock = patch('boss.time.time', return_value=self.b.export()['created_at'] + 1.25)
-        self.clock = clock.start(); self.addCleanup(clock.stop)
-
-    def player(self, name=None, ip='192.0.2.1'):
-        c = self.app.test_client(); c.environ_base['REMOTE_ADDR'] = ip
-        v = c.get('/play/api/state').json
-        if name: self.assertEqual(self.post(c, '/play/api/profile', username=name).status_code, 200)
-        return c
-
-    def post(self, c, path, **body):
-        v = c.get('/play/api/state').json
-        return c.post(path, json={'raid_id': v['state']['raid_id'], **body}, headers={'X-CSRF-Token': v['csrf']})
-
-    def hit(self, c):
-        v = c.get('/play/api/state').json
-        return self.post(c, '/play/api/attack', style=v['state']['weakness'], request_id=secrets.token_hex(16))
-
-    def admin(self):
-        c = self.player(ip='198.51.100.1')
-        with c.session_transaction() as s: s.update(user='gingrsnaps', auth_version=1)
-        return c
-
-    def action(self, c, action, **fields):
-        v = c.get('/play/api/state').json
-        return c.post('/admin/boss/action', data={'csrf':v['csrf'], 'raid_id':v['state']['raid_id'], 'action':action, **fields})
-
-    def test_json_is_the_only_active_store_and_survives_restart(self):
-        c = self.player('Alice'); self.hit(c)
-        value = self.b.export(); before = self.r.store.admin()
-        self.assertTrue((self.root/'data/state.json').is_file())
-        self.assertFalse(list(self.root.rglob('*.sqlite3')))
-        again = Store(Config(self.root))
-        self.assertEqual(again.admin(), before)
-        self.assertEqual(CommunityBoss(again).export(), value)
-        self.assertEqual(json.loads((self.root/'data/state.json').read_text())['boss']['hp'], value['hp'])
-
-    def test_failed_file_replace_rolls_back_in_memory_and_on_disk(self):
-        c = self.player('Alice'); before = self.b.export(); disk = (self.root/'data/state.json').read_bytes()
-        with patch('storage.os.replace', side_effect=OSError('fixture disk error')):
-            response = self.hit(c)
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual((self.root/'data/state.json').read_bytes(), disk)
-        self.assertEqual(self.b.export(), before)
-        self.assertFalse(list((self.root/'data').glob('*.tmp')))
-        self.assertEqual(self.hit(c).status_code, 200)
-
-    def test_corrupt_saved_json_never_resets_accounts(self):
-        path = self.root/'data/state.json'; path.write_text('{broken', encoding='utf-8')
-        with self.assertRaises(RuntimeError): Store(Config(self.root))
-        self.assertEqual(path.read_text(), '{broken')
-
-    def test_sqlite_migration_preserves_entire_saved_state_and_original_file(self):
-        c = self.player('Alice'); self.hit(c)
-        old = self.b.export(); admin = self.r.store.admin()
-        target = self.root/'old-install'; (target/'data').mkdir(parents=True)
-        path = target/'data/redhunllef.sqlite3'
-        with sqlite3.connect(path) as db:
-            db.execute('CREATE TABLE rh_admin (name TEXT, revision INTEGER, document TEXT)')
-            db.execute('CREATE TABLE rh_live (name TEXT, service TEXT, document TEXT)')
-            db.execute('CREATE TABLE rh_boss (name TEXT, document TEXT)')
-            db.execute('INSERT INTO rh_admin VALUES (?, ?, ?)', ('redhunllef', admin[0], json.dumps(admin[1])))
-            db.execute('INSERT INTO rh_live VALUES (?, ?, ?)', ('redhunllef', 'shuffle', json.dumps(self.r.shuffle)))
-            db.execute('INSERT INTO rh_boss VALUES (?, ?)', ('redhunllef', json.dumps(old)))
-        original = path.read_bytes()
-        migrated = Store(Config(target))
-        self.assertEqual(migrated.admin(), admin)
-        self.assertEqual(CommunityBoss(migrated).export(), old)
-        self.assertEqual(migrated.live('shuffle'), self.r.shuffle)
-        self.assertEqual(path.read_bytes(), original)
-        self.assertTrue((target/'data/state.json').exists())
-
-    def test_two_store_instances_do_not_lose_concurrent_damage(self):
-        other = CommunityBoss(Store(Config(self.root)))
-        raid = self.b.status()['raid_id']; errors = []
-        def attack(i):
-            try: (self.b if i % 2 else other).attack(str(i), f'192.0.2.{i+1}', 'blade', raid, secrets.token_hex(16))
-            except Exception as exc: errors.append(exc)
-        workers = [threading.Thread(target=attack, args=(i,)) for i in range(12)]
-        for t in workers: t.start()
-        for t in workers: t.join(10)
-        self.assertFalse(errors)
-        state = self.b.export()
-        self.assertEqual(state['total_attacks'], 12)
-        validate_boss(state)
-
-    def test_owner_recovery_retains_cookie_identity_receipts_and_badges(self):
-        a = self.player('Alice'); hit = self.hit(a).json
-        code_response = self.post(a, '/play/api/recovery-code')
-        self.assertEqual(code_response.status_code, 200)
-        code = code_response.json['code']
-        disk = (self.root/'data/state.json').read_text()
-        self.assertNotIn(code, disk)
-        b = self.player(); recovered = self.post(b, '/play/api/recover', code=code)
-        self.assertEqual(recovered.status_code, 200)
-        you = recovered.json['state']['you']
-        self.assertEqual(you['name'], hit['state']['you']['name'])
-        self.assertEqual(you['damage'], hit['hit']['damage'])
-        self.assertEqual(you['badges'], hit['state']['you']['badges'])
-        self.assertEqual(self.hit(b).status_code, 429)
-        self.clock.return_value += 30
-        self.assertEqual(self.hit(b).status_code, 200)
-        self.assertEqual(len(self.b.export()['players']), 1)
-        public = self.player(ip='192.0.2.8').get('/play/api/state').text
-        self.assertNotIn('Alice', public); self.assertNotIn('recovery_hash', public)
-        with self.assertRaises(BossError): self.b.save_recovery('other', hashlib.sha256(b'bad').hexdigest())
-
-    def test_recovery_rotation_forgery_csrf_and_other_connections(self):
-        a = self.player('Alice'); code = self.post(a, '/play/api/recovery-code').json['code']
-        self.assertEqual(a.post('/play/api/recovery-code').status_code, 400)
-        b = self.player(ip='192.0.2.2')
-        self.assertEqual(self.post(b, '/play/api/recover', code=code+'x').status_code, 400)
-        self.clock.return_value += 30
-        new = self.post(a, '/play/api/recovery-code').json['code']
-        self.assertEqual(self.post(b, '/play/api/recover', code=code).status_code, 400)
-        self.assertEqual(self.post(b, '/play/api/recover', code=new).status_code, 200)
-        self.assertEqual(b.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
-
-    def test_household_approvals_are_retired_and_per_player_cooldowns_remain(self):
-        a = self.player('Alice'); b = self.player(); host = self.admin()
-        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
-        self.assertEqual(self.action(b, 'household', player_name='Alice', slots='2').status_code, 302)
-        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='2').status_code, 422)
-        self.assertEqual(self.post(b, '/play/api/profile', username='Bob').status_code, 200)
-        self.assertEqual(self.hit(a).status_code, 200); self.assertEqual(self.hit(b).status_code, 200)
-        self.assertEqual(self.hit(a).status_code, 429); self.assertEqual(self.hit(b).status_code, 429)
-        c = self.player(); self.assertEqual(self.post(c, '/play/api/profile', username='Charlie').status_code, 200)
-        self.assertEqual(self.action(host, 'household', player_name='Alice', slots='1').status_code, 422)
-        validate_boss(self.b.export())
-        public = c.get('/play/api/state').text
-        for secret in ('Alice', 'Bob', 'households', 'admin_history'): self.assertNotIn(secret, public)
-        self.clock.return_value += 30
-        self.assertEqual(self.hit(a).status_code, 200); self.assertEqual(self.hit(b).status_code, 200)
-
-    def test_rejected_flood_is_throttled_but_eligible_hits_are_never_capped(self):
-        c = self.player('Alice'); self.hit(c)
-        for _ in range(13): last = self.hit(c)
-        self.assertEqual(last.status_code, 429)
-        self.assertEqual(last.json['code'], 'request_throttle')
-        host = self.admin(); flags = host.get('/admin/boss/status').json['state']['abuse_flags']
-        self.assertEqual(len(flags), 1)
-        self.assertEqual(flags[0]['category'], 'attack')
-        self.assertNotIn('192.0.2.1', json.dumps(flags))
-        self.clock.return_value += 30
-        self.assertEqual(self.hit(c).status_code, 200)  # Still inside the abuse window.
-        for _ in range(120):
-            self.clock.return_value += 30
-            self.assertEqual(self.hit(c).status_code, 200)
-        self.assertIsNone(c.get('/play/api/state').json['state']['rules']['daily_attacks'])
-        self.assertNotIn('abuse_flags', c.get('/play/api/state').text)
-
-    def test_rapid_registration_rejections_throttle_without_banning(self):
-        c = self.player()
-        for _ in range(21): response = self.post(c, '/play/api/profile', username='')
-        self.assertEqual(response.status_code, 429)
-        self.assertEqual(response.json['code'], 'request_throttle')
-        self.assertEqual(self.r.admin['banned_ips'], [])
-
-    def test_rally_counts_distinct_recent_players_and_changes_no_combat_rules(self):
-        raid = self.b.status()['raid_id']; start = self.clock.return_value
-        for i in range(14): self.b.attack(str(i), f'192.0.2.{i+1}', 'blade', raid, secrets.token_hex(16))
-        self.assertEqual(self.b.status()['rally']['count'], 14)
-        self.clock.return_value += 30
-        self.b.attack('0', '192.0.2.1', 'blade', raid, secrets.token_hex(16))
-        self.assertFalse(self.b.status()['rally']['unlocked'])
-        self.b.attack('last', '192.0.2.99', 'blade', raid, secrets.token_hex(16))
-        v = self.b.status(); self.assertTrue(v['rally']['unlocked']); hp = v['hp']
-        self.clock.return_value = start + 86400
-        self.assertTrue(self.b.status()['rally']['unlocked']); self.assertEqual(self.b.status()['hp'], hp)
-        self.assertEqual(v['rules']['damage'], 100)
-        self.b.control('restart', raid)
-        self.assertFalse(self.b.status()['rally']['unlocked'])
-
-    def test_rally_expiry_and_admin_pace_do_not_adjust_health(self):
-        raid = self.b.status()['raid_id']
-        for i in range(11):
-            self.b.attack(str(i), f'192.0.2.{i+1}', 'blade', raid, secrets.token_hex(16))
-            self.clock.return_value += 30
-        old = self.b.export(); view = self.b.admin_status()
-        self.assertTrue(view['balance']['observed'])
-        self.assertEqual([p['days'] for p in view['balance']['presets']], [3,5,7])
-        self.assertEqual(self.b.export(), old)
-        self.clock.return_value += 601
-        self.assertEqual(self.b.status()['rally']['count'], 0)
-        self.assertEqual(self.b.status()['hp'], old['hp'])
-
-    def test_admin_history_is_atomic_persistent_and_not_public(self):
-        host = self.admin(); player = self.player('Alice')
-        self.assertEqual(self.action(host, 'settings', settings_revision=0, boss_name='Ruby', base_damage=12, weak_damage=23, burst_bonus=34).status_code, 303)
-        self.assertEqual(self.action(host, 'remaining_health', health=12345, health_revision=0, confirm_health='yes').status_code, 303)
-        records = self.b.admin_status()['admin_history']
-        self.assertEqual(records[0]['actor'], 'gingrsnaps'); self.assertEqual(records[0]['after']['hp'], 12345)
-        self.assertEqual(records[1]['after']['name'], 'Ruby')
-        self.assertEqual(CommunityBoss(Store(Config(self.root))).admin_status()['admin_history'], records)
-        self.assertNotIn('admin_history', player.get('/play/api/state').text)
-        self.assertEqual(self.action(player, 'pause').status_code, 302)
-        self.assertEqual(self.b.admin_status()['admin_history'], records)
-        validate_boss(self.b.export())
-
-    def test_source_checks_and_content_changes_have_separate_times(self):
-        from race import empty
-        now = int(self.clock.return_value)
-        admin = copy.deepcopy(self.r.admin); admin['site_settings'].update(start_time=now-100, end_time=now+10000)
-        self.r.commit(admin, self.r.revision, snapshot=empty(admin['site_settings']))
-        rows = [dict(username='Test', weightedWagerAmount='100', wagerAmount='150', campaignCode='Red')]
-        with patch.object(self.r.providers, 'shuffle', return_value=rows): self.r.check('shuffle')
-        first = self.r.job_status()['shuffle']
-        self.clock.return_value += 60
-        with patch.object(self.r.providers, 'shuffle', return_value=rows): self.r.check('shuffle')
-        second = self.r.job_status()['shuffle']
-        self.assertGreater(second['last_success'], first['last_success'])
-        self.assertEqual(second['changed_at'], first['changed_at'])
-        rows[0]['weightedWagerAmount'] = '200'; self.clock.return_value += 60
-        with patch.object(self.r.providers, 'shuffle', return_value=rows): self.r.check('shuffle')
-        self.assertGreater(self.r.job_status()['shuffle']['changed_at'], first['changed_at'])
-
-
-if __name__ == '__main__': unittest.main()
-```
-
-## `tests/test_community.py`
-
-```python
-"""Regressions for community polish, reviewed publication and recovery metadata."""
-import copy
-import io
-import json
-from pathlib import Path
-import re
-import secrets
-import tempfile
-import unittest
-from unittest.mock import patch
-
-import test_app as support
-from boss import CommunityBoss, DAY, fresh_raid, validate_boss
-from wager_backend import create_app
-
-
-class CommunityTests(unittest.TestCase):
-    setUp = support.AppTests.setUp
-    form = support.AppTests.form
-    schedule = support.AppTests.schedule
-
-    def hit(self, guest='community-test', ip='192.0.2.9'):
-        boss = self.app.extensions['boss']
-        state = boss.status(guest, ip)
-        return boss.attack(guest, ip, state['weakness'], state['raid_id'], secrets.token_hex(16))
-
-    def test_conditional_public_snapshot_and_private_cache_boundaries(self):
-        first = self.client.get('/public-state')
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(first.headers['Cache-Control'], 'public, no-cache')
-        self.assertNotIn('server_time', first.json)
-        self.assertNotIn('you', first.json['boss'])
-        self.assertNotIn('csrf', first.json)
-        with patch('runtime.time.time', return_value=float(first.headers['X-Server-Time']) + 1):
-            unchanged = self.client.get('/public-state', headers={'If-None-Match': first.headers['ETag']})
-        self.assertEqual(unchanged.status_code, 304)
-        self.assertEqual(unchanged.data, b'')
-        self.assertGreater(float(unchanged.headers['X-Server-Time']), float(first.headers['X-Server-Time']))
-        self.hit()
-        changed = self.client.get('/public-state', headers={'If-None-Match': first.headers['ETag']})
-        self.assertEqual(changed.status_code, 200)
-        self.assertNotEqual(first.headers['ETag'], changed.headers['ETag'])
-        for url in ('/play/api/state', '/admin/status', '/admin/recovery-backup'):
-            response = self.client.get(url)
-            self.assertEqual(response.headers['Cache-Control'], 'no-store')
-            self.assertNotIn('ETag', response.headers)
-
-    def test_review_signature_requires_the_exact_reviewed_changes(self):
-        self.schedule()
-        original = copy.deepcopy(self.r.admin)
-        revision = self.r.revision
-        form = dict(self.form(), csrf='test-token', action='save_race', revision=revision,
-                    race_title='The new community race', prize_1='1801', sponsor_url='https://example.test/sponsor')
-        preview = self.client.post('/admin/action', data=form)
-        self.assertEqual(preview.status_code, 200)
-        for label in ('Race title', 'Place 1 prize', 'Sponsor link'):
-            self.assertIn(label, preview.text)
-        review = re.search('name="review_token" value="([^"]+)"', preview.text).group(1)
-        tampered = self.client.post('/admin/action', data={**form, 'confirm_race':'yes', 'review_token':review, 'prize_1':'1901'})
-        self.assertEqual(tampered.status_code, 200)
-        self.assertEqual(self.r.revision, revision)
-        self.assertEqual(self.r.admin, original)
-        confirmed = self.client.post('/admin/action', data={**form, 'confirm_race':'yes', 'review_token':review})
-        self.assertEqual(confirmed.status_code, 303)
-        self.assertEqual(self.r.revision, revision + 1)
-        self.assertEqual(self.r.admin['site_settings']['prizes']['1'], '1801')
-
-    def test_badges_reward_real_hits_and_distinct_raid_days(self):
-        boss = self.app.extensions['boss']
-        with patch('boss.time.time', return_value=1_800_000_000) as clock:
-            for hit in range(100):
-                clock.return_value = 1_800_000_000 + (hit // 40) * DAY + (hit % 40) * 60
-                result = self.hit()
-            state = result['state']
-            self.assertEqual(state['you']['active_days'], 3)
-            self.assertEqual(state['you']['attacks'], 100)
-            self.assertTrue(all(badge['earned'] for badge in state['you']['badges'] if badge['id'] in {'first', 'burst', 'loyal'}))
-            self.assertEqual(len(state['you']['badges']), 8)
-            self.assertEqual(state['total_damage'], 16_000)
-            self.assertIsNone(state['rules']['daily_attacks'])
-            self.assertEqual(state['rules']['cooldown'], 30)
-        validate_boss(boss.export())
-
-    def test_legacy_raid_migration_keeps_progress_and_counts_only_known_days(self):
-        boss = self.app.extensions['boss']
-        with patch('boss.time.time', return_value=1_800_000_000) as clock:
-            self.hit()
-            old = boss.export()
-            for player in old['players'].values():
-                player.pop('active_days')
-            with self.r.store.connection(transaction=True) as conn:
-                boss._write(conn, old)
-            restored = CommunityBoss(self.r.store)
-            self.assertEqual(restored.export(), old)
-            self.app.extensions['boss'] = restored
-            clock.return_value += DAY
-            state = self.hit()['state']
-            self.assertEqual(state['you']['active_days'], 2)
-            self.assertEqual(state['you']['damage'], 300)
-            self.assertFalse(next(b for b in state['you']['badges'] if b['id'] == 'loyal')['earned'])
-
-    def test_milestones_and_victory_recap_include_every_contributor(self):
-        boss = self.app.extensions['boss']
-        raid = fresh_raid(health=1650)
-        with self.r.store.connection(transaction=True) as conn:
-            boss._write(conn, raid, new_raid=True)
-        boss.loaded_at = 0
-        url = '/play/api/contributors?raid_id=' + raid['id']
-        self.assertEqual(self.client.get(url).status_code, 409)
-        for index in range(11):
-            state = self.hit(str(index), f'192.0.2.{index + 1}')['state']
-            if index == 2:
-                self.assertEqual([m['percent'] for m in state['milestones'] if m['reached']], [25])
-        self.assertTrue(all(m['reached'] for m in state['milestones']))
-        result = self.client.get(url)
-        self.assertEqual(result.status_code, 200)
-        self.assertEqual(len(result.json['contributors']), 11)
-        self.assertTrue(all(set(row) == {'name', 'damage', 'attacks'} for row in result.json['contributors']))
-        self.assertEqual(self.client.get('/play/api/contributors?raid_id=old-raid').status_code, 409)
-
-    def test_recovery_export_tracks_changes_without_invalidating_admin_forms(self):
-        before = self.r.store.admin()
-        recovery = self.client.get('/admin/recovery-backup').json
-        self.assertEqual(self.r.store.admin(), before)
-        self.assertEqual(self.r.store.checkpoint(), recovery['recovery_export'])
-        self.assertFalse(self.client.get('/admin/status').json['checkpoint']['changes'])
-        self.hit()
-        status = self.client.get('/admin/status').json['checkpoint']
-        self.assertEqual(status['attacks'], 1)
-        self.assertEqual(status['damage'], 150)
-        self.assertTrue(status['changes'])
-
-    def test_private_recovery_review_validates_without_changing_live_state(self):
-        self.hit()
-        recovery = self.client.get('/admin/recovery-backup').json
-        before = self.r.store.admin(), self.app.extensions['boss'].export()
-        response = self.client.post('/admin/recovery-preview', data={
-            'csrf':'test-token', 'recovery':(io.BytesIO(json.dumps(recovery).encode()), 'recovery.json')})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Validated recovery file', response.text)
-        self.assertIn('1 raiders', response.text)
-        self.assertNotIn(recovery['users']['gingrsnaps']['pw_hash'], response.text)
-        self.assertEqual((self.r.store.admin(), self.app.extensions['boss'].export()), before)
-        invalid = self.client.post('/admin/recovery-preview', data={
-            'csrf':'test-token', 'recovery':(io.BytesIO(b'{bad json'), 'bad.json')})
-        self.assertEqual(invalid.status_code, 422)
-        self.assertEqual(self.client.post('/admin/recovery-preview').status_code, 400)
-        self.assertEqual(self.app.test_client().post('/admin/recovery-preview').status_code, 302)
-
-    def test_recovered_metadata_survives_import_and_malformed_metadata_is_ignored(self):
-        self.hit()
-        recovery = self.client.get('/admin/recovery-backup').json
-        for malformed in (False, True):
-            with self.subTest(malformed=malformed), tempfile.TemporaryDirectory() as directory:
-                value = copy.deepcopy(recovery)
-                if malformed:
-                    value['recovery_export']['attacks'] = 'untrusted number'
-                root = Path(directory)
-                (root / 'private').mkdir()
-                (root / 'private/recovery.seed.json').write_text(json.dumps(value), encoding='utf-8')
-                restored = create_app(root, testing=True)
-                try:
-                    store = restored.extensions['runtime'].store
-                    self.assertEqual(restored.extensions['boss'].export(), recovery['community_boss'])
-                    self.assertEqual(store.checkpoint(), None if malformed else recovery['recovery_export'])
-                finally:
-                    restored.extensions['runtime'].store.close()
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/test_deployment_optimization.py`
-
-```python
-"""Static release sanity checks; provider credentials are never opened."""
-import unittest
-import sys
-from pathlib import Path
-root=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(root/'tools'))
-from deployment_diagnostics import evaluate
-
-class DeploymentTests(unittest.TestCase):
-    def test_buildpack_has_no_second_pip_install(self):
-        self.assertTrue(evaluate(root))
-    def test_python_is_pinned(self):
-        self.assertTrue((root/'runtime.txt').read_text().strip().startswith('python-3.13.'))
-    def test_waitress_is_main_server(self):
-        self.assertIn('server.run()', (root/'wager_backend.py').read_text())
-    def test_health_is_local_not_external(self):
-        text=(root/'wager_backend.py').read_text()
-        idx=text.index('    @app.get("/healthz")')
-        self.assertIn('return jsonify(ok=True, release=RELEASE)',text[idx:idx+180])
-
-if __name__=='__main__': unittest.main()
-```
-
-## `tests/test_empiredrop.py`
-
-```python
-"""No live EmpireDrop API calls. Tests use synthetic referral and wager data."""
-import copy
-import unittest
-from unittest.mock import patch
-
-from empiredrop import EmpireDropBoard, parse_rows, validate_settings, schedule, scope_id
-from integrations import ProviderError
-from wager_backend import create_app
-
-
-class EmpireDropParsingTests(unittest.TestCase):
-    def test_red_only_and_sorted_without_shuffles_weighting(self):
-        sample = {'data': [
-            {'username': 'NotRed', 'totalWagered': 50000, 'referralCode': 'other'},
-            {'username': 'TwoPlayer', 'totalWagered': '150.50', 'referralCode': 'RED'},
-            {'username': 'FirstPlayer', 'totalWagered': 300, 'referralCode': 'red'},
-            {'username': 'TwoPlayer', 'totalWagered': '50', 'referralCode': 'red'},
-        ]}
-        rows = parse_rows(sample)
-        self.assertEqual([(r['username'], r['wager']) for r in rows],
-                         [('FirstPlayer', '€300.00'), ('TwoPlayer', '€150.50')])
-
-    def test_unproved_code_scope_refuses_to_show_users(self):
-        with self.assertRaises(ProviderError):
-            parse_rows([{'username': 'Test', 'totalWagered': 5}])
-        rows = parse_rows([{'username': 'Test', 'totalWagered': 5}],
-                          settings={'code_scoped': True})
-        self.assertEqual(rows[0]['username'], 'Test')
-
-    def test_unknown_wager_fields_not_converted_from_deposits(self):
-        with self.assertRaises(ProviderError):
-            parse_rows([{'username': 'Person', 'deposits': 500, 'referralCode': 'red'}])
-        with self.assertRaises(ProviderError):
-            parse_rows([{'username': 'Person', 'totalWagered': 'NaN', 'referralCode': 'red'}])
-        with self.assertRaises(ProviderError):
-            parse_rows([{'username': 'Person', 'totalWagered': -1, 'referralCode': 'red'}])
-
-    def test_url_and_header_validation_forbids_credential_redirects(self):
-        for value in ('http://api.empiredrop.com/v1',
-                      'https://api.empiredrop.com@evil.example/path',
-                      'https://evil.example/path',
-                      'https://api.empiredrop.com/v1?private_key=secret'):
-            with self.subTest(value=value), self.assertRaises(ValueError):
-                validate_settings({'api_url': value})
-        self.assertEqual(validate_settings({'api_url':'https://api.empiredrop.com/v1'})['api_url'],
-                         'https://api.empiredrop.com/v1')
-
-
-class EmpireDropAppTests(unittest.TestCase):
-    def setUp(self):
-        import tempfile
-        from pathlib import Path
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        with patch.dict('os.environ', {'APP_ENV':'test','ADMIN_BOOTSTRAP_PASS':'test-only-password'}, clear=True):
-            self.app = create_app(Path(self.temp.name), testing=True)
-        self.addCleanup(self.app.extensions['runtime'].store.close)
-        self.client = self.app.test_client()
-        with self.client.session_transaction() as session:
-            session.update(user='gingrsnaps', auth_version=1, csrf='test-csrf')
-
-    def test_separate_public_and_admin_views_never_share_names_or_keys(self):
-        runtime = self.app.extensions['runtime']
-        site = runtime.admin['site_settings']
-        board = runtime.empiredrop
-        with board.lock:
-            board.saved = dict(scope=scope_id(schedule(runtime.admin)), rows=[{'rank':1,'username':'RealEmpireName', 'wager':'€500.00'}], updated_at=12345, attempt_at=12345, error='')
-        public = board.public(site)
-        private = self.client.get('/admin/empiredrop/status')
-        self.assertEqual(private.status_code, 200)
-        self.assertEqual(private.json['rows'][0]['username'], 'RealEmpireName')
-        self.assertEqual(public['rows'][0]['username'], 'Re******')
-        self.assertNotIn('RealEmpireName', str(public))
-        self.assertNotIn(runtime.config.credentials.get('empiredrop_private_key') or 'KEY_NOT_SET', private.text)
-        self.assertNotIn(runtime.config.credentials.get('empiredrop_public_key') or 'KEY_NOT_SET', private.text)
-        self.assertNotIn('RealEmpireName', self.app.test_client().get('/public-state').text)
-        self.assertEqual(self.app.test_client().get('/admin/empiredrop/status').status_code, 401)
-
-    def test_superadmin_config_isolated_and_csrf_protected(self):
-        board = self.app.extensions['runtime'].empiredrop
-        original_shuffle = copy.deepcopy(self.app.extensions['runtime'].store.live('shuffle'))
-        original = dict(board._settings())
-        response = self.client.post('/admin/empiredrop/config', data={'api_url':'https://api.empiredrop.com/v1'})
-        self.assertEqual(response.status_code, 400)
-        fields = {key:str(value) for key,value in original.items() if key != 'code_scoped'}
-        fields.update(csrf='test-csrf', revision='1', api_url='https://api.empiredrop.com/v1')
-        response = self.client.post('/admin/empiredrop/config', data=fields)
-        self.assertEqual(response.status_code, 303, response.text)
-        self.assertEqual(board._settings()['api_url'], 'https://api.empiredrop.com/v1')
-        self.assertEqual(self.app.extensions['runtime'].store.live('shuffle'), original_shuffle)
-
-    def test_referral_link_is_present(self):
-        html = self.client.get('/').text
-        self.assertIn('https://empiredrop.com/c/red', html)
-        self.assertIn('empireBoard', html)
-        self.assertIn('shuffleBoard', html)
-        self.assertIn('EmpireDrop', self.client.get('/admin?tab=empiredrop').text)
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/test_empiredrop_contract.py`
-
-```python
-"""No Flask, no live provider access: reproducible EmpireDrop isolation tests."""
-import copy
-from datetime import datetime
-from decimal import Decimal
-from pathlib import Path
-import tempfile
-import unittest
-import os
-import json
-from unittest.mock import patch
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from empiredrop import (CODE, EmpireDropBoard, current_week, parse_rows, schedule,
-                        scope_id, validate_settings)
-from integrations import ProviderError
-from race_support import EASTERN
-
-
-class MockResponse:
-    def __init__(self, payload, status=200):
-        self.payload, self.status_code = payload, status
-    def __enter__(self): return self
-    def __exit__(self, *_): return False
-    def iter_content(self, size):
-        import json
-        yield json.dumps(self.payload).encode('utf-8')
-
-
-class FakeStore:
-    def __init__(self):
-        self.doc = {'site_settings':{'start_time':1,'end_time':2,'campaign_code_filter':'ShuffleCampaign'}}
-        self.live_values = {'shuffle':{'key':'unchanged','rows':[{'username':'ShuffleExample'}]}}
-    def admin(self): return 1, copy.deepcopy(self.doc)
-    def live(self, service): return copy.deepcopy(self.live_values.get(service))
-    def publish(self, service, value): self.live_values[service] = copy.deepcopy(value)
-
-
-class FakeConfig:
-    def __init__(self):
-        self.empiredrop = {**validate_settings({}), 'api_url':'https://api.empiredrop.com/v1/example',
-                           'verified_contract':True}
-        self.credentials = {'empiredrop_public_key':'pk_test-example','empiredrop_private_key':'sk_test-example'}
-        self.sources = {'empiredrop_public_key':'test', 'empiredrop_private_key':'test'}
-
-
-class EmpireDropContractTests(unittest.TestCase):
-    def test_weekly_eastern_calendar_and_dst_boundaries(self):
-        for day, hours in [('2026-03-10T18:00',167), ('2026-11-03T18:00',169)]:
-            end = int(datetime.fromisoformat(day).replace(tzinfo=EASTERN).timestamp())
-            start, calculated_end = current_week(end-60)
-            self.assertEqual(calculated_end,end)
-            self.assertEqual((end-start)//3600,hours)
-        store = FakeStore()
-        value = schedule(store.doc, now=1793275200)
-        self.assertNotEqual(value['start_time'],store.doc['site_settings']['start_time'])
-        store.doc['empiredrop_race']={'mode':'custom','start_time':123456,'end_time':234567}
-        self.assertEqual(schedule(store.doc)['start_time'],123456)
-
-    def test_referral_red_filters_others_and_does_not_inherit_shuffles_weighting(self):
-        payload=[{'username':'Alice','totalWagered':'50.23','referralCode':'RED'},
-                 {'username':'Other','totalWagered':'1000000','referralCode':'other'}]
-        self.assertEqual(parse_rows(payload),[{'rank':1,'username':'Alice','wager':'€50.23'}])
-        with self.assertRaises(ProviderError):
-            parse_rows([{'username':'Not scoped','totalWagered':100}])
-
-    def test_aggregated_duplicates_do_not_double_count(self):
-        rows=[{'username':'Alice','userId':'123','totalWagered':100,'referralCode':'red'},
-              {'username':'Alice','userId':'123','totalWagered':100,'referralCode':'red'},
-              {'username':'Alice','userId':'123','totalWagered':200,'referralCode':'red'}]
-        self.assertEqual(parse_rows(rows,settings={'user_id_field':'userId'})[0]['wager'],'€200.00')
-
-    def test_transaction_mode_requires_unique_ids(self):
-        sample=[{'username':'A','transaction':'a','totalWagered':100,'referralCode':'red'},
-                {'username':'A','transaction':'a','totalWagered':100,'referralCode':'red'},
-                {'username':'A','transaction':'b','totalWagered':80,'referralCode':'red'}]
-        self.assertEqual(parse_rows(sample,settings={'record_mode':'transactions','transaction_id_field':'transaction'})[0]['wager'],'€180.00')
-        with self.assertRaises(ValueError):validate_settings({'record_mode':'transactions'})
-        with self.assertRaises(ProviderError):parse_rows([{'username':'A','referralCode':'red','totalWagered':1}],settings={'record_mode':'transactions','transaction_id_field':'transaction'})
-
-    def test_bad_amount_and_unknown_deposits_rejected(self):
-        for bad in ('NaN',-1,float('inf'), True):
-            with self.assertRaises(ProviderError):parse_rows([{'username':'A','referralCode':'red','totalWagered':bad}])
-        with self.assertRaises(ProviderError):parse_rows([{'username':'A','referralCode':'red','deposit':1000}])
-
-    def test_cannot_use_non_empiredrop_hosts_or_redirect_headers(self):
-        for url in ('http://api.empiredrop.com/v1', 'https://api.empiredrop.com.evil.test/secret',
-                    'https://empiredrop.com:8080/v1', 'https://empiredrop.com/?api_key=abc'):
-            with self.assertRaises(ValueError): validate_settings({'api_url':url})
-        with self.assertRaises(ValueError): validate_settings({'public_header':'Authorization'})
-
-    def test_keys_never_leave_without_confirmed_contract(self):
-        c, db = FakeConfig(), FakeStore()
-        c.empiredrop['verified_contract']=False
-        board=EmpireDropBoard(c,db)
-        with patch('empiredrop.requests.get',side_effect=AssertionError('unexpected network request')):
-            with self.assertRaises(ProviderError): board.fetch(schedule(db.doc))
-
-    def test_connection_and_scoped_rows_with_no_secret_exposure(self):
-        c, db=FakeConfig(),FakeStore()
-        board=EmpireDropBoard(c,db)
-        start,end=current_week()
-        params=[]
-        def request(url,**kw):
-            self.assertTrue(url.startswith('https://api.empiredrop.com/'))
-            self.assertFalse(kw['allow_redirects'])
-            params.append(kw)
-            return MockResponse({'data':[{'username':'PublicName', 'referralCode':'red', 'totalWagered':123.45}]})
-        with patch('empiredrop.requests.get',side_effect=request):
-            board.check()
-        self.assertEqual(len(params),1)
-        self.assertEqual(db.live('shuffle'),{'key':'unchanged','rows':[{'username':'ShuffleExample'}]})
-        public=board.public()
-        self.assertEqual(public['rows'][0]['username'],'Pu******')
-        self.assertNotIn(c.credentials['empiredrop_private_key'],str(public))
-        private=board.private_status()
-        self.assertEqual(private['rows'][0]['username'],'PublicName')
-        self.assertNotIn(c.credentials['empiredrop_private_key'],str(private))
-
-    def test_pagination_no_partial_board_and_safe_cursor(self):
-        c,db=FakeConfig(),FakeStore()
-        board=EmpireDropBoard(c,db)
-        def part(url,**kwargs): return MockResponse({'data':[{'username':'A','referralCode':'red','totalWagered':1}], 'nextCursor':'more'})
-        with patch('empiredrop.requests.get',side_effect=part):
-            with self.assertRaises(ProviderError):board.fetch(schedule(db.doc))
-        c.empiredrop['pagination_mode']='cursor'
-        pages=[]
-        def paged(url,**kwargs):
-            pages.append(kwargs['params'].get('cursor'))
-            if len(pages)==1:
-                return MockResponse({'data':[{'username':'A','referralCode':'red','totalWagered':10}], 'nextCursor':'next'})
-            return MockResponse({'data':[{'username':'B','referralCode':'red','totalWagered':20}]})
-        with patch('empiredrop.requests.get',side_effect=paged): rows=board.fetch(schedule(db.doc))
-        self.assertEqual(pages,[None,'next'])
-        self.assertEqual([x['username'] for x in rows],['B','A'])
-
-    def test_failure_preserves_last_good_results_and_never_edits_shuffle(self):
-        c,db=FakeConfig(),FakeStore()
-        board=EmpireDropBoard(c,db)
-        with patch.object(board,'fetch',return_value=[{'rank':1,'username':'Saved','wager':'€12.00'}]):board.check()
-        before=db.live('empiredrop')
-        with patch.object(board,'fetch',side_effect=ProviderError('rate limited',kind='rate_limit')):board.check()
-        self.assertEqual(db.live('empiredrop')['rows'],before['rows'])
-        self.assertIn('delayed',board.public()['label'])
-        self.assertEqual(db.live('shuffle')['rows'][0]['username'],'ShuffleExample')
-
-    def test_provider_errors_have_distinct_safe_categories(self):
-        config, store = FakeConfig(), FakeStore()
-        board = EmpireDropBoard(config, store)
-        for status, kind in [(401,'access'),(403,'access'),(429,'rate_limit'),(302,'http'),(500,'http')]:
-            with self.subTest(status=status), patch('empiredrop.requests.get',return_value=MockResponse({},status)):
-                with self.assertRaises(ProviderError) as raised:board.fetch(schedule(store.doc))
-                self.assertEqual(raised.exception.kind,kind)
-
-    def test_nested_response_paths_and_millisecond_requests(self):
-        c, db = FakeConfig(), FakeStore()
-        c.empiredrop.update(rows_path='payload.players', name_field='player.display',
-                           code_field='meta.code', wager_field='metrics.volume',
-                           user_id_field='player.id', timestamp_format='unix_ms',
-                           next_cursor_path='paging.next')
-        board = EmpireDropBoard(c,db)
-        calls=[]
-        def request(url, **kw):
-            calls.append(kw)
-            return MockResponse({'payload':{'players':[{'player':{'id':7,'display':'Nested'},
-                       'metrics':{'volume':'12.25'}, 'meta':{'code':'red'}}]},
-                       'paging':{'next':None}})
-        with patch('empiredrop.requests.get',side_effect=request):
-            result = board.fetch(schedule(db.doc))
-        self.assertEqual(result[0]['username'],'Nested')
-        self.assertEqual(result[0]['wager'],'€12.25')
-        self.assertIsInstance(calls[0]['params']['startTime'],int)
-        self.assertGreater(calls[0]['params']['startTime'],10**12)
-
-    def test_post_json_bearer_auth_with_iso_dates(self):
-        c, db = FakeConfig(), FakeStore()
-        c.empiredrop.update(auth_mode='bearer_private',http_method='POST',
-                           request_location='json',timestamp_format='iso8601_utc')
-        board=EmpireDropBoard(c,db)
-        called=[]
-        def post(url, **kw):
-            called.append(kw)
-            return MockResponse([{'username':'Poster','referralCode':'red','totalWagered':5}])
-        with patch('empiredrop.requests.post',side_effect=post):
-            result=board.fetch(schedule(db.doc))
-        self.assertEqual(result[0]['username'],'Poster')
-        self.assertTrue(called[0]['headers']['Authorization'].startswith('Bearer '))
-        self.assertTrue(called[0]['json']['startTime'].endswith('Z'))
-        self.assertNotIn('params',called[0])
-
-    def test_wrong_or_unverified_configuration_never_contacts_provider(self):
-        for bad in ({'auth_mode':'unknown'},{'http_method':'DELETE'},
-                    {'http_method':'GET','request_location':'json'},
-                    {'rows_path':'results.__class__[0]'},
-                    {'timestamp_format':'local'}):
-            with self.subTest(bad=bad), self.assertRaises(ValueError):
-                validate_settings(bad)
-        c, db = FakeConfig(), FakeStore()
-        c.empiredrop.update(verified_contract=False,auth_mode='bearer_private')
-        with patch('empiredrop.requests.post',side_effect=AssertionError('network')), \
-             patch('empiredrop.requests.get',side_effect=AssertionError('network')):
-            with self.assertRaises(ProviderError):
-                EmpireDropBoard(c,db).fetch(schedule(db.doc))
-
-    def test_private_settings_key_replace_is_atomic_and_persistent(self):
-        from config import Config
-        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {}, clear=True):
-            path = Path(folder)/'private'/'settings.json'
-            path.parent.mkdir()
-            path.write_text(json.dumps({'site_name':'Test','empiredrop_public_key':'pk_prod_initialinitialinitial111',
-                                        'empiredrop_private_key':'sk_prod_initialinitialinitial111'}))
-            c=Config(folder)
-            original=c.credentials['empiredrop_private_key']
-            self.assertFalse(c.replace_empiredrop_keys())
-            self.assertTrue(c.replace_empiredrop_keys(public='pk_prod_newpublickeyvalue9999999'))
-            saved=json.loads(path.read_text())
-            self.assertEqual(saved['empiredrop_private_key'], original)
-            self.assertEqual(c.credentials['empiredrop_public_key'], 'pk_prod_newpublickeyvalue9999999')
-            restarted=Config(folder)
-            self.assertEqual(restarted.credentials['empiredrop_public_key'],c.credentials['empiredrop_public_key'])
-            self.assertEqual(restarted.credentials['empiredrop_private_key'],original)
-            with self.assertRaises(ValueError):c.replace_empiredrop_keys(private='not-a-key')
-            self.assertEqual(json.loads(path.read_text()),saved)
-
-    def test_env_credential_overrides_are_not_replaced_by_admin(self):
-        from config import Config
-        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'EMPIREDROP_PRIVATE_KEY':'sk_prod_environmentenvironment12345'}, clear=True):
-            c=Config(folder)
-            with self.assertRaises(ValueError):
-                c.replace_empiredrop_keys(private='sk_prod_newprivatekeyvalue1234')
-            self.assertFalse((Path(folder)/'private'/'settings.json').exists())
-
-
-
-if __name__ == '__main__':unittest.main()
-```
-
-## `tests/test_empiredrop_frontend.cjs`
-
-```javascript
-/* Node-native test: no browser or live provider is required. */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const vm = require('node:vm');
-const path = require('node:path');
-
-test('independent provider tabs swap panels and render only EmpireDrop slots', () => {
-  const handlers = {};
-  class Element {
-    constructor(id, panel) {
-      this.id = id; this.tabIndex = 0; this.hidden = false;
-      this.textContent = ''; this.attributes = { 'aria-controls': panel };
-      this.classList = { toggle: (name, on) => { this.active = on; } };
-    }
-    setAttribute(k, v) { this.attributes[k] = v; }
-    getAttribute(k) { return this.attributes[k]; }
-    addEventListener(name, fn) { handlers[this.id + ':' + name] = fn; }
-    focus() { this.focused = true; }
-  }
-  const elements = {
-    shuffleTab: new Element('shuffleTab', 'shuffleBoard'),
-    empireTab: new Element('empireTab', 'empireBoard'),
-    shuffleBoard: new Element('shuffleBoard'),
-    empireBoard: new Element('empireBoard'),
-    empireMessage: new Element('empireMessage'),
-    empireChecked: new Element('empireChecked'),
-  };
-  const slots = {};
-  for (let n = 1; n <= 15; n++) {
-    for (const field of ['name', 'wager']) {
-      slots[`${n}:${field}`] = new Element(`slot-${n}-${field}`);
-    }
-  }
-  let update;
-  const document = {
-    body: { dataset: { bootstrap: JSON.stringify({empiredrop: {rows:[],label:'Not connected'}}) } },
-    getElementById(id) { return elements[id] || null; },
-    querySelector(selector) {
-      if (selector.includes('.source-status')) return null;
-      const match = selector.match(/data-empire(?:-row)?-(name|wager)="(\d+)"/);
-      return match ? slots[`${match[2]}:${match[1]}`] : null;
-    },
-    addEventListener(name, fn) { if (name === 'empiredrop:update') update = fn; },
-  };
-  const file = path.join(__dirname, '..', 'static', 'empiredrop.js');
-  vm.runInNewContext(fs.readFileSync(file, 'utf8'), {document, Intl, Date});
-  assert.equal(elements.empireBoard.hidden, true);
-  assert.equal(elements.shuffleBoard.hidden, false);
-  handlers['empireTab:click']();
-  assert.equal(elements.empireBoard.hidden, false);
-  assert.equal(elements.shuffleBoard.hidden, true);
-  update({detail:{rows:[{rank:1,username:'Te******',wager:'€123.00'}],label:'Confirmed',updated_at:1720000000}});
-  assert.equal(slots['1:name'].textContent, 'Te******');
-  assert.equal(slots['1:wager'].textContent, '€123.00');
-  assert.equal(slots['2:name'].textContent, 'Open position');
-  assert.equal(elements.empireMessage.textContent, 'Confirmed');
-  handlers['shuffleTab:click']();
-  assert.equal(elements.shuffleBoard.hidden, false);
-});
-```
-
-## `tests/test_extra_games.py`
-
-```python
-"""Seven-game accounting, commitment compatibility and real Poker decisions."""
-import copy
-import time
-import unittest
-from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import patch
-
-import test_app
-import test_redpoints
-from fairness import V4_VERSION, VERSION, V2_VERSION, commitment, outcome, verify, max_payout
-from gaming import Gaming, GamingError, player_key, validate_gaming
-from poker import PAYTABLE, classify, replay
-from storage import StoreError
-
-
-class FixedDraw:
-    def __init__(self, value): self.value = value
-    def below(self, size):
-        if not 0 <= self.value < size: raise AssertionError('Test draw outside range')
-        return self.value
-
-
-class ExtraRulesTests(unittest.TestCase):
-    def receipt(self, game, options, wager=101):
-        return dict(rules_version=VERSION, season='1780000000', game=game,
-                    client_seed='reference', client_salt='01'*16, nonce=0, wager=wager, options=options)
-
-    def test_coinflip_is_even_and_whole_point_returns_are_exact(self):
-        for picked in ('heads', 'tails'):
-            values=[]
-            for bit in (0, 1):
-                with patch('fairness.Draw',return_value=FixedDraw(bit)):
-                    values.append(outcome('00'*32,self.receipt('coinflip',dict(side=picked))))
-            self.assertEqual(sum(r['won'] for r in values),1)
-            self.assertEqual(sorted(r['payout'] for r in values),[0,199])
-
-    def test_limbo_exact_boundary_at_each_target_and_maximum_roll(self):
-        size=2**32
-        for target in (101,200,1000,99999999,100000000):
-            winning_rolls=99*size//target
-            for roll,won in ((size-winning_rolls-1,False),(size-winning_rolls,True),(size-1,True),(0,False)):
-                with patch('fairness.Draw',return_value=FixedDraw(roll)):
-                    result=outcome('00'*32,self.receipt('limbo',dict(target=target)))
-                self.assertEqual(result['won'],won)
-                self.assertEqual(result['payout'],101*target//100 if won else 0)
-                self.assertGreaterEqual(result['multiplier'],100)
-            self.assertLessEqual(winning_rolls*target,99*size)
-
-    def test_all_poker_categories_including_ace_low_straight(self):
-        cases={
-            'royal_flush':[0,9,10,11,12], 'straight_flush':[0,1,2,3,4],
-            'four_of_a_kind':[0,13,26,39,1], 'full_house':[0,13,26,1,14],
-            'flush':[0,2,4,6,8], 'straight':[0,14,28,42,4],
-            'three_of_a_kind':[0,13,26,1,2], 'two_pair':[0,13,1,14,2],
-            'jacks_or_better':[10,23,0,1,2], 'no_win':[1,14,0,3,5],
-        }
-        for label,cards in cases.items(): self.assertEqual(classify(cards),label)
-        self.assertEqual(PAYTABLE['royal_flush'],800)
-        self.assertEqual(classify([0,13,1,3,5]),'jacks_or_better')
-        self.assertEqual(classify([9,22,0,1,2]),'no_win')
-
-    def test_hold_or_replace_every_subset_without_reusing_a_discard(self):
-        for mask in range(32):
-            holds=[i for i in range(5) if mask & (1<<i)]
-            result=replay(FixedDraw(0),100,holds)
-            self.assertEqual(result['initial'],list(range(5)))
-            self.assertEqual(len(set(result['cards'])),5)
-            for i,card in enumerate(result['cards']):
-                if i in holds:self.assertEqual(card,result['initial'][i])
-                else:self.assertNotIn(card,result['initial'])
-            self.assertEqual(result['payout'],100*PAYTABLE[result['category']])
-        self.assertEqual(replay(FixedDraw(0),100,list(range(5)))['payout'],5000)
-        for bad in ([0,0],[-1],[5],[True],None):
-            if bad is not None:
-                with self.assertRaises(ValueError):replay(FixedDraw(0),100,bad)
-
-
-class ExtraWalletTests(unittest.TestCase):
-    setUp=test_app.AppTests.setUp
-    body=test_redpoints.RedPointsTests.body
-    player=test_redpoints.RedPointsTests.player
-    play=test_redpoints.RedPointsTests.play
-    finish_hand=test_redpoints.RedPointsTests.finish_hand
-
-    def opened(self, who='poker', name='PokerPlayer'):
-        game=self.app.extensions['gaming']
-        wallet=game.confirm_community_name(who,name,client_ip='192.0.2.1')
-        body=self.body(wallet,'poker')
-        # Emulate an actual pre-upgrade saved Video Poker hand. New deals are Hold’em.
-        body.update(rules_version=V4_VERSION,options=dict(variant='jacks_or_better'))
-        with game.store.connection(transaction=True) as conn:
-            player=conn['gaming']['players'][player_key(who)]
-            player['poker']=dict(**body,server_seed=player['server_seed'],holds=None,at=int(time.time()))
-            player['balance']-=body['wager']
-            player.pop('poker_stats_version',None)
-        game=Gaming(game.store)
-        result=dict(receipt=None,wallet=game.view(who,name))
-        return game,body,result
-
-    def test_eight_games_share_a_profile_wallet_and_private_rankings(self):
-        client,_=self.player('SevenGames')
-        for name in ('dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat'):
-            self.assertEqual(client.get('/gaming/'+name).status_code,200)
-            result,_=self.play(client,name,time.time())
-            self.assertTrue(verify(result['receipt']))
-        rankings=self.client.get('/admin/gaming/status').json
-        self.assertEqual(rankings['completed_rounds'],8)
-        self.assertEqual(len(rankings['games']),8)
-        self.assertTrue(all(rows[0]['name']=='SevenGames' for rows in rankings['games'].values()))
-        self.assertEqual(len({rows[0]['player_tag'] for rows in rankings['games'].values()}),1)
-        self.assertNotIn('SevenGames',self.app.test_client().get('/gaming/api/state').text)
-
-    def test_poker_reservation_holds_seed_privacy_and_retry(self):
-        game,body,opened=self.opened();hand=opened['wallet']['poker']
-        self.assertIsNone(opened['receipt']);self.assertEqual(opened['wallet']['balance'],99900)
-        initial=hand['initial'];saved=game.recovery()['players'][player_key('poker')]
-        self.assertNotIn(saved['server_seed'],str(opened))
-        self.assertNotIn('server_seed',str(opened))
-        move=dict(round_id=hand['round_id'],holds=[0,2,4],action_id='poker-test-draw')
-        result=game.poker_action('poker','PokerPlayer',move,client_ip=None)
-        receipt=result['receipt'];self.assertTrue(verify(receipt,body['commitment']))
-        self.assertEqual(receipt['result']['initial'],initial)
-        for i in move['holds']:self.assertEqual(receipt['result']['cards'][i],initial[i])
-        self.assertEqual(result['wallet']['balance'],99900+receipt['payout'])
-        self.assertIsNone(result['wallet']['poker'])
-        self.assertEqual(result['wallet']['legacy_poker']['bets'],1)
-        again=game.poker_action('poker','PokerPlayer',move)
-        self.assertTrue(again['duplicate']);self.assertEqual(again['wallet'],result['wallet'])
-        self.assertFalse(verify({**receipt,'holds':[1,3]}))
-        self.assertFalse(verify({**receipt,'holds':[0,0]}))
-        validate_gaming(game.recovery())
-
-    def test_competing_draws_commit_once_and_other_players_cannot_draw(self):
-        game,_,opened=self.opened();hand=opened['wallet']['poker']
-        body=dict(round_id=hand['round_id'],holds=[],action_id='same-draw-request')
-        with ThreadPoolExecutor(max_workers=6) as pool:
-            values=list(pool.map(lambda _:game.poker_action('poker','PokerPlayer',body),range(6)))
-        self.assertEqual(sum(not value['duplicate'] for value in values),1)
-        with self.assertRaises(GamingError):game.poker_action('poker','PokerPlayer',{**body,'action_id':'other-tab-draw','holds':[0]})
-        with self.assertRaises(GamingError):game.poker_action('another','Another',body,client_ip='192.0.2.1')
-        validate_gaming(game.recovery())
-
-    def test_refresh_restart_grant_and_weekly_boundary_keep_a_pending_hand_consistent(self):
-        game,body,result=self.opened();wallet=result['wallet'];hand=wallet['poker']
-        original=copy.deepcopy(game.recovery()['players'][player_key('poker')]['poker'])
-        game.refresh_balance('poker','PokerPlayer',dict(version=wallet['version'],season=wallet['season']['id']))
-        game.grant_everyone('ab'*16,'Admin');game.restart_balances()
-        self.assertEqual(game.recovery()['players'][player_key('poker')]['poker'],original)
-        restored=Gaming(game.store).view('poker','PokerPlayer')
-        self.assertEqual(restored['poker'],hand);self.assertEqual(restored['balance'],100000)
-        new=game.view('poker','PokerPlayer',now=wallet['season']['end_time'])
-        self.assertIsNone(new['poker']);self.assertEqual(new['balance'],100000)
-        self.assertTrue(verify(new['receipts'][0],body['commitment']))
-        self.assertEqual(new['receipts'][0]['holds'],list(range(5)))
-        self.assertTrue(all(stats['bets']==0 for stats in new['stats'].values()))
-        validate_gaming(game.recovery())
-
-    def test_pending_hand_blocks_other_games_and_failed_draw_rolls_back(self):
-        game,_,result=self.opened();before=game.recovery();wallet=result['wallet']
-        other={**self.body(wallet,'coinflip'),'request_id':'another-game-while-pending'}
-        with self.assertRaises(GamingError):game.bet('poker','PokerPlayer',other)
-        hand=wallet['poker'];body=dict(round_id=hand['round_id'],holds=[0,3],action_id='disk-fail-draw')
-        with patch('storage.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(StoreError):game.poker_action('poker','PokerPlayer',body)
-        self.assertEqual(game.recovery(),before)
-        client,state=self.player('CSRFPlayer')
-        self.assertEqual(client.post('/gaming/api/poker/action',json=body).status_code,400)
-
-    def test_v2_blackjack_hand_and_four_game_save_migrate_without_redealing(self):
-        game=self.app.extensions['gaming'];wallet=game.view('old','OldPlayer')
-        body=self.body(wallet,'blackjack')
-        for seed in range(100):
-            private=f'{seed:064x}'
-            pending={**body,'rules_version':V2_VERSION,'server_seed':private,
-                     'commitment':commitment(private),'actions':[],'action_ids':[],'at':int(time.time())}
-            if not outcome(private,pending)['ended']:break
-        with game.store.connection(transaction=True) as conn:
-            player=conn['gaming']['players'][player_key('old')]
-            for new in ('limbo','coinflip','poker','baccarat'):player['stats'].pop(new)
-            player.update(server_seed=private,blackjack=pending,balance=99900)
-        validate_gaming(game.recovery());migrated=Gaming(game.store)
-        migrated.restart_balances()
-        saved=migrated.recovery()['players'][player_key('old')]
-        self.assertEqual(saved['blackjack'],pending);self.assertEqual(len(saved['stats']),8)
-        hand=migrated.view('old','OldPlayer')['blackjack']
-        result=migrated.blackjack_action('old','OldPlayer',dict(round_id=hand['round_id'],step=0,action='stand',action_id='finish-old-hand'))
-        self.assertEqual(result['receipt']['rules_version'],V2_VERSION)
-        self.assertTrue(verify(result['receipt']));validate_gaming(migrated.recovery())
-
-
-if __name__ == '__main__': unittest.main()
-```
-
-## `tests/test_fairness_frontend.cjs`
-
-```javascript
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const vectors = [
-  ...require("./fairness_vectors.json"),
-  ...require("./fairness_v2_vectors.json"),
-  ...require("./fairness_v3_vectors.json"),
-  ...require("./fairness_v4_vectors.json"),
-  ...JSON.parse(require("node:child_process").execFileSync(process.env.RH_TEST_PYTHON || "python3", [require("node:path").join(__dirname, "holdem_vectors.py")], {encoding:"utf8",maxBuffer:16*1024*1024})),
-];
-const fair = require("../static/fairness.js");
-test("independent browser verifier reproduces every published Python reference receipt", async () => {
-  for (const receipt of vectors) {
-    assert.equal(
-      await fair.verify(receipt, receipt.commitment),
-      true,
-      receipt.request_id,
-    );
-    assert.equal(
-      await fair.verify(
-        { ...receipt, payout: receipt.payout + 1 },
-        receipt.commitment,
-      ),
-      false,
-    );
-    assert.equal(await fair.verify(receipt, "0".repeat(64)), false);
-  }
-});
-test("browser and backend use identical payout units and committed paths", async () => {
-  for (const receipt of vectors) {
-    const result = await fair.outcome(receipt.server_seed, receipt);
-    assert.deepEqual(result, receipt.result);
-  }
-});
-
-test("v2 edge payouts and doubled Blackjack stake are verified exactly", async () => {
-  assert.equal(Math.max(...fair.table("plinko", 16, "high")), 10000000);
-  const edge = vectors.find(
-    (r) =>
-      r.rules_version === "redpoints-v2" &&
-      r.game === "plinko" &&
-      r.result.multiplier === 10000000,
-  );
-  assert.equal(edge.payout, edge.wager * 1000);
-  const doubled = vectors.find(
-    (r) => r.game === "blackjack" && r.actions.includes("double"),
-  );
-  assert.equal(doubled.result.total_wager, doubled.wager * 2);
-  assert.equal(doubled.net, doubled.payout - doubled.result.total_wager);
-  assert.equal(await fair.verify(doubled), true);
-  assert.equal(await fair.verify({ ...doubled, actions: ["stand"] }), false);
-});
-```
-
-## `tests/test_frontend.cjs`
-
-```javascript
-/* Optional development checks. The deployed app does not use Node or jsdom. */
-const {test} = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const {JSDOM, VirtualConsole} = require('jsdom');
-const root = path.resolve(__dirname, '..');
-const fixtures = process.env.DOM_FIXTURES || path.join(root, '.test-fixtures');
-const code = fs.readFileSync(path.join(root, 'static/app.js'), 'utf8');
-const data = name => JSON.parse(fs.readFileSync(path.join(fixtures, name+'.json'), 'utf8'));
-const flush = async () => {for (let n=0; n<5; n++) await new Promise(resolve=>setImmediate(resolve));};
-
-function page(name, feed=data(name==='public'?'public':'admin')) {
-  const errors=[];
-  const console = new VirtualConsole().on('jsdomError', error=>errors.push(error.message));
-  const dom = new JSDOM(fs.readFileSync(path.join(fixtures,name+'.html'),'utf8'), {
-    url:'https://example.test/'+(name==='public'?'':'admin?tab='+name), runScripts:'outside-only', virtualConsole:console,
-  });
-  const window=dom.window, calls=[], timers=new Map(), intervals=new Map();
-  let now=feed.server_time*1000, serial=0;
-  window.Date.now=()=>now;
-  Object.defineProperty(window.document,'hidden',{value:false,configurable:true});
-  window.setTimeout=(fn,delay)=>{const id=++serial;timers.set(id,{fn,at:now+delay,delay});return id;};
-  window.clearTimeout=id=>timers.delete(id);
-  window.setInterval=(fn,delay)=>{const id=++serial;intervals.set(id,{fn,delay});return id;};
-  window.clearInterval=id=>intervals.delete(id);
-  let responder=async()=>({status:200,ok:true,headers:new Map([['content-type','application/json']]),json:async()=>structuredClone(feed)});
-  window.fetch=async(url,options)=>{calls.push({url:String(url),options,at:now});return responder(url,options);};
-  window.confirm=()=>true;
-  window.eval(code);
-  return {window, dom, calls, errors, feed, timers, intervals,
-    respond(fn){responder=fn;},
-    async advance(ms){now+=ms;for(const [id,timer] of [...timers])if(timer.at<=now){timers.delete(id);timer.fn();}await flush();},
-    async tick(){for(const timer of intervals.values())timer.fn();await flush();},
-    close(){dom.window.close();},
-  };
-}
-
-for(const name of ['public','login','overview','race','players','boss','settings','error']) {
-  test(name+' has unique IDs, connected labels, and no script errors',async()=>{
-    const p=page(name);await flush();
-    const ids=[...p.window.document.querySelectorAll('[id]')].map(node=>node.id);
-    assert.equal(new Set(ids).size,ids.length,'Duplicate element ID');
-    for(const label of p.window.document.querySelectorAll('label[for]'))assert.ok(p.window.document.getElementById(label.htmlFor));
-    assert.equal(p.window.document.querySelectorAll('main').length,1);
-    assert.deepEqual(p.errors,[]);p.close();
-  });
-}
-
-test('public and admin automatically poll at the 60-second cadence',async()=>{
-  for(const name of ['public','overview']) {
-    const p=page(name);await flush();assert.equal(p.calls.length,1);
-    await p.advance(60000);await p.advance(60000);
-    assert.deepEqual(p.calls.map(c=>c.at-p.calls[0].at),[0,60000,120000]);p.close();
-  }
-});
-
-test('repeated refreshes preserve the dashboard and unsaved race draft',async()=>{
-  const p=page('race');await flush();
-  const form=p.window.document.getElementById('raceForm'),field=form.querySelector('[name=race_title]');
-  field.value='My unsaved race title';field.dispatchEvent(new p.window.Event('input',{bubbles:true}));
-  for(let i=0;i<4;i++){p.feed.site.race_title='Saved title '+i;await p.advance(60000);}
-  assert.strictEqual(p.window.document.getElementById('raceForm'),form);
-  assert.equal(field.value,'My unsaved race title');assert.ok(p.window.document.body.textContent.includes('Race'));
-  assert.notEqual(p.window.document.body.textContent.trim().toLowerCase(),'not yet');
-  assert.deepEqual(p.errors,[]);p.close();
-});
-
-test('Code Red expands, searches, updates, and renders usernames as text',async()=>{
-  const p=page('players');await flush();
-  const details=p.window.document.getElementById('codeRed');details.open=true;
-  details.dispatchEvent(new p.window.Event('toggle'));await flush();
-  assert.ok(p.calls.at(-1).url.includes('code_red=1'));
-  assert.equal(p.window.document.querySelectorAll('#redBody tr').length,100);
-  assert.equal(p.window.document.querySelectorAll('#redBody img,#participantsBody img').length,0);
-  const search=p.window.document.getElementById('redSearch');search.value='ExamplePlayer010';
-  search.dispatchEvent(new p.window.Event('input'));
-  assert.equal(p.window.document.querySelectorAll('#redBody tr:not([hidden])').length,1);
-  p.feed.red[0].weighted='$555.00';await p.advance(60000);
-  assert.equal(search.value,'ExamplePlayer010');assert.equal(details.open,true);
-  assert.equal(p.window.document.querySelectorAll('#redBody tr:not([hidden])').length,1);p.close();
-});
-
-test('session and proxy errors retain rendered content and retry',async()=>{
-  const p=page('players');await flush();const html=p.window.document.getElementById('participantsBody').innerHTML;
-  p.respond(async()=>({status:401,ok:false}));await p.advance(60000);
-  assert.match(p.window.document.getElementById('networkError').textContent,/session expired/);
-  assert.equal(p.window.document.getElementById('participantsBody').innerHTML,html);
-  p.respond(async()=>({status:502,ok:false,headers:new Map([['content-type','text/html']])}));await p.advance(60000);
-  assert.match(p.window.document.getElementById('networkError').textContent,/HTTP 502/);
-  assert.equal(p.window.document.getElementById('participantsBody').innerHTML,html);assert.equal(p.calls.length,3);p.close();
-});
-
-test('race state transitions use the server clock without waiting for polling',async()=>{
-  const feed=data('public');feed.site.start_time=feed.server_time+10;feed.site.end_time=feed.server_time+20;
-  const p=page('public',feed);await flush();assert.equal(p.window.document.getElementById('raceBadge').textContent,'Upcoming');
-  await p.advance(11000);await p.tick();assert.equal(p.window.document.getElementById('raceBadge').textContent,'Active');
-  await p.advance(10000);await p.tick();assert.equal(p.window.document.getElementById('raceBadge').textContent,'Ended');p.close();
-});
-
-test('manual check polls quickly then returns to the minute cadence',async()=>{
-  const p=page('overview');await flush();let post=false;
-  p.respond(async(url,options)=>{
-    const value=options.method==='POST'?(post=true,{message:'Check queued'}):p.feed;
-    return {status:200,ok:true,headers:new Map([['content-type','application/json']]),json:async()=>structuredClone(value)};
-  });
-  p.feed.jobs.shuffle.state='queued';
-  p.window.document.querySelector('[data-refresh]').dispatchEvent(new p.window.Event('submit',{cancelable:true,bubbles:true}));await flush();
-  assert.equal(post,true);const first=p.calls.length;await p.advance(2000);assert.equal(p.calls.length,first+1);
-  p.feed.jobs.shuffle.state='scheduled';p.feed.jobs.kick.state='scheduled';await p.advance(2000);
-  await p.advance(56000);assert.equal(p.calls.at(-1).at-p.calls[0].at,60000);p.close();
-});
-
-test('a named action control cannot redirect a refresh to the wrong URL',async()=>{
-  const p=page('overview');await flush();
-  try {
-    for(const form of p.window.document.querySelectorAll('[data-refresh]')) {
-      // jsdom omits this native-browser named-property behavior. Model the
-      // actual input collision explicitly, then verify the request destination.
-      const control=form.querySelector('[name="action"]');
-      Object.defineProperty(form,'action',{configurable:true,value:control});
-      p.respond(async(url,options)=>{
-        const valid=options.method!=='POST'||new URL(String(url),p.window.location.href).pathname==='/admin/action';
-        return {status:valid?200:404,ok:valid,headers:new Map([['content-type',valid?'application/json':'text/html']]),
-          json:async()=>structuredClone(options.method==='POST'?{message:'Check requested'}:p.feed)};
-      });
-      form.dispatchEvent(new p.window.Event('submit',{cancelable:true,bubbles:true}));await flush();
-      const sent=p.calls.filter(call=>call.options.method==='POST').at(-1);
-      assert.equal(new URL(sent.url,p.window.location.href).pathname,'/admin/action');
-      assert.equal(sent.options.body.get('action'),'refresh');
-      assert.equal(sent.options.body.get('csrf'),'fixture-csrf');
-      assert.equal(sent.options.headers.Accept,'application/json');
-      assert.equal(form.querySelector('button').disabled,false);
-      assert.match(p.window.document.getElementById('toast').textContent,/Check requested/);
-    }
-  } finally {p.close();}
-});
-
-test('refresh explains a rejected form and re-enables the button',async()=>{
-  const p=page('overview');await flush();
-  try {
-    p.respond(async()=>({status:400,ok:false,headers:new Map([['content-type','application/json']]),
-      json:async()=>({error:'This form expired. Reload the page and try again.'})}));
-    const form=p.window.document.querySelector('[data-refresh]');
-    form.dispatchEvent(new p.window.Event('submit',{cancelable:true,bubbles:true}));await flush();
-    assert.match(p.window.document.getElementById('toast').textContent,/form expired.*HTTP 400/);
-    assert.equal(form.querySelector('button').disabled,false);
-  } finally {p.close();}
-});
-
-test('empty-board explanation clears when live rows arrive on either page',async()=>{
-  for(const name of ['public','players']) {
-    const feed=data(name==='public'?'public':'admin');
-    const values=structuredClone(name==='public'?feed.rows:feed.participants);
-    feed.rows=[];feed.participants=[];feed.leaderboard_message='Waiting for Shuffle data.';
-    const p=page(name,feed);await flush();
-    try {
-      const message=p.window.document.getElementById('leaderboardMessage');
-      assert.equal(message.hidden,false);assert.match(message.textContent,/Waiting for Shuffle/);
-      feed.leaderboard_message='';if(name==='public')feed.rows=values;else feed.participants=values;
-      await p.advance(60000);
-      assert.equal(message.hidden,true);
-      if(name==='public')assert.equal(p.window.document.querySelector('[data-rank="1"] [data-name]').textContent,values[0].username);
-      else assert.equal(p.window.document.querySelector('#participantsBody strong').textContent,values[0].username);
-    } finally {p.close();}
-  }
-});
-
-test('stylesheet parses and includes responsive and reduced-motion rules',()=>{
-  const css=fs.readFileSync(path.join(root,'static/style.css'),'utf8');
-  const dom=new JSDOM('<!doctype html><head></head>');
-  const style=dom.window.document.createElement('style');style.textContent=css;dom.window.document.head.append(style);
-  assert.ok(style.sheet.cssRules.length>50);assert.match(css,/prefers-reduced-motion/);assert.match(css,/@media/);
-  const games=dom.window.document.createElement('style');games.textContent=fs.readFileSync(path.join(root,'static/gaming.css'),'utf8');
-  dom.window.document.head.append(games);assert.ok(games.sheet.cssRules.length>50);dom.window.close();
-});
-
-test('publishing dates automatically follows queued work and shows the saved window',async()=>{
-  const feed=data('admin');
-  Object.assign(feed.jobs.shuffle,{state:'queued',pending:true,requested:1,completed:0,next_check:feed.server_time});
-  const p=page('race',feed);await flush();
-  try {
-    assert.match(p.window.document.getElementById('shuffleProgress').textContent,/Refresh queued/);
-    const published=p.window.document.getElementById('publishedWindow').textContent;
-    const field=p.window.document.querySelector('[name="start_et"]');
-    field.value='2030-01-01T18:00';field.dispatchEvent(new p.window.Event('input',{bubbles:true}));
-    Object.assign(feed.jobs.shuffle,{state:'checking',pending:false,runs:1});
-    await p.advance(2000);
-    assert.equal(p.calls.length,2);assert.match(p.window.document.getElementById('shuffleProgress').textContent,/Checking the provider now/);
-    Object.assign(feed.jobs.shuffle,{state:'scheduled',completed:1,result:'updated',completed_at:feed.server_time+3,next_check:feed.server_time+60});
-    await p.advance(2000);
-    assert.match(p.window.document.getElementById('shuffleProgress').textContent,new RegExp('Published '+feed.count+' qualifying players'));
-    assert.equal(p.window.document.getElementById('publishedWindow').textContent,published);
-    assert.equal(field.value,'2030-01-01T18:00');
-    assert.equal(p.calls.filter(c=>c.options.method==='POST').length,0);
-  } finally {p.close();}
-});
-
-test('a queued provider retry shows both its reason and the scheduled time on every tab',async()=>{
-  for(const name of ['overview','race','players','settings']) {
-    const feed=data('admin');
-    Object.assign(feed.jobs.shuffle,{state:'queued',pending:true,requested:1,completed:0,
-      next_check:feed.server_time+120,error:'Shuffle rate limit reached.',http_status:429,retry_after:120});
-    const p=page(name,feed);await flush();
-    try {
-      const message=p.window.document.getElementById('shuffleProgress').textContent;
-      assert.match(message,/Retry scheduled/);assert.match(message,/HTTP 429/);assert.match(message,/rate limit/);
-      await p.advance(2000);assert.equal(p.calls.length,1,'Respect the provider cooldown without fast browser polling');
-    } finally {p.close();}
-  }
-});
-
-test('a manual refresh during an in-flight status read schedules an immediate follow-up',async()=>{
-  const p=page('overview');await flush();
-  try {
-    let release, held=false;
-    p.respond(async(url,options)=>{
-      if(options.method!=='POST'&&!held) {held=true;return new Promise(resolve=>{release=resolve;});}
-      const value=options.method==='POST'?{message:'Refresh queued',runtime_id:p.feed.runtime_id,requests:{shuffle:1}}:p.feed;
-      return {status:200,ok:true,headers:new Map([['content-type','application/json']]),json:async()=>structuredClone(value)};
-    });
-    await p.advance(60000);assert.equal(held,true);
-    p.window.document.querySelector('[data-refresh]').dispatchEvent(new p.window.Event('submit',{cancelable:true,bubbles:true}));await flush();
-    release({status:200,ok:true,headers:new Map([['content-type','application/json']]),json:async()=>structuredClone(p.feed)});await flush();
-    const before=p.calls.length;await p.advance(50);assert.equal(p.calls.length,before+1);
-    Object.assign(p.feed.jobs.shuffle,{completed:1,result:'updated',completed_at:p.feed.server_time+61});
-    await p.advance(60000);
-    assert.match(p.window.document.getElementById('toast').textContent,/Refresh finished\. See the update result/);
-  } finally {p.close();}
-});
-
-test('conditional public updates reuse the cached body and take a fresh server clock',async()=>{
-  const p=page('public');await flush();let reads=0;
-  const payload=structuredClone(p.feed);delete payload.server_time;
-  p.respond(async()=>{
-    reads++;
-    return reads===1?{status:200,ok:true,headers:new Map([['content-type','application/json'],['ETag','"same-public-state"'],['X-Server-Time',String(p.feed.server_time+60)]]),json:async()=>payload}:
-      {status:304,ok:false,headers:new Map([['ETag','"same-public-state"'],['X-Server-Time',String(p.feed.server_time+120)]]),json:async()=>{throw Error('304 has no JSON body');}};
-  });
-  await p.advance(60000);const before=p.window.document.querySelector('#countdown').textContent;
-  await p.advance(60000);await p.tick();
-  assert.equal(p.calls.at(-1).options.headers['If-None-Match'],'"same-public-state"');
-  assert.equal(p.window.document.querySelector('#networkError').hidden,true);
-  assert.notEqual(p.window.document.querySelector('#countdown').textContent,before);
-  assert.deepEqual(p.errors,[]);p.close();
-});
-
-test('source success and last content change have separate labels',async()=>{
-  const p=page('overview');await flush();
-  p.feed.jobs.shuffle.last_success=p.feed.server_time;
-  p.feed.jobs.shuffle.changed_at=p.feed.server_time-600;
-  await p.advance(60000);await p.tick();
-  const value=p.window.document.getElementById('shuffleFreshness').textContent;
-  assert.match(value,/Last successful check:/);assert.match(value,/Content last changed:/);
-  assert.ok(p.window.document.getElementById('shuffleProgress'));p.close();
-});
-```
-
-## `tests/test_gaming_ip.py`
-
-```python
-from config import RELEASE
-"""Shared connections, private rankings and backwards-compatible RedPoints saves."""
-import copy
-import json
-import time
-import unittest
-from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import patch
-from pathlib import Path
-
-import test_app
-import test_redpoints as redpoints
-from fairness import VERSION, LEGACY_VERSION, commitment, outcome, verify, table, table_info
-from gaming import Gaming, GamingError, canonical_ip, fresh_stats, player_key, season, validate_gaming
-
-
-class GamingIPTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-    body = redpoints.RedPointsTests.body
-    player = redpoints.RedPointsTests.player
-    finish_hand = redpoints.RedPointsTests.finish_hand
-    play = redpoints.RedPointsTests.play
-
-    def test_shared_ip_players_keep_separate_wallets_and_private_records(self):
-        game=self.app.extensions['gaming']; ip='198.51.100.1'
-        owner=game.view('one','First',client_ip=ip)
-        result=game.bet('one','First',self.body(owner),client_ip=ip)
-        for name in ('', 'Second'):
-            other=game.view('two',name,client_ip=ip)
-            self.assertEqual(other['balance'],100000)
-            self.assertIsNone(other['play_blocked'])
-            self.assertEqual(other['receipts'],[])
-            self.assertNotIn('First',json.dumps(other))
-        played=game.bet('two','Second',self.body(other),client_ip=ip)
-        self.assertTrue(verify(played['receipt']))
-        self.assertEqual(game.view('one','First',client_ip=ip),result['wallet'])
-        self.assertEqual(len(game.recovery()['players']),2)
-        rows=game.leaders()['games']['dice']
-        self.assertEqual({row['name'] for row in rows},{'First','Second'})
-        self.assertTrue(all(row['ips']==[ip] for row in rows))
-        validate_gaming(game.recovery())
-
-    def test_signed_owner_moves_to_another_players_network_without_losing_ledger(self):
-        game=self.app.extensions['gaming']
-        wallet=game.view('one','First',client_ip='192.0.2.1')
-        paid=game.bet('one','First',self.body(wallet),client_ip='192.0.2.1')['wallet']
-        self.assertEqual(game.view('one','First',client_ip='192.0.2.2'),paid)
-        other=game.view('two','Second',client_ip='192.0.2.3')
-        self.assertEqual(game.view('one','First',client_ip='192.0.2.3'),paid)
-        self.assertEqual(game.view('two','Second',client_ip='192.0.2.3'),other)
-        validate_gaming(game.recovery())
-
-    def test_missing_or_invalid_ip_never_blocks_play(self):
-        self.assertEqual(canonical_ip('::ffff:192.0.2.1'),'192.0.2.1')
-        self.assertEqual(canonical_ip('2001:0db8::0001'),'2001:db8::1')
-        game=self.app.extensions['gaming']
-        for n,address in enumerate((None,'unknown','192.0.2.1, 192.0.2.2','fe80::1%eth0','192.0.2.1','::ffff:192.0.2.1')):
-            who=str(n);wallet=game.confirm_community_name(who,'Player'+who,client_ip=address)
-            self.assertEqual(wallet['balance'],100000)
-            self.assertIsNone(wallet['play_blocked'])
-            result=game.bet(who,'Player'+who,self.body(wallet),client_ip=address)
-            self.assertTrue(verify(result['receipt']))
-        self.assertEqual(len(game.recovery()['players']),6)
-        with patch('storage.atomic_json',side_effect=AssertionError('Idle write')):
-            game.view('0','Player0',client_ip=None)
-        validate_gaming(game.recovery())
-
-    def test_one_hundred_players_can_register_and_bet_on_one_ip(self):
-        game=self.app.extensions['gaming']
-        def play(n):
-            who=str(n);name='Player'+who;ip='192.0.2.1'
-            wallet=game.confirm_community_name(who,name,client_ip=ip)
-            return game.bet(who,name,self.body(wallet),client_ip=ip)
-        with ThreadPoolExecutor(max_workers=10) as pool:
-            results=list(pool.map(play,range(100)))
-        self.assertTrue(all(result['ok'] and verify(result['receipt']) for result in results))
-        self.assertEqual(len(game.recovery()['players']),100)
-        self.assertEqual(game.leaders()['counts']['dice'],dict(players=100,rounds=100))
-        self.assertTrue(all(r['ips']==['192.0.2.1'] for r in game.leaders()['games']['dice']))
-        validate_gaming(game.recovery())
-
-    def test_proxy_headers_are_tracking_only_and_only_trusted_when_configured(self):
-        game=self.app.extensions['gaming']
-        headers={'X-Forwarded-For':'192.0.2.222','DO-Connecting-IP':'192.0.2.223'}
-        client=self.app.test_client();client.environ_base['REMOTE_ADDR']='198.51.100.1'
-        value=client.get('/gaming/api/state',headers=headers).json
-        headers['X-CSRF-Token']=value['player_csrf']
-        self.assertEqual(client.post('/gaming/api/profile',headers=headers,json={'username':'Direct'}).status_code,200)
-        addresses=game.recovery()['ip_guard']['addresses'].values()
-        self.assertIn('198.51.100.1',addresses);self.assertNotIn('192.0.2.223',addresses)
-        self.app.extensions['settings'].proxy=True
-        for ip in ('192.0.2.10','192.0.2.10',None):
-            client=self.app.test_client();headers={'DO-Connecting-IP':ip} if ip else {}
-            value=client.get('/gaming/api/state',headers=headers).json
-            headers['X-CSRF-Token']=value['player_csrf']
-            saved=client.post('/gaming/api/profile',headers=headers,json={'username':'SharedConnection'}).json
-            self.assertEqual(saved['wallet']['balance'],100000,saved)
-            self.assertIsNone(saved['wallet']['play_blocked'])
-            played=client.post('/gaming/api/bet',headers=headers,json=self.body(saved['wallet']))
-            self.assertEqual(played.status_code,200,played.text)
-        self.assertEqual(len(game.recovery()['players']),4)
-
-    def test_old_exclusive_claims_migrate_and_allow_new_players(self):
-        game=self.app.extensions['gaming'];ip='192.0.2.1'
-        before=game.confirm_community_name('old','Original',client_ip=ip)
-        with game.store.connection(transaction=True) as conn:
-            guard=conn['gaming']['ip_guard'];guard['version']=1
-            guard['claims']={digest:owners[0] for digest,owners in guard['claims'].items()}
-        validate_gaming(game.recovery())
-        # Importing an old recovery while running also uses the migration path.
-        new=game.confirm_community_name('new','NewPlayer',client_ip=ip)
-        self.assertIsNone(new['play_blocked'])
-        self.assertEqual(game.view('old','Original',client_ip=ip),before)
-        saved=game.recovery();self.assertEqual(saved['ip_guard']['version'],2)
-        self.assertEqual(len(next(iter(saved['ip_guard']['claims'].values()))),2)
-        validate_gaming(saved)
-
-    def test_full_tracking_directory_does_not_block_wallets_or_idle_polls(self):
-        game=self.app.extensions['gaming']
-        game.view('one','First',client_ip='192.0.2.1')
-        with patch('gaming.MAX_IP_BINDINGS',1):
-            other=game.confirm_community_name('two','Second',client_ip='192.0.2.1')
-            result=game.bet('two','Second',self.body(other),client_ip='192.0.2.2')
-            self.assertTrue(result['ok'])
-            with patch('storage.atomic_json',side_effect=AssertionError('Idle write')):
-                self.assertIsNone(game.view('two','Second',client_ip='192.0.2.2')['play_blocked'])
-        validate_gaming(game.recovery())
-
-    def test_legacy_save_keeps_all_balances_seeds_receipts(self):
-        game=self.app.extensions['gaming']; now=time.time()
-        base=game.view('legacy','Legacy',now,client_ip='192.0.2.1')
-        old={**self.body(base,'plinko'),'rules_version':LEGACY_VERSION,'server_seed':'a1'*32,'at':int(now)}
-        old['commitment']=commitment(old['server_seed']);result=outcome(old['server_seed'],old)
-        old.update(result=result,payout=result['payout'],net=result['payout']-old['wager'])
-        with game.store.connection(transaction=True) as conn:
-            data=conn['gaming'];data.pop('ip_guard')
-            player=data['players'][player_key('legacy')]
-            player['stats'].pop('blackjack')
-            stats=player['stats']['plinko'];stats.update(bets=1,wagered=old['wager'],paid=old['payout'],net=old['net'],biggest_payout=old['payout'])
-            player.update(balance=100000+old['net'],nonce=1,receipts=[old])
-        before=game.recovery()['players'][player_key('legacy')]
-        fresh=Gaming(game.store);after=fresh.view('legacy','Legacy',client_ip='192.0.2.1')
-        self.assertEqual(after['balance'],before['balance']);self.assertEqual(after['receipts'],before['receipts'])
-        self.assertEqual(after['commitment'],commitment(before['server_seed']))
-        duplicate=fresh.bet('legacy','Legacy',old,client_ip='192.0.2.1')
-        self.assertTrue(duplicate['duplicate']);self.assertEqual(duplicate['receipt'],old)
-        with self.assertRaises(GamingError) as exc:
-            fresh.bet('legacy','Legacy',{**self.body(after),'rules_version':LEGACY_VERSION},client_ip='192.0.2.1')
-        self.assertEqual(exc.exception.code,'release_mismatch')
-        validate_gaming(fresh.recovery())
-
-    def test_admin_full_names_ips_and_rankings_not_in_public_state(self):
-        client,_=self.player('PrivateRedName');self.play(client,'plinko',time.time())
-        value=self.client.get('/admin/gaming/status').json
-        self.assertEqual(value['games']['plinko'][0]['ips'],['198.51.100.1'])
-        for tab in ('overview','gaming'):
-            text=self.client.get('/admin?tab='+tab).text
-            self.assertIn('gamingLeaders-blackjack',text)
-            self.assertIn('PrivateRedName',text);self.assertIn('198.51.100.1',text)
-        guest=self.app.test_client()
-        self.assertEqual(guest.get('/admin/gaming/status').status_code,401)
-        for url in ('/gaming','/gaming/api/state','/gaming/api/receipts'):
-            text=guest.get(url).text
-            self.assertNotIn('PrivateRedName',text);self.assertNotIn('198.51.100.1',text)
-
-    def test_idle_wallet_and_rank_polls_do_not_rewrite_state(self):
-        client,_=self.player()
-        with patch('storage.atomic_json',side_effect=AssertionError('Idle write')):
-            for _ in range(5):
-                self.assertEqual(client.get('/gaming/api/state').status_code,200)
-                self.assertEqual(self.client.get('/admin/gaming/status').status_code,200)
-
-    def test_new_week_restarts_shared_wallets_and_tracking(self):
-        game=self.app.extensions['gaming'];now=time.time();edge=season(now)['end_time']
-        game.view('a','First',edge-1,client_ip='192.0.2.1')
-        b=game.view('b','Second',edge,client_ip='192.0.2.1')
-        self.assertEqual(b['balance'],100000)
-        a=game.view('a','First',edge,client_ip='192.0.2.1')
-        self.assertIsNone(a['play_blocked']);self.assertEqual(a['balance'],100000)
-        self.assertEqual(len(game.recovery()['players']),2)
-
-    def test_app_restart_funds_every_saved_player_and_keeps_names_and_records(self):
-        from wager_backend import create_app
-        clients=[self.player('Restart'+str(n))[0] for n in range(2)]
-        for client in clients:self.play(client,'dice',time.time())
-        game=self.app.extensions['gaming']
-        with game.store.connection(transaction=True) as conn:
-            for player,balance in zip(conn['gaming']['players'].values(),(0,333333)):
-                player['balance_adjustment']=balance-100000-sum(s['net'] for s in player['stats'].values())
-                player['balance']=balance
-        before=game.recovery();validate_gaming(before)
-        # Reconstruct the real app against the persisted JSON, as a restart does.
-        self.r.store.close()
-        restarted=create_app(self.root,testing=True)
-        self.addCleanup(restarted.extensions['runtime'].store.close)
-        after=restarted.extensions['gaming'].recovery()
-        for key,original in before['players'].items():
-            saved=after['players'][key];self.assertEqual(saved['balance'],100000)
-            for field in ('name','community_name_confirmed','stats','receipts','server_seed','nonce'):
-                self.assertEqual(saved[field],original[field],field)
-        for client in clients:
-            restored=restarted.test_client();restored.set_cookie('rh_raider',client.get_cookie('rh_raider').value)
-            state=restored.get('/gaming/api/state').json
-            self.assertFalse(state['wallet']['needs_profile'])
-            result=restored.post('/gaming/api/bet',json=self.body(state['wallet']),headers={'X-CSRF-Token':state['player_csrf']})
-            self.assertEqual(result.status_code,200,result.text)
-        validate_gaming(restarted.extensions['gaming'].recovery())
-
-    def test_restart_retains_active_blackjack_and_its_fairness_receipt(self):
-        from test_blackjack import BlackjackWalletTests
-        game,body,result=BlackjackWalletTests.opened(self)
-        original=game.recovery()['players'][player_key('bj')]
-        self.assertEqual(game.restart_balances()['restored'],1)
-        restored=game.recovery()['players'][player_key('bj')]
-        self.assertEqual(restored['balance'],100000)
-        for field in ('blackjack','server_seed','stats','receipts','nonce'):
-            self.assertEqual(restored[field],original[field])
-        hand=result['wallet']['blackjack']
-        final=game.blackjack_action('bj','RedCard',dict(round_id=hand['round_id'],step=hand['step'],action='stand',action_id='restart-stand'),client_ip=None)
-        self.assertTrue(verify(final['receipt'],body['commitment']))
-        validate_gaming(game.recovery())
-
-    def test_shared_ip_refresh_only_changes_own_points_and_keeps_records(self):
-        first,_=self.player('One');self.play(first,'dice',time.time())
-        before=first.get('/gaming/api/state').json
-        other=self.app.test_client();other.environ_base['REMOTE_ADDR']=first.environ_base['REMOTE_ADDR']
-        state=other.get('/gaming/api/state').json
-        saved=other.post('/gaming/api/profile',json={'username':'Two'},headers={'X-CSRF-Token':state['player_csrf']}).json
-        self.play(other,'plinko',time.time())
-        state=other.get('/gaming/api/state').json
-        body=dict(version=state['wallet']['version'],season=state['wallet']['season']['id'])
-        self.assertEqual(other.post('/gaming/api/refresh',json=body).status_code,400)
-        response=other.post('/gaming/api/refresh',json=body,headers={'X-CSRF-Token':state['player_csrf']})
-        self.assertEqual(response.status_code,200,response.text)
-        self.assertEqual(response.json['wallet']['balance'],100000)
-        self.assertEqual(response.json['wallet']['stats'],state['wallet']['stats'])
-        self.assertEqual(response.json['wallet']['receipts'],state['wallet']['receipts'])
-        self.assertEqual(first.get('/gaming/api/state').json['wallet'],before['wallet'])
-        validate_gaming(self.app.extensions['gaming'].recovery())
-
-    def test_published_v2_plinko_and_v1_reference_receipts(self):
-        for receipt in json.loads((Path(__file__).parent/'fairness_vectors.json').read_text()):
-            self.assertTrue(verify(receipt),receipt['request_id'])
-        for rows in (8,12,16):
-            for risk in ('low','medium','high'):
-                values=table('plinko',rows,risk)
-                self.assertEqual(values,tuple(reversed(values)))
-                self.assertEqual(len(values),rows+1)
-                self.assertTrue(98.8<float(table_info('plinko',rows,risk)['rtp_percent'])<99.2)
-        self.assertEqual(table('plinko',16,'high')[0],10000000)
-        self.assertEqual(max(table('plinko',16,'high')),10000000)
-
-    def test_direct_admin_route_and_empty_state_are_rendered_without_javascript(self):
-        from config import RELEASE
-        for url in ('/admin', '/admin?tab=gaming', '/admin/gaming'):
-            response=self.client.get(url)
-            self.assertEqual(response.status_code,200,response.text)
-            for game in ('dice','keno','plinko','blackjack'):
-                self.assertIn('gamingLeaders-'+game,response.text)
-                self.assertIn('gamingCount-'+game,response.text)
-            self.assertIn('No completed rounds this week',response.text)
-            self.assertIn(RELEASE,response.text)
-            self.assertIn('href="/admin/gaming">Gaming top 5',response.text)
-        self.assertEqual(self.app.test_client().get('/admin/gaming').status_code,302)
-
-    def test_all_players_are_counted_before_slicing_top_five(self):
-        game=self.app.extensions['gaming'];now=time.time()
-        for n in range(7):
-            who='count-'+str(n);name='CountPlayer'+str(n);ip='192.0.2.'+str(n+1)
-            for item in ('dice','keno','plinko','blackjack'):
-                wallet=game.view(who,name,now,client_ip=ip)
-                result=game.bet(who,name,self.body(wallet,item),now,client_ip=ip)
-                if not result['receipt']:
-                    hand=result['wallet']['blackjack']
-                    game.blackjack_action(who,name,dict(round_id=hand['round_id'],step=0,action='stand',action_id='count-stand'),now,client_ip=ip)
-        saved=self.client.get('/admin/gaming/status').json
-        self.assertEqual(saved['completed_rounds'],28)
-        for item in ('dice','keno','plinko','blackjack'):
-            self.assertEqual(len(saved['games'][item]),5)
-            self.assertEqual(saved['counts'][item],dict(players=7,rounds=7))
-            self.assertTrue(all(row['ips'] and row['bets']==1 for row in saved['games'][item]))
-        self.assertEqual(RELEASE,saved['release'])
-```
-
-## `tests/test_gui_update.py`
-
-```python
-"""Anonymous fast updates and server-confirmed admin receipts."""
-import unittest
-import test_app
-from unittest.mock import patch
-
-
-class GuiUpdateTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-
-    def test_summary_is_anonymous_private_fields_absent_and_provider_free(self):
-        guest = self.app.test_client()
-        with patch.object(self.r.providers, 'shuffle', side_effect=AssertionError('No provider call')):
-            response = guest.get('/boss-summary')
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn('Set-Cookie', response.headers)
-        self.assertIn('no-store', response.headers['Cache-Control'])
-        self.assertIn('health_revision', response.json['boss'])
-        for key in ('you', 'csrf', 'admin_leaders', 'profiles', 'players', 'username', 'pw_hash'):
-            self.assertNotIn(key, response.json['boss'])
-
-    def test_native_override_has_receipt_beside_control_and_exact_accepted_value(self):
-        response = self.client.post('/admin/action', data={
-            'csrf':'test-token', 'action':'override', 'tab':'players',
-            'revision':self.r.revision, 'username':'Example', 'amount':'1234.56'})
-        self.assertEqual(response.status_code, 303)
-        self.assertTrue(response.location.endswith('#feedback-override'))
-        page = self.client.get(response.location).text
-        self.assertIn('id="feedback-override"', page)
-        self.assertIn('Override saved for Example: $1,234.56', page)
-        self.assertNotIn('id="feedback-override"', self.client.get('/admin?tab=players').text)
-
-    def test_json_invalid_write_is_specific_and_does_not_commit(self):
-        before = self.r.revision
-        response = self.client.post('/admin/action', data={
-            'csrf':'test-token', 'action':'override', 'tab':'players',
-            'revision':before, 'username':'Example', 'amount':'bad'}, headers={'Accept':'application/json'})
-        self.assertEqual(response.status_code, 422)
-        self.assertIn('non-negative amount', response.json['error'])
-        self.assertEqual(self.r.revision, before)
-
-    def test_json_boss_save_has_confirmed_values_and_native_receipt(self):
-        state = self.client.get('/admin/boss/status').json['state']
-        response = self.client.post('/admin/boss/action', data={
-            'csrf':'test-token', 'action':'settings', 'raid_id':state['raid_id'],
-            'settings_revision':state['settings_revision'], 'boss_name':'Ruby <boss>',
-            'base_damage':'234', 'weak_damage':'456', 'burst_bonus':'78'}, headers={'Accept':'application/json'})
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json['ok'])
-        self.assertIn('base: 234', response.json['message'])
-        page = self.client.get(response.json['redirect']).text
-        self.assertIn('id="feedback-bossSettingsHeading"', page)
-        self.assertIn('Ruby &lt;boss&gt;', page)
-        self.assertNotIn('Ruby <boss>', page)
-
-    def test_failed_boss_save_is_json_and_preserves_original_state(self):
-        state = self.client.get('/admin/boss/status').json['state']
-        response = self.client.post('/admin/boss/action', data={
-            'csrf':'test-token', 'action':'remaining_health', 'raid_id':state['raid_id'],
-            'health_revision':state['health_revision'], 'health':'100'}, headers={'Accept':'application/json'})
-        self.assertEqual(response.status_code, 422)
-        self.assertIn('Confirm', response.json['error'])
-        self.assertEqual(self.client.get('/admin/boss/status').json['state']['hp'], state['hp'])
-
-    def test_masked_latest_hit_and_health_notice_never_expose_admin_identity(self):
-        player=self.app.test_client();opening=player.get('/play/api/state').json
-        token=opening['player_csrf']
-        player.post('/play/api/profile',json={'username':'VisibleToAdminsOnly','raid_id':opening['state']['raid_id']},headers={'X-CSRF-Token':token})
-        response=player.post('/play/api/attack',json={'raid_id':opening['state']['raid_id'],'request_id':'test-latest-hit','style':'blade'},headers={'X-CSRF-Token':token})
-        self.assertEqual(response.status_code,200)
-        boss=self.app.extensions['boss'];current=boss.summary()
-        boss.control('remaining_health',current['raid_id'],current['max_hp'],health_revision=current['health_revision'],actor='SecretAdmin')
-        public=self.app.test_client().get('/boss-summary')
-        self.assertEqual(public.json['boss']['latest_hit']['name'],'Vi******')
-        self.assertIsNotNone(public.json['boss']['health_change'])
-        self.assertNotIn('VisibleToAdminsOnly',public.text)
-        self.assertNotIn('SecretAdmin',public.text)
-```
-
-## `tests/test_health_release.py`
-
-```python
-"""Readiness, private diagnostics, consistent recovery and community load."""
-from concurrent.futures import ThreadPoolExecutor
-import copy
-import io
-import json
-from pathlib import Path
-import tempfile
-import time
-import unittest
-from unittest.mock import patch
-
-import test_app
-from fairness import VERSION, verify
-from gaming import player_key, validate_gaming
-from release_check import check_release
-from storage import StoreError
-
-
-class HealthTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-
-    def test_provider_failure_does_not_fail_readiness_but_storage_failure_does(self):
-        self.r.jobs['shuffle']['error'] = 'Upstream unavailable'
-        self.r.jobs['kick']['error'] = 'Upstream unavailable'
-        self.assertEqual(self.client.get('/readyz').status_code, 200)
-        self.r.store._probe_until = 0
-        with patch('storage.tempfile.TemporaryFile', side_effect=OSError('read-only')):
-            result = self.client.get('/readyz')
-        self.assertEqual(result.status_code, 503)
-        self.assertFalse(result.json['ok'])
-        self.assertEqual(self.client.get('/healthz').status_code, 200)
-
-    def test_health_report_requires_current_admin_and_has_no_private_values(self):
-        anonymous = self.app.test_client()
-        self.assertEqual(anonymous.get('/admin/health-report').status_code, 401)
-        self.r.jobs['shuffle']['error'] = 'DO_NOT_EXPORT_PROVIDER_RESPONSE'
-        game = self.app.extensions['gaming']
-        game.confirm_community_name('health-player', 'DO_NOT_EXPORT_NAME')
-        result = self.client.get('/admin/health-report')
-        self.assertEqual(result.status_code, 200)
-        for value in ['DO_NOT_EXPORT_NAME', 'DO_NOT_EXPORT_PROVIDER_RESPONSE', self.app.secret_key, 'server_seed', '198.51.100.1']:
-            self.assertNotIn(value, result.text)
-        self.assertEqual({c['key'] for c in result.json['components']}, {'website','shuffle','kick','games','storage'})
-        with self.client.session_transaction() as session:
-            session['auth_version'] = 999
-        self.assertEqual(self.client.get('/admin/health-report').status_code, 401)
-
-    def test_errors_have_trace_ids_and_storage_measurements_do_not_change_state(self):
-        result = self.client.get('/gaming/api/unknown', headers={'Accept':'application/json'})
-        self.assertEqual(result.status_code, 404)
-        self.assertEqual(result.json['request_id'], result.headers['X-Request-ID'])
-        self.assertEqual(result.json['code'], 'http_404')
-        self.assertEqual(len(result.headers['X-Request-ID']), 16)
-        before = self.r.store.path.read_bytes()
-        for _ in range(3):
-            self.client.get('/readyz')
-            self.client.get('/admin/health-report')
-        self.assertEqual(before, self.r.store.path.read_bytes())
-        self.assertGreater(self.app.extensions['measurements'].snapshot()['requests'], 0)
-
-    def test_full_export_preserves_pending_hand_and_preview_counts_differences(self):
-        game = self.app.extensions['gaming']
-        wallet = game.confirm_community_name('export-player', 'Export player')
-        body = dict(rules_version=VERSION, game='poker', request_id='export-test-hand',
-                    season=wallet['season']['id'], nonce=wallet['nonce'], commitment=wallet['commitment'],
-                    wager=1000, client_seed='export', client_salt='ab'*16,
-                    options=dict(variant='texas_holdem', button='player'))
-        game.bet('export-player', 'Export player', body)
-        exported = self.client.get('/admin/recovery-backup')
-        self.assertEqual(exported.status_code, 200)
-        state = validate_gaming(exported.json['redpoints'])
-        self.assertEqual(state['players'][player_key('export-player')]['poker']['request_id'], 'export-test-hand')
-        response = self.client.post('/admin/recovery-preview', data={
-            'csrf':'test-token', 'recovery':(io.BytesIO(exported.data), 'recovery.json')})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Compared with the current save', response.text)
-        self.assertIn('Unfinished hands', response.text)
-        self.assertEqual(game.view('export-player','Export player')['balance'], 99000)
-
-    def test_one_hundred_players_can_settle_and_retry_on_same_network(self):
-        game = self.app.extensions['gaming']
-        jobs = []
-        for index in range(100):
-            identity, name = 'load-'+str(index), 'Community '+str(index)
-            wallet = game.confirm_community_name(identity, name)
-            body = dict(rules_version=VERSION, game='coinflip', request_id='load-round-'+str(index),
-                        season=wallet['season']['id'], nonce=wallet['nonce'], commitment=wallet['commitment'],
-                        wager=100, client_seed='community-load', client_salt='ab'*16, options=dict(side='heads'))
-            jobs.append((identity, name, body))
-        def play(job):
-            identity, name, body = job
-            start = time.perf_counter()
-            result = game.bet(identity, name, body, client_ip='198.51.100.9')
-            return result, (time.perf_counter()-start)*1000
-        with ThreadPoolExecutor(max_workers=16) as pool:
-            results = list(pool.map(play, jobs+jobs))
-        self.assertEqual(sum(not item[0]['duplicate'] for item in results), 100)
-        saved = validate_gaming(game.recovery())
-        self.assertEqual(len(saved['players']), 100)
-        for player in saved['players'].values():
-            self.assertEqual(player['stats']['coinflip']['bets'], 1)
-            self.assertEqual(player['balance'], 100000+player['receipts'][0]['net'])
-            self.assertTrue(verify(player['receipts'][0]))
-        from telemetry import distribution
-        print('COMMUNITY_LOAD '+json.dumps(dict(players=100, requests=200, threads=16,
-              latency=distribution([item[1] for item in results]), storage=self.r.store.measurements.snapshot()['storage'])))
-
-
-class PackageTests(unittest.TestCase):
-    def test_incomplete_asset_is_reported(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root=Path(folder); (root/'templates').mkdir()
-            (root/'templates/index.html').write_text("<script src=\"{{ url_for('static',filename='missing.js') }}\"></script>")
-            (root/'templates/admin.html').write_text('admin')
-            result=check_release(root)
-            self.assertFalse(result['ok'])
-            self.assertIn('index.html requires missing static/missing.js', result['problems'])
-```
-
-## `tests/test_history_frontend.cjs`
-
-```javascript
-/* Optional development tests; Node/jsdom are not runtime dependencies. */
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const { JSDOM } = require("jsdom");
-const root = path.resolve(__dirname, "..");
-const fixture = process.env.DOM_FIXTURES || path.join(root, ".test-fixtures");
-const flush = async () => {
-  for (let n = 0; n < 5; n++) await new Promise((r) => setImmediate(r));
-};
-function page() {
-  const dom = new JSDOM(
-    fs.readFileSync(path.join(fixture, "history.html"), "utf8"),
-    { url: "https://example.test/history", runScripts: "outside-only" },
-  );
-  const w = dom.window,
-    timers = new Map(),
-    calls = [];
-  const value = JSON.parse(
-    fs.readFileSync(path.join(fixture, "history.json"), "utf8"),
-  );
-  let now = 0,
-    serial = 0,
-    fail = false;
-  Object.defineProperty(w.document, "hidden", {
-    value: false,
-    configurable: true,
-  });
-  w.setTimeout = (fn, delay) => {
-    const id = ++serial;
-    timers.set(id, { fn, at: now + delay });
-    return id;
-  };
-  w.clearTimeout = (id) => timers.delete(id);
-  w.fetch = async (url) => {
-    calls.push({ url, now });
-    if (fail) throw Error("offline");
-    return {
-      ok: true,
-      headers: new Map([["content-type", "application/json"]]),
-      json: async () => structuredClone(value),
-    };
-  };
-  w.eval(fs.readFileSync(path.join(root, "static/app.js"), "utf8"));
-  w.eval(fs.readFileSync(path.join(root, "static/history.js"), "utf8"));
-  return {
-    w,
-    value,
-    calls,
-    fail(v) {
-      fail = v;
-    },
-    async advance(ms) {
-      now += ms;
-      for (const [id, t] of [...timers])
-        if (t.at <= now) {
-          timers.delete(id);
-          t.fn();
-        }
-      await flush();
-    },
-    close() {
-      dom.window.close();
-    },
-  };
-}
-test("history renders 25 masked rows, four native links and the active navigation tab", async () => {
-  const p = page();
-  await flush();
-  const d = p.w.document;
-  assert.equal(d.querySelectorAll("#historyRows tr").length, 25);
-  assert.equal(d.querySelectorAll("#historyWeeks a").length, 4);
-  assert.equal(
-    d.querySelectorAll('nav[aria-label="Main navigation"] [aria-current]')
-      .length,
-    1,
-  );
-  for (const a of d.querySelectorAll("#historyWeeks a"))
-    assert.match(a.href, /\/history\?week=\d{4}-\d{2}-\d{2}$/);
-  assert.ok(!d.body.textContent.includes("ExamplePlayer"));
-  assert.equal(d.querySelectorAll("#historyRows img").length, 0);
-  const ids = [...d.querySelectorAll("[id]")].map((x) => x.id);
-  assert.equal(new Set(ids).size, ids.length);
-  p.close();
-});
-test("history polls every minute, pauses hidden tabs and reconnects without erasing results", async () => {
-  const p = page();
-  await flush();
-  await p.advance(60000);
-  await p.advance(60000);
-  assert.deepEqual(
-    p.calls.map((c) => c.now),
-    [0, 60000, 120000],
-  );
-  const before = p.w.document.getElementById("historyRows").textContent;
-  p.fail(true);
-  await p.advance(60000);
-  assert.equal(p.w.document.getElementById("historyNetwork").hidden, false);
-  assert.equal(p.w.document.getElementById("historyRows").textContent, before);
-  Object.defineProperty(p.w.document, "hidden", {
-    value: true,
-    configurable: true,
-  });
-  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
-  await p.advance(180000);
-  assert.equal(p.calls.length, 4);
-  p.fail(false);
-  Object.defineProperty(p.w.document, "hidden", {
-    value: false,
-    configurable: true,
-  });
-  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
-  await flush();
-  assert.equal(p.calls.length, 5);
-  assert.equal(p.w.document.getElementById("historyNetwork").hidden, true);
-  p.close();
-});
-test("updates use text nodes and preserve table nodes when the results did not change", async () => {
-  const p = page();
-  await flush();
-  const d = p.w.document;
-  const first = d.querySelector("#historyRows tr");
-  await p.advance(60000);
-  assert.strictEqual(d.querySelector("#historyRows tr"), first);
-  p.value.selected.rows[0].username = "<img src=x onerror=alert(1)>";
-  await p.advance(60000);
-  assert.equal(d.querySelector("#historyRows img"), null);
-  assert.match(d.querySelector("#historyRows").textContent, /<img/);
-  p.close();
-});
-test("weekly rollover rebuilds four links and follows the selected period", async () => {
-  const p = page();
-  await flush();
-  const week = structuredClone(p.value.weeks[0]);
-  week.id = "2030-01-01";
-  week.label = "New week";
-  p.value.weeks = [week, ...p.value.weeks.slice(0, 3)];
-  p.value.selected = week;
-  await p.advance(60000);
-  assert.equal(p.w.document.querySelectorAll("#historyWeeks a").length, 4);
-  assert.equal(
-    p.w.document.querySelector("#historyWeeks [aria-current]").dataset.week,
-    "2030-01-01",
-  );
-  await p.advance(60000);
-  assert.match(p.calls.at(-1).url, /week=2030-01-01/);
-  p.close();
-});
-```
-
-## `tests/test_holdem.py`
-
-```python
-"""Hold'em rules, accounting, privacy, recovery, and atomic action regressions."""
-import copy
-from concurrent.futures import ThreadPoolExecutor
-import unittest
-from unittest.mock import patch
-
-import test_redpoints
-from fairness import VERSION, V4_VERSION, commitment, outcome, verify
-from gaming import Gaming, GamingError, player_key, validate_gaming
-from holdem import Hand, best_hand, bot_action, validate_action
-from holdem_vectors import vectors
-from storage import StoreError
-
-
-def cards(ranks, suits):
-    return [s*13+(0 if r==14 else r-1) for r,s in zip(ranks,suits)]
-
-
-class HoldemRulesTests(unittest.TestCase):
-    def test_best_five_kickers_wheel_board_tie_and_two_trips(self):
-        examples=[([14,13,12,11,10,2,3],[0,0,0,0,0,1,2],[8,14]),
-                  ([14,2,3,4,5,8,9],[0,1,2,3,0,1,2],[4,5]),
-                  ([14,14,14,13,13,13,2],[0,1,2,0,1,2,3],[6,14,13]),
-                  ([9,9,9,9,14,13,2],[0,1,2,3,0,1,2],[7,9,14]),
-                  ([14,14,13,13,12,12,11],[0,1,0,1,0,1,0],[2,14,13,12]),
-                  ([14,14,13,12,11,9,2],[0,1,2,3,0,1,2],[1,14,13,12,11])]
-        for ranks,suits,want in examples:
-            self.assertEqual(best_hand(cards(ranks,suits))['rank'],want)
-        board=cards([14,13,12,11,10],[0]*5)
-        self.assertEqual(best_hand(board+[14,15])['rank'],best_hand(board+[16,17])['rank'])
-        self.assertEqual(best_hand(board+[14,15])['cards'],sorted(board))
-
-    def test_heads_up_order_big_blind_option_and_minimum_raise(self):
-        hand=Hand(list(range(52)),1000,'player')
-        self.assertEqual((hand.small,hand.big,hand.actor),(10,20,0))
-        hand.move(dict(action='call',amount=0))
-        self.assertEqual(hand.street,0);self.assertEqual(hand.actor,1)
-        hand.move(dict(action='check',amount=0))
-        self.assertEqual(hand.street,1);self.assertEqual(hand.actor,1)
-        hand.move(dict(action='bet',amount=40))
-        self.assertEqual(hand.legal(0)['min_raise_to'],80)
-        with self.assertRaises(ValueError):hand.move(dict(action='raise',amount=60))
-        hand.move(dict(action='raise',amount=100))
-        self.assertEqual(hand.legal(1)['min_raise_to'],160)
-        self.assertEqual(hand.actor,1)
-
-    def test_fold_refunds_uncalled_blind_and_all_in_deals_all_streets(self):
-        hand=Hand(list(range(52)),1000,'player');hand.move(dict(action='fold',amount=0))
-        self.assertEqual(hand.refunds,[0,10]);self.assertEqual(hand.stacks,[990,1010])
-        self.assertEqual(hand.result([])['total_wager'],10)
-        hand=Hand(list(range(52)),1000,'player')
-        hand.move(dict(action='all_in',amount=0))
-        self.assertFalse(hand.legal(1)['can_raise'])
-        hand.move(dict(action='call',amount=0))
-        self.assertTrue(hand.ended);self.assertEqual(hand.street,3)
-        self.assertEqual(len(hand.result([])['board']),5);self.assertEqual(sum(hand.stacks),2000)
-
-    def test_opponent_observation_has_no_hidden_information(self):
-        first=Hand(list(range(52)),1000,'computer')
-        other_deck=list(range(52));other_deck[0],other_deck[20]=other_deck[20],other_deck[0]
-        other_deck[5],other_deck[30]=other_deck[30],other_deck[5]
-        second=Hand(other_deck,1000,'computer')
-        self.assertNotEqual(first.holes[0],second.holes[0])
-        self.assertEqual(first.observation(),second.observation())
-        self.assertEqual(bot_action(first.observation()),bot_action(second.observation()))
-        self.assertEqual(set(first.observation()),{'hole','board','legal','pot','highest','big_blind','street_index','raises'})
-
-    def test_illegal_actions_and_buy_in_types_rejected(self):
-        for value in (dict(action='check',amount=True),dict(action='call',amount=1),dict(action='win',amount=0),dict(action='raise',amount=-1)):
-            with self.assertRaises(ValueError):validate_action(value)
-        for value in (True,19,20.0,2**53):
-            with self.assertRaises(ValueError):Hand(list(range(52)),value,'player')
-
-    def test_reference_hands_verify_and_tampering_fails(self):
-        receipts=vectors()
-        for receipt in receipts:
-            self.assertTrue(verify(receipt),receipt['request_id'])
-            if receipt['game']!='poker':continue
-            self.assertEqual(sum(receipt['result']['stacks']),receipt['wager']*2)
-            self.assertEqual(receipt['net'],receipt['result']['returned']-receipt['result']['total_wager'])
-            changed=copy.deepcopy(receipt);changed['result']['events'][0]['amount']+=1
-            self.assertFalse(verify(changed))
-            changed=copy.deepcopy(receipt);changed['options']['button']='computer' if changed['options']['button']=='player' else 'player'
-            self.assertFalse(verify(changed))
-
-
-class HoldemWalletTests(unittest.TestCase):
-    setUp=test_redpoints.RedPointsTests.setUp
-    player=test_redpoints.RedPointsTests.player
-    body=test_redpoints.RedPointsTests.body
-    finish_hand=test_redpoints.RedPointsTests.finish_hand
-
-    def opened(self):
-        game=self.app.extensions['gaming'];wallet=game.confirm_community_name('holdem-player','Holdem Player')
-        body=self.body(wallet,'poker');body['wager']=1000
-        result=game.bet('holdem-player','Holdem Player',body,client_ip='192.0.2.40')
-        return game,body,result
-
-    @staticmethod
-    def move(hand,action='fold',amount=0):
-        return dict(variant='texas_holdem',round_id=hand['round_id'],step=hand['step'],action_id='move-test-'+str(hand['step']),move=dict(action=action,amount=amount))
-
-    def test_private_hand_and_duplicate_action_exactly_once(self):
-        game,body,result=self.opened();hand=result['wallet']['poker']
-        self.assertEqual(hand['computer'],[None,None])
-        self.assertTrue(all(e['state']['computer']==[None,None] for e in hand['events']))
-        self.assertNotIn('server_seed',str(result));self.assertEqual(result['wallet']['balance'],99000)
-        move=self.move(hand)
-        with ThreadPoolExecutor(max_workers=6) as pool:
-            results=list(pool.map(lambda _:game.poker_action('holdem-player','Holdem Player',move),range(6)))
-        self.assertEqual(sum(not r['duplicate'] for r in results),1)
-        receipt=results[0]['receipt'];self.assertTrue(verify(receipt,body['commitment']))
-        self.assertEqual(receipt['net'],-10);self.assertEqual(receipt['payout'],990)
-        self.assertEqual(results[0]['wallet']['stats']['poker']['wagered'],10)
-        self.assertEqual(results[0]['wallet']['stats']['poker']['paid'],0)
-        with self.assertRaises(GamingError):game.poker_action('holdem-player','Holdem Player',{**move,'move':dict(action='call',amount=0)})
-        self.assertEqual(game.leaders()['games']['poker'][0]['name'],'Holdem Player')
-        self.assertEqual(game.leaders()['games']['poker'][0]['ips'],['192.0.2.40'])
-        self.assertEqual(game.view('holdem-player','Holdem Player')['poker_button'],'computer')
-        validate_gaming(game.recovery())
-
-    def test_refresh_restart_weekly_settlement_and_name_persist(self):
-        game,body,result=self.opened();wallet=result['wallet'];before=game.recovery()['players'][player_key('holdem-player')]['poker']
-        game.refresh_balance('holdem-player','Holdem Player',dict(version=wallet['version'],season=wallet['season']['id']))
-        game.grant_everyone('a1'*16,'Admin');game.restart_balances()
-        restored=Gaming(game.store)
-        self.assertEqual(restored.recovery()['players'][player_key('holdem-player')]['poker'],before)
-        self.assertEqual(restored.view('holdem-player','Holdem Player')['balance'],100000)
-        rollover=restored.view('holdem-player','Holdem Player',now=wallet['season']['end_time'])
-        self.assertEqual(rollover['balance'],100000);self.assertIsNone(rollover['poker'])
-        receipt=rollover['receipts'][0];self.assertEqual(receipt['ending'],'weekly_reset');self.assertTrue(verify(receipt))
-        self.assertEqual(receipt['net'],-10);self.assertEqual(rollover['stats']['poker']['bets'],0)
-        validate_gaming(restored.recovery())
-
-    def test_action_failure_and_other_player_cannot_change_hand(self):
-        game,_,result=self.opened();hand=result['wallet']['poker'];before=game.recovery()
-        with self.assertRaises(ValueError):game.poker_action('holdem-player','Holdem Player',self.move(hand,'check'))
-        self.assertEqual(game.recovery(),before)
-        with patch('storage.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(StoreError):game.poker_action('holdem-player','Holdem Player',self.move(hand))
-        self.assertEqual(game.recovery(),before)
-        with self.assertRaises(GamingError):game.poker_action('different','Different',self.move(hand))
-        with self.assertRaises(GamingError):game.bet('holdem-player','Holdem Player',{**self.body(result['wallet'],'coinflip'),'request_id':'different-pending-game'})
-
-    def test_legacy_statistics_migrate_once_and_stay_separate(self):
-        game,_,result=self.opened();game.poker_action('holdem-player','Holdem Player',self.move(result['wallet']['poker']))
-        # Turn this fixture into an old completed Video Poker save with matching accounting.
-        with game.store.connection(transaction=True) as conn:
-            player=conn['gaming']['players'][player_key('holdem-player')]
-            old=self.body(game._view(player,{'id':player['season']}),'poker')
-            old.update(rules_version=V4_VERSION,options=dict(variant='jacks_or_better'),server_seed='ef'*32,
-                       commitment=commitment('ef'*32),holds=[0,1,2,3,4],nonce=0)
-            old['result']=outcome(old['server_seed'],old);old['payout']=old['result']['payout'];old['net']=old['payout']-old['wager']
-            player['receipts']=[old];player['stats']['poker']=dict(bets=1,wagered=100,paid=old['payout'],net=old['net'],biggest_payout=old['payout'])
-            player['balance']=100000+old['net'];player.pop('poker_stats_version')
-        validate_gaming(game.recovery())
-        self.assertEqual(game.leaders()['games']['poker'],[])
-        self.assertEqual(len(game.leaders()['legacy_poker']),1)
-        self.assertEqual(game.view('holdem-player','Holdem Player')['stats']['poker']['bets'],0)
-        migrated=Gaming(game.store);again=Gaming(game.store)
-        value=again.view('holdem-player','Holdem Player')
-        self.assertEqual(value['stats']['poker']['bets'],0);self.assertEqual(value['legacy_poker']['bets'],1)
-        self.assertEqual(value['receipts'][0],old);self.assertTrue(verify(old))
-        self.assertEqual(again.leaders()['games']['poker'],[]);self.assertEqual(len(again.leaders()['legacy_poker']),1)
-        validate_gaming(again.recovery())
-
-    def test_client_cannot_choose_the_button_or_mix_legacy_protocols(self):
-        game=self.app.extensions['gaming'];wallet=game.confirm_community_name('seat','Seat Test')
-        body=self.body(wallet,'poker');before=game.recovery()
-        with self.assertRaises(GamingError):
-            game.bet('seat','Seat Test',{**body,'options':dict(variant='texas_holdem',button='computer')})
-        self.assertEqual(game.recovery(),before)
-        result=game.bet('seat','Seat Test',body);hand=result['wallet']['poker']
-        result=game.poker_action('seat','Seat Test',self.move(hand))
-        with self.assertRaises(GamingError):
-            game.poker_action('seat','Seat Test',dict(round_id=hand['round_id'],holds=[],action_id='wrong-protocol'))
-        self.assertTrue(verify(result['receipt']));validate_gaming(game.recovery())
-
-    def test_http_csrf_and_other_wallet_isolation(self):
-        client,value=self.player('HTTP Holdem')
-        body=self.body(value['wallet'],'poker')
-        response=client.post('/gaming/api/bet',json=body,headers={'X-CSRF-Token':value['player_csrf']})
-        self.assertEqual(response.status_code,200,response.text)
-        hand=response.json['wallet']['poker'];move=self.move(hand)
-        self.assertEqual(client.post('/gaming/api/poker/action',json=move).status_code,400)
-        other,state=self.player('Other User')
-        reply=other.post('/gaming/api/poker/action',json=move,headers={'X-CSRF-Token':state['player_csrf']})
-        self.assertEqual(reply.status_code,409)
-        response=self.finish_hand(client,response,value['player_csrf'])
-        self.assertTrue(verify(response.json['receipt']))
-        self.assertEqual(len(response.json['wallet']['stats']),8)
-        self.assertEqual(client.get('/gaming/poker').status_code,200)
-        self.assertEqual(self.app.test_client().get('/admin/gaming/status').status_code,401)
-
-
-if __name__=='__main__':unittest.main()
-```
-
-## `tests/test_homepage_frontend.cjs`
-
-```javascript
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const { JSDOM } = require("jsdom");
-const root = path.resolve(__dirname, ".."),
-  fixtures = process.env.DOM_FIXTURES || path.join(root, ".test-fixtures");
-const flush = async () => {
-  for (let n = 0; n < 5; n++) await new Promise((r) => setImmediate(r));
-};
-function page() {
-  const dom = new JSDOM(
-    fs.readFileSync(path.join(fixtures, "public.html"), "utf8"),
-    { url: "https://example.test/", runScripts: "outside-only" },
-  );
-  const w = dom.window,
-    feed = JSON.parse(
-      fs.readFileSync(path.join(fixtures, "public.json"), "utf8"),
-    ),
-    timers = new Map(),
-    calls = [];
-  let now = 0,
-    serial = 0,
-    fail = false;
-  Object.defineProperty(w.document, "hidden", {
-    value: false,
-    configurable: true,
-  });
-  w.setTimeout = (fn, delay) => {
-    const id = ++serial;
-    timers.set(id, { fn, at: now + delay });
-    return id;
-  };
-  w.clearTimeout = (id) => timers.delete(id);
-  w.fetch = async (url) => {
-    calls.push({ url, at: now });
-    if (fail) throw Error("offline");
-    return {
-      ok: true,
-      headers: new Map([["content-type", "application/json"]]),
-      json: async () => structuredClone(feed),
-    };
-  };
-  w.eval(fs.readFileSync(path.join(root, "static/homepage.js"), "utf8"));
-  return {
-    w,
-    feed,
-    calls,
-    fail(v) {
-      fail = v;
-    },
-    async advance(ms) {
-      now += ms;
-      for (const [id, t] of [...timers])
-        if (t.at <= now) {
-          timers.delete(id);
-          t.fn();
-        }
-      await flush();
-    },
-    close() {
-      w.close();
-    },
-  };
-}
-test("homepage bar and remaining percentage drain together", async () => {
-  const p = page();
-  await flush();
-  for (const percent of [0, 25, 75, 100]) {
-    p.feed.boss.hp = (p.feed.boss.max_hp * (100 - percent)) / 100;
-    p.feed.boss.version++;
-    p.feed.boss.total_damage = p.feed.boss.max_hp - p.feed.boss.hp;
-    p.feed.boss.total_attacks++;
-    p.feed.boss.status = percent === 100 ? "victory" : "active";
-    await p.advance(5000);
-    assert.equal(
-      p.w.document.querySelector("#inviteHealth").value,
-      p.feed.boss.hp,
-    );
-    assert.equal(
-      p.w.document.querySelector("#inviteHealth").max,
-      p.feed.boss.max_hp,
-    );
-    assert.equal(
-      p.w.document.querySelector("#invitePercent").textContent,
-      (100 - percent).toFixed(2) + "% remaining",
-    );
-  }
-  assert.match(
-    p.w.document.querySelector("#inviteButtonLabel").textContent,
-    /victory/,
-  );
-  p.close();
-});
-test("homepage checks only the local summary every five seconds and pauses while hidden", async () => {
-  const p = page();
-  await flush();
-  await p.advance(5000);
-  await p.advance(5000);
-  assert.deepEqual(
-    p.calls.map((c) => c.at),
-    [0, 5000, 10000],
-  );
-  assert.ok(p.calls.every((c) => c.url === "/boss-summary"));
-  Object.defineProperty(p.w.document, "hidden", {
-    value: true,
-    configurable: true,
-  });
-  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
-  await p.advance(60000);
-  assert.equal(p.calls.length, 3);
-  Object.defineProperty(p.w.document, "hidden", {
-    value: false,
-    configurable: true,
-  });
-  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
-  await flush();
-  assert.equal(p.calls.length, 4);
-  p.close();
-});
-test("a delayed minute poll cannot reverse damage; explicit admin heals can", async () => {
-  const p = page();
-  await flush();
-  const old = structuredClone(p.feed);
-  p.feed.boss.hp /= 4;
-  p.feed.boss.version++;
-  p.feed.boss.total_damage = p.feed.boss.max_hp - p.feed.boss.hp;
-  p.feed.boss.total_attacks++;
-  await p.advance(5000);
-  p.w.document.dispatchEvent(
-    new p.w.CustomEvent("boss:summary", { detail: old }),
-  );
-  assert.equal(
-    p.w.document.querySelector("#inviteHealth").value,
-    p.feed.boss.max_hp / 4,
-  );
-  p.feed.boss.health_revision++;
-  p.feed.boss.version++;
-  p.feed.boss.hp = p.feed.boss.max_hp;
-  await p.advance(5000);
-  assert.equal(
-    p.w.document.querySelector("#inviteHealth").value,
-    p.feed.boss.max_hp,
-  );
-  p.close();
-});
-test("new raid starts at zero and retired raid responses cannot return", async () => {
-  const p = page();
-  await flush();
-  const old = structuredClone(p.feed);
-  p.feed.boss.raid_id = "new-raid";
-  p.feed.server_time += 10;
-  p.feed.boss.created_at += 10;
-  await p.advance(5000);
-  old.server_time += 100;
-  old.boss.hp = 0;
-  old.boss.version += 100;
-  p.w.document.dispatchEvent(
-    new p.w.CustomEvent("boss:summary", { detail: old }),
-  );
-  assert.equal(
-    p.w.document.querySelector("#inviteHealth").value,
-    p.feed.boss.max_hp,
-  );
-  p.close();
-});
-test("connection failure retains confirmed progress and hostile boss names stay text", async () => {
-  const p = page();
-  await flush();
-  p.feed.boss.name = "<img src=x>";
-  p.feed.boss.status = "victory";
-  p.feed.boss.hp = 0;
-  p.feed.boss.version++;
-  await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#inviteTitle img"), null);
-  assert.match(
-    p.w.document.querySelector("#inviteTitle").textContent,
-    /<img src=x>/,
-  );
-  p.fail(true);
-  await p.advance(5000);
-  assert.equal(p.w.document.querySelector("#inviteHealth").value, 0);
-  assert.equal(p.w.document.querySelector("#inviteError").hidden, false);
-  p.close();
-});
-```
-
-## `tests/test_player_access.py`
-
-```python
-"""Real HTTP regressions for community access and persistent player names."""
-from concurrent.futures import ThreadPoolExecutor
-import copy
-from pathlib import Path
-import tempfile
-import unittest
-
-import test_comfort_update as support
-from boss import CommunityBoss, validate_boss
-from wager_backend import create_app
-
-
-class PlayerAccessTests(unittest.TestCase):
-    setUp = support.ComfortTests.setUp
-    player = support.ComfortTests.player
-    post = support.ComfortTests.post
-    hit = support.ComfortTests.hit
-    admin = support.ComfortTests.admin
-    action = support.ComfortTests.action
-
-    def test_100_players_share_one_proxy_and_all_attack_without_approvals(self):
-        self.app.extensions['settings'].proxy = True
-        clients = []
-        for i in range(100):
-            c = self.app.test_client()
-            c.environ_base.update(REMOTE_ADDR='10.0.0.1', HTTP_DO_CONNECTING_IP='192.0.2.1')
-            c.get('/play/api/state')
-            clients.append(c)
-        def register_and_hit(i):
-            c = clients[i]
-            registered = self.post(c, '/play/api/profile', username=f'CommunityMember{i:03}')
-            if registered.status_code != 200: return ('registration', registered.status_code)
-            return ('attack', self.hit(c).status_code)
-        with ThreadPoolExecutor(max_workers=12) as pool:
-            results = list(pool.map(register_and_hit, range(100)))
-        self.assertEqual(results, [('attack', 200)] * 100)
-        before = self.b.export()
-        self.assertEqual(len(before['players']), 100)
-        self.assertEqual(before['total_attacks'], 100)
-        self.assertEqual(len(before['profiles']), 100)
-        self.assertEqual(self.hit(clients[0]).status_code, 429)
-        # Everybody gets their own next turn, not a shared connection cooldown.
-        self.clock.return_value += 30
-        with ThreadPoolExecutor(max_workers=12) as pool:
-            self.assertEqual(list(pool.map(lambda c: self.hit(c).status_code, clients)), [200]*100)
-        state = self.b.export()
-        self.assertEqual(state['total_attacks'], 200)
-        self.assertEqual(state['hp'], state['max_hp'] - state['total_damage'])
-        self.assertEqual(len(state.get('households', {})), 0)
-        validate_boss(state)
-
-    def test_name_survives_ip_changes_refresh_restart_and_new_raid(self):
-        c = self.player('StickyName'); self.hit(c)
-        saved = self.b.export()
-        for ip in ('192.0.2.2', '198.51.100.8', '2001:db8::a', '2001:db8:1::b'):
-            c.environ_base['REMOTE_ADDR'] = ip
-            current = c.get('/play/api/state').json['state']
-            self.assertEqual(current['you']['display_name'], 'StickyName')
-            self.assertTrue(current['you']['identity_ready'])
-            self.assertIn('StickyName', c.get('/play').text)
-            self.assertEqual(self.hit(c).status_code, 429)
-        self.assertEqual(self.b.export(), saved)  # Polls do not rewrite a name or reset progress.
-        rebuilt = create_app(self.root, testing=True)
-        same = rebuilt.test_client()
-        same.set_cookie('rh_raider', c.get_cookie('rh_raider').value)
-        self.assertEqual(same.get('/play/api/state').json['state']['you']['display_name'], 'StickyName')
-        self.assertEqual(rebuilt.extensions['boss'].export(), saved)
-        self.clock.return_value += 30
-        v = same.get('/play/api/state').json
-        hit = same.post('/play/api/attack',json=dict(raid_id=v['state']['raid_id'],style='blade',request_id='retained-cookie-hit'),headers={'X-CSRF-Token':v['csrf']})
-        self.assertEqual(hit.status_code, 200)
-        rebuilt.extensions['boss'].control('restart', saved['id'])
-        self.assertEqual(same.get('/play/api/state').json['state']['you']['display_name'], 'StickyName')
-        self.assertTrue(same.get('/play/api/state').json['state']['you']['identity_ready'])
-
-    def test_missing_or_changing_proxy_header_never_discards_a_player(self):
-        self.app.extensions['settings'].proxy = True
-        a = self.player('NoHeader'); self.assertEqual(self.hit(a).status_code, 200)
-        a.environ_base['HTTP_DO_CONNECTING_IP'] = '192.0.2.44'
-        self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'NoHeader')
-        a.environ_base['HTTP_DO_CONNECTING_IP'] = 'not-an-ip'
-        self.clock.return_value += 30
-        self.assertEqual(self.hit(a).status_code, 200)
-        # The malformed header still is not trusted as a client IP.
-        self.assertNotIn('not-an-ip', str(self.b.export()))
-
-    def test_one_rejecting_browser_cannot_throttle_other_players_on_same_ip(self):
-        bad = self.player()
-        for _ in range(25): self.post(bad, '/play/api/profile', username='')
-        self.assertEqual(self.post(bad, '/play/api/profile', username='BadClient').status_code, 429)
-        for i in range(30):
-            c = self.player(f'Unaffected{i}')
-            self.assertEqual(self.hit(c).status_code, 200)
-        self.assertEqual(self.b.export()['total_attacks'], 30)
-
-    def test_valid_recovery_can_use_a_network_with_other_active_players(self):
-        a = self.player('RecoverMe', '192.0.2.1'); self.hit(a)
-        code = self.post(a, '/play/api/recovery-code').json['code']
-        b = self.player('ExistingPlayer', '192.0.2.2'); self.hit(b)
-        recovered = self.player(ip='192.0.2.2')
-        response = self.post(recovered, '/play/api/recover', code=code)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['state']['you']['display_name'], 'RecoverMe')
-        self.assertEqual(self.hit(recovered).status_code, 429)
-        self.clock.return_value += 30
-        self.assertEqual(self.hit(recovered).status_code, 200)
-        self.assertEqual(self.hit(b).status_code, 200)
-        self.assertEqual(len(self.b.export()['players']), 2)
-
-    def test_reloading_never_reissues_the_raider_identity_cookie(self):
-        c = self.player('PersistentCookie'); cookie = c.get_cookie('rh_raider').value
-        for _ in range(5):
-            for path in ('/play', '/play/api/state'):
-                response = c.get(path)
-                self.assertFalse(any(h.startswith('rh_raider=') for h in response.headers.getlist('Set-Cookie')))
-                self.assertEqual(c.get_cookie('rh_raider').value, cookie)
-                self.assertIn('PersistentCookie', response.text)
-
-    def test_legacy_network_claims_and_household_limits_do_not_require_a_reset(self):
-        a = self.player('Existing'); self.hit(a)
-        before = self.b.export()
-        profile = next(iter(before['profiles'].values()))
-        legacy = copy.deepcopy(before)
-        legacy['networks'][profile['network']] = {'last_attack': self.clock.return_value + 300, 'day':0, 'used':500}
-        legacy['households'] = {profile['network']:2}
-        with self.r.store.connection(transaction=True) as conn: self.b._write(conn, legacy)
-        self.b.loaded_at = 0
-        current = self.b.export()
-        self.assertEqual(current, legacy)
-        for i in range(10):
-            c = self.player(f'NewMember{i}'); self.assertEqual(self.hit(c).status_code, 200)
-        after = self.b.export()
-        pk = next(iter(before['profiles']))
-        self.assertEqual(after['profiles'][pk], before['profiles'][pk])
-        self.assertEqual(after['players'][pk], before['players'][pk])
-        self.assertEqual(after['id'], before['id'])
-        self.assertEqual(after['total_attacks'], before['total_attacks'] + 10)
-        self.assertLess(after['hp'], before['hp'])
-        validate_boss(after)
-
-    def test_name_collision_does_not_give_access_to_someone_elses_profile(self):
-        a = self.player('ReservedName'); self.hit(a)
-        b = self.player()
-        self.assertEqual(self.post(b, '/play/api/profile', username='reservedname').status_code, 200)
-        self.assertEqual(b.get('/play/api/state').json['state']['you']['damage'], 0)
-        self.assertNotIn('ReservedName', b.get('/play/api/state').text)
-        self.assertEqual(self.hit(b).status_code, 200)
-        self.assertNotEqual(a.get('/play/api/state').json['state']['you']['name'], b.get('/play/api/state').json['state']['you']['name'])
-
-
-if __name__ == '__main__': unittest.main()
-```
-
-## `tests/test_raid_update.py`
-
-```python
-"""Requested gameplay changes, identity boundaries and additive save upgrades."""
-import copy
-import json
-import os
-from pathlib import Path
-import secrets
-import tempfile
-import unittest
-from unittest.mock import patch
-
-from boss import CommunityBoss, DAY, MAX_HP, MAX_DAMAGE, validate_boss
-from wager_backend import create_app
-
-
-class RaidUpdateTests(unittest.TestCase):
-    def setUp(self):
-        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
-        self.root = Path(temp.name)
-        env = patch.dict(os.environ, {'APP_ENV':'test', 'ADMIN_BOOTSTRAP_PASS':'test-password'}, clear=True)
-        env.start(); self.addCleanup(env.stop)
-        self.app = create_app(self.root, testing=True)
-        self.r, self.b = self.app.extensions['runtime'], self.app.extensions['boss']
-        self.addCleanup(self.r.store.close)
-        clock = patch('boss.time.time', return_value=self.b.export()['created_at'] + 1.25)
-        self.clock = clock.start(); self.addCleanup(clock.stop)
-
-    def client(self, ip='192.0.2.1', name=None):
-        c = self.app.test_client(); c.environ_base['REMOTE_ADDR'] = ip
-        value = c.get('/play/api/state').json
-        if name:
-            self.assertEqual(self.name(c, name).status_code, 200)
-        return c, value
-
-    def name(self, c, name, **extra):
-        v = c.get('/play/api/state').json
-        return c.post('/play/api/profile', json={'raid_id':v['state']['raid_id'], 'username':name, **extra}, headers={'X-CSRF-Token':v['csrf']})
-
-    def attack(self, c, **extra):
-        v = c.get('/play/api/state').json
-        return c.post('/play/api/attack', json={'raid_id':v['state']['raid_id'], 'style':v['state']['weakness'],
-                      'request_id':secrets.token_hex(16), **extra}, headers={'X-CSRF-Token':v['csrf']})
-
-    def core_hit(self, guest='a', ip='192.0.2.1', style=None):
-        v = self.b.status(guest, ip)
-        return self.b.attack(guest, ip, style or v['weakness'], v['raid_id'], secrets.token_hex(16))
-
-    def admin(self):
-        c, v = self.client('198.51.100.50')
-        with c.session_transaction() as session: session.update(user='gingrsnaps', auth_version=1)
-        return c, v['csrf']
-
-    def test_username_is_required_on_http_and_cannot_be_forged_in_attack(self):
-        c, v = self.client()
-        self.assertEqual(self.attack(c, username='Fake', role='admin').status_code, 409)
-        self.assertEqual(c.post('/play/api/profile', json={'username':'Fake'}).status_code, 400)
-        for invalid in ('', ' ', 'x'*65, 'a\nb', 5, []):
-            self.assertEqual(self.name(c, invalid).status_code, 422)
-        self.assertEqual(self.name(c, 'Real submitted name').status_code, 200)
-        self.assertEqual(self.attack(c).status_code, 200)
-        self.assertEqual(self.b.export()['total_attacks'], 1)
-
-    def test_distinct_players_share_ip_and_names_survive_ip_changes(self):
-        a, _ = self.client(name='Alice'); b, _ = self.client()
-        self.assertEqual(self.name(b, 'Bob').status_code, 200)
-        self.assertNotIn('Alice', b.get('/play/api/state').text)
-        self.attack(a)
-        a.environ_base['REMOTE_ADDR'] = '192.0.2.2'
-        self.assertEqual(self.attack(a).status_code, 429)
-        self.clock.return_value += 30
-        self.assertEqual(a.get('/play/api/state').json['state']['you']['display_name'], 'Alice')
-        self.assertTrue(a.get('/play/api/state').json['state']['you']['identity_ready'])
-        self.assertEqual(self.attack(a).status_code, 200)
-        self.assertEqual(self.name(b, 'Alice').status_code, 200)
-        # Reusing a display label never inherits the first player's damage.
-        self.assertEqual(b.get('/play/api/state').json['state']['you']['damage'], 0)
-        self.assertEqual(a.get('/play/api/state').json['state']['you']['attacks'], 2)
-
-    def test_profile_forgery_cannot_change_another_player_or_game_settings(self):
-        a, _ = self.client(name='Alice'); b, _ = self.client('192.0.2.2')
-        self.attack(a); before = self.b.export()
-        response = self.name(b, 'Bob', guest='forged', player_id=next(iter(before['profiles'])), hp=0, damage=9999, role='admin')
-        self.assertEqual(response.status_code, 200)
-        after = self.b.export()
-        for field in ('hp', 'players', 'total_damage', 'settings', 'networks'):
-            self.assertEqual(after[field], before[field])
-        self.assertEqual(next(iter(after['profiles'].values()))['name'], 'Alice')
-        self.assertEqual(self.name(b, 'Other name').status_code, 429)
-
-    def test_thirty_seconds_exact_and_no_daily_cap(self):
-        c, _ = self.client(name='Unlimited')
-        beginning = self.clock.return_value
-        for i in range(101):
-            self.clock.return_value = beginning + i*30
-            self.assertEqual(self.attack(c).status_code, 200)
-        saved = self.b.export()
-        self.clock.return_value += 29.99
-        blocked = self.attack(c)
-        self.assertEqual(blocked.status_code, 429)
-        self.assertEqual(blocked.headers['Retry-After'], '1')
-        self.clock.return_value += .01
-        self.assertEqual(self.attack(c).status_code, 200)
-        self.assertEqual(saved['total_attacks'], 101)
-        self.assertIsNone(c.get('/play/api/state').json['state']['rules']['daily_attacks'])
-
-    def test_private_top_five_full_names_and_public_aliases(self):
-        names = [f'FullName{i}' for i in range(7)]
-        for i, name in enumerate(names):
-            guest, ip = str(i), f'192.0.2.{i+1}'
-            self.b.register(guest, ip, self.b.status()['raid_id'], name)
-            for _ in range(i+1):
-                self.core_hit(guest, ip); self.clock.return_value += 30
-        anonymous, _ = self.client('198.51.100.1')
-        self.assertEqual(anonymous.get('/admin/boss/status').status_code, 401)
-        admin, _ = self.admin()
-        response = admin.get('/admin/boss/status')
-        self.assertEqual(response.headers['Cache-Control'], 'no-store')
-        self.assertEqual([r['name'] for r in response.json['state']['admin_leaders']], names[-1:1:-1])
-        for url in ('/play/api/state', '/play', '/public-state'):
-            for name in names: self.assertNotIn(name, anonymous.get(url).text)
-        self.r.admin['users']['helper'] = copy.deepcopy(self.r.admin['users']['gingrsnaps'])
-        self.r.commit(self.r.admin, self.r.revision)
-        with admin.session_transaction() as session: session['user'] = 'helper'
-        self.assertEqual(admin.get('/admin/boss/status').status_code, 200)
-        self.r.admin['users'].pop('helper'); self.r.commit(self.r.admin, self.r.revision)
-        self.assertEqual(admin.get('/admin/boss/status').status_code, 401)
-
-    def test_extreme_damage_zero_damage_and_explicit_hp_preserve_contributions(self):
-        self.core_hit(); saved = self.b.export()
-        self.b.control('health', saved['id'], 1, health_revision=0)
-        s = self.b.export()
-        self.assertEqual((s['hp'], s['max_hp'], s['total_damage']), (0, 1, 150))
-        self.assertEqual(s['players'], saved['players'])
-        self.b.control('health', s['id'], MAX_HP, health_revision=1)
-        self.b.control('remaining_health', s['id'], MAX_HP, health_revision=2)
-        self.b.configure(s['id'], dict(name='Flexible', damage=MAX_DAMAGE, weak_damage=0, burst_bonus=0), 0)
-        self.clock.return_value += 30
-        zero = self.core_hit()
-        self.assertEqual(zero['hit']['damage'], 0)
-        self.assertEqual(zero['state']['hp'], MAX_HP)
-        validate_boss(self.b.export())
-        self.b.control('remaining_health', s['id'], 5, health_revision=3)
-        self.clock.return_value += 30
-        v = self.b.status('a', '192.0.2.1')
-        wrong = next(x for x in ('blade','bow','magic') if x != v['weakness'])
-        self.assertEqual(self.core_hit(style=wrong)['hit']['damage'], 5)
-        validate_boss(self.b.export())
-        # Recovery metadata must handle the same numeric range as combat saves.
-        self.b.control('restart', s['id'], MAX_HP)
-        view = self.b.status('a', '192.0.2.1')
-        wrong = next(x for x in ('blade','bow','magic') if x != view['weakness'])
-        self.assertEqual(self.core_hit(style=wrong)['hit']['damage'], MAX_HP)
-        admin, _ = self.admin()
-        exported = admin.get('/admin/recovery-backup')
-        self.assertEqual(exported.status_code, 200)
-        self.assertEqual(exported.json['recovery_export']['damage'], MAX_HP)
-        self.assertFalse(admin.get('/admin/status').json['checkpoint']['changes'])
-
-
-    def test_random_weakness_is_shared_and_stable_without_writes(self):
-        saved = self.b.export(); samples = []
-        for i in range(60):
-            self.clock.return_value += 600
-            first = self.b.status('a', '192.0.2.1')['weakness']
-            other = CommunityBoss(self.r.store).status('b', '192.0.2.2')['weakness']
-            self.assertEqual(first, other); samples.append(first)
-        self.assertEqual(set(samples), {'blade','bow','magic'})
-        self.assertTrue(any(a == b for a,b in zip(samples, samples[1:])))
-        self.assertEqual(saved, self.b.export())
-
-    def test_eight_achievements_take_a_week_and_survive_new_raids(self):
-        start = self.clock.return_value
-        self.b.register('a', '192.0.2.1', self.b.status()['raid_id'], 'WeekPlayer')
-        for day in range(7):
-            if day == 3:
-                self.b.control('restart', self.b.status()['raid_id'])
-            for hit in range(75):
-                self.clock.return_value = start + day*DAY + hit*30
-                self.core_hit(style=('blade','bow','magic')[hit%3] if day == 0 else None)
-            view = self.b.status('a', '192.0.2.1')
-            if day < 6:
-                self.assertFalse(next(b for b in view['you']['badges'] if b['id'] == 'week')['earned'])
-        self.assertEqual(len(view['you']['badges']), 8)
-        self.assertTrue(all(b['earned'] for b in view['you']['badges']))
-        before = self.b.export()
-        self.assertEqual(CommunityBoss(self.r.store).export(), before)
-        self.b.control('restart', view['raid_id'])
-        self.assertEqual(self.b.status('a', '192.0.2.1')['you']['badges'], view['you']['badges'])
-        self.assertEqual(self.b.status()['total_damage'], 0)
-
-    def test_legacy_save_migrates_additively_without_changing_hp(self):
-        self.core_hit(); old = self.b.export()
-        old.pop('profiles', None); old.pop('health_adjustment', None)
-        for p in old['players'].values(): p['used'] = 40
-        for p in old['networks'].values(): p['used'] = 40
-        with self.r.store.connection(transaction=True) as conn: self.b._write(conn, old)
-        self.b = CommunityBoss(self.r.store)
-        self.assertEqual(self.b.export(), old)
-        self.b.register('a', '192.0.2.1', old['id'], 'Returning player')
-        self.assertEqual(self.b.export()['players'], old['players'])
-        self.clock.return_value += 30
-        self.assertEqual(self.core_hit()['state']['total_attacks'], 2)
-        validate_boss(self.b.export())
-
-    def test_profile_and_health_recovery_are_portable_and_reject_tampering(self):
-        c, _ = self.client(name='RecoveryPlayer'); self.attack(c)
-        saved = self.b.export()
-        self.b.control('remaining_health', saved['id'], 17, health_revision=0)
-        admin, _ = self.admin(); recovery = admin.get('/admin/recovery-backup').json
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory); (root/'private').mkdir()
-            (root/'private/recovery.seed.json').write_text(json.dumps(recovery), encoding='utf-8')
-            restored = create_app(root, testing=True)
-            try: self.assertEqual(restored.extensions['boss'].export(), self.b.export())
-            finally: restored.extensions['runtime'].store.close()
-        bad = self.b.export(); next(iter(bad['profiles'].values()))['weak_hits'] = 99999
-        with self.assertRaises(ValueError): validate_boss(bad)
-
-    def test_connection_release_and_remaining_hp_are_admin_only(self):
-        player, _ = self.client(name='Claimed')
-        current = self.b.status(); admin, csrf = self.admin()
-        form = dict(csrf=csrf, raid_id=current['raid_id'], action='release_player', player_name='Claimed', confirm_release='yes')
-        self.assertEqual(player.post('/admin/boss/action', data=form).status_code, 302)
-        self.assertEqual(admin.post('/admin/boss/action', data={**form,'csrf':'wrong'}).status_code, 400)
-        self.assertEqual(admin.post('/admin/boss/action', data=form).status_code, 422)
-        replacement, _ = self.client()
-        self.assertEqual(self.name(replacement, 'Replacement').status_code, 200)
-        self.assertEqual(self.attack(player).status_code, 200)
-        hpform = dict(csrf=csrf, raid_id=current['raid_id'], action='remaining_health', health='0', health_revision='0', confirm_health='yes')
-        self.assertEqual(admin.post('/admin/boss/action', data=hpform).status_code, 303)
-        self.assertEqual(self.b.status()['hp'], 0)
-        self.assertEqual(self.b.status()['status'], 'victory')
-
-
-if __name__ == '__main__': unittest.main()
-```
-
-## `tests/test_redpoints.py`
-
-```python
-"""Real wallet/API tests; synthetic seeds and players, never live providers."""
-import copy
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from fractions import Fraction
-import json
-from math import comb
-from pathlib import Path
-import time
-import unittest
-from unittest.mock import patch
-
-import test_app
-from fairness import GAMES, VERSION, LEGACY_VERSION, commitment, outcome, table, verify
-from gaming import Gaming, GamingError, season, validate_gaming
-from race_support import EASTERN
-from storage import StoreError
-from wager_backend import create_app
-
-
-class RedPointsTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-
-    def player(self, name='RedPlayer'):
-        client=self.app.test_client()
-        self.next_ip = getattr(self, 'next_ip', 0) + 1
-        client.environ_base['REMOTE_ADDR'] = '198.51.100.' + str(self.next_ip)
-        state=client.get('/gaming/api/state').json
-        response=client.post('/gaming/api/profile', json={'username':name}, headers={'X-CSRF-Token':state['player_csrf']})
-        self.assertEqual(response.status_code,200,response.text)
-        return client,response.json
-
-    def body(self, wallet, game='dice', **values):
-        options={'dice':dict(chance=50,side='under'),'keno':dict(picks=list(range(1,11)),risk='medium'),'plinko':dict(rows=16,risk='high'),'blackjack':dict(decks=6),'limbo':dict(target=200),'coinflip':dict(side='heads'),'poker':dict(variant='texas_holdem',button=wallet.get('poker_button','player')),'baccarat':dict(decks=8,side='banker')}[game]
-        return dict(rules_version=VERSION, game=game, request_id='test-bet-'+str(wallet['nonce']), season=wallet['season']['id'],
-                    nonce=wallet['nonce'], commitment=wallet['commitment'], client_seed='player-chosen-seed',
-                    client_salt='0123456789abcdef'*2,wager=100,options=options,**values)
-
-    def finish_hand(self, client, response, csrf):
-        if response.json.get('receipt') is None and response.json.get('wallet', {}).get('blackjack'):
-            hand=response.json['wallet']['blackjack']
-            response=client.post('/gaming/api/blackjack/action', json=dict(round_id=hand['round_id'], step=hand['step'], action='stand', action_id='finish-test-hand'), headers={'X-CSRF-Token':csrf})
-            self.assertEqual(response.status_code,200,response.text)
-        while response.json.get('receipt') is None and response.json.get('wallet', {}).get('poker'):
-            hand=response.json['wallet']['poker']
-            response=client.post('/gaming/api/poker/action', json=dict(variant='texas_holdem',round_id=hand['round_id'],step=hand['step'],move=dict(action='check' if hand['legal']['check'] else 'call',amount=0),action_id='finish-poker-hand-'+str(hand['step'])), headers={'X-CSRF-Token':csrf})
-            self.assertEqual(response.status_code,200,response.text)
-        return response
-
-    def play(self, client, game, now):
-        value=client.get('/gaming/api/state').json
-        body=self.body(value['wallet'],game)
-        with patch('gaming.time.time',return_value=now):
-            response=client.post('/gaming/api/bet',json=body,headers={'X-CSRF-Token':value['player_csrf']})
-        self.assertEqual(response.status_code,200,response.text)
-        response = self.finish_hand(client, response, value['player_csrf'])
-        self.assertTrue(verify(response.json['receipt'],body['commitment']))
-        return response.json,body
-
-    def test_one_balance_across_three_games_refresh_and_name_edits(self):
-        client,value=self.player()
-        self.assertEqual(value['wallet']['balance'],100000)
-        now=time.time()
-        expected=100000
-        for n,game in enumerate(GAMES):
-            result,body=self.play(client,game,now+n*2)
-            expected+=result['receipt']['net']
-            self.assertEqual(result['wallet']['balance'],expected)
-            self.assertNotEqual(result['wallet']['commitment'],body['commitment'])
-            self.assertEqual(client.get('/gaming/'+game).status_code,200)
-        state=client.get('/gaming/api/state').json
-        with patch('gaming.time.time',return_value=now+61):
-            renamed=client.post('/gaming/api/profile',json={'username':'NewRedName'},headers={'X-CSRF-Token':state['player_csrf']})
-        self.assertEqual(renamed.status_code,200,renamed.text)
-        self.assertEqual(renamed.json['wallet']['balance'],expected)
-        self.assertEqual(client.get('/gaming/api/state').json['wallet']['nonce'],len(GAMES))
-        self.assertEqual(client.get('/play/api/state').json['state']['you']['display_name'],'NewRedName')
-
-    def test_duplicate_response_after_lost_reply_and_concurrent_tabs(self):
-        client,value=self.player()
-        body=self.body(value['wallet'])
-        api=lambda:client.post('/gaming/api/bet',json=body,headers={'X-CSRF-Token':value['player_csrf']})
-        first=api().json; again=api().json
-        self.assertTrue(again['duplicate']);self.assertEqual(first['receipt'],again['receipt'])
-        self.assertEqual(again['wallet']['nonce'],1)
-        changed={**body,'request_id':'different-request'}
-        self.assertEqual(client.post('/gaming/api/bet',json=changed,headers={'X-CSRF-Token':value['player_csrf']}).status_code,409)
-
-    def test_atomic_concurrent_wallet_debit(self):
-        game=self.app.extensions['gaming']; wallet=game.view('parallel','Parallel', client_ip='198.51.100.1')
-        body=self.body(wallet)
-        with ThreadPoolExecutor(max_workers=5) as pool:
-            results=list(pool.map(lambda _:game.bet('parallel','Parallel',body, client_ip='198.51.100.1'),range(5)))
-        self.assertEqual(sum(not result['duplicate'] for result in results),1)
-        self.assertEqual(game.view('parallel','Parallel', client_ip='198.51.100.1')['nonce'],1)
-
-    def test_tuesday_reset_and_dst_without_reloading_accounts(self):
-        cutoff=datetime(2026,11,3,18,tzinfo=EASTERN).timestamp()
-        game=self.app.extensions['gaming']; wallet=game.view('weekly','Weekly',cutoff-2, client_ip='198.51.100.1')
-        self.assertEqual(wallet['season']['end_time']-wallet['season']['start_time'],169*3600)
-        body=self.body(wallet)
-        bet=game.bet('weekly','Weekly',body,cutoff-2, client_ip='198.51.100.1')
-        reset=game.view('weekly','Weekly',cutoff, client_ip='198.51.100.1')
-        self.assertEqual(reset['balance'],100000)
-        self.assertTrue(all(row['bets']==0 for row in reset['stats'].values()))
-        self.assertEqual(reset['nonce'],1)
-        self.assertEqual(reset['receipts'][0],bet['receipt'])
-        self.assertTrue(game.bet('weekly','Weekly',body,cutoff+1, client_ip='198.51.100.1')['duplicate'])
-        with self.assertRaises(GamingError):game.bet('weekly','Weekly',{**body,'request_id':'a-new-id'},cutoff+2, client_ip='198.51.100.1')
-
-    def test_tampering_overdraft_and_csrf_rejected(self):
-        client,value=self.player();body=self.body(value['wallet'])
-        for values,status in [({'wager':True},422),({'wager':100001},409),({'wager':2**53},422),({'wager':-5},422),
-                              ({'options':{'chance':100,'side':'under'}},422),({'commitment':'a'*64},409),
-                              ({'nonce':9},409),({'options':{'chance':50,'side':'bad'}},422),({'client_salt':'bad'},422)]:
-            response=client.post('/gaming/api/bet',json={**body,**values},headers={'X-CSRF-Token':value['player_csrf']})
-            self.assertEqual(response.status_code,status,response.text)
-        other,foreign=self.player('Another')
-        self.assertEqual(other.post('/gaming/api/bet',json=self.body(foreign['wallet']),headers={'X-CSRF-Token':value['player_csrf']}).status_code,400)
-        self.assertEqual(client.get('/gaming/api/state').json['wallet']['balance'],100000)
-        self.assertEqual(client.get('/gaming/api/state').json['wallet']['nonce'],0)
-
-    def test_save_failure_rolls_back_wager_and_seed(self):
-        game=self.app.extensions['gaming'];before=game.view('writer','Writer', client_ip='198.51.100.1'); body=self.body(before)
-        with patch('storage.atomic_json',side_effect=OSError('disk full')):
-            with self.assertRaises(StoreError):game.bet('writer','Writer',body, client_ip='198.51.100.1')
-        self.assertEqual(game.view('writer','Writer', client_ip='198.51.100.1'),before)
-
-    def test_top_five_for_each_game_private_and_sorted_by_net(self):
-        game=self.app.extensions['gaming'];now=time.time()
-        for n in range(7):
-            for index,item in enumerate(GAMES):
-                wallet=game.view('private'+str(n),'PrivatePlayer'+str(n), client_ip='198.51.100.'+str(n+1))
-                result=game.bet('private'+str(n),'PrivatePlayer'+str(n),self.body(wallet,item),now+index*2, client_ip='198.51.100.'+str(n+1))
-                if item=='blackjack' and not result['receipt']:
-                    hand=result['wallet']['blackjack']
-                    game.blackjack_action('private'+str(n),'PrivatePlayer'+str(n),dict(round_id=hand['round_id'],step=hand['step'],action='stand',action_id='top-five-stand'),now+index*2,client_ip='198.51.100.'+str(n+1))
-                while item=='poker' and not result['receipt']:
-                    hand=result['wallet']['poker']
-                    result=game.poker_action('private'+str(n),'PrivatePlayer'+str(n),dict(variant='texas_holdem',round_id=hand['round_id'],step=hand['step'],move=dict(action='check' if hand['legal']['check'] else 'call',amount=0),action_id='top-five-move-'+str(hand['step'])),now+index*2,client_ip='198.51.100.'+str(n+1))
-        value=self.client.get('/admin/gaming/status').json
-        for item in GAMES:
-            rows=value['games'][item]
-            self.assertEqual(len(rows),5)
-            self.assertEqual([r['net'] for r in rows],sorted((r['net'] for r in rows),reverse=True))
-        guest=self.app.test_client()
-        self.assertEqual(guest.get('/admin/gaming/status').status_code,401)
-        for url in ('/','/history','/gaming','/gaming/api/state','/gaming/api/receipts'):
-            self.assertNotIn('PrivatePlayer',guest.get(url).text)
-        self.assertIn('PrivatePlayer',self.client.get('/admin').text)
-
-    def test_recovery_retains_wallet_seed_nonce_receipts_and_cookie_identity(self):
-        client,_=self.player();self.play(client,'keno',time.time())
-        before=client.get('/gaming/api/state').json['wallet']
-        backup=self.client.get('/admin/recovery-backup')
-        self.assertIn('redpoints',backup.json)
-        target=self.root/'restored';(target/'private').mkdir(parents=True)
-        (target/'private/recovery.seed.json').write_bytes(backup.data)
-        restored=create_app(target,testing=True);self.addCleanup(restored.extensions['runtime'].store.close)
-        other=restored.test_client();other.set_cookie('rh_raider',client.get_cookie('rh_raider').value)
-        after=other.get('/gaming/api/state').json['wallet']
-        self.assertEqual(after['balance'],100000)  # Restoring starts a new server.
-        for key in ('name','needs_profile','stats','receipts','nonce','commitment','blackjack'):
-            self.assertEqual(after[key],before[key],key)
-        state=backup.json['redpoints'];next(iter(state['players'].values()))['balance']+=1
-        with self.assertRaises(ValueError):validate_gaming(state)
-
-    def test_one_hundred_distinct_networks_can_all_play(self):
-        game=self.app.extensions['gaming']
-        for n in range(100):
-            wallet=game.view('shared-'+str(n),'Shared'+str(n), client_ip='198.51.100.'+str(n+1))
-            self.assertEqual(wallet['balance'],100000)
-        self.assertEqual(len(game.recovery()['players']),100)
-
-    def test_live_seed_is_never_returned_and_receipt_tamper_is_detected(self):
-        client,value=self.player()
-        seed=next(iter(self.app.extensions['gaming'].recovery()['players'].values()))['server_seed']
-        self.assertNotIn(seed,client.get('/gaming/api/state').text)
-        result,body=self.play(client,'plinko',time.time())
-        r=result['receipt'];self.assertEqual(r['server_seed'],seed)
-        for key,new in [('payout',r['payout']+1),('nonce',r['nonce']+1),('client_seed','changed')]:
-            self.assertFalse(verify({**r,key:new},body['commitment']))
-
-    def test_wallet_poll_reuses_etag_until_a_committed_change(self):
-        client, _ = self.player()
-        response = client.get('/gaming/api/state')
-        etag = response.headers['ETag']
-        unchanged = client.get('/gaming/api/state', headers={'If-None-Match': etag})
-        self.assertEqual(unchanged.status_code, 304)
-        self.assertEqual(unchanged.data, b'')
-        self.play(client, 'dice', time.time())
-        changed = client.get('/gaming/api/state', headers={'If-None-Match': etag})
-        self.assertEqual(changed.status_code, 200)
-        self.assertNotEqual(changed.headers['ETag'], etag)
-
-    def test_recovery_checkpoint_notices_wagers_without_marking_idle_polls(self):
-        client, _ = self.player()
-        self.assertEqual(self.client.get('/admin/recovery-backup').status_code, 200)
-        before = self.client.get('/admin/status').json['checkpoint']
-        self.assertFalse(before['changes'], before)
-        client.get('/gaming/api/state')
-        self.assertFalse(self.client.get('/admin/status').json['checkpoint']['changes'])
-        self.play(client, 'dice', time.time())
-        after = self.client.get('/admin/status').json['checkpoint']
-        self.assertTrue(after['changes'])
-        self.assertIn('RedPoints wallets or fairness receipts changed', after['details'])
-
-    def test_full_balance_can_be_wagered_in_every_game(self):
-        for game in GAMES:
-            client, state = self.player('FullBalance' + game)
-            body = {**self.body(state['wallet'], game), 'wager':100000}
-            response = client.post('/gaming/api/bet', json=body,
-                                   headers={'X-CSRF-Token':state['player_csrf']})
-            self.assertEqual(response.status_code, 200, response.text)
-            response = self.finish_hand(client, response, state['player_csrf'])
-            self.assertEqual(response.json['receipt']['wager'], 100000)
-            self.assertEqual(response.json['wallet']['balance'], response.json['receipt']['payout'])
-            self.assertTrue(verify(response.json['receipt'], body['commitment']))
-        validate_gaming(self.app.extensions['gaming'].recovery())
-
-    def test_consecutive_distinct_bets_need_no_clock_advance(self):
-        game = self.app.extensions['gaming']
-        now = time.time()
-        wallet = game.view('no-delay', 'NoDelay', now, client_ip='198.51.100.1')
-        for nonce in range(40):
-            body = {**self.body(wallet), 'wager':1}
-            result = game.bet('no-delay', 'NoDelay', body, now, client_ip='198.51.100.1')
-            self.assertEqual(result['receipt']['nonce'], nonce)
-            self.assertEqual(result['receipt']['at'], int(now))
-            self.assertFalse(result['duplicate'])
-            wallet = result['wallet']
-        duplicate = game.bet('no-delay', 'NoDelay', body, now, client_ip='198.51.100.1')
-        self.assertTrue(duplicate['duplicate'])
-        self.assertEqual(duplicate['wallet']['nonce'], 40)
-        validate_gaming(game.recovery())
-
-    def test_large_wager_receipt_survives_full_recovery(self):
-        client, value = self.player()
-        body = {**self.body(value['wallet'], 'keno'), 'wager':75000}
-        result = client.post('/gaming/api/bet', json=body,
-                             headers={'X-CSRF-Token':value['player_csrf']})
-        self.assertEqual(result.status_code, 200, result.text)
-        target = self.root / 'large-wager-restore'
-        (target/'private').mkdir(parents=True)
-        (target/'private/recovery.seed.json').write_bytes(self.client.get('/admin/recovery-backup').data)
-        restored = create_app(target, testing=True)
-        self.addCleanup(restored.extensions['runtime'].store.close)
-        other = restored.test_client()
-        other.set_cookie('rh_raider', client.get_cookie('rh_raider').value)
-        wallet = other.get('/gaming/api/state').json['wallet']
-        self.assertEqual(wallet['balance'], 100000)  # Startup restores the allowance.
-        for key in ('name', 'stats', 'nonce', 'commitment', 'receipts', 'blackjack'):
-            self.assertEqual(wallet[key], result.json['wallet'][key], key)
-        self.assertTrue(verify(wallet['receipts'][0], body['commitment']))
-
-
-class FairMathTests(unittest.TestCase):
-    def test_published_tables_bound_expected_return(self):
-        for game,sizes in [('keno',range(1,11)),('plinko',(8,12,16))]:
-            for size in sizes:
-                for risk in ('low','medium','high'):
-                    values=table(game,size,risk,LEGACY_VERSION)
-                    probabilities=[Fraction(comb(size,i)*comb(40-size,10-i),comb(40,10)) if game=='keno' else Fraction(comb(size,i),2**size) for i in range(size+1)]
-                    self.assertEqual(sum(probabilities),1)
-                    rtp=sum(p*Fraction(v,10000) for p,v in zip(probabilities,values))
-                    self.assertLessEqual(rtp,Fraction(99,100))
-                    self.assertGreaterEqual(rtp,Fraction(9899,10000))
-                    if game=='plinko':self.assertEqual(values,tuple(reversed(values)))
-
-    def test_draw_shapes_are_deterministic_without_duplicate_keno_numbers(self):
-        for n in range(50):
-            base=dict(season='1790719200',client_seed='example',client_salt='a'*32,nonce=n,wager=100)
-            for game,opt in [('keno',dict(picks=[1,2,3],risk='low')),('plinko',dict(rows=16,risk='high')),('dice',dict(chance=50,side='over'))]:
-                receipt=dict(base,game=game,options=opt)
-                result=outcome('ab'*32,receipt)
-                self.assertEqual(result,outcome('ab'*32,receipt))
-                if game=='keno':self.assertEqual(len(set(result['drawn'])),10)
-                elif game=='plinko':self.assertEqual(result['slot'],sum(result['path']))
-                else:self.assertTrue(0<=result['roll']<10000)
-
-if __name__=='__main__':unittest.main()
-```
-
-## `tests/test_username_http.cjs`
-
-```javascript
-/* Real page + both shipped scripts + HTTP + cookie jar. No mocked save API. */
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const path = require("node:path");
-const { spawn } = require("node:child_process");
-const { once } = require("node:events");
-const { JSDOM, CookieJar, VirtualConsole } = require("jsdom");
-
-async function until(check, description) {
-  const deadline = Date.now() + 7000;
-  while (Date.now() < deadline) {
-    if (await check()) return;
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  }
-  throw new Error("Timed out: " + description);
-}
-
-test("username saves through the actual website and persists with real cookies", async (t) => {
-  const python = process.env.RH_TEST_PYTHON || "python";
-  const server = spawn(
-    python,
-    [path.join(__dirname, "serve_game_fixture.py")],
-    {
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  );
-  let output = "",
-    errors = "",
-    processError;
-  const windows = new Set();
-  let pendingRequests = 0;
-  async function close(dom) {
-    if (!windows.has(dom)) return;
-    Object.defineProperty(dom.window.document, "hidden", {
-      value: true,
-      configurable: true,
-    });
-    dom.window.document.dispatchEvent(new dom.window.Event("visibilitychange"));
-    await until(
-      () => pendingRequests === 0,
-      "HTTP requests finish before tab close",
-    );
-    for (let i = 0; i < 4; i++)
-      await new Promise((resolve) => setImmediate(resolve));
-    dom.window.close();
-    windows.delete(dom);
-  }
-  server.stdout.on("data", (chunk) => (output += chunk));
-  server.stderr.on("data", (chunk) => (errors += chunk));
-  server.on("error", (error) => (processError = error));
-  t.after(async () => {
-    for (const dom of windows) await close(dom);
-    if (server.exitCode === null && !processError) {
-      const stopped = once(server, "exit");
-      server.kill();
-      await stopped;
-    }
-  });
-  await until(() => {
-    if (processError) throw processError;
-    if (server.exitCode !== null) throw new Error(errors);
-    return output.includes("\n");
-  }, "fixture starts");
-  const base = "http://127.0.0.1:" + JSON.parse(output.split("\n")[0]).port;
-
-  async function transport(jar, url, options = {}) {
-    const target = new URL(url, base).href;
-    const headers = new Headers(options.headers);
-    const cookie = jar.getCookieStringSync(target);
-    if (cookie) headers.set("Cookie", cookie);
-    pendingRequests++;
-    try {
-      const response = await fetch(target, {
-        ...options,
-        headers,
-        redirect: "manual",
-      });
-      for (const cookie of response.headers.getSetCookie())
-        jar.setCookieSync(cookie, target);
-      await response.clone().arrayBuffer();
-      return response;
-    } finally {
-      pendingRequests--;
-    }
-  }
-  async function page(jar, scripts = true) {
-    const faults = [];
-    const console = new VirtualConsole();
-    console.on("jsdomError", (error) => faults.push(error.message));
-    const dom = await JSDOM.fromURL(base + "/play", {
-      cookieJar: jar,
-      runScripts: scripts ? "dangerously" : "outside-only",
-      resources: scripts ? "usable" : undefined,
-      pretendToBeVisual: true,
-      virtualConsole: console,
-      beforeParse(window) {
-        // Undici requires its own AbortSignal class; this is transport glue,
-        // not a substitute for the real script, request, cookie jar or server.
-        window.AbortController = globalThis.AbortController;
-        window.AbortSignal = globalThis.AbortSignal;
-        window.fetch = (url, options) => transport(jar, url, options);
-      },
-    });
-    windows.add(dom);
-    if (scripts) {
-      await until(
-        () =>
-          dom.window.document
-            .querySelector("#bossConnection")
-            .textContent.startsWith("Updated"),
-        "game scripts start",
-      );
-      assert.deepEqual(faults, []);
-    }
-    return { dom, w: dom.window, doc: dom.window.document, faults };
-  }
-  async function save(p, name) {
-    const input = p.doc.querySelector("#playerUsername");
-    input.value = name;
-    input.dispatchEvent(new p.w.Event("input", { bubbles: true }));
-    p.doc.querySelector("#playerNameForm button[type=submit]").click();
-    try {
-      await until(
-        () => p.doc.querySelector("#playerIdentity").hidden === false,
-        "saved player appears",
-      );
-    } catch (error) {
-      throw new Error(
-        error.message +
-          ": " +
-          JSON.stringify({
-            result: p.doc.querySelector("#playerNameResult").textContent,
-            game: p.doc.querySelector("#bossError").textContent,
-            input: input.value,
-            faults: p.faults,
-            server: errors,
-          }),
-      );
-    }
-    assert.equal(p.doc.querySelector("#playingAs").textContent, name);
-    assert.equal(p.doc.querySelector("#playerNameForm").hidden, true);
-    assert.match(p.doc.querySelector("#playerNameResult").textContent, /Saved/);
-    assert.equal(p.doc.querySelector("#attackButton").disabled, false);
-    assert.deepEqual(p.faults, []);
-  }
-
-  const jar = new CookieJar();
-  const first = await page(jar);
-  // The old release rejects this Save even though the year-long player cookie
-  // is valid. Keep the page open while the independent session is removed.
-  jar.setCookieSync("session=; Max-Age=0; Path=/", base);
-  await save(first, "HTTP Raider");
-  const state = await (await transport(jar, "/play/api/state")).json();
-  assert.equal(state.state.you.display_name, "HTTP Raider");
-  assert.equal(state.player_cookie_ready, true);
-  await close(first.dom);
-  const reload = await page(jar);
-  assert.equal(
-    reload.doc.querySelector("#playingAs").textContent,
-    "HTTP Raider",
-  );
-  assert.equal(reload.doc.querySelector("#playerNameForm").hidden, true);
-  assert.equal(reload.doc.querySelector("#attackButton").disabled, false);
-  reload.doc.querySelector("#attackButton").click();
-  await until(
-    () => reload.doc.querySelector("#yourAttacks").textContent === "1",
-    "saved player can attack",
-  );
-  const afterHit = await (await transport(jar, "/play/api/state")).json();
-  assert.equal(afterHit.state.you.display_name, "HTTP Raider");
-  assert.equal(afterHit.state.you.attacks, 1);
-  assert.equal(afterHit.state.you.can_attack, false);
-
-  // Same display label, same HTTP peer, independent identity and progress.
-  const otherJar = new CookieJar();
-  const other = await page(otherJar);
-  await save(other, "HTTP Raider");
-  const otherState = await (
-    await transport(otherJar, "/play/api/state")
-  ).json();
-  assert.notEqual(otherState.state.you.name, state.state.you.name);
-  assert.equal(otherState.state.you.damage, 0);
-
-  // Exercise the literal native form with no JS at all, including the redirect.
-  const nativeJar = new CookieJar();
-  const native = await page(nativeJar, false);
-  const form = native.doc.querySelector("#playerNameForm");
-  assert.equal(form.method, "post");
-  form.elements.namedItem("username").value = "Native HTTP Raider";
-  const fields = new URLSearchParams(new native.w.FormData(form));
-  nativeJar.setCookieSync("session=; Max-Age=0; Path=/", base);
-  const response = await transport(nativeJar, form.action, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: fields.toString(),
-  });
-  assert.equal(response.status, 303);
-  const confirmed = await page(nativeJar, false);
-  assert.equal(
-    confirmed.doc.querySelector("#playingAs").textContent,
-    "Native HTTP Raider",
-  );
-  assert.equal(confirmed.doc.querySelector("#playerIdentity").hidden, false);
-  assert.equal(confirmed.doc.querySelector("#playerNameForm").hidden, true);
-});
-```
-
-## `tests/test_username_save.py`
-
-```python
-"""Username form, cookie ownership and real persistence regressions."""
-from html.parser import HTMLParser
-import secrets
-import unittest
-
-import test_comfort_update as support
-from boss import validate_boss
-from wager_backend import create_app
-
-
-class NameForm(HTMLParser):
-    def __init__(self, html):
-        super().__init__()
-        self.active = False
-        self.attributes, self.fields = {}, {}
-        self.feed(html)
-
-    def handle_starttag(self, tag, attributes):
-        attrs = dict(attributes)
-        if tag == 'form':
-            self.active = attrs.get('id') == 'playerNameForm'
-            if self.active:
-                self.attributes = attrs
-        if self.active and tag == 'input' and 'name' in attrs:
-            self.fields[attrs['name']] = attrs.get('value', '')
-
-    def handle_endtag(self, tag):
-        if tag == 'form':
-            self.active = False
-
-
-class UsernameSaveTests(unittest.TestCase):
-    setUp = support.ComfortTests.setUp
-    player = support.ComfortTests.player
-    post = support.ComfortTests.post
-    hit = support.ComfortTests.hit
-
-    def save(self, client, value, name):
-        return client.post('/play/api/profile', json={
-            'username': name, 'raid_id': value['state']['raid_id'],
-        }, headers={'X-CSRF-Token': value['player_csrf']})
-
-    def test_actual_html_form_saves_without_javascript_and_survives_reload(self):
-        c = self.app.test_client()
-        form = NameForm(c.get('/play').text)
-        self.assertEqual(form.attributes['method'], 'post')
-        self.assertEqual(form.attributes['action'], '/play/profile')
-        cookie = c.get_cookie('rh_raider').value
-        # This is the browser's native form payload, not a separately invented API request.
-        response = c.post(form.attributes['action'], data={**form.fields, 'username': 'Native Raider'})
-        self.assertEqual(response.status_code, 303)
-        self.assertNotIn('Native', response.headers['Location'])
-        page = c.get(response.headers['Location'])
-        self.assertIn('Playing as <strong id="playingAs">Native Raider</strong>', page.text)
-        self.assertIn('hidden', NameForm(page.text).attributes)
-        self.assertEqual(c.get_cookie('rh_raider').value, cookie)
-        for _ in range(3):
-            self.assertEqual(c.get('/play/api/state').json['state']['you']['display_name'], 'Native Raider')
-        restarted = create_app(self.root, testing=True)
-        same = restarted.test_client()
-        same.set_cookie('rh_raider', cookie)
-        self.assertIn('Native Raider', same.get('/play').text)
-
-    def test_expired_page_session_cannot_break_valid_player_cookie(self):
-        c = self.player()
-        value = c.get('/play/api/state').json
-        cookie = c.get_cookie('rh_raider').value
-        c.delete_cookie('session')
-        self.assertEqual(self.save(c, value, 'Persistent Raider').status_code, 200)
-        c.delete_cookie('session')
-        hit = c.post('/play/api/attack', json={'raid_id': value['state']['raid_id'],
-            'style': 'blade', 'request_id': secrets.token_hex(16)},
-            headers={'X-CSRF-Token': value['player_csrf']})
-        self.assertEqual(hit.status_code, 200)
-        c.delete_cookie('session')
-        recovery = c.post('/play/api/recovery-code', headers={'X-CSRF-Token': value['player_csrf']})
-        self.assertEqual(recovery.status_code, 200)
-        self.assertEqual(c.get_cookie('rh_raider').value, cookie)
-
-    def test_login_rotation_keeps_player_token_but_player_token_cannot_edit_admin(self):
-        c = self.player()
-        value = c.get('/play/api/state').json
-        with c.session_transaction() as session:
-            session.update(user='gingrsnaps', auth_version=1, csrf='rotated-admin-token')
-        self.assertEqual(self.save(c, value, 'Same Browser').status_code, 200)
-        saved = self.b.export()
-        response = c.post('/admin/boss/action', data={'csrf': value['player_csrf'],
-            'action': 'pause', 'raid_id': value['state']['raid_id']})
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(self.b.export(), saved)
-
-    def test_player_tokens_are_browser_bound_and_missing_cookies_are_explained(self):
-        a, b = self.player(), self.player()
-        value = a.get('/play/api/state').json
-        self.assertEqual(self.save(b, value, 'Forged').status_code, 400)
-        bad = {**value, 'player_csrf': '🔥'}
-        self.assertEqual(self.save(a, bad, 'Forged').status_code, 400)
-        a.delete_cookie('rh_raider')
-        response = self.save(a, value, 'Missing Cookie')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json['code'], 'player_cookie_required')
-        self.assertIn('cookie', response.json['error'])
-        self.assertFalse(self.b.export().get('profiles'))
-
-    def test_native_failure_preserves_draft_and_returns_a_working_form(self):
-        c = self.player()
-        form = NameForm(c.get('/play').text)
-        response = c.post('/play/profile', data={**form.fields, 'username': 'Keep my draft', 'csrf': 'expired'})
-        self.assertEqual(response.status_code, 400)
-        repaired = NameForm(response.text)
-        self.assertEqual(repaired.fields['username'], 'Keep my draft')
-        self.assertEqual(repaired.attributes['method'], 'post')
-        self.assertNotIn('hidden', repaired.attributes)
-        self.assertEqual(c.post(repaired.attributes['action'], data=repaired.fields).status_code, 303)
-        value = c.get('/play/api/state').json
-        self.assertEqual(value['state']['you']['display_name'], 'Keep my draft')
-
-    def test_name_save_does_not_depend_on_the_raid_open_when_form_loaded(self):
-        c = self.player()
-        value = c.get('/play/api/state').json
-        self.b.control('restart', value['state']['raid_id'])
-        self.assertEqual(self.save(c, value, 'Next Raid Too').status_code, 200)
-        self.assertEqual(c.get('/play/api/state').json['state']['you']['display_name'], 'Next Raid Too')
-
-    def test_reusing_a_name_cannot_claim_or_change_another_players_progress(self):
-        a = self.player('Same Name')
-        self.hit(a)
-        code = self.post(a, '/play/api/recovery-code').json['code']
-        before = self.b.export()
-        b = self.player('Same Name')
-        av, bv = [c.get('/play/api/state').json['state']['you'] for c in (a, b)]
-        self.assertNotEqual(av['name'], bv['name'])
-        self.assertEqual(bv['damage'], 0)
-        self.assertFalse(bv['recovery_saved'])
-        self.assertTrue(av['recovery_saved'])
-        for key, profile in before['profiles'].items():
-            self.assertEqual(self.b.export()['profiles'][key], profile)
-        self.assertNotIn(code, b.get('/play/api/state').text)
-        self.assertEqual(self.hit(b).status_code, 200)
-        validate_boss(self.b.export())
-        restarted = create_app(self.root, testing=True)
-        self.assertEqual(len(restarted.extensions['boss'].export()['profiles']), 2)
-
-    def test_native_validation_is_escaped_and_does_not_erase_existing_name(self):
-        c = self.player('Existing')
-        form = NameForm(c.get('/play?edit_name=1').text)
-        value = ' <img src=x>\x01 '
-        response = c.post('/play/profile', data={**form.fields, 'username': value})
-        self.assertEqual(response.status_code, 422)
-        self.assertNotIn('<img src=x>', response.text)
-        self.assertIn('&lt;img src=x&gt;', response.text)
-        self.assertEqual(c.get('/play/api/state').json['state']['you']['display_name'], 'Existing')
-
-    def test_recovery_rotates_player_token_to_recovered_identity(self):
-        a = self.player('Owner'); self.hit(a)
-        code = self.post(a, '/play/api/recovery-code').json['code']
-        b = self.player('Other')
-        old = b.get('/play/api/state').json['player_csrf']
-        recovered = self.post(b, '/play/api/recover', code=code).json
-        self.assertNotEqual(recovered['player_csrf'], old)
-        self.assertEqual(self.save(b, recovered, 'Owner').status_code, 200)
-        self.assertEqual(self.save(b, {**recovered, 'player_csrf':old}, 'Other').status_code, 400)
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/test_weekly_history.py`
-
-```python
-"""Calendar, public privacy and persistence tests; never contacts live accounts."""
-import copy
-from datetime import datetime
-import json
-import re
-import time
-import unittest
-from unittest.mock import patch
-
-import test_app
-from integrations import ProviderError
-from race_support import EASTERN
-from storage import Conflict
-from wager_backend import create_app
-from weekly_history import WeeklyHistory, clean_history, completed_weeks
-
-
-def stamp(value):
-    return int(datetime.fromisoformat(value).replace(tzinfo=EASTERN).timestamp())
-
-
-class WeeklyHistoryTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-    action = test_app.AppTests.action
-    schedule = test_app.AppTests.schedule
-    form = test_app.AppTests.form
-
-    def fill(self, now=None, count=30):
-        rows = [test_app.player('HistoryPlayer%03d' % n, str(1000-n)) for n in range(count)]
-        with patch.object(self.r.providers, 'shuffle', return_value=rows) as provider:
-            self.r.history.check(now)
-        return provider
-
-    def test_tuesday_exact_cutoff_and_four_contiguous_completed_weeks(self):
-        before = completed_weeks(stamp('2026-10-06T17:59:59'))
-        after = completed_weeks(stamp('2026-10-06T18:00:00'))
-        self.assertEqual(before[0]['id'], '2026-09-29')
-        self.assertEqual(after[0]['id'], '2026-10-06')
-        self.assertEqual(len(after), 4)
-        for n, week in enumerate(after):
-            for field in ('start_time', 'end_time'):
-                local = datetime.fromtimestamp(week[field], EASTERN)
-                self.assertEqual((local.weekday(), local.hour, local.minute), (1, 18, 0))
-            if n:
-                self.assertEqual(week['end_time'], after[n-1]['start_time'])
-
-    def test_dst_weeks_follow_eastern_wall_time_not_168_fixed_hours(self):
-        for end, hours in [('2026-03-10T18:00', 167), ('2026-11-03T18:00', 169)]:
-            week = completed_weeks(stamp(end))[0]
-            self.assertEqual(week['end_time']-week['start_time'], hours*3600)
-
-    def test_top_25_and_all_public_responses_mask_names_before_delivery(self):
-        provider = self.fill()
-        self.assertEqual(provider.call_count, 4)
-        for call, week in zip(provider.call_args_list, completed_weeks()):
-            self.assertEqual(call.args[0]['start_time'], week['start_time'])
-            self.assertEqual(call.args[0]['end_time'], week['end_time'])
-        guest = self.app.test_client()
-        for url in ('/history', '/history-state'):
-            response = guest.get(url)
-            self.assertEqual(response.status_code, 200)
-            self.assertNotIn('HistoryPlayer', response.text)
-            self.assertNotIn('shuffle_api_key', response.text)
-            self.assertNotIn('raw_wager', response.text)
-            self.assertIn('Hi******', response.text)
-        value = guest.get('/history-state').json
-        self.assertEqual(len(value['weeks']), 4)
-        for week in value['weeks']:
-            self.assertEqual(len(week['rows']), 25)
-            self.assertEqual(week['count'], 30)
-            self.assertEqual([row['rank'] for row in week['rows']], list(range(1, 26)))
-            self.assertEqual(week['rows'][0]['wager'], '$1,000.00')
-            self.assertEqual(week['rows'][-1]['wager'], '$976.00')
-
-    def test_views_and_fresh_cache_never_call_provider(self):
-        self.fill()
-        with patch.object(self.r.providers, 'shuffle', side_effect=AssertionError('Must use cache')):
-            self.r.history.check()
-            weeks = completed_weeks()
-            for week in weeks:
-                response = self.client.get('/history?week='+week['id'])
-                self.assertEqual(response.status_code, 200)
-                self.assertIn('data-selected-week="'+week['id']+'"', response.text)
-                self.assertEqual(self.client.get('/history-state?week='+week['id']).json['selected']['id'], week['id'])
-            self.assertEqual(self.client.get('/history-state?week=bad').json['selected']['id'], weeks[0]['id'])
-
-    def test_rollover_retains_only_last_four_weeks_and_automatically_loads_newest(self):
-        now = stamp('2026-10-06T17:59:59')
-        self.fill(now)
-        with patch.object(self.r.providers, 'shuffle', return_value=[test_app.player()]):
-            self.r.history.check(now+1)
-        self.assertEqual({w['id'] for w in self.r.store.live('weekly_history')['weeks']},
-                         {w['id'] for w in completed_weeks(now+1)})
-        self.assertEqual(self.r.history.public(now=now+1)['selected']['rows'][0]['username'], 'Al******')
-
-    def test_archived_settings_apply_only_to_the_matching_week(self):
-        week = completed_weeks()[0]
-        admin = copy.deepcopy(self.r.admin)
-        old = copy.deepcopy(admin['site_settings'])
-        old.update(start_time=week['start_time'], end_time=week['end_time'])
-        old['prizes']['1'] = '321'
-        admin['race_history'].append(dict(site_settings=old, overrides={'HistoryPlayer000':'5000'}))
-        admin['overrides'] = {'HistoryPlayer001':'99999'}
-        admin['site_settings']['prizes']['1'] = '9999'
-        self.r.commit(admin, self.r.revision)
-        self.fill()
-        value = self.r.history.public()
-        self.assertEqual(value['weeks'][0]['rows'][0]['wager'], '$5,000.00')
-        self.assertEqual(value['weeks'][0]['rows'][0]['prize'], '$321.00')
-        self.assertEqual(value['weeks'][0]['rows'][24]['prize'], '$0.00')
-        self.assertFalse(value['weeks'][1]['prizes_known'])
-        self.assertEqual(value['weeks'][1]['rows'][0]['wager'], '$1,000.00')
-        self.assertEqual(value['weeks'][1]['rows'][0]['prize'], '—')
-
-    def test_failure_retains_results_and_respects_provider_retry(self):
-        # Keep both checks in one completed-week selection, even when this test
-        # runs on a Tuesday. Rollover behavior has its own boundary tests.
-        now = stamp('2026-10-07T12:00:00')
-        self.fill(now)
-        before = self.r.history.public(now=now)['selected']['rows']
-        later = now+86400
-        with patch.object(self.r.providers, 'shuffle', side_effect=ProviderError('secret upstream details', status=429, retry_after=180)) as provider:
-            self.assertEqual(self.r.history.check(later), 180)
-            self.assertEqual(provider.call_count, 1)
-        value = self.r.history.public(now=later)
-        self.assertEqual(value['selected']['rows'], before)
-        self.assertEqual(value['selected']['status'], 'delayed')
-        self.assertNotIn('secret upstream details', json.dumps(value))
-        self.assertEqual(self.r.store.live('weekly_history')['weeks'][0]['retry_at'], later+180)
-
-    def test_missing_and_successfully_empty_are_distinct(self):
-        self.assertEqual(self.r.history.public()['selected']['status'], 'loading')
-        self.assertIsNone(self.r.history.public()['selected']['count'])
-        self.fill(count=0)
-        value = self.r.history.public()['selected']
-        self.assertEqual(value['status'], 'ready')
-        self.assertEqual(value['count'], 0)
-
-    def test_history_save_survives_restart_and_full_private_recovery(self):
-        self.fill()
-        before = self.r.history.public()
-        reloaded = WeeklyHistory(self.r.config, self.r.store, self.r.providers)
-        self.assertEqual(reloaded.public()['weeks'], before['weeks'])
-        response = self.client.get('/admin/recovery-backup')
-        self.assertEqual(len(response.json['weekly_history']['weeks']), 4)
-        target = self.root/'fresh'
-        (target/'private').mkdir(parents=True)
-        (target/'private/recovery.seed.json').write_bytes(response.data)
-        restored = create_app(target, testing=True)
-        runtime = restored.extensions['runtime']
-        try:
-            self.assertEqual(runtime.history.public()['weeks'], before['weeks'])
-            self.assertNotIn('weekly_history', runtime.admin)
-        finally:
-            runtime.store.close()
-
-    def test_configuration_change_during_fetch_cannot_publish_old_results(self):
-        def changed(site):
-            admin = copy.deepcopy(self.r.admin)
-            admin['site_settings']['campaign_code_filter'] = 'other'
-            self.r.commit(admin, self.r.revision)
-            return [test_app.player()]
-        with patch.object(self.r.providers, 'shuffle', side_effect=changed):
-            with self.assertRaises(Conflict):
-                self.r.history.check()
-        self.assertEqual(self.r.history.public()['selected']['rows'], [])
-
-    def test_invalid_recovery_cache_rejected(self):
-        self.fill()
-        saved = self.r.store.live('weekly_history')
-        saved['weeks'][0]['rows'][0]['weighted_wager'] = 'NaN'
-        with self.assertRaises(ValueError):
-            clean_history(saved)
-
-    def test_homepage_health_server_rendered_full_partial_and_empty(self):
-        for hp in (2400000, 765432, 0):
-            admin = self.client.get('/admin/boss/status').json
-            response = self.client.post('/admin/boss/action', data={
-                'csrf':'test-token', 'action':'remaining_health', 'raid_id':admin['state']['raid_id'],
-                'health_revision':admin['state']['health_revision'],
-                'health':str(hp), 'confirm_health':'yes'})
-            self.assertEqual(response.status_code, 303)
-            page = self.client.get('/').text
-            progress = re.search(r'<progress id="inviteHealth"[^>]*>', page).group()
-            self.assertEqual(int(re.search(r'value="([^"]+)"', progress).group(1)), hp)
-            self.assertIn('max="2400000"', progress)
-
-
-class HistoryRecoveryTests(unittest.TestCase):
-    setUp = test_app.AppTests.setUp
-
-    def test_one_bad_window_does_not_starve_other_weeks(self):
-        first=completed_weeks()[0]['end_time']
-        def source(site):
-            if site['end_time']==first: raise ProviderError('do not disclose',status=400)
-            return [test_app.player()]
-        with patch.object(self.r.providers,'shuffle',side_effect=source) as provider:
-            self.r.history.check()
-        self.assertEqual(provider.call_count,4)
-        weeks=self.r.history.public()['weeks']
-        self.assertEqual(weeks[0]['status'],'delayed')
-        self.assertTrue(all(w['status']=='ready' for w in weeks[1:]))
-        private=self.client.get('/admin/diagnostics').json['history']
-        self.assertEqual(private['weeks'][0]['http_status'],400)
-        self.assertIn('date range',private['weeks'][0]['message'])
-        self.assertNotIn('do not disclose',json.dumps(private))
-
-    def test_global_access_error_explains_all_four_weeks_without_four_rejections(self):
-        with patch.object(self.r.providers,'shuffle',side_effect=ProviderError('secret',status=403)) as provider:
-            self.r.history.check()
-        self.assertEqual(provider.call_count,1)
-        self.assertTrue(all(w['status']=='delayed' and 'attention' in w['message'] for w in self.r.history.public()['weeks']))
-        with patch.object(self.r.providers,'shuffle') as provider:
-            self.r.history.request_refresh();self.r.history.check()
-        provider.assert_not_called()
-
-    def test_admin_history_refresh_is_authenticated_csrf_protected_and_queued(self):
-        guest=self.app.test_client()
-        self.assertEqual(guest.post('/admin/history/refresh',headers={'Accept':'application/json'}).status_code,401)
-        self.assertEqual(self.client.post('/admin/history/refresh').status_code,400)
-        with patch.object(self.r.providers,'shuffle',side_effect=AssertionError('Must not block web request')):
-            response=self.client.post('/admin/history/refresh',data={'csrf':'test-token'},headers={'Accept':'application/json'})
-        self.assertEqual(response.status_code,200)
-        self.assertTrue(self.r.history.force)
-        self.assertIn('queued',response.json['message'])
-
-    def test_exact_archived_snapshot_rescued_and_labelled_provisional(self):
-        period=completed_weeks()[0];admin=copy.deepcopy(self.r.admin)
-        site={**admin['site_settings'],'start_time':period['start_time'],'end_time':period['end_time']}
-        from race_support import race_key
-        admin['race_history'].append(dict(site_settings=site,overrides={},leaderboard_snapshots=dict(race_key=race_key(site),updated_at=period['end_time']-10,
-            last_top15=[dict(rank=1,username='PreviousWinner',weighted_wager='500')],prev_top15=[])))
-        self.r.commit(admin,self.r.revision)
-        with patch.object(self.r.providers,'shuffle',side_effect=ProviderError('offline',kind='connection')):
-            self.r.history.check()
-        result=self.r.history.public()['selected']
-        self.assertEqual(result['rows'][0]['username'],'Pr******')
-        self.assertEqual(result['rows'][0]['wager'],'$500.00')
-        self.assertEqual(result['origin'],'snapshot')
-        self.assertEqual(result['status'],'delayed')
-        self.assertIn('Showing saved',result['message'])
-        self.assertIn('provisional',result['message'])
-
-    def test_timeout_attempts_every_week_and_keeps_next_retry_information(self):
-        with patch.object(self.r.providers,'shuffle',side_effect=ProviderError('timeout',kind='timeout')) as provider:
-            self.r.history.check()
-        self.assertEqual(provider.call_count,4)
-        self.assertTrue(all(w['retry_at']>0 for w in self.r.history.public()['weeks']))
-
-
-if __name__ == '__main__':
-    unittest.main()
-```
-
-## `tests/visual_checks.cjs`
-
-```javascript
-/* Real Chromium layout checks + reproducible screenshots, using synthetic data.
-   Optional developer check; neither Node nor Chromium is needed in production. */
-const { chromium } = require("playwright");
-const assert = require("node:assert/strict");
-const path = require("node:path");
-const fs = require("node:fs");
-const { spawn, spawnSync } = require("node:child_process");
-const { once } = require("node:events");
-const output =
-  process.env.RH_VISUAL_OUTPUT || path.join(__dirname, "..", ".visual-checks");
-const flush = (ms) => new Promise((r) => setTimeout(r, ms));
-(async () => {
-  const server = spawn(
-    process.env.RH_TEST_PYTHON || "python",
-    [path.join(__dirname, "serve_gui_fixture.py")],
-    { stdio: ["ignore", "pipe", "pipe"] },
-  );
-  let stdout = "",
-    stderr = "",
-    browser;
-  server.stdout.on("data", (c) => (stdout += c));
-  server.stderr.on("data", (c) => (stderr += c));
-  try {
-    for (let n = 0; n < 100 && !stdout.includes("\n"); n++) {
-      if (server.exitCode !== null) throw Error(stderr);
-      await flush(50);
-    }
-    const base = "http://127.0.0.1:" + JSON.parse(stdout.split("\n")[0]).port;
-    browser = await chromium.launch({
-      headless: true,
-      executablePath: process.env.RH_BROWSER_EXECUTABLE || undefined,
-      args: [
-        "--no-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-      ],
-    });
-    fs.mkdirSync(output, { recursive: true });
-    const context = await browser.newContext({ reducedMotion: "reduce" });
-    await context.addInitScript(() => {
-      Date.now = () => 1791028800000;
-    });
-    const page = await context.newPage();
-    const errors = [];
-    const measurements = [];
-    page.on("pageerror", (e) => errors.push(e.message));
-    for (const [size, width, height] of [
-      ["desktop", 1440, 1000],
-      ["mobile", 390, 844],
-    ]) {
-      await page.setViewportSize({ width, height });
-      for (const percent of [0, 25, 75, 100]) {
-        await context.request.post(base + "/__fixture__/progress/" + percent);
-        await page.goto(base);
-        await page
-          .locator("#invitePercent")
-          .filter({ hasText: (100 - percent).toFixed(2) + "% remaining" })
-          .waitFor();
-        assert.equal(
-          await page
-            .locator("#inviteHealth")
-            .evaluate((el) => (el.value / el.max) * 100),
-          100 - percent,
-        );
-        const geometry = await page.evaluate(() => ({
-          width: document.documentElement.scrollWidth,
-          viewport: innerWidth,
-          leaderboard: document
-            .querySelector("#leaderboard")
-            .getBoundingClientRect().top,
-          nav: [...document.querySelectorAll(".section-nav")].map(
-            (x) => x.getBoundingClientRect().height,
-          ),
-        }));
-        assert.ok(geometry.width <= width, "Homepage overflows " + size);
-        const bossTop = await page.locator('#communityBoss').evaluate(node => node.getBoundingClientRect().top);
-        assert.ok(bossTop < geometry.leaderboard, "Boss above standings");
-        if (size === "mobile")
-          assert.ok(
-            geometry.nav.every((h) => h >= 44),
-            "Mobile navigation tap targets",
-          );
-        for (const href of [
-          "/#leaderboard",
-          "/history",
-          "/play",
-          "/gaming",
-          "https://botrix.live/k/redhunllef/shop",
-          "https://example.test/community",
-        ]) {
-          assert.ok(
-            await page.locator(`.site-header a[href="${href}"]`).isVisible(),
-            `Missing navigation: ${href}`,
-          );
-        }
-        const bar = await page.locator("#inviteHealth").boundingBox();
-        measurements.push({
-          file: `home-${size}-${percent}.png`,
-          bar,
-          percent,
-        });
-        await page.screenshot({
-          path: path.join(output, `home-${size}-${percent}.png`),
-          fullPage: true,
-          animations: "disabled",
-        });
-      }
-      await page.goto(base + "/history");
-      await page.locator("#historyRows tr").nth(24).waitFor();
-      assert.ok(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-        "History page overflows",
-      );
-      if (size === "mobile") {
-        assert.equal(await page.locator("#historyWeeks").isVisible(), false);
-        assert.equal(await page.locator(".history-picker").isVisible(), true);
-        await page.locator("#historyPrevious").click();
-        await page.waitForURL(/week=/);
-        assert.equal(
-          await page.locator("#historyNext").getAttribute("aria-disabled"),
-          null,
-        );
-        const older = await page
-          .locator("#historyWeekSelect option")
-          .last()
-          .getAttribute("value");
-        await page.selectOption("#historyWeekSelect", older);
-        await page.locator(".history-picker button").click();
-        await page.waitForURL("**week=" + older);
-        assert.equal(
-          await page.locator("#historyPrevious").getAttribute("aria-disabled"),
-          "true",
-        );
-      }
-      await page.screenshot({
-        path: path.join(output, `history-${size}.png`),
-        fullPage: true,
-        animations: "disabled",
-      });
-    }
-    await page.setViewportSize({ width: 320, height: 860 });
-    await page.goto(base);
-    assert.ok(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-      "320px page overflows",
-    );
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto(base + "/admin");
-    await page.locator('input[name="username"]').fill("gingrsnaps");
-    await page
-      .locator('input[name="password"]')
-      .fill("visual-fixture-password");
-    await page.locator('button[type="submit"]').click();
-    await page.waitForURL(/tab=|\/admin$/);
-    await page.goto(base + "/admin?tab=boss");
-    await page.locator("#bossNameInput").fill("Ruby Guardian");
-    assert.equal(
-      await page.locator("#bossPreviewName").textContent(),
-      "Ruby Guardian",
-    );
-    await page
-      .locator("#bossAvatarFile")
-      .setInputFiles(path.join(__dirname, "..", "static", "redlogo.png"));
-    await page.waitForFunction(() =>
-      document.getElementById("bossPreviewAvatar").src.startsWith("data:"),
-    );
-    await page.locator("#bossBaseDamage").fill("234");
-    await page.locator('#bossSettingsForm button[type="submit"]').click();
-    await page.locator("#feedback-bossSettingsHeading").waitFor();
-    assert.match(
-      await page.locator("#feedback-bossSettingsHeading").textContent(),
-      /base: 234/,
-    );
-    await page.locator("#bossNameInput").fill("Draft to preserve");
-    const form = page.locator("#bossSettingsForm");
-    await form
-      .locator('input[name="settings_revision"]')
-      .evaluate((el) => (el.value = -1));
-    await form.locator('button[type="submit"]').click();
-    await form.locator("[data-form-feedback].warning").waitFor();
-    assert.equal(
-      await page.locator("#bossNameInput").inputValue(),
-      "Draft to preserve",
-    );
-    assert.match(
-      await form.locator("[data-form-feedback]").textContent(),
-      /Save boss settings:/,
-    );
-    await page.screenshot({
-      path: path.join(output, "admin-boss-feedback.png"),
-      fullPage: true,
-      animations: "disabled",
-    });
-    const games = await context.newPage();
-    games.on("pageerror", (error) => errors.push(error.message));
-    await games.goto(base + "/gaming");
-    await games.locator("#gamingUsername").fill("BrowserRedPlayer");
-    await games.locator("#gamingNameForm button").click();
-    await games.locator("#gamingIdentity").waitFor();
-    assert.equal(
-      await games.locator("#pointsBalance").textContent(),
-      "100,000",
-    );
-    let balance = 100000,
-      lastReceipt;
-    for (const game of ["dice", "keno", "plinko"]) {
-      await context.request.post(base + "/__fixture__/advance");
-      await games.goto(base + "/gaming/" + game);
-      await games.locator("#redWager").fill("125");
-      if (game === "keno")
-        for (const n of [1, 5, 15])
-          await games.locator(`[data-keno="${n}"]`).click();
-      const reply = games.waitForResponse(
-        (r) =>
-          r.url().endsWith("/gaming/api/bet") &&
-          r.request().method() === "POST",
-      );
-      await games.locator("#betButton").click();
-      const response = await reply;
-      assert.equal(response.status(), 200);
-      const value = await response.json();
-      lastReceipt = value.receipt;
-      balance += lastReceipt.net;
-      await games
-        .locator("#betProof")
-        .filter({ hasText: "Verified in your browser" })
-        .waitFor();
-      assert.equal(
-        await games.locator("#pointsBalance").textContent(),
-        balance.toLocaleString("en-US"),
-      );
-      const repeat = await context.request.post(base + "/gaming/api/bet", {
-        data: response.request().postDataJSON(),
-        headers: {
-          "X-CSRF-Token": await games
-            .locator(".gaming-page")
-            .getAttribute("data-csrf"),
-        },
-      });
-      const duplicated = await repeat.json();
-      assert.equal(duplicated.duplicate, true);
-      assert.equal(duplicated.wallet.balance, balance);
-      for (const [size, width, height] of [
-        ["desktop", 1440, 1000],
-        ["mobile", 390, 844],
-      ]) {
-        await games.setViewportSize({ width, height });
-        assert.ok(
-          await games.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-          game + " overflows " + size,
-        );
-        if (game === "keno" && size === "mobile") {
-          assert.ok(
-            (await games.locator('[data-keno="1"]').boundingBox()).height >= 44,
-          );
-        }
-        await games.evaluate(() => {
-          scrollTo({ top: 0, behavior: "instant" });
-          document.activeElement?.blur();
-        });
-        await games.screenshot({
-          path: path.join(output, game + "-" + size + ".png"),
-          fullPage: true,
-          animations: "disabled",
-        });
-      }
-      await games.reload();
-      assert.equal(
-        await games.locator("#pointsBalance").textContent(),
-        balance.toLocaleString("en-US"),
-      );
-    }
-    await games.goto(base + "/gaming");
-    await games.screenshot({
-      path: path.join(output, "gaming-mobile.png"),
-      fullPage: true,
-    });
-    await games.setViewportSize({ width: 1440, height: 1000 });
-    await games.screenshot({
-      path: path.join(output, "gaming-desktop.png"),
-      fullPage: true,
-    });
-    await games.goto(base + "/gaming/fairness");
-    await games.locator("#verifyReceipt").fill(JSON.stringify(lastReceipt));
-    await games.locator("#verifyCommitment").fill(lastReceipt.commitment);
-    await games.locator("#receiptVerifier button").click();
-    await games
-      .locator("#verifyResult")
-      .filter({ hasText: "Verified 1 receipt" })
-      .waitFor();
-    await games.goto(base + "/admin?tab=gaming");
-    for (const game of ["dice", "keno", "plinko"])
-      assert.match(
-        await games.locator("#gamingLeaders-" + game).textContent(),
-        /BrowserRedPlayer/,
-      );
-    await games.screenshot({
-      path: path.join(output, "admin-gaming.png"),
-      fullPage: true,
-    });
-    assert.deepEqual(errors, []);
-    fs.writeFileSync(
-      path.join(output, "progress-measurements.json"),
-      JSON.stringify(measurements),
-    );
-    const pixels = spawnSync(
-      process.env.RH_TEST_PYTHON || "python",
-      [path.join(__dirname, "assert_visual_pixels.py"), output],
-      { encoding: "utf8" },
-    );
-    assert.equal(pixels.status, 0, pixels.stderr || pixels.stdout);
-    console.log(
-      JSON.stringify({
-        passed: true,
-        progress_states: [0, 25, 75, 100],
-        viewports: [1440, 390, 320],
-        screenshots: 20,
-        games_verified: ["dice", "keno", "plinko"],
-        duplicate_wagers_preserved: true,
-        admin_save_and_draft_preservation: true,
-        output,
-      }),
-    );
-  } finally {
-    if (browser) await browser.close();
-    if (server.exitCode === null) {
-      const done = once(server, "exit");
-      server.kill();
-      await done;
-    }
-  }
-})().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
-```
-
-## `tools/deployment_diagnostics.py`
-
-```python
-"""Read-only diagnostics for the deployment archive and its public health routes."""
-import argparse
-import json
-import os
-from pathlib import Path
-import re
-import sys
-import time
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
-
-ROOT = Path(__file__).resolve().parents[1]
-
-def evaluate(root=ROOT):
-    app_spec = (root/'app.yaml').read_text(encoding='utf-8')
-    requirements = (root/'requirements.txt').read_text(encoding='utf-8').splitlines()
-    errors = []
-    if re.search(r'^\s*build_command\s*:', app_spec, re.M):
-        errors.append('app.yaml has a custom build_command; remove redundant pip installs')
-    if not (root/'wager_backend.py').is_file(): errors.append('No wager_backend.py')
-    for asset in ('templates/index.html','templates/admin.html','static/app.js','runtime.txt'):
-        if not (root/asset).is_file(): errors.append('Missing '+asset)
-    if not any(line.startswith('Flask==') for line in requirements): errors.append('Flask pin missing')
-    files = [p for p in root.rglob('*') if p.is_file()]
-    print('Deployment inventory:',len(files),'files,',sum(p.stat().st_size for p in files),'bytes')
-    print('Python target:',(root/'runtime.txt').read_text(encoding='utf-8').strip())
-    print('Custom build command:', 'found' if re.search(r'^\s*build_command\s*:', app_spec, re.M) else 'none')
-    print('Private directory:', 'present (contents never printed)' if (root/'private').is_dir() else 'not included')
-    print('Saved state:', 'present' if (root/'data/state.json').is_file() else 'not included')
-    for error in errors: print('ERROR:',error)
-    return not errors
-
-def probe(url):
-    base = url.rstrip('/')
-    if not base.startswith('https://') and not base.startswith('http://localhost') and not base.startswith('http://127.0.0.1'):
-        print('ERROR: remote URL must use HTTPS',file=sys.stderr); return False
-    result = True
-    for path in ('/healthz','/readyz'):
-        started=time.perf_counter()
-        try:
-            with urlopen(Request(base+path,headers={'User-Agent':'RedHunllef-deploy-diagnostics/1.0'}),timeout=8) as response:
-                payload = response.read(4096)
-                healthy = response.status==200
-                print(path, 'HTTP',response.status,'%.3fs'%(time.perf_counter()-started))
-                try:
-                    obj = json.loads(payload)
-                    print('  ok:',obj.get('ok'),'release:',str(obj.get('release',''))[:100])
-                except ValueError: print('  WARNING: Response was not JSON')
-                result &= healthy
-        except HTTPError as exc:
-            print(path,'HTTP',exc.code,'%.3fs'%(time.perf_counter()-started)); result=False
-        except (URLError,TimeoutError) as exc:
-            print(path,'FAILED:',type(exc).__name__,'%.3fs'%(time.perf_counter()-started)); result=False
-    return result
-
-if __name__=='__main__':
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--url',help='HTTPS base URL of deployed site (optional)')
-    args=parser.parse_args()
-    ok=evaluate()
-    if args.url: ok=probe(args.url) and ok
-    raise SystemExit(0 if ok else 1)
-```
-
-## `tools/verify_redpoints.py`
-
-```python
-"""Optional offline audit, not a server launcher: python tools/verify_redpoints.py receipts.json"""
-import argparse
-import json
-from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from fairness import verify
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Verify RedPoints receipts without contacting a server.')
-    parser.add_argument('file', type=Path)
-    parser.add_argument('--commitment', help='Previously saved commitment; for a single receipt.')
-    args = parser.parse_args()
-    try:
-        values = json.loads(args.file.read_text(encoding='utf-8'))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        parser.error(f'Cannot read receipt JSON: {exc}')
-    values = values if isinstance(values, list) else [values]
-    if not values or args.commitment and len(values) != 1:
-        parser.error('Provide receipts, or one receipt when using --commitment.')
-    checks = []
-    for index, value in enumerate(values, 1):
-        try: passed = verify(value, args.commitment)
-        except (ValueError, KeyError, TypeError): passed = False
-        checks.append(passed)
-        label = value.get('request_id', f'receipt-{index}') if isinstance(value, dict) else f'receipt-{index}'
-        print(('PASS' if passed else 'FAIL') + ' ' + str(label))
-    raise SystemExit(0 if all(checks) else 1)
 ```
 
 ## `wager_backend.py`
 
-```python
+```py
 """RedHunllef's sole launch command: python wager_backend.py.
 
 App construction has no provider requests or hidden worker startup. The main
@@ -25604,7 +19064,7 @@ function binds one production server, then starts the two automatic jobs once.
 from collections import deque
 import copy
 import csv
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from functools import wraps
 import io
@@ -25642,11 +19102,15 @@ from storage import Conflict, StoreError
 from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
 from empiredrop import validate_settings, EDITABLE, schedule as empire_schedule, CODE as EMPIRE_CODE
+from empiredrop_races import RACE_EDITABLE, validate_race_settings
+from empiredrop_features import validate_rewards, rewards_public
+from operations_log import ActivityLog
+from provider_admin import summarize_providers
 from integrations import ProviderError
 from telemetry import Measurements, health_view
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "shuffle":"Shuffle", "empiredrop":"EmpireDrop", "race":"Race", "players":"Players", "boss":"Community boss", "gaming":"Gaming", "settings":"Settings"}
+TABS = {"overview":"Overview", "shuffle":"Shuffle", "empiredrop":"EmpireDrop", "race":"Shuffle race", "players":"Shuffle players", "boss":"Community boss", "gaming":"Gaming", "activity":"Activity & logs", "settings":"Settings"}
 
 
 def account(users, name):
@@ -25672,6 +19136,9 @@ def create_app(root=None, testing=False):
                       MAX_CONTENT_LENGTH=8 * 1024 * 1024, SESSION_COOKIE_HTTPONLY=True,
                       SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=timedelta(hours=12))
     app.extensions["runtime"] = runtime
+    activity = app.extensions["activity"] = ActivityLog()
+    runtime.empiredrop.events = activity
+    runtime.activity_log = activity
     app.extensions["settings"] = config
     measurements = app.extensions['measurements'] = Measurements()
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
@@ -25709,7 +19176,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith(("/play/api/", "/gaming/api/")) or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/healthz", "/readyz"
+            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/admin/operations/events", "/admin/operations/export", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -25768,6 +19235,8 @@ def create_app(root=None, testing=False):
         if request.endpoint not in {'static', 'health', 'ready'}:
             measurements.request(request.endpoint, response.status_code, elapsed)
         if response.status_code >= 500:
+            activity.record('system','error','server_error',http_status=response.status_code,
+                            duration_ms=round(elapsed))
             LOG.error('REQUEST id=%s route=%s status=%s elapsed_ms=%.1f',
                       g.request_id, request.endpoint or 'unmatched', response.status_code, elapsed)
         response.headers.update({"X-Content-Type-Options":"nosniff", "X-Frame-Options":"DENY",
@@ -26236,6 +19705,8 @@ def create_app(root=None, testing=False):
         values['boss'] = boss.summary()
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
+        empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
+        values["providers"] = summarize_providers(values, empire_status)
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
         form.update(start_et=local_input(form["start_time"]), end_et=local_input(form["end_time"]))
@@ -26253,7 +19724,7 @@ def create_app(root=None, testing=False):
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review, admin_receipt=receipt,
                                gaming_grant_id=secrets.token_hex(16),
-                               empire_admin=runtime.empiredrop.private_status(g.admin['site_settings'])), status
+                               empire_admin=empire_status), status
 
     def admin_saved(message, tab, target):
         """A receipt is created only after the state commit succeeds.
@@ -26381,6 +19852,7 @@ def create_app(root=None, testing=False):
         value['boss'] = boss.summary()
         value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
+        value["providers"] = summarize_providers(value, runtime.empiredrop.private_status(g.admin["site_settings"]))
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
         if request.args.get("tab", "players") == "players":
@@ -26402,6 +19874,7 @@ def create_app(root=None, testing=False):
         require_csrf()
         if runtime.started:
             queued = runtime.empiredrop.request_refresh()
+            if queued: activity.record('empiredrop','info','refresh_queued')
             message = ('EmpireDrop refresh requested; check status for the confirmed result.' if queued
                        else 'A refresh was requested recently; the 15-second limit is still active.')
         else:
@@ -26420,7 +19893,13 @@ def create_app(root=None, testing=False):
         if not g.superadmin:
             abort(403)
         try:
-            rows = runtime.empiredrop.fetch(empire_schedule(g.admin))
+            source_mode = runtime.empiredrop._race_settings()['source_mode']
+            if source_mode == 'races':
+                rows, _ = runtime.empiredrop._fetch_races(empire_schedule(g.admin))
+            elif source_mode == 'legacy_window':
+                rows, _ = runtime.empiredrop._fetch_window(empire_schedule(g.admin))
+            else:
+                rows = runtime.empiredrop.fetch(empire_schedule(g.admin))
         except ProviderError as exc:
             # Only our own short safe exception text is exposed; no response body or keys.
             result = {'ok': False, 'kind': exc.kind, 'message': str(exc)[:220]}
@@ -26429,7 +19908,62 @@ def create_app(root=None, testing=False):
             result = {'ok': True, 'kind': 'verified', 'message': 'Authenticated result validated. No standings were changed.',
                       'qualified_players': len(rows)}
             status = 200
+        activity.record('empiredrop','success' if status==200 else 'warning','connection_test',count=len(rows) if status==200 else None,
+                        code=exc.kind if status!=200 and isinstance(exc,ProviderError) else None)
         return jsonify(result), status
+
+    @app.post('/admin/empiredrop/discover')
+    @protected
+    def empire_admin_discover():
+        """Read public-key race catalog; never return credentials or player PII."""
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            return jsonify({'ok':True, **runtime.empiredrop.discover_races()})
+        except ProviderError as exc:
+            return jsonify({'ok':False, 'kind':exc.kind, 'message':str(exc)[:220]}), 422
+
+    @app.post('/admin/empiredrop/probe')
+    @protected
+    def empire_admin_probe():
+        """Return only JSON field names/types to aid correct field mapping."""
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            # The slug can be left empty to use the uniquely active provider race.
+            slug = str((request.get_json(silent=True) or {}).get('slug', '')).strip()
+            if len(slug) > 100: raise ValueError('Invalid slug length.')
+            return jsonify({'ok':True, **runtime.empiredrop.probe_race(slug)})
+        except (ProviderError, ValueError) as exc:
+            return jsonify({'ok':False, 'kind':getattr(exc,'kind','input'), 'message':str(exc)[:220]}), 422
+
+    @app.post('/admin/empiredrop/races/config')
+    @protected
+    def empire_admin_race_config():
+        """Persist race API settings independently of Shuffle and legacy mode."""
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            expected = int(request.form.get('revision', '-1'))
+            if expected != g.revision: raise Conflict('Settings changed. Reload and try again.')
+            # Authentication, endpoint, units and JSON paths are FIXED by the
+            # official OpenAPI 2.0.1. Admins only choose which race to display.
+            values = {
+                'source_mode': request.form.get('source_mode', 'races').strip(),
+                'race_slug': request.form.get('race_slug', '').strip(),
+                'auto_select': request.form.get('auto_select') == 'yes',
+                'race_window_policy': request.form.get('race_window_policy', 'provider').strip(),
+            }
+            candidate = copy.deepcopy(g.admin)
+            candidate['empiredrop_races'] = validate_race_settings(values)
+            runtime.commit(candidate, expected)
+            runtime.empiredrop.request_refresh()
+            activity.record('admin','info','settings_saved',code='empire_settings')
+            return admin_saved('EmpireDrop race API settings saved; a refresh was queued. Verify results before publishing.',
+                               'empiredrop', 'empireRaces')
+        except (ValueError, Conflict) as exc:
+            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc, Conflict) else 422)
 
     @app.post('/admin/empiredrop/schedule')
     @protected
@@ -26455,12 +19989,113 @@ def create_app(root=None, testing=False):
                 raise ValueError('Choose a valid EmpireDrop schedule mode.')
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_race'] = value
+            # Saving local dates activates the explicitly deprecated date-range
+            # endpoint. Modern slug race totals cannot be recounted locally.
+            race_options = validate_race_settings(candidate.get('empiredrop_races', {}))
+            race_options['source_mode'] = 'legacy_window'
+            candidate['empiredrop_races'] = race_options
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
+            activity.record('admin','info','settings_saved',code='empire_schedule')
             return admin_saved('EmpireDrop schedule saved independently of Shuffle.', 'empiredrop', 'empireSchedule')
         except (ValueError, Conflict) as exc:
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
+
+    @app.post('/admin/empiredrop/rewards')
+    @protected
+    def empire_admin_rewards():
+        """Save *independent* locally advertised rank prizes, not payments.
+
+        Never copy Shuffle amounts implicitly, change provider ranking data,
+        or infer that an API prize has been paid. Tied ranks share a local
+        advertised rank prize as documented in the public UI.
+        """
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            expected = int(request.form.get('revision','-1'))
+            if expected != g.revision:
+                raise Conflict('Another administrator changed settings. Reload before saving.')
+            payload = dict(currency=request.form.get('currency','EUR'),
+                           enabled=request.form.get('enabled')=='yes',
+                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,16)})
+            value = validate_rewards(payload)
+            candidate = copy.deepcopy(g.admin)
+            candidate['empiredrop_rewards'] = value
+            runtime.commit(candidate, expected)
+            activity.record('admin','info','settings_saved',code='empire_rewards')
+            return admin_saved('EmpireDrop reward schedule saved. Shuffle prizes were not changed.',
+                               'empiredrop','empireRewards')
+        except (ValueError, Conflict) as exc:
+            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc, Conflict) else 422)
+
+    @app.get('/admin/empiredrop/settings-backup')
+    @protected
+    def empire_settings_backup():
+        """Export ONLY EmpireDrop admin choices. No live keys or player IDs."""
+        if not g.superadmin: abort(403)
+        _, current = runtime.store.admin()
+        document = {
+            'format': 'redhunllef-empiredrop-settings-1',
+            'empiredrop_races': validate_race_settings(current.get('empiredrop_races', {})),
+            'empiredrop_race': copy.deepcopy(current.get('empiredrop_race', {'mode':'weekly'})),
+            'empiredrop_rewards': validate_rewards(current.get('empiredrop_rewards', {})),
+        }
+        activity.record('admin','info','backup_export')
+        return Response(json.dumps(document,indent=2),mimetype='application/json',
+                        headers={'Content-Disposition':'attachment; filename=empiredrop-settings-backup.json'})
+
+    @app.post('/admin/empiredrop/settings-restore')
+    @protected
+    def empire_settings_restore():
+        """Opt-in import of settings ONLY; never replace accounts, games, or keys.
+
+        A successful commit performs the store's ordinary revision-checked save.
+        The separate provider worker then refreshes when its cache permits.
+        """
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            if request.form.get('confirm') != 'yes':
+                raise ValueError('Check the confirmation before importing settings.')
+            expected = int(request.form.get('revision','-1'))
+            if expected != g.revision:
+                raise Conflict('Settings changed. Reload and recheck the import.')
+            upload = request.files.get('settings_file')
+            if upload is None:
+                raise ValueError('Select an EmpireDrop settings JSON file.')
+            try:
+                incoming = json.load(upload)
+            except (ValueError,UnicodeDecodeError):
+                raise ValueError('The selected file is not valid JSON.') from None
+            if not isinstance(incoming,dict) or set(incoming)!={
+                'format','empiredrop_races','empiredrop_race','empiredrop_rewards'} or                incoming.get('format')!='redhunllef-empiredrop-settings-1':
+                raise ValueError('This is not a supported EmpireDrop settings backup.')
+            race = incoming['empiredrop_race']
+            if not isinstance(race,dict) or race.get('mode') not in {'weekly','custom'}:
+                raise ValueError('Invalid EmpireDrop race schedule in backup.')
+            if race['mode']=='custom':
+                start,end = race.get('start_time'),race.get('end_time')
+                if type(start) is not int or type(end) is not int or                    not 0 < start < end <= 4102444799 or end-start>90*86400:
+                    raise ValueError('Invalid custom race dates in backup.')
+                race={'mode':'custom','start_time':start,'end_time':end}
+            else:
+                race={'mode':'weekly'}
+            reward = validate_rewards(incoming['empiredrop_rewards'])
+            opts = validate_race_settings(incoming['empiredrop_races'])
+            candidate = copy.deepcopy(g.admin)
+            candidate.update(empiredrop_races=opts,empiredrop_race=race,
+                             empiredrop_rewards=reward)
+            runtime.commit(candidate,expected,reason='before-empiredrop-settings-restore')
+            runtime.empiredrop.request_refresh()
+            activity.record('admin','info','settings_saved')
+            return admin_saved('EmpireDrop settings restored. Accounts, games, Shuffle and API keys were not changed.',
+                               'empiredrop','empireBackup')
+        except (ValueError,Conflict) as exc:
+            return render_admin('empiredrop',errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc,Conflict) else 422)
 
     @app.post('/admin/empiredrop/keys')
     @protected
@@ -26511,6 +20146,45 @@ def create_app(root=None, testing=False):
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
 
+    @app.get('/admin/operations/events')
+    @protected
+    def operations_events():
+        """Admin-only structured events. No usernames, addresses, keys, or bodies."""
+        try:
+            result = activity.list(request.args.get('service','all'),
+                                   request.args.get('level','all'),request.args.get('limit','100'))
+        except ValueError:
+            return json_error('Choose valid event filters.',422)
+        return jsonify(events=result, summary=activity.summary(request.args.get('service','all'),request.args.get('level','all')),
+                       retention='Last 300 events; reset on server restart')
+
+    @app.get('/admin/operations/export')
+    @protected
+    def operations_export():
+        """Download a minimal, safe operational report, never runtime snapshots."""
+        try:
+            report = activity.export(request.args.get('service','all'),
+                                     request.args.get('level','all'))
+        except ValueError:
+            return json_error('Choose valid event filters.',422)
+        # TXT is convenient when sharing a quick diagnostic excerpt. Both
+        # formats are built exclusively from the allowlisted event schema.
+        if request.args.get('format') == 'txt':
+            lines = ['RedHunllef operational activity (sanitized)',
+                     'Generated: '+report['generated_at'], report['retention'], '']
+            for event in report['events']:
+                lines.append('%s | %-10s | %-7s | %-18s | class=%s | HTTP %s | %s ms | %s entries | %sx' % (
+                    datetime.fromtimestamp(event['at'], timezone.utc).isoformat(),event['service'],event['level'],event['event'],
+                    event.get('code') or '-',
+                    event['http_status'] if event['http_status'] is not None else '-',
+                    event['duration_ms'] if event['duration_ms'] is not None else '-',
+                    event['count'] if event['count'] is not None else '-',
+                    event.get('occurrences', 1)))
+            return Response('\n'.join(lines)+'\n',mimetype='text/plain',
+                            headers={'Content-Disposition':'attachment; filename=redhunllef-operations.txt'})
+        return Response(json.dumps(report,indent=2),mimetype='application/json',
+                        headers={'Content-Disposition':'attachment; filename=redhunllef-operations.json'})
+
     @app.get("/admin/diagnostics")
     @protected
     def diagnostics():
@@ -26537,6 +20211,7 @@ def create_app(root=None, testing=False):
     @app.get("/admin/backup")
     @protected
     def backup():
+        activity.record('admin','info','backup_export')
         return Response(json.dumps(safe_backup(), indent=2), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=redhunllef-race-backup.json"})
 
@@ -26789,6 +20464,10 @@ def create_app(root=None, testing=False):
                 runtime.request_refresh()
                 LOG.info("RACE Published revision %s: %s -> %s; fresh provider checks queued.", runtime.revision,
                          fmt_et(candidate["site_settings"]["start_time"]), fmt_et(candidate["site_settings"]["end_time"]))
+            # One sanitized operational event for the control panel. The detailed
+            # account/adjustment audit remains in the protected persistent audit.
+            if action_name in {'save_race', 'override', 'restore'}:
+                activity.record('admin', 'info', 'settings_saved', code='shuffle_settings')
             LOG.info("ADMIN %s completed.", action_name)
             if action_name == 'save_race':
                 detail = f"Race saved: {candidate['site_settings']['race_title']}. {fmt_et(site['start_time'])} → {fmt_et(site['end_time'])}. Fresh source check queued."
@@ -26865,11 +20544,12 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 ```
 
 ## `weekly_history.py`
 
-```python
+```py
 """Four completed Eastern-time weeks, cached in the existing JSON save.
 
 Only the automatic worker contacts Shuffle. Page views read the cache, so traffic
@@ -26894,7 +20574,8 @@ PROBLEMS = {
     'access': 'Shuffle rejected access. Check the affiliate key and its permissions.',
     'rate_limit': 'Shuffle is rate limiting requests. Waiting for its retry window.',
     'upstream': 'Shuffle returned a server error. Retrying automatically.',
-    'window': 'Shuffle rejected this completed date range. Check affiliate access to historical wagers.',
+    'window': 'Shuffle identified a date validation problem for this completed week.',
+    'bad_request': 'Shuffle rejected a request parameter. The cause may be dates or another API parameter; check the configured endpoint.',
     'connect_timeout': 'Could not connect to Shuffle before the timeout. Check outbound connectivity.',
     'timeout': 'Shuffle did not finish this history query within the allowed time.',
     'connection': 'Could not reach Shuffle. Check DNS, outbound HTTPS, and provider availability.',
@@ -26911,7 +20592,7 @@ def problem(exc):
     if status in (401, 403): kind = 'access'
     elif status == 429: kind = 'rate_limit'
     elif status and status >= 500: kind = 'upstream'
-    elif status == 400: kind = 'window'
+    elif status == 400 and kind not in {'window', 'bad_request'}: kind = 'bad_request'
     if kind not in PROBLEMS: kind = 'unknown'
     return kind, status
 
@@ -27204,5 +20885,5 @@ class WeeklyHistory:
         self.wake_event.set()
         if self.thread:
             self.thread.join(timeout=1)
-```
 
+```

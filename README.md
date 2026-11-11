@@ -1,3 +1,9 @@
+# Unified Admin and Provider Data Quality — November 10, 2026
+
+The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.
+
+> **CURRENT RELEASE (Nov 10, 2026):** EmpireDrop now has independent payouts, admin date controls, masked public usernames, a source-aware countdown, sanitized activity logs, and settings backup/restore. See [the new setup and limitations guide](docs/EMPIREDROP_QOL_WEEKLY_PAYOUTS_2026-11-10.md). Official races use their own EmpireDrop dates; custom/weekly windows use a **deprecated** endpoint that EmpireDrop may remove.
+
 > **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
 
 # RedHunllef — 2026-11-02 EmpireDrop race endpoint update
@@ -291,7 +297,7 @@ browser for development. `RH_SCREENSHOTS` selects a local output directory.
 
 The home page contains independent **Shuffle Top 15** and **EmpireDrop Top 15** boards and sponsor links. The EmpireDrop referral is https://empiredrop.com/c/red and its code is **red**. Admin → Overview is the common control center; Admin → Shuffle and Admin → EmpireDrop are two separate authenticated provider panels. Existing Gaming, Boss, History, prizes and JSON storage remain separate.
 
-**IMPORTANT:** The public EmpireDrop affiliate site does not document its authenticated wager endpoint or the exact signature/header schema. The integration does not guess this API. A blank official endpoint is included by default; EmpireDrop Top 15 stays explicitly unavailable until you configure an official contract in Admin → EmpireDrop. The two production credentials you supplied are in `private/settings.json` by explicit request. The archive is **private**; do not distribute it or put it on public GitHub.
+**Current API:** EmpireDrop OpenAPI v2.0.1 confirms the running-races and slug-detail paths with mandatory X-Public-Key / X-Private-Key headers. A separately offered deprecated time-window path supports weekly/custom dates but can be removed by the provider. The server-side production credentials you supplied remain embedded in this private archive; never publish it or its Git repository. New local EmpireDrop payouts default to unannounced until enabled by an administrator.
 
 See `docs/EMPIREDROP_INTEGRATION.md` and `docs/EMPIREDROP_VALIDATION.md` for exact scope and tests. Run `python -m pip install -r requirements.txt`, then `python wager_backend.py`.
 
@@ -309,3 +315,15 @@ configuration. The provider's authenticated wagering API contract is still
 unverified: do not guess an API URL or publish rankings as live until EmpireDrop
 provides its official endpoint/authentication/field specification. See
 `docs/EMPIREDROP_INTEGRATION.md` and `docs/EMPIREDROP_VALIDATION.md`.
+
+
+## November 10 admin / Shuffle recovery patch
+
+See `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md` for verified findings from
+the operations report and actions for the live DigitalOcean server. The original
+JSON state, accounts, historical race and private settings are preserved.
+
+**Private repository only:** `shuffle_deploy_key.py` and
+`empiredrop_deploy_keys.py` contain live server-only fallback credentials as
+requested. Never publish this repository; encrypted environment variables
+remain the safer long-term option.

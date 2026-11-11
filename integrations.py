@@ -28,6 +28,26 @@ def retry_delay(value):
             return 0
 
 
+def classify_shuffle_bad_request(response):
+    """Classify a Shuffle 400 without logging or returning its raw response.
+
+    The API's error body can contain arbitrary user-controlled text. We only
+    inspect up to 4 KiB for fixed date parameter names; other HTTP 400s are
+    deliberately called bad_request, not misdiagnosed as date errors.
+    """
+    try:
+        fragment = next(iter(response.iter_content(4096)), b'')[:4096]
+        # Strings are used ONLY for allowlisted evidence, never displayed.
+        content = fragment.decode('utf-8', errors='ignore').lower()
+        if any(mark in content for mark in (
+                'starttime', 'endtime', 'start_time', 'end_time',
+                'timestamp', 'date range', 'date_window', 'invalid date')):
+            return 'window'
+    except (TypeError, ValueError, RuntimeError):
+        pass
+    return 'bad_request'
+
+
 class Providers:
     def __init__(self, config):
         self.config, self.local = config, threading.local()
@@ -52,8 +72,17 @@ class Providers:
                 if code in (401, 403):
                     raise ProviderError(f"{service} rejected the credentials or access permissions (HTTP {code}).", status=code, kind="access")
                 if not 200 <= code < 300:
-                    message = "Shuffle rejected the saved race window; check its dates and affiliate configuration." if service == "Shuffle" and code == 400 else f"{service} returned HTTP {code}."
-                    raise ProviderError(message, status=code, kind="window" if code == 400 else "http")
+                    if service == "Shuffle" and code == 400:
+                        category = classify_shuffle_bad_request(response)
+                        # Never surface provider response bodies, request URLs,
+                        # keys, or user-specific fields in errors or logs.
+                        explanation = (
+                            "Shuffle rejected the request's date parameters (HTTP 400). Review the saved race window."
+                            if category == 'window' else
+                            "Shuffle rejected a request parameter (HTTP 400). Check the date range and configured affiliate endpoint."
+                        )
+                        raise ProviderError(explanation, status=400, kind=category)
+                    raise ProviderError(f"{service} returned HTTP {code}.", status=code, kind="http")
                 body = bytearray()
                 deadline = time.monotonic() + max(30, read_timeout)
                 for chunk in response.iter_content(65536):

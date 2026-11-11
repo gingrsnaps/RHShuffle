@@ -6,5 +6,24 @@
     {% if item.action %}<a class="text-link small" href="{{ item.action }}">{{ 'Recovery & storage' if item.key=='storage' else 'View games' if item.key=='games' else 'Connection details' }} →</a>{% endif %}
   </article>{% endfor %}</div>
   <details class="health-measurements"><summary>Recent measurements</summary><div class="health-metrics" id="healthMetrics"></div><p class="small muted">Recent measurements on this server. Request reports contain no player names, IPs, keys or saved game seeds.</p></details>
+  <details class="operations-panel" id="adminOperations" {% if tab=='activity' %}open{% endif %}>
+    <summary><strong>Operational activity</strong> <span class="small muted">Search, filter and export recent provider events</span></summary>
+    <p class="small muted">Recorded events contain only service, time, severity, HTTP status, duration and counts. Logs are held in memory and reset after restart. They are not a permanent audit trail.</p>
+    <div class="ops-summary-grid" aria-label="Recent event totals">
+      <div><span>All events</span><strong id="opsTotalEvents">0</strong></div>
+      <div><span>Successful</span><strong id="opsTotalSuccess">0</strong></div>
+      <div><span>Informational</span><strong id="opsTotalInfo">0</strong></div>
+      <div><span>Warnings</span><strong id="opsTotalWarning">0</strong></div>
+      <div><span>Errors</span><strong id="opsTotalError">0</strong></div>
+    </div>
+    <div class="ops-filters">
+      <div class="field"><label for="opsSource">Service</label><select id="opsSource"><option value="all">All services</option><option value="shuffle">Shuffle</option><option value="empiredrop">EmpireDrop</option><option value="kick">Kick</option><option value="admin">Admin</option><option value="system">System</option><option value="storage">Storage</option></select></div>
+      <div class="field"><label for="opsLevel">Severity</label><select id="opsLevel"><option value="all">All levels</option><option value="success">Success</option><option value="info">Information</option><option value="warning">Warnings</option><option value="error">Errors</option></select></div>
+      <div class="field"><label for="opsSearch">Search visible events</label><input type="search" id="opsSearch" placeholder="Source, HTTP code or event type" autocomplete="off"></div>
+    </div>
+    <div class="button-row ops-buttons"><button type="button" class="button small" id="opsReload">Refresh activity</button><a id="opsExport" class="button small" href="/admin/operations/export">Export JSON</a><a id="opsExportTxt" class="button small" href="/admin/operations/export?format=txt">Export TXT</a></div>
+    <p id="opsMessage" class="small muted" role="status" aria-live="polite">Open this section to load recent activity.</p>
+    <div id="opsEvents" class="operations-events" role="list" aria-label="Recent operational events"></div>
+  </details>
   <p id="healthReportFeedback" class="small" role="status" hidden></p>
 </section>

@@ -1,3 +1,7 @@
+# Unified Admin and Provider Data Quality — November 10, 2026
+
+The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.
+
 > **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
 
 # RedHunllef Release Notes — October 30, 2026
@@ -23,3 +27,14 @@
 - All Jinja source parse checks: completed for templates.
 - Full application suite: **not verified in this sandbox** because Flask/Werkzeug are not installed in the execution environment.
 - Live EmpireDrop requests and actual DigitalOcean deployment: not performed.
+
+## 2026-11-10 · EmpireDrop independent weekly race and QOL update
+
+- Same public username masking as Shuffle (`XX******`); EmpireDrop admin continues to show provider-anonymized usernames.
+- Independent local EmpireDrop per-rank rewards (1–15) with EUR/USD pool and tied-rank split display. Disabled by default until the Superadmin authorizes amounts. No payment automation.
+- Admin custom and Tuesday 6 PM Eastern schedules activate the provider's **deprecated** timestamp leaderboard endpoint. Official race mode continues using slug-defined provider dates. Do not claim that custom dates alter an official partner race.
+- Matching public countdown, payout column, source freshness, and four cached race snapshots.
+- Pretty protected operational activity viewer, service/severity filters, JSON/TXT exports, and EmpireDrop health card.
+- EmpireDrop-only versioned settings export/import, with CSRF, revision and confirmation guards.
+- Added `tests/test_empiredrop_qol.py`; all existing gameplay and Shuffle source modules preserved.
+- Details: `docs/EMPIREDROP_QOL_WEEKLY_PAYOUTS_2026-11-10.md`.

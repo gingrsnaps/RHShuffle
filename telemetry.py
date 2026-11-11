@@ -87,6 +87,19 @@ def health_view(runtime, measurements, status):
                           last_success=last, last_check=job.get('attempt_at', 0),
                           last_change=job.get('changed_at', 0), next_check=job.get('next_check', 0),
                           action='/admin?tab=settings#diagnostics'))
+    # EmpireDrop is an independent source with provider-controlled cache TTL.
+    empire = runtime.empiredrop.private_status()
+    age = time.time() - (empire.get('updated_at') or 0) if empire.get('updated_at') else None
+    interval = max(60, int(empire.get('refresh_interval') or 300))
+    failed = bool(empire.get('error')) or not empire.get('running')
+    state = 'warning' if failed or age is None or age > interval*2+60 else 'good'
+    cards.append(dict(key='empiredrop',label='EmpireDrop',state=state,
+                      status='Connected' if state=='good' else 'Needs attention',
+                      detail=('Latest verified ranking is delayed; the last good board stays visible.' if state=='warning'
+                              else 'Provider cache respected; automatic race updates running.'),
+                      last_success=empire.get('updated_at') or 0,
+                      last_check=empire.get('attempt_at') or 0,
+                      action='/admin?tab=empiredrop'))
     cards.append(dict(key='games', label='Games', state='good' if probe['ok'] else 'error',
                       status='Ready to save play' if probe['ok'] else 'Saving unavailable',
                       detail='Results are acknowledged after their save completes. Retry receipts prevent duplicate bets.',

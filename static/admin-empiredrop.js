@@ -4,7 +4,7 @@
   if (!document.getElementById('empireAdminTitle')) return;
   const id = x => document.getElementById(x);
   let pending = false, expired = false;
-  const fmt = t => t ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'}).format(new Date(t*1000)) + ' ET' : 'Not yet verified';
+  const fmt = t => t ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short'}).format(new Date(t*1000)) : 'Not yet verified';
   const render = data => {
     if (expired) return;
     id('empireAdminStatus').textContent = data.label || 'Awaiting verified EmpireDrop data';
@@ -18,16 +18,17 @@
     const body = document.createDocumentFragment();
     (Array.isArray(data.rows) ? data.rows.slice(0,15) : []).forEach(r => {
       const tr = document.createElement('tr');
-      for (const v of [String(r.rank).padStart(2,'0'), r.username, r.wager]) {
+      for (const v of [String(r.rank).padStart(2,'0'), r.username, r.user_id || '—', r.wager, r.prize || '—']) {
         const td = document.createElement('td'); td.textContent = String(v ?? ''); tr.appendChild(td);
       }
       body.appendChild(tr);
     });
     if (!body.childNodes.length) {
-      const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 3;
+      const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 5;
       td.textContent = 'No ranked players returned for this race. A closed race or a new race may return an empty ranking.'; tr.appendChild(td); body.appendChild(tr);
     }
     id('empireAdminRows').replaceChildren(body);
+    filterEmpirePlayers();
   };
   const clear = () => {
     expired = true; id('empireAdminRows').replaceChildren();
@@ -91,3 +92,35 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
   window.setInterval(poll, 15000);
 })();
+
+/* Prize preview is purely client-side: saving still validates all 15 amounts server-side. */
+(() => {
+  const form = document.querySelector('form[action="/admin/empiredrop/rewards"]');
+  if (!form) return;
+  const output = document.getElementById('empireRewardTotal');
+  function preview() {
+    let total = 0;
+    for (let i=1;i<=15;i++) {
+      const input = form.querySelector(`[name="prize_${i}"]`);
+      const n = Number(input?.value);
+      if (!Number.isFinite(n) || n<0) { output.textContent = 'Check amount for place '+i;return; }
+      total += n;
+    }
+    const currency = form.querySelector('[name="currency"]').value;
+    output.textContent = new Intl.NumberFormat('en-US', {style:'currency',currency}).format(total);
+  }
+  form.addEventListener('input',preview);form.addEventListener('change',preview);preview();
+})();
+
+/* Local search over the admin-only provider names and stable public IDs. */
+function filterEmpirePlayers() {
+  const input = document.getElementById('empireAdminSearch');
+  const body = document.getElementById('empireAdminRows');
+  if (!input || !body) return;
+  const q = input.value.trim().toLocaleLowerCase();
+  for (const tr of body.querySelectorAll('tr')) {
+    tr.hidden = q !== '' && !tr.textContent.toLocaleLowerCase().includes(q);
+  }
+}
+// The common admin-providers.js controller attaches the input event.
+// filterEmpirePlayers() is still used after each live table refresh.

@@ -1,0 +1,7 @@
+{# The central view is purpose-built for nontechnical admins. No provider calls. #}
+<section class="panel form-panel admin-activity-page">
+  <div class="section-title"><div><p class="eyebrow">ADMINISTRATION · OPERATIONS</p><h2>Activity &amp; diagnostics</h2><p class="muted">See when sources last worked, what changed, and what needs attention.</p></div>
+  <a class="button small" href="/admin/diagnostics">Download source report</a></div>
+  {% include 'admin_health.html' %}
+  <p class="small muted">Reports are server-generated and contain only operational status and counters. Provider payloads, credentials and player names are excluded.</p>
+</section>

@@ -22,7 +22,8 @@ PROBLEMS = {
     'access': 'Shuffle rejected access. Check the affiliate key and its permissions.',
     'rate_limit': 'Shuffle is rate limiting requests. Waiting for its retry window.',
     'upstream': 'Shuffle returned a server error. Retrying automatically.',
-    'window': 'Shuffle rejected this completed date range. Check affiliate access to historical wagers.',
+    'window': 'Shuffle identified a date validation problem for this completed week.',
+    'bad_request': 'Shuffle rejected a request parameter. The cause may be dates or another API parameter; check the configured endpoint.',
     'connect_timeout': 'Could not connect to Shuffle before the timeout. Check outbound connectivity.',
     'timeout': 'Shuffle did not finish this history query within the allowed time.',
     'connection': 'Could not reach Shuffle. Check DNS, outbound HTTPS, and provider availability.',
@@ -39,7 +40,7 @@ def problem(exc):
     if status in (401, 403): kind = 'access'
     elif status == 429: kind = 'rate_limit'
     elif status and status >= 500: kind = 'upstream'
-    elif status == 400: kind = 'window'
+    elif status == 400 and kind not in {'window', 'bad_request'}: kind = 'bad_request'
     if kind not in PROBLEMS: kind = 'unknown'
     return kind, status
 

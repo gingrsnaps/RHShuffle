@@ -6,7 +6,7 @@ function binds one production server, then starts the two automatic jobs once.
 from collections import deque
 import copy
 import csv
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from functools import wraps
 import io
@@ -45,11 +45,14 @@ from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
 from empiredrop import validate_settings, EDITABLE, schedule as empire_schedule, CODE as EMPIRE_CODE
 from empiredrop_races import RACE_EDITABLE, validate_race_settings
+from empiredrop_features import validate_rewards, rewards_public
+from operations_log import ActivityLog
+from provider_admin import summarize_providers
 from integrations import ProviderError
 from telemetry import Measurements, health_view
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "shuffle":"Shuffle", "empiredrop":"EmpireDrop", "race":"Race", "players":"Players", "boss":"Community boss", "gaming":"Gaming", "settings":"Settings"}
+TABS = {"overview":"Overview", "shuffle":"Shuffle", "empiredrop":"EmpireDrop", "race":"Shuffle race", "players":"Shuffle players", "boss":"Community boss", "gaming":"Gaming", "activity":"Activity & logs", "settings":"Settings"}
 
 
 def account(users, name):
@@ -75,6 +78,9 @@ def create_app(root=None, testing=False):
                       MAX_CONTENT_LENGTH=8 * 1024 * 1024, SESSION_COOKIE_HTTPONLY=True,
                       SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=timedelta(hours=12))
     app.extensions["runtime"] = runtime
+    activity = app.extensions["activity"] = ActivityLog()
+    runtime.empiredrop.events = activity
+    runtime.activity_log = activity
     app.extensions["settings"] = config
     measurements = app.extensions['measurements'] = Measurements()
     boss = app.extensions["boss"] = CommunityBoss(runtime.store)
@@ -112,7 +118,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith(("/play/api/", "/gaming/api/")) or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/healthz", "/readyz"
+            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/admin/operations/events", "/admin/operations/export", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -171,6 +177,8 @@ def create_app(root=None, testing=False):
         if request.endpoint not in {'static', 'health', 'ready'}:
             measurements.request(request.endpoint, response.status_code, elapsed)
         if response.status_code >= 500:
+            activity.record('system','error','server_error',http_status=response.status_code,
+                            duration_ms=round(elapsed))
             LOG.error('REQUEST id=%s route=%s status=%s elapsed_ms=%.1f',
                       g.request_id, request.endpoint or 'unmatched', response.status_code, elapsed)
         response.headers.update({"X-Content-Type-Options":"nosniff", "X-Frame-Options":"DENY",
@@ -639,6 +647,8 @@ def create_app(root=None, testing=False):
         values['boss'] = boss.summary()
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
+        empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
+        values["providers"] = summarize_providers(values, empire_status)
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
         form.update(start_et=local_input(form["start_time"]), end_et=local_input(form["end_time"]))
@@ -656,7 +666,7 @@ def create_app(root=None, testing=False):
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review, admin_receipt=receipt,
                                gaming_grant_id=secrets.token_hex(16),
-                               empire_admin=runtime.empiredrop.private_status(g.admin['site_settings'])), status
+                               empire_admin=empire_status), status
 
     def admin_saved(message, tab, target):
         """A receipt is created only after the state commit succeeds.
@@ -784,6 +794,7 @@ def create_app(root=None, testing=False):
         value['boss'] = boss.summary()
         value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
+        value["providers"] = summarize_providers(value, runtime.empiredrop.private_status(g.admin["site_settings"]))
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
         if request.args.get("tab", "players") == "players":
@@ -805,6 +816,7 @@ def create_app(root=None, testing=False):
         require_csrf()
         if runtime.started:
             queued = runtime.empiredrop.request_refresh()
+            if queued: activity.record('empiredrop','info','refresh_queued')
             message = ('EmpireDrop refresh requested; check status for the confirmed result.' if queued
                        else 'A refresh was requested recently; the 15-second limit is still active.')
         else:
@@ -823,8 +835,11 @@ def create_app(root=None, testing=False):
         if not g.superadmin:
             abort(403)
         try:
-            if runtime.empiredrop._race_settings()['source_mode'] == 'races':
+            source_mode = runtime.empiredrop._race_settings()['source_mode']
+            if source_mode == 'races':
                 rows, _ = runtime.empiredrop._fetch_races(empire_schedule(g.admin))
+            elif source_mode == 'legacy_window':
+                rows, _ = runtime.empiredrop._fetch_window(empire_schedule(g.admin))
             else:
                 rows = runtime.empiredrop.fetch(empire_schedule(g.admin))
         except ProviderError as exc:
@@ -835,6 +850,8 @@ def create_app(root=None, testing=False):
             result = {'ok': True, 'kind': 'verified', 'message': 'Authenticated result validated. No standings were changed.',
                       'qualified_players': len(rows)}
             status = 200
+        activity.record('empiredrop','success' if status==200 else 'warning','connection_test',count=len(rows) if status==200 else None,
+                        code=exc.kind if status!=200 and isinstance(exc,ProviderError) else None)
         return jsonify(result), status
 
     @app.post('/admin/empiredrop/discover')
@@ -883,6 +900,7 @@ def create_app(root=None, testing=False):
             candidate['empiredrop_races'] = validate_race_settings(values)
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
+            activity.record('admin','info','settings_saved',code='empire_settings')
             return admin_saved('EmpireDrop race API settings saved; a refresh was queued. Verify results before publishing.',
                                'empiredrop', 'empireRaces')
         except (ValueError, Conflict) as exc:
@@ -913,12 +931,113 @@ def create_app(root=None, testing=False):
                 raise ValueError('Choose a valid EmpireDrop schedule mode.')
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_race'] = value
+            # Saving local dates activates the explicitly deprecated date-range
+            # endpoint. Modern slug race totals cannot be recounted locally.
+            race_options = validate_race_settings(candidate.get('empiredrop_races', {}))
+            race_options['source_mode'] = 'legacy_window'
+            candidate['empiredrop_races'] = race_options
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
+            activity.record('admin','info','settings_saved',code='empire_schedule')
             return admin_saved('EmpireDrop schedule saved independently of Shuffle.', 'empiredrop', 'empireSchedule')
         except (ValueError, Conflict) as exc:
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
+
+    @app.post('/admin/empiredrop/rewards')
+    @protected
+    def empire_admin_rewards():
+        """Save *independent* locally advertised rank prizes, not payments.
+
+        Never copy Shuffle amounts implicitly, change provider ranking data,
+        or infer that an API prize has been paid. Tied ranks share a local
+        advertised rank prize as documented in the public UI.
+        """
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            expected = int(request.form.get('revision','-1'))
+            if expected != g.revision:
+                raise Conflict('Another administrator changed settings. Reload before saving.')
+            payload = dict(currency=request.form.get('currency','EUR'),
+                           enabled=request.form.get('enabled')=='yes',
+                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,16)})
+            value = validate_rewards(payload)
+            candidate = copy.deepcopy(g.admin)
+            candidate['empiredrop_rewards'] = value
+            runtime.commit(candidate, expected)
+            activity.record('admin','info','settings_saved',code='empire_rewards')
+            return admin_saved('EmpireDrop reward schedule saved. Shuffle prizes were not changed.',
+                               'empiredrop','empireRewards')
+        except (ValueError, Conflict) as exc:
+            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc, Conflict) else 422)
+
+    @app.get('/admin/empiredrop/settings-backup')
+    @protected
+    def empire_settings_backup():
+        """Export ONLY EmpireDrop admin choices. No live keys or player IDs."""
+        if not g.superadmin: abort(403)
+        _, current = runtime.store.admin()
+        document = {
+            'format': 'redhunllef-empiredrop-settings-1',
+            'empiredrop_races': validate_race_settings(current.get('empiredrop_races', {})),
+            'empiredrop_race': copy.deepcopy(current.get('empiredrop_race', {'mode':'weekly'})),
+            'empiredrop_rewards': validate_rewards(current.get('empiredrop_rewards', {})),
+        }
+        activity.record('admin','info','backup_export')
+        return Response(json.dumps(document,indent=2),mimetype='application/json',
+                        headers={'Content-Disposition':'attachment; filename=empiredrop-settings-backup.json'})
+
+    @app.post('/admin/empiredrop/settings-restore')
+    @protected
+    def empire_settings_restore():
+        """Opt-in import of settings ONLY; never replace accounts, games, or keys.
+
+        A successful commit performs the store's ordinary revision-checked save.
+        The separate provider worker then refreshes when its cache permits.
+        """
+        require_csrf()
+        if not g.superadmin: abort(403)
+        try:
+            if request.form.get('confirm') != 'yes':
+                raise ValueError('Check the confirmation before importing settings.')
+            expected = int(request.form.get('revision','-1'))
+            if expected != g.revision:
+                raise Conflict('Settings changed. Reload and recheck the import.')
+            upload = request.files.get('settings_file')
+            if upload is None:
+                raise ValueError('Select an EmpireDrop settings JSON file.')
+            try:
+                incoming = json.load(upload)
+            except (ValueError,UnicodeDecodeError):
+                raise ValueError('The selected file is not valid JSON.') from None
+            if not isinstance(incoming,dict) or set(incoming)!={
+                'format','empiredrop_races','empiredrop_race','empiredrop_rewards'} or                incoming.get('format')!='redhunllef-empiredrop-settings-1':
+                raise ValueError('This is not a supported EmpireDrop settings backup.')
+            race = incoming['empiredrop_race']
+            if not isinstance(race,dict) or race.get('mode') not in {'weekly','custom'}:
+                raise ValueError('Invalid EmpireDrop race schedule in backup.')
+            if race['mode']=='custom':
+                start,end = race.get('start_time'),race.get('end_time')
+                if type(start) is not int or type(end) is not int or                    not 0 < start < end <= 4102444799 or end-start>90*86400:
+                    raise ValueError('Invalid custom race dates in backup.')
+                race={'mode':'custom','start_time':start,'end_time':end}
+            else:
+                race={'mode':'weekly'}
+            reward = validate_rewards(incoming['empiredrop_rewards'])
+            opts = validate_race_settings(incoming['empiredrop_races'])
+            candidate = copy.deepcopy(g.admin)
+            candidate.update(empiredrop_races=opts,empiredrop_race=race,
+                             empiredrop_rewards=reward)
+            runtime.commit(candidate,expected,reason='before-empiredrop-settings-restore')
+            runtime.empiredrop.request_refresh()
+            activity.record('admin','info','settings_saved')
+            return admin_saved('EmpireDrop settings restored. Accounts, games, Shuffle and API keys were not changed.',
+                               'empiredrop','empireBackup')
+        except (ValueError,Conflict) as exc:
+            return render_admin('empiredrop',errors={'empiredrop':str(exc)},
+                                status=409 if isinstance(exc,Conflict) else 422)
 
     @app.post('/admin/empiredrop/keys')
     @protected
@@ -969,6 +1088,45 @@ def create_app(root=None, testing=False):
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
 
+    @app.get('/admin/operations/events')
+    @protected
+    def operations_events():
+        """Admin-only structured events. No usernames, addresses, keys, or bodies."""
+        try:
+            result = activity.list(request.args.get('service','all'),
+                                   request.args.get('level','all'),request.args.get('limit','100'))
+        except ValueError:
+            return json_error('Choose valid event filters.',422)
+        return jsonify(events=result, summary=activity.summary(request.args.get('service','all'),request.args.get('level','all')),
+                       retention='Last 300 events; reset on server restart')
+
+    @app.get('/admin/operations/export')
+    @protected
+    def operations_export():
+        """Download a minimal, safe operational report, never runtime snapshots."""
+        try:
+            report = activity.export(request.args.get('service','all'),
+                                     request.args.get('level','all'))
+        except ValueError:
+            return json_error('Choose valid event filters.',422)
+        # TXT is convenient when sharing a quick diagnostic excerpt. Both
+        # formats are built exclusively from the allowlisted event schema.
+        if request.args.get('format') == 'txt':
+            lines = ['RedHunllef operational activity (sanitized)',
+                     'Generated: '+report['generated_at'], report['retention'], '']
+            for event in report['events']:
+                lines.append('%s | %-10s | %-7s | %-18s | class=%s | HTTP %s | %s ms | %s entries | %sx' % (
+                    datetime.fromtimestamp(event['at'], timezone.utc).isoformat(),event['service'],event['level'],event['event'],
+                    event.get('code') or '-',
+                    event['http_status'] if event['http_status'] is not None else '-',
+                    event['duration_ms'] if event['duration_ms'] is not None else '-',
+                    event['count'] if event['count'] is not None else '-',
+                    event.get('occurrences', 1)))
+            return Response('\n'.join(lines)+'\n',mimetype='text/plain',
+                            headers={'Content-Disposition':'attachment; filename=redhunllef-operations.txt'})
+        return Response(json.dumps(report,indent=2),mimetype='application/json',
+                        headers={'Content-Disposition':'attachment; filename=redhunllef-operations.json'})
+
     @app.get("/admin/diagnostics")
     @protected
     def diagnostics():
@@ -995,6 +1153,7 @@ def create_app(root=None, testing=False):
     @app.get("/admin/backup")
     @protected
     def backup():
+        activity.record('admin','info','backup_export')
         return Response(json.dumps(safe_backup(), indent=2), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=redhunllef-race-backup.json"})
 
@@ -1247,6 +1406,10 @@ def create_app(root=None, testing=False):
                 runtime.request_refresh()
                 LOG.info("RACE Published revision %s: %s -> %s; fresh provider checks queued.", runtime.revision,
                          fmt_et(candidate["site_settings"]["start_time"]), fmt_et(candidate["site_settings"]["end_time"]))
+            # One sanitized operational event for the control panel. The detailed
+            # account/adjustment audit remains in the protected persistent audit.
+            if action_name in {'save_race', 'override', 'restore'}:
+                activity.record('admin', 'info', 'settings_saved', code='shuffle_settings')
             LOG.info("ADMIN %s completed.", action_name)
             if action_name == 'save_race':
                 detail = f"Race saved: {candidate['site_settings']['race_title']}. {fmt_et(site['start_time'])} → {fmt_et(site['end_time'])}. Fresh source check queued."

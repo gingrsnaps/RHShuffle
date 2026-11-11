@@ -1,3 +1,11 @@
+# Unified Admin and Provider Data Quality — November 10, 2026
+
+The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.
+
+**Deployment:** use the repository root, blank custom Build Command, `python wager_backend.py` as Run Command, port 8080, `/healthz`, and one instance. Source ZIPs include existing private settings as requested; Git ignores private files. Back up live JSON state first.
+
+> **CURRENT RELEASE (Nov 10, 2026):** EmpireDrop now has independent payouts, admin date controls, masked public usernames, a source-aware countdown, sanitized activity logs, and settings backup/restore. See [the new setup and limitations guide](docs/EMPIREDROP_QOL_WEEKLY_PAYOUTS_2026-11-10.md). Official races use their own EmpireDrop dates; custom/weekly windows use a **deprecated** endpoint that EmpireDrop may remove.
+
 > **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
 
 # DigitalOcean App Platform — build and deploy fix
@@ -101,3 +109,15 @@ but returns unhealthy, check the port and `/healthz` route.
 The EmpireDrop race adapter is unchanged from the previous release. Its
 external response mapping and live authentication are not verified by this
 packaging/deployment change.
+
+
+## November 10 admin / Shuffle recovery patch
+
+See `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md` for verified findings from
+the operations report and actions for the live DigitalOcean server. The original
+JSON state, accounts, historical race and private settings are preserved.
+
+**Private repository only:** `shuffle_deploy_key.py` and
+`empiredrop_deploy_keys.py` contain live server-only fallback credentials as
+requested. Never publish this repository; encrypted environment variables
+remain the safer long-term option.

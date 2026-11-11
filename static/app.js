@@ -134,6 +134,26 @@
     d.setUTCDate(d.getUTCDate() + days);
     return d.toISOString().slice(0, 16);
   }
+  // Construct the current Tuesday 6 PM -> Tuesday 6 PM window in Eastern
+  // *wall time*, not UTC. The Python server resolves EST/EDT at save time,
+  // avoiding a one-hour drift when daylight saving changes.
+  function currentEasternWeek() {
+    const current = new Date(easternInput(Date.now()) + "Z");
+    const start = new Date(current);
+    const elapsed = (current.getUTCDay() - 2 + 7) % 7;
+    start.setUTCDate(start.getUTCDate() - elapsed);
+    start.setUTCHours(18, 0, 0, 0);
+    if (start > current) start.setUTCDate(start.getUTCDate() - 7);
+    const startText = start.toISOString().slice(0, 16);
+    return [startText, daysAfter(startText, 7)];
+  }
+  id("currentWeek")?.addEventListener("click", () => {
+    const [start, end] = currentEasternWeek();
+    id("f-start_et").value = start;
+    id("f-end_et").value = end;
+    id("f-start_et").dispatchEvent(new Event("input", { bubbles: true }));
+    toast("Current Eastern Time week prepared. Review and confirm before publishing.");
+  });
   id("startNow")?.addEventListener("click", () => {
     id("f-start_et").value = easternInput(Date.now());
     id("f-end_et").value = daysAfter(id("f-start_et").value, 7);
@@ -148,7 +168,14 @@
         (new Date(end.value + "Z") - new Date(start.value + "Z")) / 86400000,
       ) || 7,
     );
-    start.value = end.value || easternInput(Date.now());
+    const now = easternInput(Date.now());
+    if (!end.value || end.value < now) {
+      // Avoid generating another already-expired race from an old backup.
+      const [, currentEnd] = currentEasternWeek();
+      start.value = currentEnd;
+    } else {
+      start.value = end.value;
+    }
     end.value = daysAfter(start.value, duration);
     start.dispatchEvent(new Event("input", { bubbles: true }));
     toast("Draft prepared. Review the dates before saving.");
@@ -503,6 +530,7 @@
     if (isAdmin) {
       jobs = value.jobs || {};
       if (value.health) globalThis.RedHealth?.render(value.health);
+      if (value.providers) globalThis.RedProviderCards?.render(value);
       if (value.boss) globalThis.RedHealth?.renderBoss(value.boss);
       if (value.checkpoint && id("recoveryReminder")) {
         id("recoveryReminder").hidden = !value.checkpoint.changes;

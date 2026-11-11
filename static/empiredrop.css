@@ -5,7 +5,7 @@
 .provider-tabs [role="tab"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .empire-sponsor .sponsor-symbol { color: #ffb6bf; background: #361622; }
 .empire-podium { margin-top: 20px; }
-.empire-podium .podium-values { grid-template-columns: 1fr; }
+.empire-podium .podium-values { grid-template-columns: 1fr 1fr; }
 .empire-podium .podium-name { min-height: 1.2em; }
 #empireBoard .section-title { margin-top: 20px; }
 #empireBoard .leaderboard-foot { margin-bottom: 30px; }
@@ -20,3 +20,13 @@
 /* Only the selected provider's race schedule is visible. */
 #shuffleRaceClock[hidden], #empireRaceClock[hidden] {display:none!important}
 #empireRaceClock .clock {font-size:clamp(1.1rem,2vw,1.5rem);white-space:normal}
+
+/* EmpireDrop now mirrors Shuffle's two-column wager/prize presentation. */
+#empireBoard .public-table td:last-child {font-variant-numeric:tabular-nums}
+#empireBoard .podium-values small {line-height:1.2}
+#empireBoard .podium-values strong {overflow-wrap:anywhere}
+@media (max-width:520px){.empire-podium .podium-values{grid-template-columns:1fr 1fr}}
+
+.empire-history-list{display:grid;gap:8px}
+.empire-history-row{padding:12px;border:1px solid var(--line);border-radius:10px;display:grid;gap:5px}
+.empire-history-row small{color:var(--muted)}

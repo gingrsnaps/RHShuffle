@@ -26,6 +26,7 @@ LOG = logging.getLogger('redhunllef.empiredrop.races')
 API_ORIGIN = 'https://api.empiredrop.com'
 LIST_PATH = '/api/v1/affiliate-partner/races'
 DETAIL_PATH = '/api/v1/affiliate-partner/races/{slug}'
+LEGACY_PATH = '/api/v1/race/affiliates/{publicKey}'  # Deprecated: explicit dates only
 # Compatibility alias for historical code/tests. Never used as discovery.
 DISCOVER_PATH = LIST_PATH
 SLUG = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$')
@@ -75,7 +76,7 @@ def validate_race_settings(candidate):
         if key in candidate:
             settings[key] = candidate[key]
     settings['source_mode'] = str(settings['source_mode']).lower()
-    if settings['source_mode'] not in ('races', 'legacy'):
+    if settings['source_mode'] not in ('races', 'legacy', 'legacy_window'):
         raise ValueError('Choose the official race API or legacy integration.')
     settings['race_slug'] = str(settings['race_slug']).strip()
     if settings['race_slug'] and not SLUG.fullmatch(settings['race_slug']):
@@ -226,7 +227,9 @@ def normalize_race(payload, settings=None):
                 raise ProviderError('Ranking unit differs from race.currency.', kind='format')
             display = _amount(total, currency)
         # The provider already anonymizes user.name. Never show Steam IDs.
-        output.append({'rank': rank, 'username': username.strip(), 'wager': display})
+        # Public projections strip user_id; it remains valuable to admins
+        # because EmpireDrop anonymizes the name before sending it.
+        output.append({'rank': rank, 'username': username.strip(), 'user_id':user_id, 'wager': display})
     limit = race.get('ranks_limit')
     if type(limit) is int and limit >= 0 and len(output) > limit:
         raise ProviderError('Ranking contains more players than race.ranks_limit.', kind='format')
@@ -240,7 +243,7 @@ class RaceAPI:
         self.credentials = credentials
         self.requester = requester or requests
 
-    def _get(self, suffix):
+    def _get(self, suffix, *, params=None, deprecated=False):
         public = str(self.credentials.get('empiredrop_public_key') or '').strip()
         secret = str(self.credentials.get('empiredrop_private_key') or '').strip()
         if not public or not secret:
@@ -248,12 +251,15 @@ class RaceAPI:
         headers = {
             'Accept': 'application/json',
             'User-Agent': 'RedHunllef-EmpireDrop-OpenAPI-2.0.1',
-            'X-Public-Key': public,
             'X-Private-Key': secret,
         }
+        # OpenAPI marks the deprecated path as ApiKeyAuth (private header only).
+        # The identifier is already in that endpoint's URL path.
+        if not deprecated:
+            headers['X-Public-Key'] = public
         try:
             # Only hard-coded provider origin and path prefixes can receive keys.
-            with self.requester.get(API_ORIGIN + suffix, headers=headers,
+            with self.requester.get(API_ORIGIN + suffix, headers=headers, params=params,
                                     timeout=(5, 20), stream=True,
                                     allow_redirects=False) as response:
                 code = response.status_code
@@ -305,3 +311,42 @@ class RaceAPI:
             'race': keys_only(payload.get('race', {})),
             'mapping_warning': '',
         }
+
+    def legacy_window(self, start, end):
+        """Deprecated endpoint: explicitly scoped Unix UTC timestamp window.
+
+        Current slug-based races cannot change their official dates. This is
+        provided as an opt-in compatibility path for custom/weekly schedules.
+        Do not mistake the returned rankings for official active race results.
+        """
+        public = str(self.credentials.get('empiredrop_public_key') or '').strip()
+        if not public or not 0 < int(start) < int(end):
+            raise ProviderError('A public key and valid start/end dates are required.',kind='configuration')
+        return self._get(LEGACY_PATH.format(publicKey=quote(public, safe='')),
+                         params={'start_timestamp': int(start), 'end_timestamp': int(end)},
+                         deprecated=True)
+
+
+def normalize_legacy_window(payload, start, end):
+    """Normalize the documented deprecated ranking[].currency shape.
+
+    rank/total/user are identical to the modern ranking shape, except for
+    currency instead of unit. Retain the provider's displayed rank and avoid
+    guessing monetary units from total_value (which is formatted text).
+    """
+    if not isinstance(payload,dict) or not isinstance(payload.get('ranking'),list):
+        raise ProviderError('Deprecated race API must return ranking[].',kind='format')
+    ranking = payload['ranking']
+    units = {r.get('currency') for r in ranking if isinstance(r,dict)}
+    if len(units)>1:
+        raise ProviderError('Deprecated ranking contains mixed currencies.',kind='format')
+    currency = next(iter(units),'EUR')
+    if currency not in CURRENCY_DECIMALS:
+        raise ProviderError('Unsupported currency in deprecated ranking.',kind='format')
+    translated = [{**r,'unit':r.get('currency')} for r in ranking]
+    race = {'name':'Custom EmpireDrop wager race','slug':'date-window',
+            'engine':'RANKING','type':'WAGER','currency':currency,
+            'ranks_limit':max(15,len(translated)),
+            'cache_duration':payload.get('cache_duration',300),
+            'is_active':True}
+    return normalize_race({'race':race,'ranking':translated}),race

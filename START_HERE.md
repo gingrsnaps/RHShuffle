@@ -1,3 +1,9 @@
+# Unified Admin and Provider Data Quality — November 10, 2026
+
+The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.
+
+> **CURRENT RELEASE (Nov 10, 2026):** EmpireDrop now has independent payouts, admin date controls, masked public usernames, a source-aware countdown, sanitized activity logs, and settings backup/restore. See [the new setup and limitations guide](docs/EMPIREDROP_QOL_WEEKLY_PAYOUTS_2026-11-10.md). Official races use their own EmpireDrop dates; custom/weekly windows use a **deprecated** endpoint that EmpireDrop may remove.
+
 > **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
 
 > **DigitalOcean App Platform:** This ZIP is flat-root. Do NOT upload the ZIP as a file in GitHub. Extract it, commit the root-level code, and read [DEPLOY_DIGITALOCEAN.md](DEPLOY_DIGITALOCEAN.md). The App Platform build command must be blank; `python -m pip install -r requirements.txt` below is for local usage only.
@@ -89,3 +95,15 @@ RedPoints are play-only and separate from Botrix/Shuffle balances. Each round
 publishes a seed commitment and then reveals a verifiable receipt. Full rules and
 limits: `docs/REDPOINTS.md`. Setup/recovery: `README.md`. Complete code in separate
 blocks: `FILE_STRUCTURE.md`.
+
+
+## November 10 admin / Shuffle recovery patch
+
+See `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md` for verified findings from
+the operations report and actions for the live DigitalOcean server. The original
+JSON state, accounts, historical race and private settings are preserved.
+
+**Private repository only:** `shuffle_deploy_key.py` and
+`empiredrop_deploy_keys.py` contain live server-only fallback credentials as
+requested. Never publish this repository; encrypted environment variables
+remain the safer long-term option.
