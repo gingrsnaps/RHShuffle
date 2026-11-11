@@ -1,3 +1,11 @@
+## 2026-11-11 — EmpireDrop public leaderboard rendering hotfix
+
+- Fixed payout-rendering temporal-dead-zone error which stopped public EmpireDrop standings after position one when prizes were unannounced.
+- Added server-rendered masked names and wagers to the initial public page for all returned positions.
+- Clarified official `ranks_limit` and preserved provider-tied ranks.
+- Added tests covering the exact 10-player screenshot, enabled/disabled payouts, refreshes and escaped HTML.
+- No changes to provider API calls, keys, saved data, Shuffle, gaming or boss. See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md`.
+
 ## 2026-11-11 — EmpireDrop race slug recovery
 
 - Recover an out-of-date selected race slug only when automatic selection is enabled and EmpireDrop lists exactly one active WAGER/RANKING race.

@@ -67,24 +67,52 @@
     // rank; map by displayed POSITION rather than rank, or ties disappear.
     const rows = Array.isArray(board.rows) ? board.rows.slice(0, 15) : [];
     const metric = board.race_meta?.metric || 'Wagered';
+
+    // Read the independently configured EmpireDrop prize schedule BEFORE
+    // rendering player slots. Previously `configured` was accessed inside
+    // this loop before its `const` declaration (temporal dead zone). When
+    // payouts were not announced, a ReferenceError stopped the entire render
+    // after writing the first player's name and wager. Admin still showed
+    // every player because its renderer does not use this payout loop.
+    const rewards = board.prizes || {};
+    const configured = rewards.enabled === true;
+    const providerLimit = Number(board.race_meta?.ranks_limit);
+    const hasProviderLimit = Number.isInteger(providerLimit) && providerLimit > 0;
+    const displayLimit = hasProviderLimit ? Math.min(15, providerLimit) : 15;
+
     document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
       node.textContent = 'EmpireDrop ' + metric.toLowerCase();
     });
-    for (let rank=1; rank<=15; rank++) {
-      const r = rows[rank - 1];
-      const name = document.querySelector(rank<=3 ? `[data-empire-name="${rank}"]` : `[data-empire-row-name="${rank}"]`);
-      const amount = document.querySelector(rank<=3 ? `[data-empire-wager="${rank}"]` : `[data-empire-row-wager="${rank}"]`);
-      if (name) name.textContent = r?.username || 'Open position';
-      const place = id('empireBoard')?.querySelector?.(`[data-empire-place="${rank}"]`);
-      if (place) place.textContent = String(r?.rank || rank).padStart(2, '0');
+    // The official API can return fewer than 15 places (race.ranks_limit).
+    // Clarify that positions the provider does not expose are not vacant.
+    const coverage = id('empireRankingCoverage');
+    if (coverage) {
+      coverage.textContent = hasProviderLimit && providerLimit < 15
+        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–15 for this race.`
+        : `Showing ${rows.length} verified ${rows.length === 1 ? 'player' : 'players'} from EmpireDrop.`;
+    }
+    for (let position=1; position<=15; position++) {
+      // Position is the position in the returned array, not necessarily the
+      // provider rank: tied players can both be rank 2 (then rank 4).
+      const r = rows[position - 1];
+      const unreported = !r && position > displayLimit;
+      const name = document.querySelector(position<=3 ? `[data-empire-name="${position}"]` : `[data-empire-row-name="${position}"]`);
+      const amount = document.querySelector(position<=3 ? `[data-empire-wager="${position}"]` : `[data-empire-row-wager="${position}"]`);
+      if (name) name.textContent = r?.username || (unreported ? 'Not reported by EmpireDrop' : 'Open position');
+      const place = id('empireBoard')?.querySelector?.(`[data-empire-place="${position}"]`);
+      if (place) place.textContent = String(r?.rank ?? position).padStart(2, '0');
       if (amount) amount.textContent = r?.wager || '—';
-      const prize = document.querySelector(rank<=3 ? `[data-empire-prize="${rank}"]` : `[data-empire-row-prize="${rank}"]`);
-      if (prize) prize.textContent = r?.prize && r.prize !== '—' ? r.prize :
-        configured ? (rewards.formatted?.[String(rank)] || '—') : 'Not announced';
+      const prize = document.querySelector(position<=3 ? `[data-empire-prize="${position}"]` : `[data-empire-row-prize="${position}"]`);
+      if (prize) {
+        // The server has already allocated provider-rank prizes and split
+        // tied places; prefer that verified value over a local fallback.
+        const serverPrize = r?.prize;
+        const prizeRank = String(r?.rank ?? position);
+        prize.textContent = serverPrize && serverPrize !== '—' ? serverPrize :
+          configured ? (rewards.formatted?.[prizeRank] || '—') : 'Not announced';
+      }
     }
     // Independent site-managed EmpireDrop payout pool, never Shuffle's.
-    const rewards = board.prizes || {};
-    const configured = rewards.enabled === true;
     if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
     if (id('empireChecked')) id('empireChecked').textContent = board.updated_at ? 'Last verified: '+date(board.updated_at) : 'Not yet verified';

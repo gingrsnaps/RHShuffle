@@ -1,6 +1,6 @@
-# RedHunllef complete commented source reference (private keys excluded)
-Full source and snapshots are in the ZIP. Server credential fallback modules are intentionally not reproduced here.
-See `docs/EMPIREDROP_SLUG_RECOVERY_2026-11-11.md` for changes and instructions.
+# RedHunllef complete commented source reference (production keys excluded)
+All runtime files and historical snapshots are included in the full archive. Secret fallback modules are intentionally omitted from this text reference.
+See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md` for the diagnosed bug and change notes.
 
 ## `abuse_guard.py`
 
@@ -1188,7 +1188,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.11-empire-slug-recovery-v5"
+RELEASE = "2026.11.11-empire-public-render-v6"
 INTERVAL = 60
 
 
@@ -9695,24 +9695,52 @@ function filterEmpirePlayers() {
     // rank; map by displayed POSITION rather than rank, or ties disappear.
     const rows = Array.isArray(board.rows) ? board.rows.slice(0, 15) : [];
     const metric = board.race_meta?.metric || 'Wagered';
+
+    // Read the independently configured EmpireDrop prize schedule BEFORE
+    // rendering player slots. Previously `configured` was accessed inside
+    // this loop before its `const` declaration (temporal dead zone). When
+    // payouts were not announced, a ReferenceError stopped the entire render
+    // after writing the first player's name and wager. Admin still showed
+    // every player because its renderer does not use this payout loop.
+    const rewards = board.prizes || {};
+    const configured = rewards.enabled === true;
+    const providerLimit = Number(board.race_meta?.ranks_limit);
+    const hasProviderLimit = Number.isInteger(providerLimit) && providerLimit > 0;
+    const displayLimit = hasProviderLimit ? Math.min(15, providerLimit) : 15;
+
     document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
       node.textContent = 'EmpireDrop ' + metric.toLowerCase();
     });
-    for (let rank=1; rank<=15; rank++) {
-      const r = rows[rank - 1];
-      const name = document.querySelector(rank<=3 ? `[data-empire-name="${rank}"]` : `[data-empire-row-name="${rank}"]`);
-      const amount = document.querySelector(rank<=3 ? `[data-empire-wager="${rank}"]` : `[data-empire-row-wager="${rank}"]`);
-      if (name) name.textContent = r?.username || 'Open position';
-      const place = id('empireBoard')?.querySelector?.(`[data-empire-place="${rank}"]`);
-      if (place) place.textContent = String(r?.rank || rank).padStart(2, '0');
+    // The official API can return fewer than 15 places (race.ranks_limit).
+    // Clarify that positions the provider does not expose are not vacant.
+    const coverage = id('empireRankingCoverage');
+    if (coverage) {
+      coverage.textContent = hasProviderLimit && providerLimit < 15
+        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–15 for this race.`
+        : `Showing ${rows.length} verified ${rows.length === 1 ? 'player' : 'players'} from EmpireDrop.`;
+    }
+    for (let position=1; position<=15; position++) {
+      // Position is the position in the returned array, not necessarily the
+      // provider rank: tied players can both be rank 2 (then rank 4).
+      const r = rows[position - 1];
+      const unreported = !r && position > displayLimit;
+      const name = document.querySelector(position<=3 ? `[data-empire-name="${position}"]` : `[data-empire-row-name="${position}"]`);
+      const amount = document.querySelector(position<=3 ? `[data-empire-wager="${position}"]` : `[data-empire-row-wager="${position}"]`);
+      if (name) name.textContent = r?.username || (unreported ? 'Not reported by EmpireDrop' : 'Open position');
+      const place = id('empireBoard')?.querySelector?.(`[data-empire-place="${position}"]`);
+      if (place) place.textContent = String(r?.rank ?? position).padStart(2, '0');
       if (amount) amount.textContent = r?.wager || '—';
-      const prize = document.querySelector(rank<=3 ? `[data-empire-prize="${rank}"]` : `[data-empire-row-prize="${rank}"]`);
-      if (prize) prize.textContent = r?.prize && r.prize !== '—' ? r.prize :
-        configured ? (rewards.formatted?.[String(rank)] || '—') : 'Not announced';
+      const prize = document.querySelector(position<=3 ? `[data-empire-prize="${position}"]` : `[data-empire-row-prize="${position}"]`);
+      if (prize) {
+        // The server has already allocated provider-rank prizes and split
+        // tied places; prefer that verified value over a local fallback.
+        const serverPrize = r?.prize;
+        const prizeRank = String(r?.rank ?? position);
+        prize.textContent = serverPrize && serverPrize !== '—' ? serverPrize :
+          configured ? (rewards.formatted?.[prizeRank] || '—') : 'Not announced';
+      }
     }
     // Independent site-managed EmpireDrop payout pool, never Shuffle's.
-    const rewards = board.prizes || {};
-    const configured = rewards.enabled === true;
     if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
     if (id('empireChecked')) id('empireChecked').textContent = board.updated_at ? 'Last verified: '+date(board.updated_at) : 'Not yet verified';
@@ -19082,10 +19110,18 @@ def health_view(runtime, measurements, status):
   <div class="section-title"><div><p class="eyebrow">EMPIREDROP · CODE RED</p><h3>EmpireDrop leaderboard<span class="accent">.</span></h3></div><a class="button" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">Join with code Red ↗</a></div>
   <p class="small muted">Each site has its own race, standings, and prizes.</p>
   <p id="empireMessage" class="notice" role="status">{{ data.empiredrop.label }}</p><p id="empirePrizeNote" class="small muted">Prize amounts are set by the site administrator. A listed prize is not a payment confirmation. Tied players share the prize assigned to their rank.</p>
+  {# Server-render verified standings so a future JavaScript exception never
+     turns a populated race into an empty first paint. The live client still
+     updates these same data-empire-* slots after each successful poll. #}
+  {% set empire_rows = data.empiredrop.rows %}
+  {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 15)|int or 15 %}
   <div class="empire-podium podium" id="empirePodium" aria-label="EmpireDrop top three">
-  {% for n in [2,1,3] %}<article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">Open position</strong><div class="podium-values"><div><small><span data-empire-metric>EMPIREDROP WAGER</span></small><strong data-empire-wager="{{ n }}">—</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ data.empiredrop.prizes.formatted[n|string] if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></div></div></article>{% endfor %}
+  {% for n in [2,1,3] %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}
+  <article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</strong><div class="podium-values"><div><small><span data-empire-metric>EMPIREDROP WAGER</span></small><strong data-empire-wager="{{ n }}">{{ r.wager if r else '—' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</strong></div></div></article>
+  {% endfor %}
   </div>
-  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,16) %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</td><td data-empire-row-name="{{ n }}">Open position</td><td class="number" data-empire-row-wager="{{ n }}">—</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ data.empiredrop.prizes.formatted[n|string] if data.empiredrop.prizes.enabled else 'Not announced' }}</td></tr>{% endfor %}</tbody></table></div>
+  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,16) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
+  <p id="empireRankingCoverage" class="small muted" aria-live="polite">{% if empire_limit < 15 %}Showing {{ empire_rows|length }} of {{ empire_limit }} official positions. EmpireDrop does not expose places {{ empire_limit + 1 }}–15 for this race.{% else %}Showing {{ empire_rows|length }} verified players from EmpireDrop.{% endif %}</p>
   <p class="leaderboard-foot">Names masked · updates follow EmpireDrop's API cache · <span id="empireChecked">Waiting for a confirmed update</span></p>
   <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><p class="small muted">Saved snapshots from this server, not official payout confirmations. Four completed races maximum.</p><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
 </div>

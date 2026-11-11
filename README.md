@@ -1,3 +1,7 @@
+## November 11, 2026 — EmpireDrop public-display hotfix
+
+Admin had the correct provider data but the public renderer crashed after the first name because payout variables were read before initialization. Fixed and covered by front-end/first-paint tests. See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md`.
+
 # Unified Admin and Provider Data Quality — November 10, 2026
 
 The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.

@@ -1,3 +1,7 @@
+## Latest: EmpireDrop public standings rendering fix
+
+See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md` for the confirmed root cause and deployment steps. The public page now renders all returned positions with or without announced local prizes. The provider may cap official rankings below 15.
+
 # Unified Admin and Provider Data Quality — November 10, 2026
 
 The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.11-empire-slug-recovery-v5"
+RELEASE = "2026.11.11-empire-public-render-v6"
 INTERVAL = 60
 
 
