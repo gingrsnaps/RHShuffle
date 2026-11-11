@@ -22,7 +22,7 @@
       recovery.textContent = data.selection_warning || '';
     }
     const body = document.createDocumentFragment();
-    (Array.isArray(data.rows) ? data.rows.slice(0,15) : []).forEach(r => {
+    (Array.isArray(data.rows) ? data.rows.slice(0,10) : []).forEach(r => {
       const tr = document.createElement('tr');
       for (const v of [String(r.rank).padStart(2,'0'), r.username, r.user_id || '—', r.wager, r.prize || '—']) {
         const td = document.createElement('td'); td.textContent = String(v ?? ''); tr.appendChild(td);
@@ -130,14 +130,14 @@
   window.setInterval(poll, 15000);
 })();
 
-/* Prize preview is purely client-side: saving still validates all 15 amounts server-side. */
+/* Prize preview is purely client-side: saving validates all ten amounts server-side. */
 (() => {
   const form = document.querySelector('form[action="/admin/empiredrop/rewards"]');
   if (!form) return;
   const output = document.getElementById('empireRewardTotal');
   function preview() {
     let total = 0;
-    for (let i=1;i<=15;i++) {
+    for (let i=1;i<=10;i++) {
       const input = form.querySelector(`[name="prize_${i}"]`);
       const n = Number(input?.value);
       if (!Number.isFinite(n) || n<0) { output.textContent = 'Check amount for place '+i;return; }

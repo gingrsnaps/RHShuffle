@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.11-empire-public-render-v6"
+RELEASE = "2026.11.11-empire-top10-refresh-v8"
 INTERVAL = 60
 
 

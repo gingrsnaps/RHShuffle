@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.11-empire-public-render-v6",
+  "release": "2026.11.11-empire-top10-refresh-v8",
   "entry_point": "python wager_backend.py",
   "source": "User-supplied EmpireDrop Partner Public API OpenAPI v2.0.1",
   "private_config_included": true,
@@ -18,7 +18,7 @@
   "api_origin": "https://api.empiredrop.com",
   "deprecation_note": "/api/v1/race/affiliates/{publicKey} is deprecated and unused by official race mode",
   "credential_note": "Production keys in private/settings.json and server-only empiredrop_deploy_keys.py; use a private repository",
-  "release_note": "Fix EmpireDrop public renderer stopping after first player when unannounced payout variables were referenced before initialization; add server-rendered first paint and 10/15-player regressions.",
+  "release_note": "EmpireDrop Top 10, independent 10-place prizes, actual last-success and next-check countdown; Shuffle unchanged.",
   "date_window_deprecation": "The custom-week mode uses deprecated /api/v1/race/affiliates/{publicKey}; official race mode remains recommended.",
   "live_shuffle_connection_verified": false,
   "bundled_state_is_historical_snapshot": true

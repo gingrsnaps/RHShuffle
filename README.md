@@ -1,3 +1,11 @@
+## Latest — EmpireDrop Top 10 and refresh status
+
+EmpireDrop public/Admin now show 10 ranks, a 10-place prize pool, and a verified last-update/next-check timer. Shuffle stays Top 15. See `docs/EMPIREDROP_TOP10_REFRESH_2026-11-11.md`.
+
+## Latest: consistent EmpireDrop public names
+
+Names such as `s********z` display as `s•******`, because the API masks the second character. See `docs/EMPIREDROP_PUBLIC_MASK_CONSISTENCY_2026-11-11.md`.
+
 ## November 11, 2026 — EmpireDrop public-display hotfix
 
 Admin had the correct provider data but the public renderer crashed after the first name because payout variables were read before initialization. Fixed and covered by front-end/first-paint tests. See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md`.

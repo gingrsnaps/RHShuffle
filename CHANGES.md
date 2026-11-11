@@ -1,3 +1,13 @@
+## 2026-11-11 — EmpireDrop Top 10, verified refresh countdown
+
+EmpireDrop now uses 10 publicly visible positions and 10 independent payout places, alongside the same refreshed-at status as Shuffle. Older 15-place payout settings migrate safely. See `docs/EMPIREDROP_TOP10_REFRESH_2026-11-11.md`.
+
+## 2026-11-11 — EmpireDrop public username mask consistency
+
+- Replaced provider-masked prefix asterisks with a clear `•` placeholder so all public usernames contain two prefix slots and exactly six trailing asterisks.
+- Preserved the original provider-anonymized names and public player IDs in Admin; no provider API, Shuffle, payout, or storage changes.
+- Added 10 screenshot-pattern regressions and public/history projection checks. See `docs/EMPIREDROP_PUBLIC_MASK_CONSISTENCY_2026-11-11.md`.
+
 ## 2026-11-11 — EmpireDrop public leaderboard rendering hotfix
 
 - Fixed payout-rendering temporal-dead-zone error which stopped public EmpireDrop standings after position one when prizes were unannounced.

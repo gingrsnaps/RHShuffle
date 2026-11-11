@@ -1,4 +1,4 @@
-/* Public EmpireDrop Top 15: no credentials and no direct provider calls.
+/* Public EmpireDrop Top 10: no credentials and no direct provider calls.
  * Only /public-state (the server's sanitized projection) is rendered here.
  */
 (() => {
@@ -25,8 +25,11 @@
     }
     if (id('shuffleRaceClock')) id('shuffleRaceClock').hidden = isEmpire();
     if (id('empireRaceClock')) id('empireRaceClock').hidden = !isEmpire();
-    const status = document.querySelector('#leaderboard > .section-title .source-status');
-    if (status) status.hidden = isEmpire();
+    const shuffleStatus = id('shuffleSourceStatus');
+    if (shuffleStatus) shuffleStatus.hidden = isEmpire();
+    const empireStatus = id('empireSourceStatus');
+    if (empireStatus) empireStatus.hidden = !isEmpire();
+    if (isEmpire()) updateRefreshStatus();
   }
   function select(tab, focus=false) {
     // Capture Shuffle's latest text before switching *away*.
@@ -58,6 +61,7 @@
   function render(board) {
     if (!board || !Array.isArray(board.rows)) return;
     latest = board;
+    if (Number.isFinite(Number(board.server_time))) dateOffset = Number(board.server_time) - Date.now()/1000;
     // The regular source poll may update Shuffle's title while EmpireDrop is selected.
     if (board.shuffle_site) {
       shuffleTitle = String(board.shuffle_site.race_title || shuffleTitle);
@@ -65,7 +69,7 @@
     }
     // Standings are ordered by the provider. Two users can share the same
     // rank; map by displayed POSITION rather than rank, or ties disappear.
-    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 15) : [];
+    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 10) : [];
     const metric = board.race_meta?.metric || 'Wagered';
 
     // Read the independently configured EmpireDrop prize schedule BEFORE
@@ -78,20 +82,20 @@
     const configured = rewards.enabled === true;
     const providerLimit = Number(board.race_meta?.ranks_limit);
     const hasProviderLimit = Number.isInteger(providerLimit) && providerLimit > 0;
-    const displayLimit = hasProviderLimit ? Math.min(15, providerLimit) : 15;
+    const displayLimit = hasProviderLimit ? Math.min(10, providerLimit) : 10;
 
     document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
       node.textContent = 'EmpireDrop ' + metric.toLowerCase();
     });
-    // The official API can return fewer than 15 places (race.ranks_limit).
+    // The official API can return fewer than 10 places (race.ranks_limit).
     // Clarify that positions the provider does not expose are not vacant.
     const coverage = id('empireRankingCoverage');
     if (coverage) {
-      coverage.textContent = hasProviderLimit && providerLimit < 15
-        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–15 for this race.`
-        : `Showing ${rows.length} verified ${rows.length === 1 ? 'player' : 'players'} from EmpireDrop.`;
+      coverage.textContent = hasProviderLimit && providerLimit < 10
+        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–10 for this race.`
+        : `Showing ${rows.length} of 10 leaderboard positions${hasProviderLimit && providerLimit > 10 ? ` (Top 10 of ${providerLimit} supplied by EmpireDrop)` : ''}.`;
     }
-    for (let position=1; position<=15; position++) {
+    for (let position=1; position<=10; position++) {
       // Position is the position in the returned array, not necessarily the
       // provider rank: tied players can both be rank 2 (then rank 4).
       const r = rows[position - 1];
@@ -115,7 +119,8 @@
     // Independent site-managed EmpireDrop payout pool, never Shuffle's.
     if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
-    if (id('empireChecked')) id('empireChecked').textContent = board.updated_at ? 'Last verified: '+date(board.updated_at) : 'Not yet verified';
+    // Refresh *status* from a successful provider fetch, not a browser poll.
+    updateRefreshStatus();
     if (board.schedule) {
       if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'provider' ? 'EmpireDrop official race' : board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
       if (id('empireRaceWindow')) id('empireRaceWindow').textContent = (board.schedule.start_et || '')+' → '+(board.schedule.end_et || '');
@@ -159,9 +164,35 @@
     // provider-specific title whenever it is selected.
     setHero();
   }
+  // Match Shuffle's live 'Updated Ns ago' indicator, while showing the
+  // next actual EmpireDrop provider check (typically cache_duration=300s).
+  // A failed check NEVER resets the successful-update age.
+  function updateRefreshStatus() {
+    if (!latest) return;
+    const now = Math.floor(Date.now()/1000) + dateOffset;
+    const success = Number(latest.updated_at);
+    const age = Number.isFinite(success) && success > 0 ? Math.max(0, Math.floor(now - success)) : null;
+    const ageLabel = age === null ? 'No successful update yet' : `Updated ${age}s ago`;
+    const next = Number(latest.next_check_at);
+    const interval = Number(latest.refresh_interval);
+    const nextLabel = Number.isFinite(next) && next > 0
+      ? (next > now ? `Next provider check in ${Math.ceil(next - now)}s` : 'Next provider check due')
+      : 'Provider refresh not scheduled';
+    const source = id('empireSourceTime');
+    if (source) source.textContent = ageLabel;
+    const nextNode = id('empireNextCheck');
+    if (nextNode) nextNode.textContent = nextLabel;
+    const label = id('empireSourceLabel');
+    if (label) label.textContent = latest.label?.startsWith('Updates delayed') || latest.label?.startsWith('Source unavailable')
+      ? 'EmpireDrop · updates delayed' : 'EmpireDrop · verified standings';
+    const details = id('empireChecked');
+    if (details) details.textContent = success > 0
+      ? `Last successful update: ${date(success)} · ${nextLabel}`
+      : `No successful update yet · ${nextLabel}`;
+  }
   document.addEventListener('empiredrop:update', event => render(event.detail));
-  if (typeof setInterval === 'function') setInterval(() => { if (!latest || !id('empireCountdown')) return; const sch=latest.schedule||{}; const n=Math.floor(Date.now()/1000); const start=Number(sch.start_time),end=Number(sch.end_time); const box=id('empireCountdown'); if(!start||!end){box.textContent='Race schedule pending';return;} if(n>=end){box.textContent='Race ended';return;} let s=Math.max(0,(n<start?start:end)-n);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;box.textContent=(n<start?'Starts in ':'')+(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); },1000);
-  try { render(JSON.parse(document.body.dataset.bootstrap || '{}').empiredrop); }
+  if (typeof setInterval === 'function') setInterval(() => { updateRefreshStatus(); if (!latest || !id('empireCountdown')) return; const sch=latest.schedule||{}; const n=Math.floor(Date.now()/1000); const start=Number(sch.start_time),end=Number(sch.end_time); const box=id('empireCountdown'); if(!start||!end){box.textContent='Race schedule pending';return;} if(n>=end){box.textContent='Race ended';return;} let s=Math.max(0,(n<start?start:end)-n);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;box.textContent=(n<start?'Starts in ':'')+(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); },1000);
+  try { const bootstrap = JSON.parse(document.body.dataset.bootstrap || '{}'); render({...bootstrap.empiredrop, server_time:bootstrap.server_time}); }
   catch { /* Keep server-rendered unavailable state if bootstrap cannot load. */ }
   select(shuffleTab);
 })();

@@ -37,14 +37,16 @@ class InitialHTMLTests(unittest.TestCase):
             wager='data-empire-wager' if i<=3 else 'data-empire-row-wager'
             self.assertIn(f'{wager}="{i}">€{i*100}.00', html)
         for i in range(11,16):
-            self.assertIn(f'data-empire-row-name="{i}">Not reported by EmpireDrop', html)
-        self.assertIn('Showing 10 of 10 official positions',html)
+            self.assertNotIn(f'data-empire-row-name="{i}"', html)
+        self.assertIn('Showing 10 of 10 leaderboard positions',html)
 
-    def test_fifteen_players_no_js_needed(self):
+    def test_fifteen_provider_players_display_only_top_ten(self):
         html=render(sample(15),limit=15,enabled=True)
-        for i in range(1,16):
+        for i in range(1,11):
             self.assertIn(f'P{i:02}******',html)
-        self.assertIn('Showing 15 verified players',html)
+        for i in range(11,16):
+            self.assertNotIn(f'P{i:02}******',html)
+        self.assertIn('Top 10 of 15 supplied by EmpireDrop',html)
         self.assertNotIn('Not reported by EmpireDrop',html)
 
     def test_tied_ranks_and_escaping(self):

@@ -25,7 +25,7 @@ from empiredrop_races import (RaceAPI, RACE_DEFAULTS, validate_race_settings,
                               select_race, normalize_race, keys_only,
                               extract_race_rows, time_value, normalize_legacy_window)
 from race_support import EASTERN, fmt_et, local_input
-from empiredrop_features import (validate_rewards, rewards_public, payout_for_rows, mask_public_username)
+from empiredrop_features import (validate_rewards, rewards_public, payout_for_rows, mask_public_username, EMPIRE_PLACES)
 
 LOG = logging.getLogger('redhunllef.empiredrop')
 CODE = 'red'
@@ -615,6 +615,21 @@ class EmpireDropBoard:
         _, admin = self.store.admin()
         return rewards_public(admin.get('empiredrop_rewards', {}))
 
+    def _next_check_at(self):
+        """UTC epoch seconds of the next scheduled provider check, if known.
+
+        The worker uses a monotonic clock, so translate its remaining delay
+        into wall time only for display. Never imply that a public page poll
+        performs an actual EmpireDrop provider request.
+        """
+        if not self.thread or not self.thread.is_alive():
+            return 0
+        with self.lock:
+            if self.checking:
+                return 0
+            remaining = max(0, self.next_allowed - time.monotonic())
+        return int(time.time() + remaining + 0.999)
+
     def public_history(self):
         """Four independent, sanitized, previously verified race snapshots."""
         archive = self.store.live('empiredrop_history') or []
@@ -627,7 +642,7 @@ class EmpireDropBoard:
             except ValueError: rewards = rewards_public({})
             rows = item.get('rows') or []
             visible = [dict(rank=x['rank'],username=mask_public_username(x['username']),wager=x['wager'])
-                       for x in rows[:15] if isinstance(x,dict) and all(k in x for k in ('rank','username','wager'))]
+                       for x in rows[:EMPIRE_PLACES] if isinstance(x,dict) and all(k in x for k in ('rank','username','wager'))]
             result.append({'name':str(meta.get('name') or meta.get('slug') or 'Previous race')[:90],
                            'slug':str(meta.get('slug') or '')[:100],
                            'start_time':meta.get('start_time') or 0,
@@ -641,7 +656,7 @@ class EmpireDropBoard:
         """Allowlisted public projection: independent prizes and name masking."""
         site = self._schedule()
         saved = self._visible(site)
-        rows = saved.get('rows', [])[:15]
+        rows = saved.get('rows', [])[:EMPIRE_PLACES]
         error = saved.get('error', '')
         label = ('Updates delayed · last verified results' if error and rows else
                  'Race ended · last verified standings (not a payout confirmation)' if rows and meta_is_closed(saved) else
@@ -667,14 +682,19 @@ class EmpireDropBoard:
                 'currency':meta.get('currency',race_settings['race_currency']) if source!='legacy' else self._settings()['currency'],
                 'referral_url':REFERRAL_URL, 'race_meta':meta, 'source_mode':source,
                 'schedule':display_schedule, 'code':CODE,
-                'refresh_interval':self.interval, 'history':self.public_history()}
+                # This is the *actual worker schedule*, not the browser's 60s poll.
+                # It updates after provider cache TTL and rate-limit backoff.
+                'refresh_interval':self.interval,
+                'next_check_at':self._next_check_at(),
+                'attempt_at':saved.get('attempt_at',0),
+                'history':self.public_history()}
 
     def private_status(self, unused_shuffle_site=None):
         site, opts = self._schedule(), self._settings()
         snapshot = self._visible(site)
         state = self.public()
         state.update(rows=list(payout_for_rows(
-                         [dict(rank=r['rank'], username=r['username'], user_id=r.get('user_id',''), wager=r['wager']) for r in snapshot.get('rows',[])],
+                         [dict(rank=r['rank'], username=r['username'], user_id=r.get('user_id',''), wager=r['wager']) for r in snapshot.get('rows',[])[:EMPIRE_PLACES]],
                          self._rewards())),
                      attempt_at=snapshot.get('attempt_at',0), error=snapshot.get('error',''),
                      error_kind=snapshot.get('error_kind',''), configuration=opts,

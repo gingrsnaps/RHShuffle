@@ -1,3 +1,11 @@
+## Update: EmpireDrop Top 10
+
+The EmpireDrop leaderboard uses 10 positions and shows the time since the last successful provider update and the real next-check countdown. No race slug or API-key changes are required. See `docs/EMPIREDROP_TOP10_REFRESH_2026-11-11.md`.
+
+## Latest: EmpireDrop public-name masking update
+
+No admin/API configuration changes needed. The public board now uses two prefix slots plus six stars. See `docs/EMPIREDROP_PUBLIC_MASK_CONSISTENCY_2026-11-11.md`.
+
 ## Latest: EmpireDrop public standings rendering fix
 
 See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md` for the confirmed root cause and deployment steps. The public page now renders all returned positions with or without announced local prizes. The provider may cap official rankings below 15.

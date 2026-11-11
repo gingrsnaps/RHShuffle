@@ -39,7 +39,8 @@ function harness(bootstrap) {
   ]) elements[id] = new Element(id, panel);
   for (const id of [
     'shuffleBoard', 'empireBoard', 'empireMessage', 'empireChecked',
-    'empireRankingCoverage', 'empirePoolTotal', 'empireRaceMode',
+    'empireRankingCoverage', 'empirePoolTotal', 'empireSourceStatus',
+    'shuffleSourceStatus', 'empireSourceTime', 'empireNextCheck', 'empireSourceLabel', 'empireRaceMode',
     'empireRaceWindow', 'empireCountdown', 'raceTitle', 'raceDescription'
   ]) elements[id] = elements[id] || new Element(id);
   elements.raceTitle.textContent = 'Shuffle Wager Race';
@@ -62,9 +63,11 @@ function harness(bootstrap) {
     addEventListener(name, fn) { handlers['document:' + name] = fn; },
   };
   const errors = [];
-  const context = {document: doc, Date, Intl, console:{error:(...x)=>errors.push(x),warn:(...x)=>errors.push(x)},setInterval:()=>null};
+  const timers=[];
+  const context = {document: doc, Date, Intl, console:{error:(...x)=>errors.push(x),warn:(...x)=>errors.push(x)},setInterval:(fn)=>{timers.push(fn);return null;}};
   vm.runInNewContext(SCRIPT, context, {filename:'static/empiredrop.js'});
   return {slots, elements, handlers, metrics, errors,
+    tick() { for (const tick of timers) tick(); },
     update(detail) { assert.equal(typeof handlers['document:empiredrop:update'], 'function'); handlers['document:empiredrop:update']({detail}); },
     selectEmpire() { handlers['empireTab:click'](); },
     selectShuffle() { handlers['shuffleTab:click'](); }};
@@ -96,23 +99,19 @@ test('all ten API entries appear publicly when payouts are NOT announced (initia
     assert.equal(h.slots[`${place}:wager`].textContent,board.rows[place-1].wager);
     assert.equal(h.slots[`${place}:prize`].textContent,'Not announced');
   }
-  for (let place=11;place<=15;place++) {
-    assert.equal(h.slots[`${place}:name`].textContent,'Not reported by EmpireDrop');
-    assert.equal(h.slots[`${place}:wager`].textContent,'—');
-  }
-  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 10 of 10 official positions/);
+  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 10 of 10 leaderboard positions/);
   assert.equal(h.elements.empirePoolTotal.textContent,'Not announced');
   assert.deepEqual(h.errors,[]);
 });
 
-test('all fifteen players and official tied ranks render with enabled independent payouts',()=>{
+test('up to ten players and official tied ranks render with enabled independent payouts',()=>{
   const incoming = rows(15,{tied:true,prizes:true});
   const board={rows:incoming,label:'Confirmed',updated_at:1794375291,
     prizes:{enabled:true,total:'€1,200.00',formatted:{'2':'€50.00'}},
     race_meta:{ranks_limit:15,metric:'Wagered',engine:'RANKING',type:'WAGER'}};
   const h=harness({rows:[],prizes:blankPrizes});
   h.update(board);
-  for (let place=1;place<=15;place++) {
+  for (let place=1;place<=10;place++) {
     assert.equal(h.slots[`${place}:name`].textContent,incoming[place-1].username);
     assert.equal(h.slots[`${place}:wager`].textContent,incoming[place-1].wager);
     assert.equal(h.slots[`${place}:prize`].textContent,incoming[place-1].prize);
@@ -131,13 +130,34 @@ test('later API refresh replaces every visible slot, not just first place',()=>{
   h.update({rows:rows(7),prizes:blankPrizes,race_meta:{ranks_limit:10},label:'New race results'});
   for(let n=1;n<=7;n++) assert.equal(h.slots[`${n}:name`].textContent,rows(7)[n-1].username);
   for(let n=8;n<=10;n++) assert.equal(h.slots[`${n}:name`].textContent,'Open position');
-  for(let n=11;n<=15;n++) assert.equal(h.slots[`${n}:name`].textContent,'Not reported by EmpireDrop');
   assert.equal(h.elements.empireMessage.textContent,'New race results');
 });
 
 test('empty results are safe and provider limit is not invented',()=>{
   const h=harness({rows:[],prizes:blankPrizes,label:'Awaiting standings'});
   assert.equal(h.slots['1:name'].textContent,'Open position');
-  assert.equal(h.slots['15:name'].textContent,'Open position');
-  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 0 verified players/);
+  assert.equal(h.slots['10:name'].textContent,'Open position');
+  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 0 of 10 leaderboard positions/);
+});
+
+test('last successful update and next provider check tick independently from page refresh',()=>{
+  const now = Math.floor(Date.now()/1000);
+  const h = harness({rows:rows(10),label:'Updated · EmpireDrop race',updated_at:now-10,
+    next_check_at:now+240,refresh_interval:300,prizes:blankPrizes,race_meta:{ranks_limit:10}});
+  h.selectEmpire();
+  assert.equal(h.elements.empireSourceStatus.hidden,false);
+  assert.equal(h.elements.shuffleSourceStatus.hidden,true);
+  assert.match(h.elements.empireSourceTime.textContent,/Updated 1\ds ago/);
+  assert.match(h.elements.empireNextCheck.textContent,/Next provider check in 2[34]\ds/);
+  assert.match(h.elements.empireChecked.textContent,/Last successful update:/);
+  h.tick();
+  assert.match(h.elements.empireNextCheck.textContent,/Next provider check in/);
+  h.update({rows:rows(10),label:'Updates delayed · last verified results',updated_at:now-10,
+    next_check_at:now+350,refresh_interval:600,prizes:blankPrizes,race_meta:{ranks_limit:10}});
+  assert.match(h.elements.empireSourceLabel.textContent,/updates delayed/);
+  assert.match(h.elements.empireSourceTime.textContent,/Updated 1\ds ago/);
+  h.selectShuffle();
+  assert.equal(h.elements.empireSourceStatus.hidden,true);
+  assert.equal(h.elements.shuffleSourceStatus.hidden,false);
+  assert.deepEqual(h.errors,[]);
 });

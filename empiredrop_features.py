@@ -7,8 +7,10 @@ from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 import re
 
+# EmpireDrop advertises ten local payout positions; Shuffle remains Top 15.
+EMPIRE_PLACES = 10
 DEFAULT_REWARDS = {'currency': 'EUR', 'enabled': False,
-                   'prizes': {str(i): '0.00' for i in range(1, 16)}}
+                   'prizes': {str(i): '0.00' for i in range(1, EMPIRE_PLACES + 1)}}
 CURRENCY_SIGNS = {'EUR': '€', 'USD': '$'}
 _AMOUNT = re.compile(r'^(?:\d{1,7})(?:\.\d{1,2})?$')
 
@@ -21,8 +23,12 @@ def validate_rewards(value):
     if currency not in CURRENCY_SIGNS:
         raise ValueError('Choose EUR or USD for EmpireDrop rewards.')
     prizes = value.get('prizes', DEFAULT_REWARDS['prizes'])
-    if not isinstance(prizes, dict) or set(prizes) != set(DEFAULT_REWARDS['prizes']):
-        raise ValueError('Provide a payout for every position from 1 to 15.')
+    if not isinstance(prizes, dict) or set(prizes) not in (
+        set(DEFAULT_REWARDS['prizes']), {str(i) for i in range(1, 16)}
+    ):
+        raise ValueError('Provide a payout for every position from 1 to 10.')
+    # Accept old 15-place JSON exports but normalize to the new ten places.
+    # Old places 11-15 are not advertised and never enter the new prize pool.
     result = {}
     for key in DEFAULT_REWARDS['prizes']:
         val = str(prizes[key]).strip()
@@ -71,10 +77,22 @@ def payout_for_rows(rows, rewards):
 
 
 def mask_public_username(name):
-    """Consistent two visible characters and six literal asterisks.
+    """Display exactly two prefix *slots* and six trailing asterisks.
 
-    EmpireDrop already anonymizes names. This is additional *presentation*
-    masking, not deanonymization; the provider string stays in Admin.
+    The partner API anonymizes ``user.name`` before we receive it. The second
+    character of ``s********z`` is a provider mask, NOT a known letter. Using
+    the raw first two characters would render ``s*******`` (seven asterisks)
+    rather than the public board's consistent eight-character display.
+
+    Use a visible bullet for a character the provider has already hidden.
+    Example: ``s********z`` -> ``s•******``; ``Re********tie`` -> ``Re******``.
+    Never search for visible suffix characters to invent an unmasked prefix.
+    Admin keeps the original, provider-masked name for reference.
     """
     clean = str(name or '').strip()
-    return (clean[:2] if clean else '') + '******'
+    masked = {'*', '＊', '•', '●', '∙', '·'}
+    prefix = []
+    for position in (0, 1):
+        char = clean[position] if position < len(clean) else ''
+        prefix.append('•' if not char or char in masked or not char.isprintable() else char)
+    return ''.join(prefix) + '******'

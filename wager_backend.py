@@ -961,7 +961,7 @@ def create_app(root=None, testing=False):
                 raise Conflict('Another administrator changed settings. Reload before saving.')
             payload = dict(currency=request.form.get('currency','EUR'),
                            enabled=request.form.get('enabled')=='yes',
-                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,16)})
+                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,11)})
             value = validate_rewards(payload)
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_rewards'] = value

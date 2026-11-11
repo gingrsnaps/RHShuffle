@@ -1,6 +1,5 @@
-# RedHunllef complete commented source reference (production keys excluded)
-All runtime files and historical snapshots are included in the full archive. Secret fallback modules are intentionally omitted from this text reference.
-See `docs/EMPIREDROP_PUBLIC_RENDER_FIX_2026-11-11.md` for the diagnosed bug and change notes.
+# RedHunllef full source reference — Top 10 and refresh timer
+Production key modules are intentionally excluded from this searchable reference; the private ZIP contains original key files.
 
 ## `abuse_guard.py`
 
@@ -1188,7 +1187,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.11-empire-public-render-v6"
+RELEASE = "2026.11.11-empire-top10-refresh-v8"
 INTERVAL = 60
 
 
@@ -1376,7 +1375,7 @@ from empiredrop_races import (RaceAPI, RACE_DEFAULTS, validate_race_settings,
                               select_race, normalize_race, keys_only,
                               extract_race_rows, time_value, normalize_legacy_window)
 from race_support import EASTERN, fmt_et, local_input
-from empiredrop_features import (validate_rewards, rewards_public, payout_for_rows, mask_public_username)
+from empiredrop_features import (validate_rewards, rewards_public, payout_for_rows, mask_public_username, EMPIRE_PLACES)
 
 LOG = logging.getLogger('redhunllef.empiredrop')
 CODE = 'red'
@@ -1966,6 +1965,21 @@ class EmpireDropBoard:
         _, admin = self.store.admin()
         return rewards_public(admin.get('empiredrop_rewards', {}))
 
+    def _next_check_at(self):
+        """UTC epoch seconds of the next scheduled provider check, if known.
+
+        The worker uses a monotonic clock, so translate its remaining delay
+        into wall time only for display. Never imply that a public page poll
+        performs an actual EmpireDrop provider request.
+        """
+        if not self.thread or not self.thread.is_alive():
+            return 0
+        with self.lock:
+            if self.checking:
+                return 0
+            remaining = max(0, self.next_allowed - time.monotonic())
+        return int(time.time() + remaining + 0.999)
+
     def public_history(self):
         """Four independent, sanitized, previously verified race snapshots."""
         archive = self.store.live('empiredrop_history') or []
@@ -1978,7 +1992,7 @@ class EmpireDropBoard:
             except ValueError: rewards = rewards_public({})
             rows = item.get('rows') or []
             visible = [dict(rank=x['rank'],username=mask_public_username(x['username']),wager=x['wager'])
-                       for x in rows[:15] if isinstance(x,dict) and all(k in x for k in ('rank','username','wager'))]
+                       for x in rows[:EMPIRE_PLACES] if isinstance(x,dict) and all(k in x for k in ('rank','username','wager'))]
             result.append({'name':str(meta.get('name') or meta.get('slug') or 'Previous race')[:90],
                            'slug':str(meta.get('slug') or '')[:100],
                            'start_time':meta.get('start_time') or 0,
@@ -1992,7 +2006,7 @@ class EmpireDropBoard:
         """Allowlisted public projection: independent prizes and name masking."""
         site = self._schedule()
         saved = self._visible(site)
-        rows = saved.get('rows', [])[:15]
+        rows = saved.get('rows', [])[:EMPIRE_PLACES]
         error = saved.get('error', '')
         label = ('Updates delayed · last verified results' if error and rows else
                  'Race ended · last verified standings (not a payout confirmation)' if rows and meta_is_closed(saved) else
@@ -2018,14 +2032,19 @@ class EmpireDropBoard:
                 'currency':meta.get('currency',race_settings['race_currency']) if source!='legacy' else self._settings()['currency'],
                 'referral_url':REFERRAL_URL, 'race_meta':meta, 'source_mode':source,
                 'schedule':display_schedule, 'code':CODE,
-                'refresh_interval':self.interval, 'history':self.public_history()}
+                # This is the *actual worker schedule*, not the browser's 60s poll.
+                # It updates after provider cache TTL and rate-limit backoff.
+                'refresh_interval':self.interval,
+                'next_check_at':self._next_check_at(),
+                'attempt_at':saved.get('attempt_at',0),
+                'history':self.public_history()}
 
     def private_status(self, unused_shuffle_site=None):
         site, opts = self._schedule(), self._settings()
         snapshot = self._visible(site)
         state = self.public()
         state.update(rows=list(payout_for_rows(
-                         [dict(rank=r['rank'], username=r['username'], user_id=r.get('user_id',''), wager=r['wager']) for r in snapshot.get('rows',[])],
+                         [dict(rank=r['rank'], username=r['username'], user_id=r.get('user_id',''), wager=r['wager']) for r in snapshot.get('rows',[])[:EMPIRE_PLACES]],
                          self._rewards())),
                      attempt_at=snapshot.get('attempt_at',0), error=snapshot.get('error',''),
                      error_kind=snapshot.get('error_kind',''), configuration=opts,
@@ -2109,8 +2128,10 @@ from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
 import re
 
+# EmpireDrop advertises ten local payout positions; Shuffle remains Top 15.
+EMPIRE_PLACES = 10
 DEFAULT_REWARDS = {'currency': 'EUR', 'enabled': False,
-                   'prizes': {str(i): '0.00' for i in range(1, 16)}}
+                   'prizes': {str(i): '0.00' for i in range(1, EMPIRE_PLACES + 1)}}
 CURRENCY_SIGNS = {'EUR': '€', 'USD': '$'}
 _AMOUNT = re.compile(r'^(?:\d{1,7})(?:\.\d{1,2})?$')
 
@@ -2123,8 +2144,12 @@ def validate_rewards(value):
     if currency not in CURRENCY_SIGNS:
         raise ValueError('Choose EUR or USD for EmpireDrop rewards.')
     prizes = value.get('prizes', DEFAULT_REWARDS['prizes'])
-    if not isinstance(prizes, dict) or set(prizes) != set(DEFAULT_REWARDS['prizes']):
-        raise ValueError('Provide a payout for every position from 1 to 15.')
+    if not isinstance(prizes, dict) or set(prizes) not in (
+        set(DEFAULT_REWARDS['prizes']), {str(i) for i in range(1, 16)}
+    ):
+        raise ValueError('Provide a payout for every position from 1 to 10.')
+    # Accept old 15-place JSON exports but normalize to the new ten places.
+    # Old places 11-15 are not advertised and never enter the new prize pool.
     result = {}
     for key in DEFAULT_REWARDS['prizes']:
         val = str(prizes[key]).strip()
@@ -2173,13 +2198,25 @@ def payout_for_rows(rows, rewards):
 
 
 def mask_public_username(name):
-    """Consistent two visible characters and six literal asterisks.
+    """Display exactly two prefix *slots* and six trailing asterisks.
 
-    EmpireDrop already anonymizes names. This is additional *presentation*
-    masking, not deanonymization; the provider string stays in Admin.
+    The partner API anonymizes ``user.name`` before we receive it. The second
+    character of ``s********z`` is a provider mask, NOT a known letter. Using
+    the raw first two characters would render ``s*******`` (seven asterisks)
+    rather than the public board's consistent eight-character display.
+
+    Use a visible bullet for a character the provider has already hidden.
+    Example: ``s********z`` -> ``s•******``; ``Re********tie`` -> ``Re******``.
+    Never search for visible suffix characters to invent an unmasked prefix.
+    Admin keeps the original, provider-masked name for reference.
     """
     clean = str(name or '').strip()
-    return (clean[:2] if clean else '') + '******'
+    masked = {'*', '＊', '•', '●', '∙', '·'}
+    prefix = []
+    for position in (0, 1):
+        char = clean[position] if position < len(clean) else ''
+        prefix.append('•' if not char or char in masked or not char.isprintable() else char)
+    return ''.join(prefix) + '******'
 
 ```
 
@@ -5299,7 +5336,7 @@ class Runtime:
       recovery.textContent = data.selection_warning || '';
     }
     const body = document.createDocumentFragment();
-    (Array.isArray(data.rows) ? data.rows.slice(0,15) : []).forEach(r => {
+    (Array.isArray(data.rows) ? data.rows.slice(0,10) : []).forEach(r => {
       const tr = document.createElement('tr');
       for (const v of [String(r.rank).padStart(2,'0'), r.username, r.user_id || '—', r.wager, r.prize || '—']) {
         const td = document.createElement('td'); td.textContent = String(v ?? ''); tr.appendChild(td);
@@ -5407,14 +5444,14 @@ class Runtime:
   window.setInterval(poll, 15000);
 })();
 
-/* Prize preview is purely client-side: saving still validates all 15 amounts server-side. */
+/* Prize preview is purely client-side: saving validates all ten amounts server-side. */
 (() => {
   const form = document.querySelector('form[action="/admin/empiredrop/rewards"]');
   if (!form) return;
   const output = document.getElementById('empireRewardTotal');
   function preview() {
     let total = 0;
-    for (let i=1;i<=15;i++) {
+    for (let i=1;i<=10;i++) {
       const input = form.querySelector(`[name="prize_${i}"]`);
       const n = Number(input?.value);
       if (!Number.isFinite(n) || n<0) { output.textContent = 'Check amount for place '+i;return; }
@@ -6820,7 +6857,7 @@ function filterEmpirePlayers() {
         text(node.querySelector("[data-prize]"), currency(site.prizes[n]));
       });
       if (value.empiredrop)
-        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site} }));
+        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site, server_time:value.server_time} }));
       if (value.boss)
         document.dispatchEvent(
           new CustomEvent("boss:summary", {
@@ -9621,12 +9658,17 @@ function filterEmpirePlayers() {
 .empire-history-row{padding:12px;border:1px solid var(--line);border-radius:10px;display:grid;gap:5px}
 .empire-history-row small{color:var(--muted)}
 
+/* Mirror Shuffle's source status; hide the inactive provider status cleanly. */
+#shuffleSourceStatus[hidden], #empireSourceStatus[hidden] {display:none!important}
+#empireSourceStatus small {font-variant-numeric:tabular-nums}
+@media (max-width:700px) { #empireSourceStatus {text-align:left;align-items:flex-start} }
+
 ```
 
 ## `static/empiredrop.js`
 
 ```js
-/* Public EmpireDrop Top 15: no credentials and no direct provider calls.
+/* Public EmpireDrop Top 10: no credentials and no direct provider calls.
  * Only /public-state (the server's sanitized projection) is rendered here.
  */
 (() => {
@@ -9653,8 +9695,11 @@ function filterEmpirePlayers() {
     }
     if (id('shuffleRaceClock')) id('shuffleRaceClock').hidden = isEmpire();
     if (id('empireRaceClock')) id('empireRaceClock').hidden = !isEmpire();
-    const status = document.querySelector('#leaderboard > .section-title .source-status');
-    if (status) status.hidden = isEmpire();
+    const shuffleStatus = id('shuffleSourceStatus');
+    if (shuffleStatus) shuffleStatus.hidden = isEmpire();
+    const empireStatus = id('empireSourceStatus');
+    if (empireStatus) empireStatus.hidden = !isEmpire();
+    if (isEmpire()) updateRefreshStatus();
   }
   function select(tab, focus=false) {
     // Capture Shuffle's latest text before switching *away*.
@@ -9686,6 +9731,7 @@ function filterEmpirePlayers() {
   function render(board) {
     if (!board || !Array.isArray(board.rows)) return;
     latest = board;
+    if (Number.isFinite(Number(board.server_time))) dateOffset = Number(board.server_time) - Date.now()/1000;
     // The regular source poll may update Shuffle's title while EmpireDrop is selected.
     if (board.shuffle_site) {
       shuffleTitle = String(board.shuffle_site.race_title || shuffleTitle);
@@ -9693,7 +9739,7 @@ function filterEmpirePlayers() {
     }
     // Standings are ordered by the provider. Two users can share the same
     // rank; map by displayed POSITION rather than rank, or ties disappear.
-    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 15) : [];
+    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 10) : [];
     const metric = board.race_meta?.metric || 'Wagered';
 
     // Read the independently configured EmpireDrop prize schedule BEFORE
@@ -9706,20 +9752,20 @@ function filterEmpirePlayers() {
     const configured = rewards.enabled === true;
     const providerLimit = Number(board.race_meta?.ranks_limit);
     const hasProviderLimit = Number.isInteger(providerLimit) && providerLimit > 0;
-    const displayLimit = hasProviderLimit ? Math.min(15, providerLimit) : 15;
+    const displayLimit = hasProviderLimit ? Math.min(10, providerLimit) : 10;
 
     document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
       node.textContent = 'EmpireDrop ' + metric.toLowerCase();
     });
-    // The official API can return fewer than 15 places (race.ranks_limit).
+    // The official API can return fewer than 10 places (race.ranks_limit).
     // Clarify that positions the provider does not expose are not vacant.
     const coverage = id('empireRankingCoverage');
     if (coverage) {
-      coverage.textContent = hasProviderLimit && providerLimit < 15
-        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–15 for this race.`
-        : `Showing ${rows.length} verified ${rows.length === 1 ? 'player' : 'players'} from EmpireDrop.`;
+      coverage.textContent = hasProviderLimit && providerLimit < 10
+        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–10 for this race.`
+        : `Showing ${rows.length} of 10 leaderboard positions${hasProviderLimit && providerLimit > 10 ? ` (Top 10 of ${providerLimit} supplied by EmpireDrop)` : ''}.`;
     }
-    for (let position=1; position<=15; position++) {
+    for (let position=1; position<=10; position++) {
       // Position is the position in the returned array, not necessarily the
       // provider rank: tied players can both be rank 2 (then rank 4).
       const r = rows[position - 1];
@@ -9743,7 +9789,8 @@ function filterEmpirePlayers() {
     // Independent site-managed EmpireDrop payout pool, never Shuffle's.
     if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
-    if (id('empireChecked')) id('empireChecked').textContent = board.updated_at ? 'Last verified: '+date(board.updated_at) : 'Not yet verified';
+    // Refresh *status* from a successful provider fetch, not a browser poll.
+    updateRefreshStatus();
     if (board.schedule) {
       if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'provider' ? 'EmpireDrop official race' : board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
       if (id('empireRaceWindow')) id('empireRaceWindow').textContent = (board.schedule.start_et || '')+' → '+(board.schedule.end_et || '');
@@ -9787,9 +9834,35 @@ function filterEmpirePlayers() {
     // provider-specific title whenever it is selected.
     setHero();
   }
+  // Match Shuffle's live 'Updated Ns ago' indicator, while showing the
+  // next actual EmpireDrop provider check (typically cache_duration=300s).
+  // A failed check NEVER resets the successful-update age.
+  function updateRefreshStatus() {
+    if (!latest) return;
+    const now = Math.floor(Date.now()/1000) + dateOffset;
+    const success = Number(latest.updated_at);
+    const age = Number.isFinite(success) && success > 0 ? Math.max(0, Math.floor(now - success)) : null;
+    const ageLabel = age === null ? 'No successful update yet' : `Updated ${age}s ago`;
+    const next = Number(latest.next_check_at);
+    const interval = Number(latest.refresh_interval);
+    const nextLabel = Number.isFinite(next) && next > 0
+      ? (next > now ? `Next provider check in ${Math.ceil(next - now)}s` : 'Next provider check due')
+      : 'Provider refresh not scheduled';
+    const source = id('empireSourceTime');
+    if (source) source.textContent = ageLabel;
+    const nextNode = id('empireNextCheck');
+    if (nextNode) nextNode.textContent = nextLabel;
+    const label = id('empireSourceLabel');
+    if (label) label.textContent = latest.label?.startsWith('Updates delayed') || latest.label?.startsWith('Source unavailable')
+      ? 'EmpireDrop · updates delayed' : 'EmpireDrop · verified standings';
+    const details = id('empireChecked');
+    if (details) details.textContent = success > 0
+      ? `Last successful update: ${date(success)} · ${nextLabel}`
+      : `No successful update yet · ${nextLabel}`;
+  }
   document.addEventListener('empiredrop:update', event => render(event.detail));
-  if (typeof setInterval === 'function') setInterval(() => { if (!latest || !id('empireCountdown')) return; const sch=latest.schedule||{}; const n=Math.floor(Date.now()/1000); const start=Number(sch.start_time),end=Number(sch.end_time); const box=id('empireCountdown'); if(!start||!end){box.textContent='Race schedule pending';return;} if(n>=end){box.textContent='Race ended';return;} let s=Math.max(0,(n<start?start:end)-n);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;box.textContent=(n<start?'Starts in ':'')+(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); },1000);
-  try { render(JSON.parse(document.body.dataset.bootstrap || '{}').empiredrop); }
+  if (typeof setInterval === 'function') setInterval(() => { updateRefreshStatus(); if (!latest || !id('empireCountdown')) return; const sch=latest.schedule||{}; const n=Math.floor(Date.now()/1000); const start=Number(sch.start_time),end=Number(sch.end_time); const box=id('empireCountdown'); if(!start||!end){box.textContent='Race schedule pending';return;} if(n>=end){box.textContent='Race ended';return;} let s=Math.max(0,(n<start?start:end)-n);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;box.textContent=(n<start?'Starts in ':'')+(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); },1000);
+  try { const bootstrap = JSON.parse(document.body.dataset.bootstrap || '{}'); render({...bootstrap.empiredrop, server_time:bootstrap.server_time}); }
   catch { /* Keep server-rendered unavailable state if bootstrap cannot load. */ }
   select(shuffleTab);
 })();
@@ -18297,11 +18370,11 @@ def health_view(runtime, measurements, status):
   <p id="empireTestResult" class="small muted" role="status" aria-live="polite"></p>
 </section>
 <section class="panel form-panel provider-panel" aria-labelledby="empirePlayersHeading">
-  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · PROVIDER RANKS</p><h2 id="empirePlayersHeading">Current Top 15</h2><p class="muted">Names are already anonymized by EmpireDrop. Public IDs help identify the same player between updates.</p></div><span class="tag">{{ empire_admin.private_rewards.total if empire_admin.private_rewards.enabled else 'Prizes not announced' }}</span></div>
+  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · PROVIDER RANKS</p><h2 id="empirePlayersHeading">Current Top 10</h2><p class="muted">Names are already anonymized by EmpireDrop. Public IDs help identify the same player between updates.</p></div><span class="tag">{{ empire_admin.private_rewards.total if empire_admin.private_rewards.enabled else 'Prizes not announced' }}</span></div>
   <div class="field"><label for="empireAdminSearch">Find a player or public ID</label><input id="empireAdminSearch" data-provider-search="empireAdminRows" type="search" placeholder="Filter the returned rankings" autocomplete="off"><small>Search covers only positions returned by the provider.</small></div>
   <div class="table-scroll" tabindex="0" role="region" aria-label="EmpireDrop ranked players">
     <table><thead><tr><th>Rank</th><th>Player (provider masked)</th><th>Public player ID</th><th class="number">{{ empire_admin.race_meta.get('metric') or 'Race total' }}</th><th class="number">Advertised prize</th></tr></thead>
-    <tbody id="empireAdminRows">{% for row in empire_admin.rows %}<tr><td class="rank">{{ row.rank }}</td><td><strong>{{ row.username }}</strong></td><td class="small">{{ row.user_id or '—' }}</td><td class="number">{{ row.wager }}</td><td class="number">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No ranked players returned. This can be normal before a race starts or after it closes.</td></tr>{% endfor %}</tbody></table>
+    <tbody id="empireAdminRows">{% for row in empire_admin.rows[:10] %}<tr><td class="rank">{{ row.rank }}</td><td><strong>{{ row.username }}</strong></td><td class="small">{{ row.user_id or '—' }}</td><td class="number">{{ row.wager }}</td><td class="number">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No ranked players returned. This can be normal before a race starts or after it closes.</td></tr>{% endfor %}</tbody></table>
   </div>
   <p class="small muted">Official ranks (including ties) are preserved. Deposit races and raffles are labeled correctly; we never present their totals as wagered currency.</p>
 </section>
@@ -18335,7 +18408,7 @@ def health_view(runtime, measurements, status):
     <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
     <div class="form-grid"><div class="field"><label for="empireRewardsCurrency">Prize currency</label><select id="empireRewardsCurrency" name="currency"><option value="EUR" {% if rewards.currency=='EUR' %}selected{% endif %}>EUR (€)</option><option value="USD" {% if rewards.currency=='USD' %}selected{% endif %}>USD ($)</option></select></div>
     <div class="field"><label><input type="checkbox" name="enabled" value="yes" {% if rewards.enabled %}checked{% endif %}> Show this payout schedule publicly</label><small>Off = prizes marked “Not announced” for players.</small></div></div>
-    <div class="prize-grid">{% for n in range(1,16) %}<div class="field"><label for="empirePrize{{ n }}">Place {{ n }}</label><input id="empirePrize{{ n }}" name="prize_{{ n }}" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" required value="{{ rewards.prizes[n|string] }}"></div>{% endfor %}</div>
+    <div class="prize-grid">{% for n in range(1,11) %}<div class="field"><label for="empirePrize{{ n }}">Place {{ n }}</label><input id="empirePrize{{ n }}" name="prize_{{ n }}" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" required value="{{ rewards.prizes[n|string] }}"></div>{% endfor %}</div>
     <p class="small muted">Prize pool preview: <strong id="empireRewardTotal">{{ rewards.total }}</strong> · Changes only this board.</p>
     <button type="submit" class="button primary">Save EmpireDrop payouts</button>
   </form>
@@ -18400,7 +18473,7 @@ def health_view(runtime, measurements, status):
       <div class="field"><label for="empireRacePolicy">Race reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Official EmpireDrop start_date / end_date (recommended)</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Require a match with local Tuesday 6 PM ET</option></select></div>
       <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is running</label></div>
     </div>
-    <p class="small muted">Official race dates cannot be edited here. To run a different official week, create/select the corresponding race in EmpireDrop and enter its slug. Custom date windows use the documented but deprecated API; it may stop working. The API returns up to race.ranks_limit places, which may be fewer than 15.</p>
+    <p class="small muted">Official race dates cannot be edited here. To run a different official week, create/select the corresponding race in EmpireDrop and enter its slug. Custom date windows use the documented but deprecated API; it may stop working. The website displays up to 10 positions, and the API may return fewer than 10 when race.ranks_limit is smaller.</p>
     <button type="submit" class="button primary">Save race API connection</button>
   </form>
   {% else %}<p class="small muted">Race API diagnostics are available to the Superadmin only.</p>{% endif %}
@@ -19079,7 +19152,7 @@ def health_view(runtime, measurements, status):
   <p class="small muted" id="empireRaceMode">{{ 'Official EmpireDrop race' if data.empiredrop.schedule.mode == 'provider' else 'Weekly · Tuesday 6 PM ET' if data.empiredrop.schedule.mode == 'weekly' else 'Custom race' }}</p>
   <div class="clock" id="empireCountdown" aria-live="off">—</div>
   <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
-  <div class="clock-footer"><span>EmpireDrop reward pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>15 places</span></div>
+  <div class="clock-footer"><span>EmpireDrop reward pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>10 places</span></div>
 </aside></section>
 
 <section class="play-invite panel" id="communityBoss" aria-labelledby="inviteTitle">
@@ -19095,8 +19168,8 @@ def health_view(runtime, measurements, status):
 <a class="button primary" id="inviteButton" href="/play"><span id="inviteButtonLabel">{{ 'View the victory' if data.boss.status=='victory' else 'View the raid' if data.boss.status=='paused' else 'Fight boss' }}</span> <span aria-hidden="true">→</span></a>
 </section>
 
-<section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div></div>
-<div class="provider-tabs" role="tablist" aria-label="Choose leaderboard provider"><button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button><button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 15</button></div>
+<section id="leaderboard"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status" id="shuffleSourceStatus"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div><div class="source-status" id="empireSourceStatus" hidden aria-live="off"><span id="empireSourceLabel">EmpireDrop · last verified update</span><small id="empireSourceTime">{% if data.empiredrop.updated_at %}Last verified {{ fmt_et(data.empiredrop.updated_at) }}{% else %}No successful update yet{% endif %}</small><small id="empireNextCheck">Checking refresh schedule…</small></div></div>
+<div class="provider-tabs" role="tablist" aria-label="Choose leaderboard provider"><button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button><button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 10</button></div>
 <div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
 <p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
 <p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
@@ -19113,16 +19186,16 @@ def health_view(runtime, measurements, status):
   {# Server-render verified standings so a future JavaScript exception never
      turns a populated race into an empty first paint. The live client still
      updates these same data-empire-* slots after each successful poll. #}
-  {% set empire_rows = data.empiredrop.rows %}
-  {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 15)|int or 15 %}
+  {% set empire_rows = data.empiredrop.rows[:10] %}
+  {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 10)|int or 10 %}
   <div class="empire-podium podium" id="empirePodium" aria-label="EmpireDrop top three">
   {% for n in [2,1,3] %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}
   <article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</strong><div class="podium-values"><div><small><span data-empire-metric>EMPIREDROP WAGER</span></small><strong data-empire-wager="{{ n }}">{{ r.wager if r else '—' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</strong></div></div></article>
   {% endfor %}
   </div>
-  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,16) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
-  <p id="empireRankingCoverage" class="small muted" aria-live="polite">{% if empire_limit < 15 %}Showing {{ empire_rows|length }} of {{ empire_limit }} official positions. EmpireDrop does not expose places {{ empire_limit + 1 }}–15 for this race.{% else %}Showing {{ empire_rows|length }} verified players from EmpireDrop.{% endif %}</p>
-  <p class="leaderboard-foot">Names masked · updates follow EmpireDrop's API cache · <span id="empireChecked">Waiting for a confirmed update</span></p>
+  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through ten"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,11) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
+  <p id="empireRankingCoverage" class="small muted" aria-live="polite">{% if empire_limit < 10 %}Showing {{ empire_rows|length }} of {{ empire_limit }} official positions. EmpireDrop does not expose places {{ empire_limit + 1 }}–10 for this race.{% else %}Showing {{ empire_rows|length }} of 10 leaderboard positions{% if empire_limit > 10 %} (Top 10 of {{ empire_limit }} supplied by EmpireDrop){% endif %}.{% endif %}</p>
+  <p class="leaderboard-foot">Names masked (• means a character EmpireDrop already hid) · updates follow EmpireDrop's API cache · <span id="empireChecked">{% if data.empiredrop.updated_at %}Last verified {{ fmt_et(data.empiredrop.updated_at) }}{% else %}Waiting for a confirmed update{% endif %}</span></p>
   <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><p class="small muted">Saved snapshots from this server, not official payout confirmations. Four completed races maximum.</p><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
 </div>
 <noscript><p class="notice">Live screen updates require JavaScript. Reload to see the latest saved results.</p></noscript>
@@ -20145,7 +20218,7 @@ def create_app(root=None, testing=False):
                 raise Conflict('Another administrator changed settings. Reload before saving.')
             payload = dict(currency=request.form.get('currency','EUR'),
                            enabled=request.form.get('enabled')=='yes',
-                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,16)})
+                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,11)})
             value = validate_rewards(payload)
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_rewards'] = value

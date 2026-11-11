@@ -643,7 +643,7 @@
         text(node.querySelector("[data-prize]"), currency(site.prizes[n]));
       });
       if (value.empiredrop)
-        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site} }));
+        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site, server_time:value.server_time} }));
       if (value.boss)
         document.dispatchEvent(
           new CustomEvent("boss:summary", {

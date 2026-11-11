@@ -42,7 +42,31 @@ class QOLTests(unittest.TestCase):
     def test_masking(self):
         self.assertEqual(mask_public_username('Ha*********ms'),'Ha******')
         self.assertEqual(mask_public_username('ShuffleFullName'),'Sh******')
-        self.assertEqual(mask_public_username('A'),'A******')
+        self.assertEqual(mask_public_username('A'),'A•******')
+        # EmpireDrop may reveal only one leading character; preserve that
+        # limitation instead of counting its mask as one of our six stars.
+        self.assertEqual(mask_public_username('s********z'), 's•******')
+        self.assertEqual(mask_public_username('r******g'), 'r•******')
+        self.assertEqual(mask_public_username('Re********tie'), 'Re******')
+        self.assertEqual(mask_public_username('li******een'), 'li******')
+        self.assertEqual(mask_public_username(''), '••******')
+        self.assertEqual(mask_public_username('**'), '••******')
+        self.assertEqual(mask_public_username('s•******'), 's•******')
+        self.assertEqual(mask_public_username('Re******'), 'Re******')
+
+    def test_all_provider_masked_examples_use_two_slots_and_six_stars(self):
+        # Covers the same patterns as the reported public screenshot.
+        names = ['s********z', 'Re********tie', 'r******g',
+                 'lig********een', 's****y', 'E****6',
+                 'a******s', 'N******y', 'el********es', 'Kno********ire']
+        for source in names:
+            with self.subTest(source=source):
+                visible = mask_public_username(source)
+                self.assertEqual(len(visible), 8)
+                self.assertTrue(visible.endswith('******'))
+                self.assertNotIn('*', visible[:2])
+                self.assertNotIn(source[-1:], visible[2:-6])
+
 
     def test_rewards_independent_and_tie_split(self):
         prizes={str(i):'0' for i in range(1,16)}
@@ -63,6 +87,33 @@ class QOLTests(unittest.TestCase):
             with self.subTest(bad=bad),self.assertRaises(ValueError):
                 validate_rewards({'prizes':wrong})
 
+
+    def test_top_ten_prize_migration_from_fifteen_places(self):
+        # Historical settings may have 15 payouts; omit the retired 11-15.
+        legacy = {str(i): '1.00' for i in range(1,16)}
+        value = validate_rewards({'currency':'EUR','enabled':True,'prizes':legacy})
+        self.assertEqual(set(value['prizes']), {str(i) for i in range(1,11)})
+        self.assertEqual(rewards_public(value)['total'], '€10.00')
+        self.assertEqual(len(rewards_public(value)['formatted']),10)
+        self.assertNotIn('11',rewards_public(value)['formatted'])
+        fresh = validate_rewards({'currency':'EUR','enabled':True,
+                                  'prizes':{str(i):'2.00' for i in range(1,11)}})
+        self.assertEqual(rewards_public(fresh)['total'], '€20.00')
+
+    def test_public_rows_and_history_limit_ten(self):
+        store=Store()
+        board=EmpireDropBoard(Config(),store)
+        ident=board._scope(board._schedule())
+        inputs=[dict(rank=i,username=f'P{i:02}',user_id=f'uid{i}',wager='€1.00') for i in range(1,16)]
+        board.saved={'scope':ident,'rows':inputs,'updated_at':1794300000}
+        public=board.public()
+        private=board.private_status()
+        self.assertEqual(len(public['rows']),10)
+        self.assertEqual(len(private['rows']),10)
+        self.assertEqual(public['refresh_interval'],300)
+        self.assertEqual(public['next_check_at'],0) # not running under tests
+        store.saved['empiredrop_history']=[{'rows':inputs, 'updated_at':1794300000}]
+        self.assertEqual(len(board.public_history()[0]['rows']),10)
     def test_deprecated_time_window_contract_and_no_private_key_in_output(self):
         fake=FakeRequests({'cache_duration':300,'ranking':[
             {'rank':1,'total':563744,'currency':'EUR','user':{'hash_id':'ref-1','name':'Ha*********ms'}}]})
@@ -105,6 +156,32 @@ class QOLTests(unittest.TestCase):
         self.assertEqual(private['rows'][0]['user_id'],'FAKE_01')
         self.assertNotIn('FAKE_01',json.dumps(public))
         self.assertNotIn(KEYS['empiredrop_private_key'],json.dumps(public))
+
+    def test_public_projection_masks_provider_name_but_admin_preserves_it(self):
+        store = Store()
+        board = EmpireDropBoard(Config(), store)
+        raw_name = 's********z'
+        board.saved = {
+            'scope': board._scope(board._schedule()),
+            'updated_at': 1794300000,
+            'rows': [{'rank': 1, 'username': raw_name, 'wager': '€5,637.44', 'user_id': 'PUBLIC_ID_1'}],
+            'race_meta': {'type': 'WAGER', 'engine': 'RANKING', 'ranks_limit': 10},
+        }
+        public = board.public()
+        private = board.private_status()
+        self.assertEqual(public['rows'][0]['username'], 's•******')
+        self.assertEqual(private['rows'][0]['username'], raw_name)
+        self.assertNotIn('PUBLIC_ID_1', json.dumps(public))
+        self.assertNotIn(raw_name, json.dumps(public))
+
+        # Old race snapshots go through the same server-side mask.
+        store.saved['empiredrop_history'] = [{
+            'race_meta': {'name': 'Past race'},
+            'updated_at': 1794300000,
+            'rows': [{'rank': 1, 'username': raw_name, 'wager': '€50.00'}],
+            'rewards': {},
+        }]
+        self.assertEqual(board.public_history()[0]['rows'][0]['username'], 's•******')
 
     def test_activity_log_has_no_arbitrary_message_or_credentials(self):
         log=ActivityLog(3)
