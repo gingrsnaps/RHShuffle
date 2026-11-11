@@ -1,305 +1,307 @@
-"""EmpireDrop race endpoints documented by the user's two developer-portal URLs.
+"""Official EmpireDrop Partner Public API v2.0.1.
 
-GET /api/v1/race/affiliates/{publicKey}       (race discovery)
-GET /api/v1/affiliate-partner/races/{slug}   (race details)
+Source of truth: ``openapi.yaml`` supplied with this release.
+Production host: https://api.empiredrop.com
+GET /api/v1/affiliate-partner/races         -> currently running races, NO ranking
+GET /api/v1/affiliate-partner/races/{slug}  -> race + ranking + prizes/winners
 
-Only the paths and HTTP methods are established from the references. Their
-server origin, authentication, response shapes and wagering units need a
-provider-backed verification. The adapter exposes these options to admins and
-NEVER turns ambiguous fields into public monetary values.
+Every current request requires BOTH X-Public-Key and X-Private-Key. The
+legacy /api/v1/race/affiliates/{publicKey} route is DEPRECATED and not used.
+No browser code should call these endpoints or receive API credentials.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
+import json
 import logging
 import re
 import time
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote
 
 import requests
 from integrations import ProviderError
 
 LOG = logging.getLogger('redhunllef.empiredrop.races')
-DISCOVER_PATH = '/api/v1/race/affiliates/{publicKey}'
+API_ORIGIN = 'https://api.empiredrop.com'
+LIST_PATH = '/api/v1/affiliate-partner/races'
 DETAIL_PATH = '/api/v1/affiliate-partner/races/{slug}'
+# Compatibility alias for historical code/tests. Never used as discovery.
+DISCOVER_PATH = LIST_PATH
 SLUG = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$')
-JSON_PATH = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,49}(?:\.[a-zA-Z][a-zA-Z0-9_-]{0,49}){0,7}$')
+ISO_CURRENCY = re.compile(r'^[A-Z]{3}$')
 
+# The former admin settings assumed an undocumented response shape. These
+# settings now reflect the exact OpenAPI request/response schema, and old saved
+# values are migrated in memory on read (no live JSON account data is erased).
 RACE_DEFAULTS = {
-    'source_mode': 'races',  # 'legacy' continues to use the old verified contract.
-    'api_base_url': 'https://empiredrop.com',  # Host is configurable; docs links prove paths only.
-    'race_slug': '',  # Blank = unique active race only (never choose arbitrarily).
+    'source_mode': 'races',
+    'api_base_url': API_ORIGIN,
+    'race_slug': '',
     'auto_select': True,
-    'race_auth_mode': 'none',  # No secret sent until authenticated access is documented.
+    'race_auth_mode': 'dual_headers',
     'race_private_header': 'X-Private-Key',
     'race_public_header': 'X-Public-Key',
-    'race_rows_path': '',  # Set after reviewing *sanitized* response structure.
-    'race_name_field': 'username',
-    'race_user_id_field': '',
-    'race_wager_field': 'wagered',
-    'race_currency': 'USD',
-    'race_wager_divisor': '1',
-    'race_window_policy': 'provider',  # Display provider race times when supplied.
-    'race_start_field': 'startTime',
-    'race_end_field': 'endTime',
-    'race_verified_fields': False,  # Explicitly acknowledge units and wager semantics.
+    'race_rows_path': 'ranking',
+    'race_name_field': 'user.name',
+    'race_user_id_field': 'user.hash_id',
+    'race_wager_field': 'total',
+    'race_currency': 'EUR',  # Actual unit comes from race.currency / ranking[].unit.
+    'race_wager_divisor': '100',  # Minor units for EUR and USD (not raffle tickets).
+    'race_window_policy': 'provider',
+    'race_start_field': 'race.start_date',
+    'race_end_field': 'race.end_date',
+    'race_verified_fields': True,  # Checked against the supplied OpenAPI spec.
 }
 RACE_EDITABLE = frozenset(RACE_DEFAULTS)
+# ISO 4217 minor-unit exceptions used to avoid pretending all currencies have 2 decimals.
+# Add currencies only after verifying the provider's supported currency list.
+CURRENCY_DECIMALS = {'EUR': 2, 'USD': 2, 'GBP': 2, 'CAD': 2, 'AUD': 2,
+                     'JPY': 0, 'KRW': 0, 'KWD': 3, 'BHD': 3}
+CURRENCY_SYMBOLS = {'EUR': '€', 'USD': '$', 'GBP': '£', 'CAD': 'CA$', 'AUD': 'A$'}
 
 
 def validate_race_settings(candidate):
-    """Whitelisted configuration, including strict outbound HTTP host validation."""
+    """Migrate old admin mapping/auth settings to the documented contract.
+
+    The only meaningful race controls are source mode, slug, active-race auto
+    selection and reporting-period policy. Old 'none' authentication cannot
+    override the mandatory dual-header OpenAPI security scheme.
+    """
     if not isinstance(candidate, dict) or set(candidate) - RACE_EDITABLE:
         raise ValueError('Unexpected EmpireDrop race configuration setting.')
-    settings = {**RACE_DEFAULTS, **candidate}
+    settings = dict(RACE_DEFAULTS)
+    for key in ('source_mode', 'race_slug', 'auto_select', 'race_window_policy'):
+        if key in candidate:
+            settings[key] = candidate[key]
     settings['source_mode'] = str(settings['source_mode']).lower()
     if settings['source_mode'] not in ('races', 'legacy'):
-        raise ValueError('Choose the races API or legacy API.')
-    base = str(settings['api_base_url']).strip().rstrip('/')
-    parts = urlsplit(base)
-    host = (parts.hostname or '').lower()
-    if (parts.scheme != 'https' or (host != 'empiredrop.com' and not host.endswith('.empiredrop.com'))
-        or parts.username or parts.password or parts.port not in (None, 443)
-        or parts.path or parts.query or parts.fragment):
-        raise ValueError('EmpireDrop API base must be an HTTPS empiredrop.com host without paths or credentials.')
-    settings['api_base_url'] = base
-    slug = str(settings['race_slug']).strip()
-    if slug and not SLUG.fullmatch(slug):
+        raise ValueError('Choose the official race API or legacy integration.')
+    settings['race_slug'] = str(settings['race_slug']).strip()
+    if settings['race_slug'] and not SLUG.fullmatch(settings['race_slug']):
         raise ValueError('Race slug contains unsupported characters.')
-    settings['race_slug'] = slug
-    if settings['race_auth_mode'] not in ('none', 'private_header', 'public_header', 'dual_headers', 'bearer_private'):
-        raise ValueError('Unknown race API authentication mode.')
-    for key in ('race_private_header', 'race_public_header'):
-        header = str(settings[key])
-        if not re.fullmatch('[A-Za-z][A-Za-z0-9-]{0,49}', header) or header.lower() in (
-            'host', 'cookie', 'authorization', 'connection', 'content-length', 'proxy-authorization',
-            'transfer-encoding', 'location'):
-            raise ValueError('Unsafe credential HTTP header.')
-    if settings['race_private_header'].lower() == settings['race_public_header'].lower():
-        raise ValueError('Public and private key header names must differ.')
-    for key in ('race_rows_path', 'race_user_id_field'):
-        if settings[key] and not JSON_PATH.fullmatch(str(settings[key])):
-            raise ValueError('Invalid optional JSON path: ' + key)
-    for key in ('race_name_field', 'race_wager_field', 'race_start_field', 'race_end_field'):
-        if not JSON_PATH.fullmatch(str(settings[key])):
-            raise ValueError('Invalid JSON field: ' + key)
-    if settings['race_currency'] not in ('EUR', 'USD'):
-        raise ValueError('Only a provider-confirmed EUR/USD wager currency is accepted.')
+    settings['auto_select'] = settings['auto_select'] is True
     if settings['race_window_policy'] not in ('provider', 'local'):
-        raise ValueError('Choose provider race dates or the local race schedule.')
-    try:
-        amount = Decimal(str(settings['race_wager_divisor']))
-        if not amount.is_finite() or not 0 < amount <= 10**12: raise ValueError
-    except (InvalidOperation, ValueError):
-        raise ValueError('Invalid race wager divisor.') from None
-    for key in ('auto_select', 'race_verified_fields'):
-        settings[key] = settings[key] is True
+        raise ValueError('Choose provider or local date matching.')
     return settings
 
 
-def path(obj, dotted):
-    if not dotted: return obj
-    for key in dotted.split('.'):
-        if not isinstance(obj, dict): return None
-        obj = obj.get(key)
-    return obj
+def time_value(value):
+    """Convert the documented UTC ISO 8601 race dates into Unix seconds."""
+    if not isinstance(value, str):
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        return int(dt.timestamp()) if dt.tzinfo else None
+    except (ValueError, OverflowError):
+        return None
 
 
-def keys_only(value):
-    """Shape summary for admin diagnostics: no player values, keys or PII."""
+def keys_only(value, depth=0):
+    """Describe nested schema without disclosing player values or secrets."""
+    if depth >= 5:
+        return {'type': type(value).__name__}
     if isinstance(value, list):
-        return {'type': 'array', 'items': len(value), 'first': keys_only(value[0]) if value else None}
+        return {'type': 'array', 'items': len(value),
+                'first': keys_only(value[0], depth + 1) if value else None}
     if isinstance(value, dict):
-        return {'type': 'object', 'fields': {str(k)[:70]: ('array' if isinstance(v, list) else
-                'object' if isinstance(v, dict) else type(v).__name__) for k,v in list(value.items())[:40]}}
+        return {'type': 'object', 'fields': {
+            str(k)[:70]: keys_only(v, depth + 1)
+            for k, v in list(value.items())[:40]}}
     return {'type': type(value).__name__}
 
 
-def time_value(value):
-    """Accept ISO8601, Unix seconds or milliseconds for race period verification."""
-    if value is None or isinstance(value, bool): return None
-    try:
-        if isinstance(value, (int, float)) or (isinstance(value, str) and value.isdigit()):
-            v = float(value)
-            if v > 1e11: v /= 1000
-            return int(v) if 946684800 <= v <= 4102444799 else None
-        if isinstance(value, str):
-            dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
-            if dt.tzinfo is None: return None
-            return int(dt.timestamp())
-    except (ValueError, OverflowError, TypeError):
-        pass
-    return None
-
-
 def race_catalog(payload):
-    """Parse race *identifiers*, never player or wager data from discovery."""
-    candidates = payload if isinstance(payload, list) else None
-    if isinstance(payload, dict):
-        for candidate in (path(payload, 'data.races'), path(payload, 'data.items'), payload.get('races'),
-                          payload.get('data'), payload.get('results'), payload.get('items')):
-            if isinstance(candidate, list): candidates = candidate; break
-        if candidates is None and isinstance(payload.get('data'), dict):
-            for candidate in (payload['data'].get('results'), payload['data'].get('affiliates')):
-                if isinstance(candidate, list): candidates = candidate; break
-    if candidates is None:
-        raise ProviderError('Race discovery JSON contains no recognized races array. Check response structure.', kind='format')
-    if len(candidates) > 500:
-        raise ProviderError('Race discovery returned too many entries.', kind='format')
-    races, unique = [], set()
-    for item in candidates:
-        if not isinstance(item, dict): continue
-        slug = next((v for v in (path(item, 'slug'), path(item, 'race.slug'), path(item, 'raceSlug'),
-                     path(item, 'race_slug')) if isinstance(v, str) and SLUG.fullmatch(v)), None)
-        if not slug or slug in unique: continue
-        unique.add(slug)
-        name = next((v for v in (item.get('name'), item.get('title'), path(item, 'race.name'))
-                     if isinstance(v, str) and v.strip()), slug)
-        status = str(item.get('status') or path(item, 'race.status') or '').lower()
-        start = time_value(next((v for v in (item.get('startTime'), item.get('start_time'), item.get('startAt'),
-                item.get('startsAt'), path(item, 'race.startTime')) if v is not None), None))
-        end = time_value(next((v for v in (item.get('endTime'), item.get('end_time'), item.get('endAt'),
-                item.get('endsAt'), path(item, 'race.endTime')) if v is not None), None))
-        races.append(dict(slug=slug, name=name[:90], status=status[:36], start_time=start, end_time=end))
-    if candidates and not races:
-        raise ProviderError('Races found but none have a recognizable slug. Inspect sanitized field names.', kind='format')
-    return races
+    """Parse the documented {"races": [Race,...]} *running races* list."""
+    if not isinstance(payload, dict) or not isinstance(payload.get('races'), list):
+        raise ProviderError('EmpireDrop race list must contain races[].', kind='format')
+    items = payload['races']
+    if len(items) > 500:
+        raise ProviderError('EmpireDrop returned too many races.', kind='format')
+    output, slugs = [], set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        slug = item.get('slug')
+        if not isinstance(slug, str) or not SLUG.fullmatch(slug) or slug in slugs:
+            continue
+        slugs.add(slug)
+        output.append({
+            'slug': slug,
+            'name': str(item.get('name') or slug)[:90],
+            'start_time': time_value(item.get('start_date')),
+            'end_time': time_value(item.get('end_date')),
+            'is_active': item.get('is_active') is True,
+            'type': item.get('type'),
+            'engine': item.get('engine'),
+            'currency': item.get('currency'),
+            'cache_duration': item.get('cache_duration'),
+            'ranks_limit': item.get('ranks_limit'),
+        })
+    if items and not output:
+        raise ProviderError('Race list contains no valid race slugs.', kind='format')
+    return output
 
 
 def select_race(races, options, now=None):
-    """Never silently select a random past or unrelated affiliate race."""
-    chosen = options['race_slug']
-    if chosen:
-        match = next((r for r in races if r['slug'] == chosen), None)
-        if match is None:
-            raise ProviderError('Configured race slug is absent from this public-key affiliate race list.', kind='scope')
-        return match
-    if not options['auto_select']:
-        raise ProviderError('Select a race slug in EmpireDrop admin or enable unique-active auto selection.', kind='configuration')
-    now = int(now or time.time())
-    active = [r for r in races if (r['start_time'] is not None and r['end_time'] is not None
-        and r['start_time'] <= now < r['end_time']) or r['status'] in ('active', 'ongoing', 'running', 'in_progress')]
-    if len(active) != 1:
-        raise ProviderError('Unable to uniquely identify an active EmpireDrop race. Select its slug in admin.', kind='selection')
-    return active[0]
+    """Select the sole running race unless an explicit slug is configured.
+
+    The running-races API does *not* list completed/scheduled races, so an
+    explicit slug may be fetched directly from the detail endpoint.
+    """
+    settings = validate_race_settings(options)
+    if settings['race_slug']:
+        return next((race for race in races if race['slug'] == settings['race_slug']),
+                    {'slug': settings['race_slug'], 'name': settings['race_slug']})
+    if not settings['auto_select']:
+        raise ProviderError('Select an EmpireDrop race slug or enable automatic selection.', kind='selection')
+    running = [item for item in races if item['is_active']]
+    if len(running) != 1:
+        message = ('No running EmpireDrop races are available.' if not running else
+                   'Multiple EmpireDrop races are running; select a slug in Admin.')
+        raise ProviderError(message, kind='selection')
+    return running[0]
 
 
-def extract_race_rows(payload, dotted=''):
-    if dotted:
-        rows = path(payload, dotted)
-        if not isinstance(rows, list):
-            raise ProviderError('Configured race rows path does not contain an array.', kind='format')
-        return rows
-    for key in ('leaderboard', 'participants', 'players', 'rankings', 'entries', 'results', 'users',
-                'data.leaderboard', 'data.participants', 'data.players', 'data.rankings',
-                'data.entries', 'data.results', 'data.race.leaderboard', 'race.leaderboard'):
-        rows = path(payload, key)
-        if isinstance(rows, list): return rows
-        if isinstance(rows, dict):
-            for sub in ('rows', 'players', 'participants', 'entries', 'items', 'data'):
-                if isinstance(rows.get(sub), list): return rows[sub]
-    raise ProviderError('Race details have no recognized participants array; configure race_rows_path.', kind='format')
+def extract_race_rows(payload, unused_path=''):
+    """Current API: ranking[] only. Empty lists are legitimate for new/closed races."""
+    if not isinstance(payload, dict) or not isinstance(payload.get('ranking'), list):
+        raise ProviderError('EmpireDrop race detail must contain ranking[].', kind='format')
+    return payload['ranking']
 
 
-def normalize_race(payload, settings):
-    """ONLY verified wagers. Never substitute prizes, deposits or box openings."""
-    opts = validate_race_settings(settings)
-    rows = extract_race_rows(payload, opts['race_rows_path'])
-    if len(rows) > 10000: raise ProviderError('Too many race participant entries.', kind='format')
-    totals, names = {}, {}
-    for item in rows:
-        if not isinstance(item, dict): continue
-        name = path(item, opts['race_name_field'])
-        amount = path(item, opts['race_wager_field'])
-        if not isinstance(name, str) or not name.strip() or len(name) > 64 or amount is None or isinstance(amount, bool):
-            continue
-        try: wager = Decimal(str(amount)) / Decimal(str(opts['race_wager_divisor']))
-        except (InvalidOperation, ValueError, TypeError, ZeroDivisionError): continue
-        if not wager.is_finite() or not 0 <= wager <= Decimal('1e18'): continue
-        ident = path(item, opts['race_user_id_field']) if opts['race_user_id_field'] else None
-        ident = str(ident).strip() if isinstance(ident, (str, int)) and not isinstance(ident, bool) else ''
-        ident = ident or name.strip().casefold()
-        # Race standings are cumulative player totals, NOT individual bets.
-        # Repeated pages or duplicated players must not inflate their amount.
-        totals[ident] = max(totals.get(ident, Decimal(0)), wager)
-        names.setdefault(ident, name.strip())
-    if rows and not totals:
-        raise ProviderError('Race participants exist, but mapped username/wager fields are invalid.', kind='format')
-    if not opts['race_verified_fields']:
-        raise ProviderError('Race wager field and units are not verified; preview data and confirm mapping in admin.', kind='verification')
-    symbol = '€' if opts['race_currency'] == 'EUR' else '$'
-    ordered = sorted(totals, key=lambda k:(-totals[k], names[k].casefold()))[:15]
-    return [dict(rank=i, username=names[k], wager=symbol + format(totals[k], ',.2f'))
-            for i,k in enumerate(ordered, 1)]
+def _amount(value, currency):
+    """Convert integer minor units, not a formatted total_value string."""
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0 or value > 10**18:
+        raise ProviderError('Invalid ranking total: expected nonnegative integer minor units.', kind='format')
+    if currency not in CURRENCY_DECIMALS:
+        raise ProviderError('Unknown currency minor-unit precision: ' + str(currency)[:8], kind='format')
+    places = CURRENCY_DECIMALS[currency]
+    val = Decimal(value) / (Decimal(10) ** places)
+    symbol = CURRENCY_SYMBOLS.get(currency, currency + ' ')
+    return symbol + format(val, ',.' + str(places) + 'f')
+
+
+def normalize_race(payload, settings=None):
+    """Translate the OpenAPI RaceDetail ranking, including provider tie ranks.
+
+    RANKING + WAGER => money wagered; RANKING + DEPOSIT => money deposited;
+    RAFFLE => tickets, *not* currency. No invented wager weighting is applied.
+    """
+    validate_race_settings(settings or {})  # retained as an API compatibility check
+    if not isinstance(payload, dict) or not isinstance(payload.get('race'), dict):
+        raise ProviderError('EmpireDrop detail is missing race{}.', kind='format')
+    race = payload['race']
+    engine, category = race.get('engine'), race.get('type')
+    currency = race.get('currency')
+    if engine not in ('RANKING', 'RAFFLE') or category not in ('WAGER', 'DEPOSIT'):
+        raise ProviderError('Unrecognized EmpireDrop race engine/type.', kind='format')
+    if not isinstance(currency, str) or not ISO_CURRENCY.fullmatch(currency):
+        raise ProviderError('Invalid EmpireDrop race currency.', kind='format')
+    rows = extract_race_rows(payload)
+    if len(rows) > 10000:
+        raise ProviderError('Too many ranked players.', kind='format')
+    output, seen = [], set()
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get('user'), dict):
+            raise ProviderError('Malformed EmpireDrop ranking entry.', kind='format')
+        user = row['user']
+        user_id, username = user.get('hash_id'), user.get('name')
+        rank, total, unit = row.get('rank'), row.get('total'), row.get('unit')
+        if not isinstance(username, str) or not username.strip() or len(username) > 100:
+            raise ProviderError('Missing EmpireDrop ranked display name.', kind='format')
+        if not isinstance(user_id, str) or not user_id.strip():
+            raise ProviderError('Missing stable EmpireDrop user.hash_id.', kind='format')
+        if type(rank) is not int or rank < 1:
+            raise ProviderError('Invalid EmpireDrop rank.', kind='format')
+        if user_id in seen:
+            raise ProviderError('Repeated EmpireDrop user in ranking.', kind='format')
+        seen.add(user_id)
+        if engine == 'RAFFLE':
+            if unit != 'TICKETS' or type(total) is not int or total < 0:
+                raise ProviderError('Expected TICKETS unit and integer ticket total.', kind='format')
+            display = f'{total:,} tickets'
+        else:
+            if unit != currency:
+                raise ProviderError('Ranking unit differs from race.currency.', kind='format')
+            display = _amount(total, currency)
+        # The provider already anonymizes user.name. Never show Steam IDs.
+        output.append({'rank': rank, 'username': username.strip(), 'wager': display})
+    limit = race.get('ranks_limit')
+    if type(limit) is int and limit >= 0 and len(output) > limit:
+        raise ProviderError('Ranking contains more players than race.ranks_limit.', kind='format')
+    return output[:15]
 
 
 class RaceAPI:
-    """Read-only transport. Public key is path segment; private key stays server-side."""
+    """Read-only HTTP client with mandatory two-key auth and no redirects."""
     def __init__(self, options, credentials, requester=None):
         self.settings = validate_race_settings(options)
         self.credentials = credentials
         self.requester = requester or requests
 
-    def _get(self, url, use_auth=False):
-        opts = self.settings
-        headers = {'Accept': 'application/json', 'User-Agent': 'RedHunllef-EmpireDrop-Races/1.0'}
-        mode = opts['race_auth_mode'] if use_auth else 'none'
-        pub, secret = self.credentials.get('empiredrop_public_key',''), self.credentials.get('empiredrop_private_key','')
-        if mode in ('public_header', 'dual_headers'):
-            if not pub: raise ProviderError('EmpireDrop public key missing.', kind='configuration')
-            headers[opts['race_public_header']] = pub
-        if mode in ('private_header', 'dual_headers', 'bearer_private'):
-            if not secret: raise ProviderError('EmpireDrop private key missing.', kind='configuration')
-            if mode == 'bearer_private': headers['Authorization'] = 'Bearer ' + secret
-            else: headers[opts['race_private_header']] = secret
+    def _get(self, suffix):
+        public = str(self.credentials.get('empiredrop_public_key') or '').strip()
+        secret = str(self.credentials.get('empiredrop_private_key') or '').strip()
+        if not public or not secret:
+            raise ProviderError('Both EmpireDrop production keys are required.', kind='configuration')
+        headers = {
+            'Accept': 'application/json',
+            'User-Agent': 'RedHunllef-EmpireDrop-OpenAPI-2.0.1',
+            'X-Public-Key': public,
+            'X-Private-Key': secret,
+        }
         try:
-            with self.requester.get(url, headers=headers, timeout=(5, 18), stream=True, allow_redirects=False) as response:
-                status = response.status_code
-                if status in (301,302,303,307,308):
-                    raise ProviderError('EmpireDrop redirected the API request; credentials were not forwarded.', kind='redirect', status=status)
-                if status in (401,403):
-                    raise ProviderError('EmpireDrop rejected access. Verify API permissions and authentication.', kind='access', status=status)
-                if status == 429:
-                    raise ProviderError('EmpireDrop rate limit reached; request frequency must be reduced.', kind='rate_limit', status=status)
-                if status != 200:
-                    raise ProviderError('EmpireDrop race API returned HTTP ' + str(status), kind='http', status=status)
-                raw = bytearray()
+            # Only hard-coded provider origin and path prefixes can receive keys.
+            with self.requester.get(API_ORIGIN + suffix, headers=headers,
+                                    timeout=(5, 20), stream=True,
+                                    allow_redirects=False) as response:
+                code = response.status_code
+                if code in (301, 302, 303, 307, 308):
+                    raise ProviderError('EmpireDrop redirected an authenticated request; refused.', kind='redirect', status=code)
+                if code == 401:
+                    raise ProviderError('EmpireDrop 401: both API keys must be present.', kind='access', status=code)
+                if code == 403:
+                    raise ProviderError('EmpireDrop 403: invalid key pair or disallowed server outbound IP.', kind='access', status=code)
+                if code == 404:
+                    raise ProviderError('EmpireDrop 404: race slug not found or not owned by partner.', kind='scope', status=code)
+                if code == 429:
+                    raise ProviderError('EmpireDrop 429: rate limit; respect race.cache_duration.', kind='rate_limit', status=code)
+                if code != 200:
+                    raise ProviderError('EmpireDrop race API returned HTTP ' + str(code), kind='http', status=code)
+                body = bytearray()
                 for block in response.iter_content(65536):
-                    raw.extend(block)
-                    if len(raw) > 4*1024*1024:
-                        raise ProviderError('EmpireDrop response larger than 4 MB.', kind='format')
-                import json
-                from decimal import Decimal
-                try: return json.loads(raw, parse_float=Decimal)
-                except (UnicodeError, ValueError, TypeError):
-                    raise ProviderError('EmpireDrop race API returned invalid JSON.', kind='format') from None
+                    body.extend(block)
+                    if len(body) > 4 * 1024 * 1024:
+                        raise ProviderError('EmpireDrop response exceeds the 4 MB limit.', kind='format')
+                try:
+                    result = json.loads(body)
+                except (ValueError, UnicodeError, TypeError):
+                    raise ProviderError('EmpireDrop returned invalid JSON.', kind='format') from None
+                if not isinstance(result, dict):
+                    raise ProviderError('EmpireDrop returned a non-object JSON response.', kind='format')
+                return result
         except requests.RequestException:
-            raise ProviderError('EmpireDrop network request failed.', kind='connection') from None
+            # Do not include exception URLs/headers; they can leak API metadata.
+            raise ProviderError('EmpireDrop network connection failed.', kind='connection') from None
 
     def discover(self):
-        public = self.credentials.get('empiredrop_public_key', '').strip()
-        if not public or len(public) > 256:
-            raise ProviderError('Configured EmpireDrop public key is missing or invalid.', kind='configuration')
-        url = self.settings['api_base_url'] + DISCOVER_PATH.format(publicKey=quote(public, safe=''))
-        payload = self._get(url)  # Discovery: never send private key.
+        payload = self._get(LIST_PATH)
         return race_catalog(payload), keys_only(payload)
 
     def details(self, slug):
-        if not SLUG.fullmatch(str(slug)):
+        if not isinstance(slug, str) or not SLUG.fullmatch(slug):
             raise ProviderError('Invalid race slug.', kind='configuration')
-        url = self.settings['api_base_url'] + DETAIL_PATH.format(slug=quote(slug, safe=''))
-        return self._get(url, use_auth=True)
+        return self._get(DETAIL_PATH.format(slug=quote(slug, safe='')))
 
     def probe(self, slug):
         payload = self.details(slug)
-        structure = keys_only(payload)
-        try:
-            rows = extract_race_rows(payload, self.settings['race_rows_path'])
-            sample = keys_only(rows[0]) if rows else None
-            count = len(rows)
-            error = ''
-        except ProviderError as exc:
-            sample, count, error = None, 0, str(exc)
-        return {'race_slug':slug, 'structure': structure, 'sample_row_fields':sample,
-                'participant_rows':count, 'mapping_warning':error}
+        rows = extract_race_rows(payload)
+        return {
+            'race_slug': slug,
+            'structure': keys_only(payload),
+            'sample_row_fields': keys_only(rows[0]) if rows else None,
+            'participant_rows': len(rows),
+            'race': keys_only(payload.get('race', {})),
+            'mapping_warning': '',
+        }

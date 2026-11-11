@@ -1,18 +1,21 @@
 {
-  "release": "2026.11.02-do-root-build-fix1",
+  "release": "2026.11.10-empiredrop-openapi-2.0.1",
   "entry_point": "python wager_backend.py",
-  "source": "EmpireDrop documented Races GET routes",
+  "source": "User-supplied EmpireDrop Partner Public API OpenAPI v2.0.1",
   "private_config_included": true,
   "docs_verified_paths": [
-    "/api/v1/race/affiliates/{publicKey}",
+    "/api/v1/affiliate-partner/races",
     "/api/v1/affiliate-partner/races/{slug}"
   ],
   "live_empiredrop_connection_verified": false,
-  "api_response_schema_verified": false,
+  "api_response_schema_verified": true,
   "storage": "JSON (ephemeral on DigitalOcean App Platform)",
   "python_version": "3.13.12",
   "build_command": "automatic Python buildpack",
   "note": "Both ZIPs contain unencrypted real credentials supplied by the user. Keep private.",
   "packaging": "flat-root complete",
-  "deployment_fix": "Flat source root and runtime-only manifest; no duplicate build command"
+  "deployment_fix": "Flat source root and runtime-only manifest; no duplicate build command",
+  "api_origin": "https://api.empiredrop.com",
+  "deprecation_note": "/api/v1/race/affiliates/{publicKey} is deprecated and unused by official race mode",
+  "credential_note": "Production keys in private/settings.json and server-only empiredrop_deploy_keys.py; use a private repository"
 }

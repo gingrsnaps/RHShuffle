@@ -871,10 +871,14 @@ def create_app(root=None, testing=False):
         try:
             expected = int(request.form.get('revision', '-1'))
             if expected != g.revision: raise Conflict('Settings changed. Reload and try again.')
-            values = {key: request.form.get(key, '').strip()
-                      for key in RACE_EDITABLE - {'auto_select','race_verified_fields'}}
-            values['auto_select'] = request.form.get('auto_select') == 'yes'
-            values['race_verified_fields'] = request.form.get('race_verified_fields') == 'yes'
+            # Authentication, endpoint, units and JSON paths are FIXED by the
+            # official OpenAPI 2.0.1. Admins only choose which race to display.
+            values = {
+                'source_mode': request.form.get('source_mode', 'races').strip(),
+                'race_slug': request.form.get('race_slug', '').strip(),
+                'auto_select': request.form.get('auto_select') == 'yes',
+                'race_window_policy': request.form.get('race_window_policy', 'provider').strip(),
+            }
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_races'] = validate_race_settings(values)
             runtime.commit(candidate, expected)

@@ -1,3 +1,5 @@
+> **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
+
 # RedHunllef — 2026-11-02 EmpireDrop race endpoint update
 
 The EmpireDrop panel now uses the two documented race GET routes, with public-key

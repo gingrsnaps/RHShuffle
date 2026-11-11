@@ -1,3 +1,5 @@
+> **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
+
 > **DigitalOcean App Platform:** This ZIP is flat-root. Do NOT upload the ZIP as a file in GitHub. Extract it, commit the root-level code, and read [DEPLOY_DIGITALOCEAN.md](DEPLOY_DIGITALOCEAN.md). The App Platform build command must be blank; `python -m pip install -r requirements.txt` below is for local usage only.
 
 # Start RedHunllef

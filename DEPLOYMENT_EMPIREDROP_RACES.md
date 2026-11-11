@@ -1,3 +1,5 @@
+> **CURRENT RELEASE (Nov 10, 2026):** The authoritative EmpireDrop integration instructions are in [docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md](docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md). Previous generic API configuration, legacy `/race/affiliates/{publicKey}` discovery, and manually mapped rows are superseded. The official production origin is `https://api.empiredrop.com`, and both authentication headers are mandatory.
+
 **DigitalOcean deployment correction (2026-11-02):** This new full ZIP has
 no nested `redhunllef/` directory. Extract the archive and upload its contents
 to the Git repository root; Source Directory is `/`. See `DEPLOY_DIGITALOCEAN.md`.

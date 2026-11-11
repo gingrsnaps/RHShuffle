@@ -1,0 +1,539 @@
+openapi: 3.0.3
+info:
+  title: EmpireDrop Partner Public API
+  version: 2.0.1
+  description: |
+    Official partner public API for EmpireDrop.
+    Allows developers to retrieve race leaderboards.
+
+    ## Authentication
+    Every current endpoint requires **both** an `X-Public-Key` (identifier)
+    and an `X-Private-Key` (secret) header. Keys are issued from the partner
+    dashboard, one per environment, and may be restricted to a list of server
+    IP addresses.
+
+    ## Deprecation notice
+    `GET /api/v1/race/affiliates/{publicKey}` is deprecated and will be removed
+    in a future release. Use `GET /api/v1/affiliate-partner/races/{slug}`
+    instead
+
+    See the migration notes on the deprecated operation for a field-by-field
+    mapping.
+  x-logo:
+    url: https://cdn.empiredrop.com/logo_black.png
+    altText: EmpireDrop
+  contact:
+    name: EmpireDrop Support
+    url: https://empiredrop.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.empiredrop.com
+    description: Production
+
+paths:
+  /api/v1/race/affiliates/{publicKey}:
+    get:
+      deprecated: true
+      summary: '[Deprecated] Get race leaderboard'
+      description: |
+        **Deprecated. Use `GET /api/v1/affiliate-partner/races/{slug}` instead.**
+
+        Returns the leaderboard ranking for a specific partner within a defined
+        time range. This operation predates the current partner API: it takes an
+        arbitrary time window rather than reading the race's own schedule, and it
+        returns nothing but the ranking.
+
+        ### Migrating
+
+        | Here | On the new operation |
+        |---|---|
+        | `publicKey` path parameter | `slug` path parameter, from your dashboard |
+        | `start_timestamp` / `end_timestamp` | Dropped: the window comes from the race itself |
+        | `X-Private-Key` alone | `X-Public-Key` **and** `X-Private-Key` |
+        | `cache_duration` at the root | `race.cache_duration` |
+        | `ranking[].currency` | `ranking[].unit`, which reads `TICKETS` on a raffle race |
+        | `ranking[].active` | Dropped: every ranked player is one of your referrals |
+        | — | `prizes`, `winners`, `fairness`, `is_locked` are now returned too |
+
+        The `ranking` entries otherwise keep the same shape.
+
+        This operation will be removed in a future release. It receives no new
+        features and its ranking is computed by the legacy engine, so totals may
+        differ slightly from the new operation on the same period.
+      tags:
+        - Races
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: publicKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: |
+            Public affiliate identifier.
+            This key uniquely identifies the affiliate race context.
+
+        - name: start_timestamp
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 1714946400
+          description: |
+            Start of the leaderboard period (Unix timestamp, UTC).
+
+        - name: end_timestamp
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 1715464800
+          description: |
+            End of the leaderboard period (Unix timestamp, UTC).
+
+      responses:
+        '200':
+          description: Successful leaderboard response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cache_duration:
+                    type: integer
+                    example: 300
+                    description: |
+                      Duration (in seconds) the response can be cached.
+                  ranking:
+                    type: array
+                    description: Ordered list of ranked affiliates.
+                    items:
+                      type: object
+                      properties:
+                        rank:
+                          type: integer
+                          example: 1
+                          description: Position in the leaderboard.
+
+                        total:
+                          type: integer
+                          example: 563744
+                          description: |
+                            Total value wagered in minor units.
+
+                        total_value:
+                          type: string
+                          example: "5,637"
+                          description: |
+                            Human-readable formatted value.
+
+                        currency:
+                          type: string
+                          example: EUR
+
+                        active:
+                          type: boolean
+                          example: true
+                          description: |
+                            Indicates whether the affiliate is still active.
+
+                        user:
+                          type: object
+                          properties:
+                            hash_id:
+                              type: string
+                              example: l1M4rjyvgO6D2L23xxZKXzEb1
+                              description: Unique public user identifier.
+                            name:
+                              type: string
+                              example: US*****1
+                              description: Display name of the user.
+                            avatar:
+                              type: string
+                              example: https://cdn.empiredrop.com/avatars/default_25.webp
+                              description: URL to the user avatar image.
+                            level:
+                              type: integer
+                              example: 12
+                              description: Current public user level.
+
+                        shared_data:
+                          type: object
+                          nullable: true
+                          description: |
+                            Additional data shared.
+                          properties:
+                            steam_id:
+                              type: string
+                              nullable: true
+                              example: "765XXXXXXXXXXXXX"
+                              description: Steam account identifier linked to the user.
+        '401':
+          description: Unauthorized - Invalid or missing API key
+        '429':
+          description: Too Many Requests - Rate limit exceeded
+
+  /api/v1/affiliate-partner/races:
+    get:
+      summary: List running races
+      description: |
+        Every race currently running for the partner, soonest to end first.
+
+        Rankings are left out on purpose: each one is an aggregate query, so
+        returning them for the whole list would make the cost grow with the
+        number of races. Fetch a race by its slug to get its standings.
+
+        Scheduled and finished races are not listed.
+      tags:
+        - Races
+      security:
+        - AffiliatePartnerPublicKey: []
+          AffiliatePartnerPrivateKey: []
+      responses:
+        '200':
+          description: Running races.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  races:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Race'
+        '401':
+          description: Unauthorized - Missing or empty credentials (X-Public-Key / X-Private-Key)
+        '403':
+          description: Forbidden - Invalid partner credentials, or request sent from a disallowed IP
+        '429':
+          description: Too Many Requests - Rate limit exceeded
+
+  /api/v1/affiliate-partner/races/{slug}:
+    get:
+      summary: Get a partner race
+      description: |
+        Returns a single race owned by the partner: its configuration, its
+        prizes, the live ranking, the winners once drawn, and the provably fair
+        data for raffle races.
+
+        ### Caching
+        The ranking is served from cache for `race.cache_duration` seconds.
+        Polling faster returns the same payload and consumes your rate limit for
+        nothing.
+
+        ### Amounts
+        `total_prizes`, `prizes[].amount` and `winners[].amount` are expressed in
+        minor units of the site's default currency. `ranking[].total` is the only
+        figure converted into `race.currency`, and on a raffle race it is a
+        ticket count rather than an amount — read `ranking[].unit` to tell the
+        two apart.
+      tags:
+        - Races
+      security:
+        - AffiliatePartnerPublicKey: []
+          AffiliatePartnerPrivateKey: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            example: summer-wager-race-42-k3n8xq
+          description: |
+            Public slug of the race, shown on your dashboard.
+      responses:
+        '200':
+          description: Race detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaceDetail'
+        '401':
+          description: Unauthorized - Missing or empty credentials (X-Public-Key / X-Private-Key)
+        '403':
+          description: Forbidden - Invalid partner credentials, or request sent from a disallowed IP
+        '404':
+          description: Not Found - Race does not exist, or is not yours
+        '429':
+          description: Too Many Requests - Rate limit exceeded
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Private-Key
+    AffiliatePartnerPublicKey:
+      type: apiKey
+      in: header
+      name: X-Public-Key
+      description: |
+        Public partner identifier, used to look up the access record.
+    AffiliatePartnerPrivateKey:
+      type: apiKey
+      in: header
+      name: X-Private-Key
+      description: |
+        Partner secret, verified against the stored hash.
+
+  schemas:
+    RaceType:
+      type: string
+      description: |
+        What the ranking measures: amounts wagered, or amounts deposited.
+      enum:
+        - WAGER
+        - DEPOSIT
+      example: WAGER
+
+    RaceEngine:
+      type: string
+      description: |
+        How winners are determined.
+
+        `RANKING` awards each prize to the player holding the matching position.
+        `RAFFLE` draws ticket numbers, every player earning one ticket per
+        `ticket_value` wagered or deposited.
+      enum:
+        - RANKING
+        - RAFFLE
+      example: RANKING
+
+    RaceDetail:
+      type: object
+      properties:
+        race:
+          $ref: '#/components/schemas/Race'
+        is_locked:
+          type: boolean
+          description: |
+            True while a finished raffle race is being drawn. Always false on a
+            ranking race.
+          example: false
+        ranking:
+          type: array
+          description: |
+            Live standings, capped at the race's displayed rank count. Empty once
+            the race is over, or while no referral has any activity.
+          items:
+            $ref: '#/components/schemas/RaceRankingEntry'
+        prizes:
+          type: array
+          description: Prize per rank.
+          items:
+            $ref: '#/components/schemas/RacePrize'
+        winners:
+          type: array
+          description: Empty until the race has been drawn.
+          items:
+            $ref: '#/components/schemas/RaceWinner'
+        fairness:
+          $ref: '#/components/schemas/RaceFairness'
+
+    Race:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Summer Wager Race
+        slug:
+          type: string
+          description: Public identifier, used to fetch this race.
+          example: summer-wager-race-42-k3n8xq
+        number:
+          type: integer
+          description: |
+            Edition number. Also used as the client seed on a raffle race.
+          example: 1
+        start_date:
+          type: string
+          format: date-time
+          description: Opening of the window, in UTC.
+          example: "2026-08-25T00:00:00.000000Z"
+        end_date:
+          type: string
+          format: date-time
+          description: |
+            Closing of the window, in UTC. Always falls on the last second of an
+            hour.
+          example: "2026-08-31T23:59:59.000000Z"
+        total_prizes:
+          type: integer
+          description: Total prize pool, in minor units of the default currency.
+          example: 50000
+        engine:
+          $ref: '#/components/schemas/RaceEngine'
+        type:
+          $ref: '#/components/schemas/RaceType'
+        currency:
+          type: string
+          description: Currency the ranking totals are converted into.
+          example: EUR
+        ticket_value:
+          type: integer
+          description: |
+            Amount granting one ticket, in minor units. Set to 1 on a ranking
+            race, where it carries no meaning.
+          example: 2000
+        cache_duration:
+          type: integer
+          description: |
+            Seconds the ranking stays cached. Mirror it on your side.
+          example: 300
+        ranks_limit:
+          type: integer
+          description: |
+            How many positions the ranking holds at most. Prizes never reward a
+            rank beyond it.
+          example: 10
+        is_active:
+          type: boolean
+          description: |
+            False once the race has been closed. A closed race stops returning
+            its ranking even if its window is still open.
+          example: true
+
+    RaceRankingEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          description: |
+            Position. Tied players share a rank and the next one is skipped.
+          example: 1
+        total:
+          type: integer
+          description: |
+            On a ranking race, the amount wagered or deposited in minor units of
+            `unit`. On a raffle race, the number of tickets earned.
+          example: 563744
+        total_value:
+          type: string
+          description: The same figure formatted for display.
+          example: "5,637"
+        unit:
+          type: string
+          description: |
+            What `total` counts: the race currency on a ranking race, or the
+            literal `TICKETS` on a raffle race.
+          example: EUR
+        user:
+          type: object
+          properties:
+            hash_id:
+              type: string
+              description: Public user identifier.
+              example: n7zaW3mML6eYaeYQpBbrxwlvq
+            name:
+              type: string
+              description: Anonymized display name.
+              example: Ha*********ms
+            avatar:
+              type: string
+              format: uri
+              description: Absolute URL to the user avatar.
+              example: https://cdn.empiredrop.com/avatars/default_25.webp
+            level:
+              type: integer
+              example: 29
+        shared_data:
+          type: object
+          nullable: true
+          description: |
+            Present only when the race was created with Steam ID sharing
+            enabled. Null otherwise.
+          properties:
+            steam_id:
+              type: string
+              nullable: true
+              description: |
+                Steam account linked to the user, or null when they have none.
+              example: "76561198000000000"
+
+    RacePrize:
+      type: object
+      properties:
+        rank:
+          type: integer
+          description: Position this prize rewards.
+          example: 1
+        amount:
+          type: integer
+          description: |
+            Prize value in minor units of the default currency. Split evenly
+            between tied players.
+          example: 30000
+
+    RaceWinner:
+      type: object
+      properties:
+        rank:
+          type: integer
+          example: 1
+        amount:
+          type: integer
+          description: Amount credited, in minor units of the default currency.
+          example: 30000
+        ticket_number:
+          type: integer
+          nullable: true
+          description: |
+            Winning ticket on a raffle race. Null on a ranking race.
+          example: 4821
+        total_amount:
+          type: integer
+          description: The player's volume over the period, in minor units.
+          example: 563744
+        user:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Anonymized display name.
+              example: US*****1
+            avatar:
+              type: string
+              description: |
+                Avatar path, relative to the CDN root.
+              example: /avatars/default_25.webp
+            level:
+              type: integer
+              example: 12
+            is_vip:
+              type: boolean
+              example: false
+            role:
+              type: string
+              example: USER
+
+    RaceFairness:
+      type: object
+      description: |
+        Provably fair data for a raffle race. Empty on a ranking race, where no
+        draw takes place.
+      properties:
+        hash:
+          type: string
+          description: |
+            SHA-256 hash of the server seed, published before the draw.
+          example: e6c20ffcbec18c93cbaea3aff7e64b0e898993156e6d2244029b6469f6954913
+        server_seed:
+          type: string
+          nullable: true
+          description: |
+            Revealed once the race is closed, so the draw can be verified
+            against the hash. Absent while the race is still running.
+          example: 3d8f1a6c9e2b5d7f0a4c8e1b6d9f3a7c
+        client_seed:
+          type: integer
+          description: |
+            Mirrors the race's edition number.
+          example: 1
+
+tags:
+  - name: Races
+    description: |
+      Race data for third-party integrations, authenticated by API key pair.

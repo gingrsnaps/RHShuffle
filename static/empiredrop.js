@@ -16,8 +16,8 @@
   const isEmpire = () => empireTab.getAttribute('aria-selected') === 'true';
   function setHero() {
     if (isEmpire()) {
-      if (title) title.textContent = 'EmpireDrop Wager Race';
-      if (description) description.textContent = latest?.race_meta?.name ? `EmpireDrop race: ${latest.race_meta.name}` : 'Top 15 EmpireDrop wagers from players referred with code red.';
+      if (title) title.textContent = 'EmpireDrop ' + (latest?.race_meta?.engine === 'RAFFLE' ? 'Raffle' : latest?.race_meta?.type === 'DEPOSIT' ? 'Deposit' : 'Wager') + ' Race';
+      if (description) description.textContent = latest?.race_meta?.name ? `EmpireDrop race: ${latest.race_meta.name}` : 'EmpireDrop partner race standings, updated from the official API.';
     } else {
       if (title) title.textContent = shuffleTitle;
       if (description) description.textContent = shuffleDescription;
@@ -62,12 +62,20 @@
       shuffleTitle = String(board.shuffle_site.race_title || shuffleTitle);
       shuffleDescription = String(board.shuffle_site.race_description || shuffleDescription);
     }
-    const rows = new Map(board.rows.map(item => [Number(item.rank), item]));
+    // Standings are ordered by the provider. Two users can share the same
+    // rank; map by displayed POSITION rather than rank, or ties disappear.
+    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 15) : [];
+    const metric = board.race_meta?.metric || 'Wagered';
+    document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
+      node.textContent = 'EmpireDrop ' + metric.toLowerCase();
+    });
     for (let rank=1; rank<=15; rank++) {
-      const r = rows.get(rank);
+      const r = rows[rank - 1];
       const name = document.querySelector(rank<=3 ? `[data-empire-name="${rank}"]` : `[data-empire-row-name="${rank}"]`);
       const amount = document.querySelector(rank<=3 ? `[data-empire-wager="${rank}"]` : `[data-empire-row-wager="${rank}"]`);
       if (name) name.textContent = r?.username || 'Open position';
+      const place = document.querySelector(`[data-empire-place="${rank}"]`);
+      if (place) place.textContent = String(r?.rank || rank).padStart(2, '0');
       if (amount) amount.textContent = r?.wager || '—';
     }
     if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';

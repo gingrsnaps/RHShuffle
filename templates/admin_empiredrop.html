@@ -3,13 +3,13 @@
   <p class="eyebrow">INDEPENDENT PROVIDER · EMPIREDROP</p>
   <h2 id="empireAdminTitle">EmpireDrop administration</h2>
   <p>Affiliate code <strong>red</strong> · <a class="text-link" href="https://empiredrop.com/c/red" rel="noopener noreferrer sponsored" target="_blank">EmpireDrop referral link ↗</a></p>
-  <p class="small muted">Separate Top 15, separate schedule, separate stored data, and separate refresh worker. EmpireDrop does not inherit Shuffle's ranking weights, prizes or dates.</p>
+  <p class="small muted">Separate standings, provider-managed dates, separate stored data, and a separate refresh worker. EmpireDrop does not inherit Shuffle's ranking weights, prizes or dates.</p>
   <div class="health-grid" aria-label="EmpireDrop connection details">
     <article class="health-card"><span class="eyebrow">CONNECTION</span><strong id="empireAdminStatus" role="status">{{ empire_admin.label }}</strong><small>{{ 'Worker active' if empire_admin.running else 'Worker not started' }}</small></article>
     <article class="health-card"><span class="eyebrow">CONFIRMED UPDATE</span><strong id="empireAdminConfirmed">{{ fmt_et(empire_admin.updated_at) if empire_admin.updated_at else 'Not yet verified' }}</strong></article>
     <article class="health-card"><span class="eyebrow">LAST ATTEMPT</span><strong id="empireAdminAttempted">{{ fmt_et(empire_admin.attempt_at) if empire_admin.attempt_at else 'Not attempted' }}</strong></article>
-    <article class="health-card"><span class="eyebrow">REFERRAL</span><strong>red</strong><small>{{ empire_admin.currency }} wagering totals</small></article>
-    <article class="health-card"><span class="eyebrow">CHECK STATUS</span><strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Idle' }}</strong><small>Automatic checks every 60 seconds</small></article>
+    <article class="health-card"><span class="eyebrow">REFERRAL</span><strong>Official races</strong><small>Server-authenticated partner standings</small></article>
+    <article class="health-card"><span class="eyebrow">CHECK STATUS</span><strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Idle' }}</strong><small>Respects provider cache_duration (typically 300 seconds)</small></article>
   </div>
   <p id="empireError" class="notice warning" role="status" {% if not empire_admin.error %}hidden{% endif %}>{{ empire_admin.error }}</p>
   {{ action_feedback('empireRefresh') }}
@@ -18,14 +18,14 @@
     {% if superadmin %}<button type="button" id="testEmpireConnection" class="button" data-csrf="{{ csrf() }}">Test API connection (no changes)</button>{% endif %}
   </div>
   <p id="empireTestResult" class="small muted" role="status" aria-live="polite"></p>
-  <h3>EmpireDrop Top 15 · full names (admin only)</h3>
-  <p class="small muted">These are verified provider wager totals for the EmpireDrop period below. Public usernames are always masked.</p>
+  <h3>EmpireDrop Top 15 · provider display names</h3>
+  <p class="small muted">EmpireDrop anonymizes user.name at the source, including for administrators. Monetary and ticket totals come from official ranking[].</p>
   <div class="table-scroll" tabindex="0" role="region" aria-label="Private EmpireDrop Top 15">
-    <table><thead><tr><th>Place</th><th>Player</th><th class="number">Wager total ({{ empire_admin.currency }})</th></tr></thead>
-    <tbody id="empireAdminRows">{% for row in empire_admin.rows %}<tr><td>{{ '%02d'|format(row.rank) }}</td><td>{{ row.username }}</td><td class="number">{{ row.wager }}</td></tr>{% else %}<tr><td colspan="3">No verified EmpireDrop wagers in this period.</td></tr>{% endfor %}</tbody></table>
+    <table><thead><tr><th>Place</th><th>Player</th><th class="number">{{ empire_admin.race_meta.metric or "Race total" }}</th></tr></thead>
+    <tbody id="empireAdminRows">{% for row in empire_admin.rows %}<tr><td>{{ '%02d'|format(row.rank) }}</td><td>{{ row.username }}</td><td class="number">{{ row.wager }}</td></tr>{% else %}<tr><td colspan="3">No ranked players returned for this EmpireDrop race.</td></tr>{% endfor %}</tbody></table>
   </div>
 </section>
-<section class="panel form-panel" aria-labelledby="empireDatesTitle">
+<section class="panel form-panel" aria-labelledby="empireDatesTitle" {% if empire_admin.race_configuration.source_mode != 'legacy' %}hidden{% endif %}>
   <p class="eyebrow">EMPIREDROP ONLY</p><h2 id="empireDatesTitle">Independent race dates</h2>
   <p>Currently selected: <strong>{{ 'Automatic Tuesday 6 PM ET weekly race' if empire_admin.schedule.mode == 'weekly' else 'Custom race dates' }}</strong>.</p>
   <p class="muted">{{ empire_admin.schedule.start_et }} → {{ empire_admin.schedule.end_et }}. Daylight saving is handled automatically.</p>
@@ -64,7 +64,7 @@
 <section class="panel form-panel" aria-labelledby="empireRacesTitle">
   <p class="eyebrow">OFFICIAL DEVELOPER ROUTES · EMPIREDROP</p>
   <h2 id="empireRacesTitle">Affiliate race connection</h2>
-  <p class="small muted">Discover races with <code>/api/v1/race/affiliates/{publicKey}</code>, then fetch the selected race with <code>/api/v1/affiliate-partner/races/{slug}</code>. Your private key is only sent by a server-side request if the chosen authentication method requires it. The developer page has not exposed a complete schema, so monetary field mapping requires confirmation.</p>
+  <p class="small muted">OpenAPI v2.0.1: <code>GET https://api.empiredrop.com/api/v1/affiliate-partner/races</code> lists currently running races; <code>GET /api/v1/affiliate-partner/races/{slug}</code> returns ranking[]. Both use mandatory X-Public-Key and X-Private-Key headers. The old /race/affiliates/{publicKey} endpoint is deprecated.</p>
   <div class="health-grid" aria-label="EmpireDrop race API health">
     <article class="health-card"><span class="eyebrow">DATA SOURCE</span><strong id="empireRaceMode">{{ empire_admin.source_mode|upper }}</strong></article>
     <article class="health-card"><span class="eyebrow">ACTIVE SLUG</span><strong id="empireRaceSlug">{{ empire_admin.race_meta.slug or 'Not discovered' }}</strong></article>
@@ -81,25 +81,12 @@
     <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
     {% set rc = empire_admin.race_configuration %}
     <div class="form-grid">
-      <div class="field"><label for="empireSourceMode">Leaderboard source</label><select name="source_mode" id="empireSourceMode"><option value="races" {% if rc.source_mode=='races' %}selected{% endif %}>Official race endpoints (recommended)</option><option value="legacy" {% if rc.source_mode=='legacy' %}selected{% endif %}>Legacy custom wager API</option></select></div>
-      <div class="field"><label for="empireRaceBase">API host (HTTPS)</label><input id="empireRaceBase" name="api_base_url" required maxlength="150" value="{{ rc.api_base_url }}"><small>Documented paths are appended. Host must be EmpireDrop-controlled.</small></div>
-      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = unique active race"></div>
-      <div class="field"><label for="empireRaceAuth">Race detail authentication</label><select id="empireRaceAuth" name="race_auth_mode">{% for value,label in [('none','No authentication'),('private_header','Private key HTTP header'),('public_header','Public key HTTP header'),('dual_headers','Two HTTP headers'),('bearer_private','Bearer private key')] %}<option value="{{ value }}" {% if rc.race_auth_mode==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <div class="field"><label for="empireRacePrivateHeader">Private credential header (when needed)</label><input id="empireRacePrivateHeader" name="race_private_header" value="{{ rc.race_private_header }}" maxlength="50" required></div>
-      <div class="field"><label for="empireRacePublicHeader">Public credential header (when needed)</label><input id="empireRacePublicHeader" name="race_public_header" value="{{ rc.race_public_header }}" maxlength="50" required></div>
-      <div class="field"><label for="empireRaceRows">Participant array path</label><input id="empireRaceRows" name="race_rows_path" value="{{ rc.race_rows_path }}" placeholder="e.g. data.leaderboard" maxlength="250"></div>
-      <div class="field"><label for="empireRaceName">Username path</label><input id="empireRaceName" name="race_name_field" value="{{ rc.race_name_field }}" required></div>
-      <div class="field"><label for="empireRaceId">Stable user ID path (optional)</label><input id="empireRaceId" name="race_user_id_field" value="{{ rc.race_user_id_field }}"></div>
-      <div class="field"><label for="empireRaceWager">Confirmed wager amount path</label><input id="empireRaceWager" name="race_wager_field" value="{{ rc.race_wager_field }}" required></div>
-      <div class="field"><label for="empireRaceDivisor">Amount units divisor</label><input id="empireRaceDivisor" name="race_wager_divisor" value="{{ rc.race_wager_divisor }}" required></div>
-      <div class="field"><label for="empireRaceCurrency">Wager currency</label><select id="empireRaceCurrency" name="race_currency">{% for value in ('EUR','USD') %}<option value="{{ value }}" {% if rc.race_currency==value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></div>
-      <div class="field"><label for="empireRacePolicy">Reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Provider-managed race dates</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Match local Tuesday 6PM ET schedule exactly</option></select></div>
-      <div class="field"><label for="empireRaceStart">Provider race start JSON path</label><input id="empireRaceStart" name="race_start_field" value="{{ rc.race_start_field }}" required></div>
-      <div class="field"><label for="empireRaceEnd">Provider race end JSON path</label><input id="empireRaceEnd" name="race_end_field" value="{{ rc.race_end_field }}" required></div>
-      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is active</label></div>
-      <div class="field"><label><input type="checkbox" name="race_verified_fields" value="yes" {% if rc.race_verified_fields %}checked{% endif %}> I confirmed leaderboard fields, currency and divisor against EmpireDrop</label></div>
+      <div class="field"><label for="empireSourceMode">Leaderboard source</label><select name="source_mode" id="empireSourceMode"><option value="races" {% if rc.source_mode=='races' %}selected{% endif %}>Official EmpireDrop Partner API (recommended)</option><option value="legacy" {% if rc.source_mode=='legacy' %}selected{% endif %}>Old custom adapter (deprecated)</option></select></div>
+      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = select the only running race"><small>For a finished or scheduled race, enter its slug from your EmpireDrop dashboard.</small></div>
+      <div class="field"><label for="empireRacePolicy">Race reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Official EmpireDrop start_date / end_date (recommended)</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Require a match with local Tuesday 6 PM ET</option></select></div>
+      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is running</label></div>
     </div>
-    <p class="small muted">Safe first-run workflow: save settings → discover races → choose a slug if necessary → inspect the JSON field names → verify wager units in the provider dashboard → check confirmation → test API connection → request refresh. Discovery does not save or publish player data.</p>
+    <p class="small muted">Authentication, field paths and amounts are specified by OpenAPI 2.0.1 and are not editable. The API reports up to race.ranks_limit places, which may be fewer than 15. New race settings are applied on the next refresh.</p>
     <button type="submit" class="button primary">Save race API connection</button>
   </form>
   {% else %}<p class="small muted">Race API diagnostics are available to the Superadmin only.</p>{% endif %}

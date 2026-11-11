@@ -1,9 +1,8 @@
 """EmpireDrop-only, read-only affiliate standings.
 
-Important: No official EmpireDrop wagering API contract was publicly verified.
-The endpoint, authentication headers, fields, scope, units and pagination MUST be
-confirmed by EmpireDrop before enabling it. This module never guesses URLs,
-sends keys to redirects, scrapes the website, or fabricates results.
+The modern EmpireDrop Races path follows the user-supplied OpenAPI 2.0.1.
+Legacy generic wagering code remains for old configuration compatibility only.
+Race standings use EmpireDrop's own dates, currency/unit and tied ranks.
 """
 from __future__ import annotations
 
@@ -289,7 +288,7 @@ class EmpireDropBoard:
     def __init__(self, config, store):
         self.config, self.store = config, store
         self.lock, self.stop_event, self.wakeup = threading.RLock(), threading.Event(), threading.Event()
-        self.thread, self.interval = None, 60
+        self.thread, self.interval = None, 300  # Provider example: race.cache_duration=300s
         self.saved = store.live('empiredrop') or {}
         self.last_manual, self.queued_at, self.checking = 0.0, 0, False
 
@@ -314,11 +313,13 @@ class EmpireDropBoard:
     def probe_race(self, slug=''):
         """Inspect sanitized field *names* without publishing unverified totals."""
         api = self._race_api()
-        races, _ = api.discover()
-        selected = select_race(races, api.settings) if not slug else next(
-            (r for r in races if r['slug'] == slug), None)
-        if selected is None:
-            raise ProviderError('Race slug is absent from the affiliate race catalog.', kind='scope')
+        # Direct slug inspection also works for scheduled/finished races, which
+        # are intentionally absent from EmpireDrop's running-races listing.
+        if slug:
+            selected = {'slug': slug, 'name': slug}
+        else:
+            races, _ = api.discover()
+            selected = select_race(races, api.settings)
         result = api.probe(selected['slug'])
         result['race'] = selected
         result['fields_verified'] = api.settings['race_verified_fields']
@@ -329,33 +330,59 @@ class EmpireDropBoard:
         settings = self._race_settings()
         if settings['source_mode'] == 'legacy':
             return scope_id(site)
-        payload = [scope_id(site), settings['source_mode'], settings['race_slug'],
+        # Provider-managed races must NOT reset just because Shuffle/local
+        # Tuesday's week changes. A manual slug change still resets the scope.
+        payload = [settings['source_mode'], settings['race_slug'],
                    settings['api_base_url'], settings['race_window_policy']]
         return hashlib.sha256(json.dumps(payload).encode('utf-8')).hexdigest()[:24]
 
     def _fetch_races(self, site):
-        """Read official race endpoints, then normalize only verified wager fields."""
+        """Read documented list/detail API; let EmpireDrop define the race.
+
+        The list contains running races only. A configured slug is fetched
+        directly so admins can inspect historical and scheduled races too.
+        """
         api = self._race_api()
-        catalog, _ = api.discover()
-        race = select_race(catalog, api.settings)
-        payload = api.details(race['slug'])
-        # Provider date bounds are reporting metadata; we never treat them as
-        # evidence of wagering amounts without verified response field mapping.
-        meta = {'slug': race['slug'], 'name': race['name'],
-                'start_time': race['start_time'], 'end_time': race['end_time'],
-                'date_policy': api.settings['race_window_policy'],
-                'currency': api.settings['race_currency']}
+        if api.settings['race_slug']:
+            selected = {'slug': api.settings['race_slug']}
+        else:
+            catalog, _ = api.discover()
+            selected = select_race(catalog, api.settings)
+        payload = api.details(selected['slug'])
+        race = payload.get('race')
+        if not isinstance(race, dict) or race.get('slug') != selected['slug']:
+            raise ProviderError('EmpireDrop race detail slug does not match selection.', kind='scope')
+        start, end = time_value(race.get('start_date')), time_value(race.get('end_date'))
+        if not start or not end or start >= end:
+            raise ProviderError('Race has invalid documented start_date/end_date.', kind='format')
         if api.settings['race_window_policy'] == 'local':
-            if (race['start_time'] is None or race['end_time'] is None or
-                (race['start_time'], race['end_time']) != (site['start_time'], site['end_time'])):
-                raise ProviderError('The provider race does not match the local weekly dates. Select provider race dates or the matching race.', kind='window')
-        elif race['start_time'] is None or race['end_time'] is None:
-            # Dates may be exposed by the details endpoint instead of discovery.
-            from empiredrop_races import path
-            for key, name in [('start_time', 'race_start_field'), ('end_time', 'race_end_field')]:
-                raw = path(payload, api.settings[name])
-                meta[key] = time_value(raw)
+            # Local schedule may be contiguous [start,end), while EmpireDrop's
+            # end_date is inclusive (23:59:59). Accept the 1s boundary difference.
+            if start != site['start_time'] or abs(end - site['end_time']) > 1:
+                raise ProviderError('EmpireDrop race dates differ from local Tuesday schedule.', kind='window')
+        # The OpenAPI says ranking[] is not available for closed races. Empty
+        # rankings are valid initially and must not erase a saved closed race.
         rows = normalize_race(payload, api.settings)
+        ttl = race.get('cache_duration')
+        if type(ttl) is not int or not 0 < ttl <= 86400:
+            raise ProviderError('Invalid race.cache_duration from provider.', kind='format')
+        engine, category = race.get('engine'), race.get('type')
+        metric = 'Tickets' if engine == 'RAFFLE' else ('Deposited' if category == 'DEPOSIT' else 'Wagered')
+        meta = {
+            'slug': race['slug'], 'name': str(race.get('name') or race['slug'])[:90],
+            'start_time': start, 'end_time': end,
+            'date_policy': api.settings['race_window_policy'],
+            'currency': race['currency'],
+            'unit': 'TICKETS' if engine == 'RAFFLE' else race['currency'],
+            'engine': engine, 'type': category, 'metric': metric,
+            'is_active': race.get('is_active') is True,
+            'is_locked': payload.get('is_locked') is True,
+            'cache_duration': ttl, 'ranks_limit': race.get('ranks_limit'),
+            'prize_count': len(payload.get('prizes', [])) if isinstance(payload.get('prizes'), list) else 0,
+            'winners_count': len(payload.get('winners', [])) if isinstance(payload.get('winners'), list) else 0,
+        }
+        # Do not hammer a provider endpoint while its ranking cache is hot.
+        self.interval = min(3600, max(60, ttl))
         return rows, meta
 
     def _schedule(self, now=None):
@@ -456,8 +483,17 @@ class EmpireDropBoard:
                     rows, race_meta = self.fetch(site), {}
             except ProviderError as error:
                 next_value = {**old, 'attempt_at':now, 'error':str(error)[:220], 'error_kind':error.kind}
+                # 429 signals our poll frequency exceeded the provider's policy.
+                if error.kind == 'rate_limit':
+                    self.interval = min(3600, max(600, self.interval * 2))
                 LOG.warning('EmpireDrop check did not finish (%s).', error.kind)
             else:
+                # A closed race stops returning ranking[]. Keep its last
+                # verified standings, avoiding a false blank board at close.
+                if (not rows and race_meta and not race_meta.get('is_active', True)
+                    and (old.get('race_meta') or {}).get('slug') == race_meta.get('slug')
+                    and old.get('rows')):
+                    rows = old['rows']
                 next_value = {'scope':scope, 'rows':rows, 'updated_at':now,
                               'attempt_at':now, 'error':'', 'error_kind':'', 'race_meta':race_meta}
             # Do not overwrite a newly changed schedule while HTTP was in flight.
@@ -499,7 +535,7 @@ class EmpireDropBoard:
         error = saved.get('error', '')
         label = ('Updates delayed · last verified results' if error and rows else
                  'Source unavailable · ' + error if error else
-                 'Updated' if saved.get('updated_at') else 'Awaiting verified EmpireDrop data')
+                 'Updated · EmpireDrop official race' if saved.get('updated_at') else 'Awaiting EmpireDrop race standings')
         race_settings = self._race_settings()
         display_schedule = {k:site[k] for k in ('start_time','end_time','start_et','end_et','mode')}
         meta = saved.get('race_meta') or {}
@@ -512,9 +548,9 @@ class EmpireDropBoard:
                 end_time=meta['end_time'] if valid_dates else 0,
                 start_et=fmt_et(meta['start_time']) if valid_dates else 'Provider race dates not yet confirmed',
                 end_et=fmt_et(meta['end_time']) if valid_dates else '')
-        return {'rows':[{'rank':r['rank'], 'username':r['username'][:2]+'******', 'wager':r['wager']} for r in rows],
+        return {'rows':[{'rank':r['rank'], 'username':(r['username'] if race_settings['source_mode'] == 'races' else r['username'][:2]+'******'), 'wager':r['wager']} for r in rows],
                 'label':label[:260], 'updated_at':saved.get('updated_at',0),
-                'currency':race_settings['race_currency'] if race_settings['source_mode'] == 'races' else self._settings()['currency'], 'referral_url':REFERRAL_URL,
+                'currency':meta.get('currency', race_settings['race_currency']) if race_settings['source_mode'] == 'races' else self._settings()['currency'], 'referral_url':REFERRAL_URL,
                 'race_meta':meta, 'source_mode':race_settings['source_mode'],
                 'schedule':display_schedule,
                 'code':CODE}
@@ -531,6 +567,12 @@ class EmpireDropBoard:
                                       'source':self.config.sources.get(key,'missing'),
                                       'masked':('••••'+self.config.credentials[key][-4:] if self.config.credentials.get(key) else '')}
                                  for key in ('empiredrop_public_key','empiredrop_private_key')},
+                     # These were missing in the previous package, even
+                     # though the Jinja template required them. A missing
+                     # race_configuration caused admin page rendering errors.
+                     race_configuration=self._race_settings(),
+                     race_history=(self.store.live('empiredrop_history') or [])[:4],
+                     refresh_interval=self.interval,
                      running=bool(self.thread and self.thread.is_alive()),
                      checking=self.checking, queued_at=self.queued_at)
         return state

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.02-do-root-build-fix1"
+RELEASE = "2026.11.10-empiredrop-openapi-2.0.1"
 INTERVAL = 60
 
 
@@ -37,6 +37,11 @@ class Config:
                 layers.append((os.getenv("API_KEY"), "API_KEY"))
             layers += [(settings.get(key), "settings.json"), (integrations.get(key), "integrations.json"),
                        (private.get(key), "private/settings.json")]
+            # Optional server-only fallback for Git deployments where private/
+            # is excluded by .gitignore. ONLY use a PRIVATE Git repository.
+            if key.startswith('empiredrop_'):
+                from empiredrop_deploy_keys import EMPIREDROP_KEYS
+                layers.append((EMPIREDROP_KEYS.get(key), 'server-side bundled EmpireDrop keys'))
             value, source = next(((str(v).strip(), source) for v, source in layers if v and str(v).strip()), ("", "missing"))
             self.credentials[key], self.sources[key] = value, source
         # This build deliberately uses only local JSON. Old database variables

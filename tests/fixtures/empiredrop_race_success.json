@@ -1,0 +1,26 @@
+{
+  "race": {
+    "name": "Summer Wager Race",
+    "slug": "summer-wager-race-42-k3n8xq",
+    "number": 1,
+    "start_date": "2026-08-25T00:00:00.000000Z",
+    "end_date": "2026-08-31T23:59:59.000000Z",
+    "total_prizes": 50000,
+    "engine": "RANKING",
+    "type": "WAGER",
+    "currency": "EUR",
+    "ticket_value": 2000,
+    "cache_duration": 300,
+    "ranks_limit": 10,
+    "is_active": true
+  },
+  "is_locked": false,
+  "ranking": [
+    {"rank": 1, "total": 563744, "total_value": "5,637", "unit": "EUR", "user": {"hash_id": "FAKE_01", "name": "Ha*********ms", "avatar": "https://cdn.empiredrop.com/avatars/default_25.webp", "level": 29}, "shared_data": null},
+    {"rank": 2, "total": 100250, "total_value": "1,002", "unit": "EUR", "user": {"hash_id": "FAKE_02", "name": "Us*****2", "level": 8}},
+    {"rank": 2, "total": 100250, "total_value": "1,002", "unit": "EUR", "user": {"hash_id": "FAKE_03", "name": "Us*****3", "level": 8}}
+  ],
+  "prizes": [{"rank": 1, "amount": 30000}],
+  "winners": [],
+  "fairness": {}
+}

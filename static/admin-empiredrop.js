@@ -25,7 +25,7 @@
     });
     if (!body.childNodes.length) {
       const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 3;
-      td.textContent = 'No verified EmpireDrop wagers for the selected period.'; tr.appendChild(td); body.appendChild(tr);
+      td.textContent = 'No ranked players returned for this race. A closed race or a new race may return an empty ranking.'; tr.appendChild(td); body.appendChild(tr);
     }
     id('empireAdminRows').replaceChildren(body);
   };
