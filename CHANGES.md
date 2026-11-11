@@ -1,3 +1,12 @@
+## 2026-11-11 — EmpireDrop race slug recovery
+
+- Recover an out-of-date selected race slug only when automatic selection is enabled and EmpireDrop lists exactly one active WAGER/RANKING race.
+- Add a verified race picker under Admin → EmpireDrop; saving remains explicit.
+- Show a protected recovery warning in Admin; avoid leaking credentials or unmasked player identifiers publicly.
+- Allow the first fetch after a race-source configuration change without waiting for the old race's cache TTL.
+- Add five regression tests for 404 recovery, ambiguous races, opt-out, race-type safety and refresh scheduling.
+- Preserve Shuffle, payout settings, game state, account seed and original private credentials.
+
 # Unified Admin and Provider Data Quality — November 10, 2026
 
 The latest update adds matching Shuffle and EmpireDrop administration cards, a dedicated Activity & Logs tab, read-only record validation metrics, clean JSON/TXT logs, and a fix for EmpireDrop player search. No new dependencies or provider API changes were introduced. See `docs/ADMIN_UNIFORMITY_DATA_QUALITY_2026-11-10.md` for the full changes and limitations.

@@ -352,12 +352,44 @@ class EmpireDropBoard:
         directly so admins can inspect historical and scheduled races too.
         """
         api = self._race_api()
+        recovered_from = ''
         if api.settings['race_slug']:
             selected = {'slug': api.settings['race_slug']}
+            try:
+                payload = api.details(selected['slug'])
+            except ProviderError as exc:
+                # A saved slug can become stale when EmpireDrop creates a new
+                # weekly race. Only recover when the admin explicitly enabled
+                # auto-selection AND exactly one current WAGER/RANKING race is
+                # available. Never silently choose between multiple races.
+                if not (exc.kind == 'scope' and exc.status == 404 and
+                        api.settings['auto_select']):
+                    raise
+                catalog, _ = api.discover()
+                try:
+                    fallback = select_race(catalog, {**api.settings, 'race_slug': ''})
+                except ProviderError as selection_error:
+                    raise ProviderError(
+                        'Saved EmpireDrop slug is unavailable (404). ' +
+                        str(selection_error) + ' Update Race API & selection in Admin.',
+                        kind='selection', status=404) from None
+                if fallback['slug'] == selected['slug']:
+                    # The list acknowledges this slug, yet its detail is
+                    # inaccessible: do not treat that as a stale selection.
+                    raise ProviderError(
+                        'EmpireDrop lists this race but its details return 404. '
+                        'Verify partner permissions with EmpireDrop support.',
+                        kind='scope', status=404) from None
+                recovered_from = selected['slug']
+                selected = fallback
+                payload = api.details(selected['slug'])
+                LOG.warning(
+                    'EmpireDrop saved slug returned 404; recovered using the sole '
+                    'running wager race. Confirm and save its current slug in Admin.')
         else:
             catalog, _ = api.discover()
             selected = select_race(catalog, api.settings)
-        payload = api.details(selected['slug'])
+            payload = api.details(selected['slug'])
         race = payload.get('race')
         if not isinstance(race, dict) or race.get('slug') != selected['slug']:
             raise ProviderError('EmpireDrop race detail slug does not match selection.', kind='scope')
@@ -379,6 +411,8 @@ class EmpireDropBoard:
         metric = 'Tickets' if engine == 'RAFFLE' else ('Deposited' if category == 'DEPOSIT' else 'Wagered')
         meta = {
             'slug': race['slug'], 'name': str(race.get('name') or race['slug'])[:90],
+            # Safe metadata only; keys and unmasked player names are not logged.
+            'selection': 'recovered' if recovered_from else 'configured',
             'start_time': start, 'end_time': end,
             'date_policy': api.settings['race_window_policy'],
             'currency': race['currency'],
@@ -653,6 +687,12 @@ class EmpireDropBoard:
                      # though the Jinja template required them. A missing
                      # race_configuration caused admin page rendering errors.
                      race_configuration=self._race_settings(),
+                     selection_warning=(
+                         'The saved race slug returned 404. The worker recovered '
+                         'the only running wager race; save its new slug or clear '
+                         'the saved slug for future automatic selection.'
+                         if (snapshot.get('race_meta') or {}).get('selection') == 'recovered'
+                         else ''),
                      race_history=(self.store.live('empiredrop_history') or [])[:4],
                      private_rewards=self._rewards(),
                      refresh_interval=self.interval,
@@ -662,8 +702,14 @@ class EmpireDropBoard:
 
     def request_refresh(self):
         with self.lock:
-            if time.monotonic() - self.last_manual < 15:
+            # A race slug or source-mode change is new data, not a re-poll of
+            # the old cached ranking. Allow the worker to fetch the new scope
+            # immediately instead of waiting the old race's cache TTL.
+            scope_changed = self.saved.get('scope') != self._scope(self._schedule())
+            if not scope_changed and time.monotonic() - self.last_manual < 15:
                 return False
+            if scope_changed:
+                self.next_allowed = 0.0
             self.last_manual, self.queued_at = time.monotonic(), int(time.time())
             self.wakeup.set()
             return True

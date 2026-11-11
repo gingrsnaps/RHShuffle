@@ -15,6 +15,12 @@
     id('empireAdminChecking').textContent = data.checking ? 'Checking provider' : data.queued_at > data.attempt_at ? 'Refresh queued' : 'Idle';
     id('empireError').hidden = !data.error;
     id('empireError').textContent = data.error || '';
+    // Show the provider's actual active race when automatic recovery occurs.
+    const recovery = id('empireSlugRecovery');
+    if (recovery) {
+      recovery.hidden = !data.selection_warning;
+      recovery.textContent = data.selection_warning || '';
+    }
     const body = document.createDocumentFragment();
     (Array.isArray(data.rows) ? data.rows.slice(0,15) : []).forEach(r => {
       const tr = document.createElement('tr');
@@ -80,6 +86,37 @@
       const body = await response.json();
       // Never interpolate response data as HTML; textContent prevents injection.
       panel.textContent = JSON.stringify(body, null, 2);
+      // Race slugs from the API are offered as a selection helper, never
+      // written to settings until the admin clicks Save below.
+      const choices = id('empireDiscoveredSlugs');
+      if (choices && path.endsWith('/discover')) {
+        choices.replaceChildren();
+        const races = body.ok && Array.isArray(body.races) ? body.races : [];
+        if (races.length) {
+          const select = document.createElement('select');
+          select.id = 'empireDiscoveredRaceSelect';
+          const placeholder = document.createElement('option');
+          placeholder.value = ''; placeholder.textContent = 'Choose a race from the verified list';
+          select.appendChild(placeholder);
+          races.forEach(r => {
+            const option = document.createElement('option');
+            option.value = r.slug;
+            option.textContent = (r.name || r.slug) + ' · ' + r.slug;
+            select.appendChild(option);
+          });
+          const use = document.createElement('button');
+          use.type = 'button'; use.className = 'button';
+          use.textContent = 'Use selected race (not saved yet)';
+          use.addEventListener('click', () => {
+            if (!select.value) return;
+            id('empireRaceSlugInput').value = select.value;
+            id('empireRaceSlugInput').focus();
+          });
+          choices.append(select, use);
+        } else {
+          choices.textContent = 'No running races were returned. Finished and scheduled races are intentionally excluded.';
+        }
+      }
     } catch {
       panel.textContent = 'Race endpoint request failed. See server logs for a safe error classification.';
     } finally { button.disabled = false; }

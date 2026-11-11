@@ -1,7 +1,6 @@
-# RedHunllef — complete source reference (server secrets excluded)
-The ZIP includes original private settings and server-side fallback key modules.
-Secrets are deliberately not repeated in this document.
-See `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md` for the change log.
+# RedHunllef complete commented source reference (private keys excluded)
+Full source and snapshots are in the ZIP. Server credential fallback modules are intentionally not reproduced here.
+See `docs/EMPIREDROP_SLUG_RECOVERY_2026-11-11.md` for changes and instructions.
 
 ## `abuse_guard.py`
 
@@ -1189,7 +1188,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.10-admin-recovery-v4"
+RELEASE = "2026.11.11-empire-slug-recovery-v5"
 INTERVAL = 60
 
 
@@ -1704,12 +1703,44 @@ class EmpireDropBoard:
         directly so admins can inspect historical and scheduled races too.
         """
         api = self._race_api()
+        recovered_from = ''
         if api.settings['race_slug']:
             selected = {'slug': api.settings['race_slug']}
+            try:
+                payload = api.details(selected['slug'])
+            except ProviderError as exc:
+                # A saved slug can become stale when EmpireDrop creates a new
+                # weekly race. Only recover when the admin explicitly enabled
+                # auto-selection AND exactly one current WAGER/RANKING race is
+                # available. Never silently choose between multiple races.
+                if not (exc.kind == 'scope' and exc.status == 404 and
+                        api.settings['auto_select']):
+                    raise
+                catalog, _ = api.discover()
+                try:
+                    fallback = select_race(catalog, {**api.settings, 'race_slug': ''})
+                except ProviderError as selection_error:
+                    raise ProviderError(
+                        'Saved EmpireDrop slug is unavailable (404). ' +
+                        str(selection_error) + ' Update Race API & selection in Admin.',
+                        kind='selection', status=404) from None
+                if fallback['slug'] == selected['slug']:
+                    # The list acknowledges this slug, yet its detail is
+                    # inaccessible: do not treat that as a stale selection.
+                    raise ProviderError(
+                        'EmpireDrop lists this race but its details return 404. '
+                        'Verify partner permissions with EmpireDrop support.',
+                        kind='scope', status=404) from None
+                recovered_from = selected['slug']
+                selected = fallback
+                payload = api.details(selected['slug'])
+                LOG.warning(
+                    'EmpireDrop saved slug returned 404; recovered using the sole '
+                    'running wager race. Confirm and save its current slug in Admin.')
         else:
             catalog, _ = api.discover()
             selected = select_race(catalog, api.settings)
-        payload = api.details(selected['slug'])
+            payload = api.details(selected['slug'])
         race = payload.get('race')
         if not isinstance(race, dict) or race.get('slug') != selected['slug']:
             raise ProviderError('EmpireDrop race detail slug does not match selection.', kind='scope')
@@ -1731,6 +1762,8 @@ class EmpireDropBoard:
         metric = 'Tickets' if engine == 'RAFFLE' else ('Deposited' if category == 'DEPOSIT' else 'Wagered')
         meta = {
             'slug': race['slug'], 'name': str(race.get('name') or race['slug'])[:90],
+            # Safe metadata only; keys and unmasked player names are not logged.
+            'selection': 'recovered' if recovered_from else 'configured',
             'start_time': start, 'end_time': end,
             'date_policy': api.settings['race_window_policy'],
             'currency': race['currency'],
@@ -2005,6 +2038,12 @@ class EmpireDropBoard:
                      # though the Jinja template required them. A missing
                      # race_configuration caused admin page rendering errors.
                      race_configuration=self._race_settings(),
+                     selection_warning=(
+                         'The saved race slug returned 404. The worker recovered '
+                         'the only running wager race; save its new slug or clear '
+                         'the saved slug for future automatic selection.'
+                         if (snapshot.get('race_meta') or {}).get('selection') == 'recovered'
+                         else ''),
                      race_history=(self.store.live('empiredrop_history') or [])[:4],
                      private_rewards=self._rewards(),
                      refresh_interval=self.interval,
@@ -2014,8 +2053,14 @@ class EmpireDropBoard:
 
     def request_refresh(self):
         with self.lock:
-            if time.monotonic() - self.last_manual < 15:
+            # A race slug or source-mode change is new data, not a re-poll of
+            # the old cached ranking. Allow the worker to fetch the new scope
+            # immediately instead of waiting the old race's cache TTL.
+            scope_changed = self.saved.get('scope') != self._scope(self._schedule())
+            if not scope_changed and time.monotonic() - self.last_manual < 15:
                 return False
+            if scope_changed:
+                self.next_allowed = 0.0
             self.last_manual, self.queued_at = time.monotonic(), int(time.time())
             self.wakeup.set()
             return True
@@ -2299,12 +2344,18 @@ def select_race(races, options, now=None):
                     {'slug': settings['race_slug'], 'name': settings['race_slug']})
     if not settings['auto_select']:
         raise ProviderError('Select an EmpireDrop race slug or enable automatic selection.', kind='selection')
-    running = [item for item in races if item['is_active']]
-    if len(running) != 1:
-        message = ('No running EmpireDrop races are available.' if not running else
-                   'Multiple EmpireDrop races are running; select a slug in Admin.')
+    # This leaderboard awards wager-volume positions. A raffle or deposit race
+    # must be selected explicitly rather than becoming an unexpected auto pick.
+    eligible = [item for item in races if item['is_active'] and
+                item['type'] == 'WAGER' and item['engine'] == 'RANKING']
+    if len(eligible) != 1:
+        message = (
+            'No active WAGER/RANKING EmpireDrop races are available. '
+            'Check the partner dashboard or select a valid race slug in Admin.'
+            if not eligible else
+            'Multiple active wager races exist; select the intended slug in Admin.')
         raise ProviderError(message, kind='selection')
-    return running[0]
+    return eligible[0]
 
 
 def extract_race_rows(payload, unused_path=''):
@@ -5241,6 +5292,12 @@ class Runtime:
     id('empireAdminChecking').textContent = data.checking ? 'Checking provider' : data.queued_at > data.attempt_at ? 'Refresh queued' : 'Idle';
     id('empireError').hidden = !data.error;
     id('empireError').textContent = data.error || '';
+    // Show the provider's actual active race when automatic recovery occurs.
+    const recovery = id('empireSlugRecovery');
+    if (recovery) {
+      recovery.hidden = !data.selection_warning;
+      recovery.textContent = data.selection_warning || '';
+    }
     const body = document.createDocumentFragment();
     (Array.isArray(data.rows) ? data.rows.slice(0,15) : []).forEach(r => {
       const tr = document.createElement('tr');
@@ -5306,6 +5363,37 @@ class Runtime:
       const body = await response.json();
       // Never interpolate response data as HTML; textContent prevents injection.
       panel.textContent = JSON.stringify(body, null, 2);
+      // Race slugs from the API are offered as a selection helper, never
+      // written to settings until the admin clicks Save below.
+      const choices = id('empireDiscoveredSlugs');
+      if (choices && path.endsWith('/discover')) {
+        choices.replaceChildren();
+        const races = body.ok && Array.isArray(body.races) ? body.races : [];
+        if (races.length) {
+          const select = document.createElement('select');
+          select.id = 'empireDiscoveredRaceSelect';
+          const placeholder = document.createElement('option');
+          placeholder.value = ''; placeholder.textContent = 'Choose a race from the verified list';
+          select.appendChild(placeholder);
+          races.forEach(r => {
+            const option = document.createElement('option');
+            option.value = r.slug;
+            option.textContent = (r.name || r.slug) + ' · ' + r.slug;
+            select.appendChild(option);
+          });
+          const use = document.createElement('button');
+          use.type = 'button'; use.className = 'button';
+          use.textContent = 'Use selected race (not saved yet)';
+          use.addEventListener('click', () => {
+            if (!select.value) return;
+            id('empireRaceSlugInput').value = select.value;
+            id('empireRaceSlugInput').focus();
+          });
+          choices.append(select, use);
+        } else {
+          choices.textContent = 'No running races were returned. Finished and scheduled races are intentionally excluded.';
+        }
+      }
     } catch {
       panel.textContent = 'Race endpoint request failed. See server logs for a safe error classification.';
     } finally { button.disabled = false; }
@@ -18273,12 +18361,14 @@ def health_view(runtime, measurements, status):
     <button type="button" class="button" id="empireProbe" data-csrf="{{ csrf() }}">Inspect selected race fields</button>
   </div>
   <pre id="empireRaceDiagnostics" class="small muted" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto" role="status" aria-live="polite">Not tested in this session. Run discovery to see available race slugs.</pre>
+  <p id="empireSlugRecovery" class="notice warning" hidden></p>
+  <div id="empireDiscoveredSlugs" class="button-row" aria-label="Verified race choices"></div>
   <form method="post" action="/admin/empiredrop/races/config" class="stack" data-dirty>
     <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
     {% set rc = empire_admin.race_configuration %}
     <div class="form-grid">
       <div class="field"><label for="empireSourceMode">Leaderboard source</label><select name="source_mode" id="empireSourceMode"><option value="races" {% if rc.source_mode=='races' %}selected{% endif %}>Official EmpireDrop race · provider-controlled dates (recommended)</option><option value="legacy_window" {% if rc.source_mode=='legacy_window' %}selected{% endif %}>Weekly/custom dates · deprecated time-range API</option><option value="legacy" {% if rc.source_mode=='legacy' %}selected{% endif %}>Old advanced adapter (compatibility only)</option></select></div>
-      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = select the only running race"><small>For a finished or scheduled race, enter its slug from your EmpireDrop dashboard.</small></div>
+      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = auto-select the only running wager race"><small>For a finished or scheduled race, enter its slug from your EmpireDrop dashboard.</small></div>
       <div class="field"><label for="empireRacePolicy">Race reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Official EmpireDrop start_date / end_date (recommended)</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Require a match with local Tuesday 6 PM ET</option></select></div>
       <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is running</label></div>
     </div>

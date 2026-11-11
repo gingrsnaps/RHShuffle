@@ -121,3 +121,8 @@ JSON state, accounts, historical race and private settings are preserved.
 `empiredrop_deploy_keys.py` contain live server-only fallback credentials as
 requested. Never publish this repository; encrypted environment variables
 remain the safer long-term option.
+
+
+### November 11 EmpireDrop 404 recovery
+
+See `docs/EMPIREDROP_SLUG_RECOVERY_2026-11-11.md` for the documented recovery rules, admin steps and validation limits. No API or admin settings were silently changed in the bundled JSON snapshot.

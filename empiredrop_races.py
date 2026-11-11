@@ -156,12 +156,18 @@ def select_race(races, options, now=None):
                     {'slug': settings['race_slug'], 'name': settings['race_slug']})
     if not settings['auto_select']:
         raise ProviderError('Select an EmpireDrop race slug or enable automatic selection.', kind='selection')
-    running = [item for item in races if item['is_active']]
-    if len(running) != 1:
-        message = ('No running EmpireDrop races are available.' if not running else
-                   'Multiple EmpireDrop races are running; select a slug in Admin.')
+    # This leaderboard awards wager-volume positions. A raffle or deposit race
+    # must be selected explicitly rather than becoming an unexpected auto pick.
+    eligible = [item for item in races if item['is_active'] and
+                item['type'] == 'WAGER' and item['engine'] == 'RANKING']
+    if len(eligible) != 1:
+        message = (
+            'No active WAGER/RANKING EmpireDrop races are available. '
+            'Check the partner dashboard or select a valid race slug in Admin.'
+            if not eligible else
+            'Multiple active wager races exist; select the intended slug in Admin.')
         raise ProviderError(message, kind='selection')
-    return running[0]
+    return eligible[0]
 
 
 def extract_race_rows(payload, unused_path=''):
