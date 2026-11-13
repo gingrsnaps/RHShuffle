@@ -11,7 +11,10 @@
     connection_test:'API connection tested',backup_export:'Backup downloaded',
     storage_warning:'State storage warning',server_error:'Server request failed',
     worker_started:'Automatic worker started',api_rate_limited:'Rate limit reached',
-    data_quality:'Source data quality warning'
+    data_quality:'Source data quality warning',
+    empire_rewards_draft:'EmpireDrop prize draft saved',
+    empire_rewards_published:'EmpireDrop prizes published',
+    empire_rewards_save_failed:'EmpireDrop prize update rejected'
   };
   const advice={
     access:'Check credentials and permitted server IP addresses.',
@@ -36,6 +39,8 @@
     empire_rewards:'EmpireDrop prizes updated.',
     empire_schedule:'EmpireDrop dates updated.',
     shuffle_settings:'Shuffle configuration updated.',
+    conflict:'Another tab saved a newer payout revision. Reload before retrying.',
+    validation:'One or more payout values were rejected before saving.',
   };
   const when=value=>new Intl.DateTimeFormat('en-US',{
     timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',timeZoneName:'short'

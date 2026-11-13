@@ -7,7 +7,7 @@
     {% if superadmin %}<button type="button" id="testEmpireConnection" class="button" data-csrf="{{ csrf() }}">Test API connection</button>{% endif %}
     <a class="button" href="#empireRaceDetails">Race API &amp; selection</a>
     <a class="button" href="#empireRewards">Schedule &amp; prizes</a>
-    <a class="button" href="/admin?tab=activity">Activity &amp; logs</a>
+    <a class="button" href="{{ admin_link('activity') }}">Activity &amp; logs</a>
   </div>
   <p class="small muted">EmpireDrop automatically respects the race's cache duration. Refresh requests do not bypass the provider's cache or rate limits.</p>
   <p id="empireError" class="notice warning" role="status" {% if not empire_admin.error %}hidden{% endif %}>{{ empire_admin.error }}</p>
@@ -24,7 +24,7 @@
   <p class="small muted">Official ranks (including ties) are preserved. Deposit races and raffles are labeled correctly; we never present their totals as wagered currency.</p>
 </section>
 <section class="panel form-panel" aria-labelledby="empireDatesTitle">
-  <p class="eyebrow">EMPIREDROP ONLY</p><h2 id="empireDatesTitle">Independent race dates</h2>
+  <p class="eyebrow">EMPIREDROP ONLY</p><h2 id="empireDatesTitle">Race schedule</h2>
   <p>Local schedule: <strong>{{ 'Automatic Tuesday 6 PM Eastern' if empire_admin.schedule.mode == 'weekly' else 'Custom dates' }}</strong>.</p>
   <p class="muted">{{ empire_admin.schedule.start_et }} → {{ empire_admin.schedule.end_et }}. Daylight saving is handled automatically.</p>
   {% if superadmin %}
@@ -42,20 +42,17 @@
   {% else %}<p class="small muted">Only the Superadmin may change race dates.</p>{% endif %}
 </section>
 <section class="panel form-panel" id="empireRewards" aria-labelledby="empireRewardsTitle">
-  <p class="eyebrow">INDEPENDENT · EMPIREDROP</p>
-  <h2 id="empireRewardsTitle">Weekly payouts and prize pool</h2>
   {% set rewards = empire_admin.private_rewards %}
-  <p>Current advertised pool: <strong class="accent">{{ rewards.total if rewards.enabled else 'Not announced' }}</strong>.</p>
-  <p class="small muted">Set a local prize for each rank, just like Shuffle. These values are independent of Shuffle, are not payments, and do not change the payouts EmpireDrop shows on its own site. Ties share the configured prize for that rank.</p>
+  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · TOP 10</p><h2 id="empireRewardsTitle">Prize schedule</h2><p class="muted">Save a private draft, review the pool, then publish it to the public leaderboard.</p></div><span class="tag" data-state="{{ 'healthy' if rewards.published and rewards.published_enabled else 'warning' }}">{{ 'Published' if rewards.published and rewards.published_enabled else 'Draft' if not rewards.published else 'Not announced' }}</span></div>
+  <div class="admin-payout-summary"><div><span class="small muted">Draft pool</span><strong id="empireRewardTotal">{{ rewards.total }}</strong></div><div><span class="small muted">Public pool</span><strong>{{ rewards.published_total if rewards.published_enabled else 'Not announced' }}</strong></div><div><span class="small muted">Last saved</span><strong>{{ fmt_et(rewards.updated_at) if rewards.updated_at else 'Never' }}</strong>{% if rewards.updated_by %}<small>by {{ rewards.updated_by }}</small>{% endif %}</div></div>
+  <p class="small muted">These are locally advertised prizes. They do not change or confirm payments on EmpireDrop. Tied players split the prize assigned to their provider rank.</p>
   {% if superadmin %}
   {{ action_feedback('empireRewards') }}
-  <form method="post" action="/admin/empiredrop/rewards" class="stack" data-dirty>
-    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
-    <div class="form-grid"><div class="field"><label for="empireRewardsCurrency">Prize currency</label><select id="empireRewardsCurrency" name="currency"><option value="EUR" {% if rewards.currency=='EUR' %}selected{% endif %}>EUR (€)</option><option value="USD" {% if rewards.currency=='USD' %}selected{% endif %}>USD ($)</option></select></div>
-    <div class="field"><label><input type="checkbox" name="enabled" value="yes" {% if rewards.enabled %}checked{% endif %}> Show this payout schedule publicly</label><small>Off = prizes marked “Not announced” for players.</small></div></div>
+  <form method="post" action="/admin/empiredrop/rewards" class="stack admin-sticky-form" data-dirty>
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="reward_revision" value="{{ rewards.revision }}">
+    <div class="field compact-field"><label for="empireRewardsCurrency">Prize currency</label><select id="empireRewardsCurrency" name="currency"><option value="EUR" {% if rewards.currency=='EUR' %}selected{% endif %}>EUR (€)</option><option value="USD" {% if rewards.currency=='USD' %}selected{% endif %}>USD ($)</option></select></div>
     <div class="prize-grid">{% for n in range(1,11) %}<div class="field"><label for="empirePrize{{ n }}">Place {{ n }}</label><input id="empirePrize{{ n }}" name="prize_{{ n }}" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" required value="{{ rewards.prizes[n|string] }}"></div>{% endfor %}</div>
-    <p class="small muted">Prize pool preview: <strong id="empireRewardTotal">{{ rewards.total }}</strong> · Changes only this board.</p>
-    <button type="submit" class="button primary">Save EmpireDrop payouts</button>
+    <div class="admin-save-bar"><div><strong id="empireRewardSaveState">No unsaved changes</strong><small>Publishing replaces the public Top 10 prize schedule after the server verifies the write.</small></div><button type="submit" name="save_mode" value="draft" class="button">Save draft</button><button type="submit" name="save_mode" value="publish" class="button primary">Save &amp; publish</button></div>
   </form>
   {% else %}<p class="small muted">Only the Superadmin can change payout amounts.</p>{% endif %}
 </section>
@@ -97,7 +94,7 @@
   <p class="small muted">OpenAPI v2.0.1: <code>GET https://api.empiredrop.com/api/v1/affiliate-partner/races</code> lists currently running races; <code>GET /api/v1/affiliate-partner/races/{slug}</code> returns ranking[]. Both use mandatory X-Public-Key and X-Private-Key headers. The old /race/affiliates/{publicKey} endpoint is deprecated.</p>
   <div class="health-grid" aria-label="EmpireDrop race API health">
     <article class="health-card"><span class="eyebrow">DATA SOURCE</span><strong id="empireRaceMode">{{ empire_admin.source_mode|upper }}</strong></article>
-    <article class="health-card"><span class="eyebrow">ACTIVE SLUG</span><strong id="empireRaceSlug">{{ empire_admin.race_meta.slug or 'Not discovered' }}</strong></article>
+    <article class="health-card"><span class="eyebrow">ACTIVE SLUG</span><strong id="empireRaceSlug">{{ (empire_admin.race_meta or {}).get('slug') or 'Not discovered' }}</strong></article>
     <article class="health-card"><span class="eyebrow">DATA WINDOW</span><strong id="empireRaceWindow">{{ 'Provider race' if empire_admin.race_configuration.race_window_policy=='provider' else 'Local schedule' }}</strong></article>
   </div>
   {% if superadmin %}
@@ -126,7 +123,7 @@
   <p class="small muted">The last four completed snapshots are retained in local JSON. The current live race is displayed above. Back up JSON state before deploying; App Platform storage is ephemeral.</p>
   <div class="table-scroll" tabindex="0" role="region" aria-label="Completed EmpireDrop races">
     <table><thead><tr><th>Race slug</th><th>Last confirmed update</th></tr></thead><tbody>
-    {% for item in empire_admin.race_history %}<tr><td>{{ item.race_meta.slug or 'Legacy race' }}</td><td>{{ fmt_et(item.updated_at) if item.updated_at else 'Not recorded' }}</td></tr>
+    {% for item in empire_admin.race_history %}{% set history_meta = item.get('race_meta') or {} %}<tr><td>{{ history_meta.get('slug') or 'Legacy race' }}</td><td>{{ fmt_et(item.get('updated_at',0)) if item.get('updated_at',0) else 'Not recorded' }}</td></tr>
     {% else %}<tr><td colspan="2">No completed EmpireDrop snapshots saved yet.</td></tr>{% endfor %}
     </tbody></table>
   </div>

@@ -81,7 +81,7 @@ class AppTests(unittest.TestCase):
         response=c.post("/admin",data={"csrf":csrf,"username":"GINGRSNAPS","password":PASSWORD},follow_redirects=True)
         self.assertEqual(response.status_code,200)
         self.assertIn("CONTROL CENTER",response.text)
-        for tab in ("overview","race","players","boss","settings"):
+        for tab in ("overview","race","players","gaming","settings"):
             p=c.get('/admin?tab='+tab)
             self.assertEqual(p.status_code,200)
             self.assertIn('aria-label="Administration"',p.text)

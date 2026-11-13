@@ -7,11 +7,11 @@
       {{ form_fields('refresh','shuffle',revision) }}<input type="hidden" name="service" value="shuffle">
       <button class="button primary" type="submit">Request Shuffle refresh</button>
     </form>
-    <a class="button" href="/admin?tab=race">Edit schedule &amp; prizes</a>
-    <a class="button" href="/admin?tab=players">View all participants</a>
-    <a class="button" href="/admin?tab=activity">Activity &amp; logs</a>
+    <a class="button" href="{{ admin_link('race') }}">Edit schedule &amp; prizes</a>
+    <a class="button" href="{{ admin_link('players') }}">View all participants</a>
+    <a class="button" href="{{ admin_link('activity') }}">Activity &amp; logs</a>
   </div>
-  <p class="small muted">Shuffle refreshes independently every 60 seconds. A request queues a check; it doesn't confirm new data until the provider responds. For an expired race window or HTTP 400, use <a class="text-link" href="/admin?tab=race">Schedule &amp; prizes</a> to review the saved dates before requesting another check.</p>
+  <p class="small muted">Shuffle refreshes independently every 60 seconds. A request queues a check; it doesn't confirm new data until the provider responds. For an expired race window or HTTP 400, use <a class="text-link" href="{{ admin_link('race') }}">Schedule &amp; prizes</a> to review the saved dates before requesting another check.</p>
   <p class="notice warning" {% if not data.freshness.warning and not data.jobs.shuffle.error %}hidden{% endif %} role="status">{{ data.freshness.warning or 'Shuffle updates are delayed; the previous verified board is preserved.' }}</p>
 </section>
 <section class="panel form-panel provider-panel" aria-labelledby="shufflePlayersHeading">
@@ -21,7 +21,7 @@
     {% for row in data.rows[:15] %}<tr><td class="rank">{{ row.rank }}</td><td><strong>{{ row.username }}</strong>{% if row.source=='override' %} <span class="tag">Adjusted</span>{% endif %}</td><td class="number">{{ row.wager }}</td><td class="number">{{ row.raw_wager_str }}</td><td class="number">{{ money(data.site.prizes.get(row.rank|string,0)) }}</td></tr>
     {% else %}<tr><td colspan="5" class="empty">No verified Shuffle results for this race window.</td></tr>{% endfor %}
   </tbody></table></div>
-  <p class="small muted">Shuffle's rank calculation includes the configured weighting and administrator adjustments. Open <a class="text-link" href="/admin?tab=players">Players</a> for source totals, campaign membership and edits.</p>
+  <p class="small muted">Shuffle's rank calculation includes the configured weighting and administrator adjustments. Open <a class="text-link" href="{{ admin_link('players') }}">Players</a> for source totals, campaign membership and edits.</p>
 </section>
 <section class="panel form-panel provider-panel" aria-labelledby="shuffleQualityHeading">
   <div class="section-title"><div><p class="eyebrow">DATA RECONCILIATION</p><h2 id="shuffleQualityHeading">Source record checks</h2></div><a class="text-link" href="/admin/diagnostics">Download diagnostic summary</a></div>

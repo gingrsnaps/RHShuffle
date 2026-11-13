@@ -84,8 +84,8 @@ def summarize_providers(status, empire):
         'scope': ('Shuffle window: ' + str((status.get('site') or {}).get('start_et') or 'Not configured') + ' → ' +
                   str((status.get('site') or {}).get('end_et') or 'Not configured')),
         'quality': f'{accepted:,} accepted / {received:,} received' if received else 'Waiting for source records',
-        'issues': s_issues, 'action': '/admin?tab=shuffle',
-        'details': '/admin?tab=players',
+        'issues': s_issues, 'action': '/admin/leaderboards/shuffle',
+        'details': '/admin/leaderboards/shuffle/players',
     }
     meta = empire.get('race_meta') or {}
     erows = empire.get('rows') or []
@@ -120,7 +120,7 @@ def summarize_providers(status, empire):
         'quality': (f'{len(erows):,} verified position(s) / provider cap {meta["ranks_limit"]}'
                     if isinstance(erows, list) and type(meta.get('ranks_limit')) is int
                     else 'Awaiting provider ranking confirmation'),
-        'issues': e_issues, 'action': '/admin?tab=empiredrop',
-        'details': '/admin?tab=empiredrop#empireRaceDetails',
+        'issues': e_issues, 'action': '/admin/leaderboards/empiredrop',
+        'details': '/admin/leaderboards/empiredrop/source',
     }
     return {'shuffle': s_card, 'empiredrop': e_card}

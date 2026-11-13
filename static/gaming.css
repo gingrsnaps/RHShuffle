@@ -980,3 +980,5 @@
 }
 
 .game-art.blackjack-art { display: flex; align-items: center; justify-content: center; }
+
+.gaming-recovery{margin:14px 0}.gaming-recovery>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer}.gaming-recovery>summary span{font-size:.78rem;color:var(--muted,#aaa)}.gaming-recovery-content{display:grid;gap:12px;padding-top:16px}.gaming-recovery textarea{width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}

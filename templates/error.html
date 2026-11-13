@@ -1,4 +1,15 @@
-{% extends 'base.html' %}{% block title %}{{ title }} · RedHunllef{% endblock %}
-{% block navigation %}<a href="/">View race ↗</a>{% endblock %}
-{% block content %}<main class="shell login-wrap" id="main"><section class="panel login-panel"><p class="eyebrow">REDHUNLLEF</p><h1>{{ title }}</h1><p class="muted">{{ message }}</p><a class="button primary" href="/admin">Return to admin →</a><p class="release">{{ release }}</p></section></main>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ title }} · RedHunllef{% endblock %}
+{% block content %}
+<main class="shell login-wrap public-interior-page" id="main">
+  <section class="panel login-panel" aria-labelledby="errorTitle">
+    <p class="eyebrow">REDHUNLLEF / NAVIGATION</p>
+    <h1 id="errorTitle">{{ title }}</h1>
+    <p class="muted">{{ message }}</p>
+    <p class="small muted">If you followed an old admin bookmark, open the Control Center and choose the section again.</p>
+    <div class="button-row"><a class="button primary" href="/admin">Admin Control Center →</a><a class="button" href="/">Public homepage</a></div>
+    <p class="release">{{ release }}</p>
+  </section>
+</main>
+{% endblock %}
 {% block footer %}RedHunllef Wager Race{% endblock %}

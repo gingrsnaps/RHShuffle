@@ -30,6 +30,56 @@ class GamingError(ValueError):
         self.code, self.status = code, status
 
 
+def player_name(value):
+    """Validate a public Gaming name without depending on the removed Boss module."""
+    if not isinstance(value, str):
+        raise GamingError('Enter a name of 1–64 printable characters.', 'invalid_name', 422)
+    value = value.strip()
+    if not 1 <= len(value) <= 64 or not value.isprintable():
+        raise GamingError('Enter a name of 1–64 printable characters.', 'invalid_name', 422)
+    return value
+
+
+def migrate_legacy_profiles(gaming, legacy_profiles):
+    """Copy recoverable profile metadata when a unique name safely matches.
+
+    The retired profile system and Gaming used different one-way identity hashes, so a profile
+    cannot be linked to a wallet by hash. Existing Gaming wallet names/balances are
+    already authoritative. A unique exact name match can safely preserve the old
+    recovery digest; ambiguous names are deliberately ignored.
+    """
+    if not isinstance(gaming, dict) or not isinstance(legacy_profiles, dict):
+        return 0
+    players = gaming.get('players')
+    profiles = legacy_profiles.get('profiles')
+    if not isinstance(players, dict) or not isinstance(profiles, dict):
+        return 0
+    by_name = {}
+    ambiguous = set()
+    for profile in profiles.values():
+        if not isinstance(profile, dict):
+            continue
+        name = profile.get('name')
+        digest = profile.get('recovery_hash')
+        if not isinstance(name, str) or not isinstance(digest, str) or not re.fullmatch(r'[a-f0-9]{64}', digest):
+            continue
+        key = name.casefold()
+        if key in by_name:
+            ambiguous.add(key)
+        else:
+            by_name[key] = profile
+    migrated = 0
+    for player in players.values():
+        key = str(player.get('name', '')).casefold()
+        profile = by_name.get(key)
+        if not profile or key in ambiguous or player.get('recovery_hash'):
+            continue
+        player['recovery_hash'] = profile['recovery_hash']
+        player['recovery_at'] = profile.get('recovery_at', 0)
+        migrated += 1
+    return migrated
+
+
 def season(now=None):
     # This is the same Tuesday 18:00 America/New_York boundary as race history.
     # It advances even if the host has not yet edited an expired race form.
@@ -92,6 +142,12 @@ def validate_gaming(value):
             raise ValueError('Invalid RedPoints display name.')
         if type(player.get('community_name_confirmed', False)) is not bool:
             raise ValueError('Invalid community-name confirmation.')
+        recovery_hash = player.get('recovery_hash')
+        if recovery_hash is not None and (not isinstance(recovery_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', recovery_hash)):
+            raise ValueError('Invalid Gaming recovery digest.')
+        recovery_at = player.get('recovery_at', 0)
+        if type(recovery_at) not in (int, float) or not 0 <= recovery_at <= 10**12:
+            raise ValueError('Invalid Gaming recovery timestamp.')
         if not isinstance(player.get('season'), str) or not re.fullmatch(r'\d{1,12}', player['season']):
             raise ValueError('Invalid RedPoints season.')
         if not isinstance(player.get('server_seed'), str) or not re.fullmatch(r'[a-f0-9]{64}', player['server_seed']):
@@ -393,11 +449,14 @@ class Gaming:
         with self.store.connection() as conn:
             data = conn.get('gaming') or {}
             player = data.get('players', {}).get(key)
-            if not name:
+            if player:
+                # The wallet owns its name. No retired profile lookup is required.
+                name = player['name']
+                if player.get('poker_stats_version') == 2 and player['season'] == current['id']:
+                    if not self._needs_network_record(data, key, client_ip, current):
+                        return self._view(player, current)
+            elif not name:
                 return preview()
-            if player and player.get('poker_stats_version') == 2 and player['season'] == current['id'] and player['name'] == name:
-                if not self._needs_network_record(data, key, client_ip, current):
-                    return self._view(player, current)
         with self.store.connection(transaction=True) as conn:
             player, current = self._player(conn, identity, name, now)
             self._record_ip(conn['gaming'], key, client_ip, current)
@@ -406,12 +465,11 @@ class Gaming:
     def confirm_community_name(self, identity, name, now=None, *, client_ip=None):
         """Activate the shared wallet once, retaining wins, receipts and its owner.
 
-        Existing boss names are suggestions until confirmed on Gaming. Older
+        Names migrated from the retired profile system remain suggestions until confirmed on Gaming. Older
         empty wallets receive the starting allowance here; re-saving a confirmed
         name does not grant more points or erase larger balances/admin credits.
         """
-        from boss_progress import username
-        name = username(name)
+        name = player_name(name)
         now = time.time() if now is None else now
         with self.store.connection(transaction=True) as conn:
             player, current = self._player(conn, identity, name, now)
@@ -423,6 +481,38 @@ class Gaming:
                     raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
                 player.update(community_name_confirmed=True, balance=player['balance']+extra,
                               balance_adjustment=adjustment, version=player['version']+1)
+            return self._view(player, current)
+
+    def save_recovery(self, identity, code_hash, now=None):
+        """Attach a replaceable recovery digest to this signed Gaming wallet."""
+        if not isinstance(code_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', code_hash):
+            raise GamingError('Invalid recovery code.', 'invalid_recovery', 422)
+        now = time.time() if now is None else now
+        with self.store.connection(transaction=True) as conn:
+            player = (conn.get('gaming') or {}).get('players', {}).get(player_key(identity))
+            if not player or not player.get('community_name_confirmed'):
+                raise GamingError('Save your Gaming name before creating a recovery code.', 'profile_required', 409)
+            if now - player.get('recovery_at', 0) < 30:
+                raise GamingError('Wait 30 seconds before replacing your recovery code.', 'profile_cooldown', 429)
+            player['recovery_hash'] = code_hash
+            player['recovery_at'] = now
+            player['version'] += 1
+            return self._view(player, season(now))
+
+    def recover(self, identity, code_hash, now=None, *, client_ip=None):
+        """Validate a recovery digest and return the wallet owned by identity."""
+        if not isinstance(code_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', code_hash):
+            raise GamingError('That recovery code is invalid or was replaced.', 'invalid_recovery', 400)
+        now = time.time() if now is None else now
+        key = player_key(identity)
+        with self.store.connection(transaction=True) as conn:
+            data = conn.get('gaming') or {}
+            player = data.get('players', {}).get(key)
+            if not player or not hmac.compare_digest(str(player.get('recovery_hash', '')), code_hash):
+                raise GamingError('That recovery code is invalid or was replaced.', 'invalid_recovery', 400)
+            current = season(now)
+            self._rollover(player, current)
+            self._record_ip(data, key, client_ip, current)
             return self._view(player, current)
 
     def grant_everyone(self, request_id, actor, now=None):

@@ -1,25 +1,909 @@
 {
-  "release": "2026.11.11-empire-top10-refresh-v8",
-  "entry_point": "python wager_backend.py",
-  "source": "User-supplied EmpireDrop Partner Public API OpenAPI v2.0.1",
+  "release": "2026.11.13-admin-pages-payouts-v13",
+  "format": "redhunllef-manifest-6",
+  "package_kind": "full",
   "private_config_included": true,
-  "docs_verified_paths": [
-    "/api/v1/affiliate-partner/races",
-    "/api/v1/affiliate-partner/races/{slug}"
-  ],
-  "live_empiredrop_connection_verified": false,
-  "api_response_schema_verified": true,
-  "storage": "JSON (ephemeral on DigitalOcean App Platform)",
-  "python_version": "3.13.12",
-  "build_command": "automatic Python buildpack",
-  "note": "Both ZIPs contain unencrypted real credentials supplied by the user. Keep private.",
-  "packaging": "flat-root complete",
-  "deployment_fix": "Flat source root and runtime-only manifest; no duplicate build command",
-  "api_origin": "https://api.empiredrop.com",
-  "deprecation_note": "/api/v1/race/affiliates/{publicKey} is deprecated and unused by official race mode",
-  "credential_note": "Production keys in private/settings.json and server-only empiredrop_deploy_keys.py; use a private repository",
-  "release_note": "EmpireDrop Top 10, independent 10-place prizes, actual last-success and next-check countdown; Shuffle unchanged.",
-  "date_window_deprecation": "The custom-week mode uses deprecated /api/v1/race/affiliates/{publicKey}; official race mode remains recommended.",
-  "live_shuffle_connection_verified": false,
-  "bundled_state_is_historical_snapshot": true
+  "file_count": 180,
+  "files": [
+    {
+      "path": ".gitignore",
+      "size_bytes": 275,
+      "sha256": "0b5da62e47b620031033e896e8d421e3218e78074ad72d87c6ce1a46de1dda81"
+    },
+    {
+      "path": "BUILD_MANIFEST.json",
+      "size_bytes": 8264,
+      "sha256": "2f8fdb4ecac5663167c8e0e2571d9dd001cf25a6b65e8811471fb9b1fda5ed8c"
+    },
+    {
+      "path": "CHANGES.md",
+      "size_bytes": 1246,
+      "sha256": "197edb95bc75d4bba146d3faf115e29320eff3289bd0634bd7f413bb83efc669"
+    },
+    {
+      "path": "DEPLOYMENT_EMPIREDROP_RACES.md",
+      "size_bytes": 505,
+      "sha256": "3ac334e6a3f308a3ded559532653a95cafb9507ff7c27779635225d62ff4fb7f"
+    },
+    {
+      "path": "DEPLOYMENT_OPTIMIZED.md",
+      "size_bytes": 418,
+      "sha256": "2c14d4e8812067af36ccae6c45e21080767d05f07cd5033013adf5af77763714"
+    },
+    {
+      "path": "DEPLOY_DIGITALOCEAN.md",
+      "size_bytes": 584,
+      "sha256": "033d48ee3829ac9ab1bbfefb23bf13f00208982ea26b4a037860052e3bd43d60"
+    },
+    {
+      "path": "EMPIREDROP_CHANGELOG_2026-11-10.md",
+      "size_bytes": 693,
+      "sha256": "25e1df145a95bfa41485bb7940ab3c85ecb21b94066c841e8c07a3d3d5a8eeb8"
+    },
+    {
+      "path": "FILE_STRUCTURE.md",
+      "size_bytes": 1115,
+      "sha256": "a0d4a1e3dadd169e54b8f53946557ef5080875680f874d2bf0791a2015e0329a"
+    },
+    {
+      "path": "FULL_CODE_BLOCKS.md",
+      "size_bytes": 1483094,
+      "sha256": "461ed090a9908205eb2645b1d6d60808ff042e05af31c3e218d57201ebad2a6d"
+    },
+    {
+      "path": "Procfile",
+      "size_bytes": 29,
+      "sha256": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 1164,
+      "sha256": "63734f0cccc22c9deb0162236c243c31dd55e2dae3a84deea05ecf15db3a7d5a"
+    },
+    {
+      "path": "RELEASE_METADATA.json",
+      "size_bytes": 1524,
+      "sha256": "18fe5c09a3b33e87dc794156d6d9774149f045a86645b0eb5dda6c7ea7e8cd4e"
+    },
+    {
+      "path": "START_HERE.md",
+      "size_bytes": 1185,
+      "sha256": "cb16b91161ba5b8572064cae0ad8de8565017a5f24c579f1d501fdb0cc5200e2"
+    },
+    {
+      "path": "UPDATE.md",
+      "size_bytes": 587,
+      "sha256": "4a612b7c758d21923b575fb912fc0fdfa24bd44218b7927b99d04dcef52bee2e"
+    },
+    {
+      "path": "admin_navigation.py",
+      "size_bytes": 2392,
+      "sha256": "b58ecd17420d447221ba29936a7009bb3a1a62cc7db3a699edfd0fbd188b04b7"
+    },
+    {
+      "path": "app.yaml",
+      "size_bytes": 1613,
+      "sha256": "87976192f030efe5e17fd1081cacca18731bf6d4afe5c029d8ac83e696a97d6e"
+    },
+    {
+      "path": "baccarat.py",
+      "size_bytes": 2218,
+      "sha256": "e859c61a9a101b9e51da02524e5b18d3a915397e2d476f2dbe8899202f88c154"
+    },
+    {
+      "path": "blackjack.py",
+      "size_bytes": 2780,
+      "sha256": "3ea903b34d6329a05bb113ac591db64fbc80d59fa2875f8fae8eee08fbb8abc7"
+    },
+    {
+      "path": "config.py",
+      "size_bytes": 10886,
+      "sha256": "aad17ae98dd3506a78cb9d183ee50c80599c03ddba13bb5025779e4a2ba24f6e"
+    },
+    {
+      "path": "data/state.json",
+      "size_bytes": 11084,
+      "sha256": "982ee4aab90682210d9227746d50e88c04ba041b9219608976eed12e9e3f6ae6"
+    },
+    {
+      "path": "data/state.json.lock",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/ADMIN_GAMING.png",
+      "size_bytes": 257427,
+      "sha256": "6be1cac1f1080d5763702687cfeabe76aaee76e31425387bdea1f672bab3c7a0"
+    },
+    {
+      "path": "docs/ADMIN_RELIABILITY_V13.md",
+      "size_bytes": 1854,
+      "sha256": "a227ae170e4a882397e89b6dee2f94211deb42d84a3f4078817e252b7294d493"
+    },
+    {
+      "path": "docs/BACCARAT_MOBILE.png",
+      "size_bytes": 342143,
+      "sha256": "ed7c081a3325dd083cf0e88241490e132f3a00724df0bd0d8e4d9e28be0cc068"
+    },
+    {
+      "path": "docs/BLACKJACK_DESKTOP.png",
+      "size_bytes": 222784,
+      "sha256": "ac964be7288ea8aa9c3e242c719af41f05ac9568b8e23215e6b150707ea78573"
+    },
+    {
+      "path": "docs/COINFLIP_MOBILE.png",
+      "size_bytes": 336322,
+      "sha256": "080f6567d4e2d70818c35c69db87ee1cd756ec7874c6d78127cf061c5968ac29"
+    },
+    {
+      "path": "docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md",
+      "size_bytes": 4583,
+      "sha256": "ade2ae40bc1c2a6b86d60fe382ff248d8eba876f11ea5046a10d7efa2c992d26"
+    },
+    {
+      "path": "docs/EMPIREDROP_INTEGRATION.md",
+      "size_bytes": 5599,
+      "sha256": "76f120b80aca76d1a085c68dbce800512d45faf8f22bc5b08476215e7c1b72a8"
+    },
+    {
+      "path": "docs/EMPIREDROP_VALIDATION.md",
+      "size_bytes": 1210,
+      "sha256": "88336408c5c9f3fda3b69f282881e385354c2593718851a884ba45994faf613f"
+    },
+    {
+      "path": "docs/GAMING_DESKTOP.png",
+      "size_bytes": 657659,
+      "sha256": "593691f0b70bcdb687b54916441263e9abd58a61238e3baa36e5636ff991453c"
+    },
+    {
+      "path": "docs/GAMING_MOBILE.png",
+      "size_bytes": 265225,
+      "sha256": "75d53af96f344208dadc180dfe652710c62b11387ad572a1109d79d0745c037c"
+    },
+    {
+      "path": "docs/HEALTH_DESKTOP.png",
+      "size_bytes": 730361,
+      "sha256": "75f964b3d0c30ab3d762199bbac066c1e517c3e8974635bc0935d6772b10dfe8"
+    },
+    {
+      "path": "docs/HEALTH_MOBILE.png",
+      "size_bytes": 286241,
+      "sha256": "9064ad3283f706277b033760113929dc2cb7439dadc3db8f530724996d0820a6"
+    },
+    {
+      "path": "docs/HISTORY_MOBILE(1).png",
+      "size_bytes": 345877,
+      "sha256": "21c02ba14d5d8864a523d186da0404828d3fae9684f468004878aa0f8c098504"
+    },
+    {
+      "path": "docs/HISTORY_MOBILE.png",
+      "size_bytes": 345877,
+      "sha256": "21c02ba14d5d8864a523d186da0404828d3fae9684f468004878aa0f8c098504"
+    },
+    {
+      "path": "docs/LIMBO_MOBILE.png",
+      "size_bytes": 336941,
+      "sha256": "278e47ad87bf9d7db72a9b277b0cf933ce442122eab7dac6f771e370ad5ab7cf"
+    },
+    {
+      "path": "docs/PERFORMANCE.md",
+      "size_bytes": 581,
+      "sha256": "5d4661d54ffe65eb4eda7427c119f21837ad3457e7c8ad3ff19e57a5e84dbd32"
+    },
+    {
+      "path": "docs/PLINKO_DESKTOP.png",
+      "size_bytes": 304230,
+      "sha256": "d6d73246718dcc584352911d8a493cff2f021109ceede1a6a43dc3656ed830a8"
+    },
+    {
+      "path": "docs/POKER_DESKTOP.png",
+      "size_bytes": 682366,
+      "sha256": "1169f6efb4911e37fde5477d78e178ab1fe5bb7888a944ff5e482a9d71600ca8"
+    },
+    {
+      "path": "docs/POKER_MOBILE.png",
+      "size_bytes": 391896,
+      "sha256": "c926a0622229b509750b3407a4ac53f2258c590d842e0abe013f031cbb353dfb"
+    },
+    {
+      "path": "docs/PREVIEW_DESKTOP.png",
+      "size_bytes": 451681,
+      "sha256": "dd702d25a50343b6318f27f172ff250b788d222529e95ade8aad8becee367ff3"
+    },
+    {
+      "path": "docs/PREVIEW_MOBILE.png",
+      "size_bytes": 436597,
+      "sha256": "7a078eeedefac09a0de15d3b8157a2116220994a5db89d6b1141f2d194b12b5a"
+    },
+    {
+      "path": "docs/REDPOINTS.md",
+      "size_bytes": 956,
+      "sha256": "bee18c6b5e49981d07e7a7ed223399edd3b46b7ce6e376334166aa88d34adbe2"
+    },
+    {
+      "path": "docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md",
+      "size_bytes": 3175,
+      "sha256": "963ce75bbda7353c1ce6b96ef8c8ea5370e621d0b90cbba0d987fa80db884185"
+    },
+    {
+      "path": "docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md",
+      "size_bytes": 2361,
+      "sha256": "a078696e6486a7862d3ff1d94657344a5fda0ff218e2a6bd2662b8a12ae17047"
+    },
+    {
+      "path": "docs/V12_VALIDATION_REPORT.md",
+      "size_bytes": 1701,
+      "sha256": "64ab373dd1754ab18f7120dc3087e9e922a37865dab56aec1fbf5e6e6b9e5005"
+    },
+    {
+      "path": "docs/VALIDATION.md",
+      "size_bytes": 1009,
+      "sha256": "948189d1a60371319ab7cd799778f203a372316760622f667a48b6b71996f294"
+    },
+    {
+      "path": "docs/empiredrop_partner_openapi_2.0.1.yaml",
+      "size_bytes": 18081,
+      "sha256": "d48069d9845f31a066e32d47810cda5a8bc5f5d0443463bc60fdd22cdfefa226"
+    },
+    {
+      "path": "docs/redlogo(3).png",
+      "size_bytes": 12003,
+      "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
+    },
+    {
+      "path": "empiredrop.py",
+      "size_bytes": 42907,
+      "sha256": "9249f5403800266408e80dfab68996917bfc50dca7d1a66199176743ddc12075"
+    },
+    {
+      "path": "empiredrop_deploy_keys.py",
+      "size_bytes": 545,
+      "sha256": "b7cf2a1172540434abf87902b6e9a6b700364d57289a1f884098009e5b560c32"
+    },
+    {
+      "path": "empiredrop_features.py",
+      "size_bytes": 5576,
+      "sha256": "fe519d83c2b01209d772cce06da5b03eba90a8353eae045f99473bb5def2afcc"
+    },
+    {
+      "path": "empiredrop_races.py",
+      "size_bytes": 18030,
+      "sha256": "cbbfe81576fe36779887c3f68a56ce4fb32e2047e9212413766be69d231e222c"
+    },
+    {
+      "path": "fairness.py",
+      "size_bytes": 13765,
+      "sha256": "fce747b68b1bc98a46fd46981154abf16af501b4b4272a12c4efa50198a9a08f"
+    },
+    {
+      "path": "gaming.py",
+      "size_bytes": 49279,
+      "sha256": "5028093b3b58c11665888157cab3506fe1da634e14760f88139d580b5ddf7c20"
+    },
+    {
+      "path": "holdem.py",
+      "size_bytes": 14322,
+      "sha256": "bb42721439cf74f291b91e11fdde2a57d4ff2ae6747eb8dc418475630d184764"
+    },
+    {
+      "path": "integrations.py",
+      "size_bytes": 9261,
+      "sha256": "5b0cdef121acd36b36916c3e1f4eab61d77426269f76896fad6fa327529f183b"
+    },
+    {
+      "path": "operations_log.py",
+      "size_bytes": 5095,
+      "sha256": "cda66de19b6ed98349b707fb485ae412c79d88736a1ed6d106143d045330ae67"
+    },
+    {
+      "path": "poker.py",
+      "size_bytes": 3179,
+      "sha256": "11e3f3578e959b12fdb3ced1b3f1ae927c103ec1ccb333e31a5508f277f320a7"
+    },
+    {
+      "path": "presentation.py",
+      "size_bytes": 3891,
+      "sha256": "8b2f7a2e31e62bd8c25c13ee1a35ce268c6d7110088509b9b06f1e4de9085a68"
+    },
+    {
+      "path": "private/admin_store.seed.json",
+      "size_bytes": 7733,
+      "sha256": "72f3b48610563a3c538905ce240df3210cd2f7c1ebb696492d347495527ad0e6"
+    },
+    {
+      "path": "private/settings.json",
+      "size_bytes": 2176,
+      "sha256": "23b03422595a0590c3f31a97f474f10b543b6b23bce9e35850ddae2693e55ddf"
+    },
+    {
+      "path": "provider_admin.py",
+      "size_bytes": 6544,
+      "sha256": "deebfa9dc69515dc8f2267e35efc2d8cb2e8549ada47e04548d3c195dfbb06d4"
+    },
+    {
+      "path": "race.py",
+      "size_bytes": 7590,
+      "sha256": "d342af11d32d65157c87f96b0cdf942be89446d9657f615f2157887d4cfab7ad"
+    },
+    {
+      "path": "race_support.py",
+      "size_bytes": 12150,
+      "sha256": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96"
+    },
+    {
+      "path": "release_check.py",
+      "size_bytes": 4326,
+      "sha256": "01332273a017d24d18956fd045b30c1fa3d9d8b9dd5ba8d96e82de91959efde4"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "size_bytes": 49,
+      "sha256": "e89b6c022ec4fbf449cbee45b5aaffefa16bcb027372a5d9f48a78df7215604a"
+    },
+    {
+      "path": "requirements-spaces.txt",
+      "size_bytes": 35,
+      "sha256": "3f623aa1d17175a34995ad108deb3ee6f713f3f2429056e4c3ca5e5f1ddf77bd"
+    },
+    {
+      "path": "requirements.txt",
+      "size_bytes": 77,
+      "sha256": "88ef5de1c188158f15949336cebb79dfcf2ab7d9df5c3f2debbc0c643eb80554"
+    },
+    {
+      "path": "runtime.py",
+      "size_bytes": 20256,
+      "sha256": "cadff37a808077b03d5713052e15a25065f0cd290d78a5c7dfa46bf088a33199"
+    },
+    {
+      "path": "runtime.txt",
+      "size_bytes": 15,
+      "sha256": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d"
+    },
+    {
+      "path": "shuffle_deploy_key.py",
+      "size_bytes": 361,
+      "sha256": "db967baa6f904b4a30c93e429b9f90ac000575c0a8398c9cc0c6553eb8f4ddbb"
+    },
+    {
+      "path": "spaces_state.py",
+      "size_bytes": 6974,
+      "sha256": "030dc52c6f774b5e3c0bb97b4f291cdc1fa0c9e70708eb4473d02c6a0e6f0bfb"
+    },
+    {
+      "path": "static/admin-empiredrop.js",
+      "size_bytes": 9285,
+      "sha256": "dde1a734827b2cc0df04c10cca2201e15b4492c6e380ec8de2d57ee66754dd28"
+    },
+    {
+      "path": "static/admin-feedback.js",
+      "size_bytes": 4432,
+      "sha256": "9300aa1f4e76a2d76573ff6cc1e5930bef90b17096374aec2f78dd1a95cd5580"
+    },
+    {
+      "path": "static/admin-gaming.js",
+      "size_bytes": 10155,
+      "sha256": "0e0c4d78d99bc8f737b39dabc6246474aa0150225816b0f567fbd81a3f314c08"
+    },
+    {
+      "path": "static/admin-health.js",
+      "size_bytes": 5053,
+      "sha256": "2a7c5bc47dc7fb5ee164c8188d783166de3a24dd5e0194bfb5bd4bca84ca87b7"
+    },
+    {
+      "path": "static/admin-logs.js",
+      "size_bytes": 6548,
+      "sha256": "e947893f8b2a364f8d8f79d759e5526a72d417feb39ae8b66767796c5bf061f9"
+    },
+    {
+      "path": "static/admin-providers.js",
+      "size_bytes": 2351,
+      "sha256": "8c7acfc1defcc9f2154d1090198db2d607bba3c2f3a3c3574bbbefac68b39998"
+    },
+    {
+      "path": "static/admin-workspace.css",
+      "size_bytes": 17169,
+      "sha256": "b76379b78707778685577de5d5e6ec71868c821e2b3f270892b9f7812b627ded"
+    },
+    {
+      "path": "static/admin-workspace.js",
+      "size_bytes": 8929,
+      "sha256": "1b0997e624275f0a737c3a21360f90e346bc4ac9fea7be9db483d0ac3cd3ec96"
+    },
+    {
+      "path": "static/app.js",
+      "size_bytes": 30432,
+      "sha256": "dd0aff9eff8366009109c182603acefe20341cf298d8caa80403e4f8efcfe3cf"
+    },
+    {
+      "path": "static/empiredrop.css",
+      "size_bytes": 2380,
+      "sha256": "38dc314830b6aef6072eb112548be55bd7968766697d3ca70da993588fcef309"
+    },
+    {
+      "path": "static/empiredrop.js",
+      "size_bytes": 12170,
+      "sha256": "04a046e55aa84c2e2640a7c88f206f53eb5381f92c7ded58a5a728b42ca3246d"
+    },
+    {
+      "path": "static/experience.css",
+      "size_bytes": 19583,
+      "sha256": "39dc0c669101783ab7e3de8a26e9b96a235af6d0d6db6d11177232d2e4003cd9"
+    },
+    {
+      "path": "static/experience.js",
+      "size_bytes": 1179,
+      "sha256": "65b1af95d44c1128de2b21fb800c375d0a1fff4837d80cb3349027d5f767f50d"
+    },
+    {
+      "path": "static/fairness.js",
+      "size_bytes": 18755,
+      "sha256": "3c895dc1311a016a83a9fc631e7ece37c9de9d5dd9b073354353d9b771abbe38"
+    },
+    {
+      "path": "static/gaming.css",
+      "size_bytes": 24017,
+      "sha256": "7797f90012fbd5ca63748ac16358bc72cf5c0c0d0972dd866b55fe18660766f7"
+    },
+    {
+      "path": "static/gaming.js",
+      "size_bytes": 62729,
+      "sha256": "3642db92f83057f99002216fc3bc0e4a1c1bb4e829453076619334fdde733a95"
+    },
+    {
+      "path": "static/history.css",
+      "size_bytes": 2879,
+      "sha256": "4cfaaaf7258083b167c4afc72638a084a49e8bb4afaec7a30feba8da403627b0"
+    },
+    {
+      "path": "static/history.js",
+      "size_bytes": 6483,
+      "sha256": "1b6a0e7be99c8a47b0f682027bcaecabddccaab0714f4eb476f0da990e3cfe1f"
+    },
+    {
+      "path": "static/holdem-fairness.js",
+      "size_bytes": 11800,
+      "sha256": "a9d2be91b530fbf77ba17376d7991212d40b58b5dc9a3ba1df1ef4854b75dd0a"
+    },
+    {
+      "path": "static/holdem-ui.js",
+      "size_bytes": 9657,
+      "sha256": "502b8e4023e5ecc80301ee50cee5b4a5b795b4fb3754449e82ac35be25aba325"
+    },
+    {
+      "path": "static/holdem.css",
+      "size_bytes": 4346,
+      "sha256": "c3cc930bc5d76a9770f91c797cdf10832a213b106a34ebd24c96dd0bffb3cf68"
+    },
+    {
+      "path": "static/plinko.js",
+      "size_bytes": 8568,
+      "sha256": "8ee550267718142b16da78242c08ae113594b7e1e735bdc8caf63dd2b06b8cf6"
+    },
+    {
+      "path": "static/public-control.css",
+      "size_bytes": 14320,
+      "sha256": "1aab5f3e2436b2e54efbd44ec35a58998b00b33146c3cf1bedff22f35fef3fcc"
+    },
+    {
+      "path": "static/public-control.js",
+      "size_bytes": 1447,
+      "sha256": "44ab93b688c0d8f265d4403959901d592cef3558702861fbafbf60feeb36bc0d"
+    },
+    {
+      "path": "static/receipt-verifier.js",
+      "size_bytes": 1675,
+      "sha256": "6a15de43e40ef4d864dc6d18a6f37a19fe3e518a377b09f2154b1813c488e288"
+    },
+    {
+      "path": "static/redlogo.ico",
+      "size_bytes": 4286,
+      "sha256": "6a2c518c570d0f0357e39f7a8791daa4de681434ca51b2fa17381fd2d6cac63e"
+    },
+    {
+      "path": "static/redlogo.png",
+      "size_bytes": 12003,
+      "sha256": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186"
+    },
+    {
+      "path": "static/style.css",
+      "size_bytes": 41532,
+      "sha256": "7e2f72ffda8b17c54edf2838d199a7dff80e68644b3000edd531e6706cdfaadc"
+    },
+    {
+      "path": "static/v11-system.css",
+      "size_bytes": 9686,
+      "sha256": "626d720a5783c2b1b6b576949e8ae36ba9337d7788de44e9017ae365ff2b427f"
+    },
+    {
+      "path": "storage.py",
+      "size_bytes": 17632,
+      "sha256": "8c5ff17c7c8ab6ea77cef8e97e64a6ed3fa3813933e4b4468455e7c95fa61d2c"
+    },
+    {
+      "path": "store_schema.py",
+      "size_bytes": 4699,
+      "sha256": "5ccf9a649f92afff624e572203a1dfd940435dc6e1248ed3e0768887aeb5fec2"
+    },
+    {
+      "path": "telemetry.py",
+      "size_bytes": 6352,
+      "sha256": "8dd8c4f3c782da94a2c1a2df99ccf771e7e688543e2c1748e7af475cd994e005"
+    },
+    {
+      "path": "templates/admin.html",
+      "size_bytes": 11532,
+      "sha256": "2d36b2c43e6aca96e29dda7bf920ee1b360e5f52d78f22f83b5409dca637addf"
+    },
+    {
+      "path": "templates/admin_activity.html",
+      "size_bytes": 802,
+      "sha256": "35a6d3c08eef9adc53f900fdbb08643796710d56619f1f59726ad80f942a066b"
+    },
+    {
+      "path": "templates/admin_attention.html",
+      "size_bytes": 964,
+      "sha256": "166d084c79fb01f5bdd0c236420d4b0dbcbb39216bcf3f1c0b18b606ff3096aa"
+    },
+    {
+      "path": "templates/admin_empiredrop.html",
+      "size_bytes": 22431,
+      "sha256": "eeddf6ee6651166a559712815cc68db50c5d2f8921cb0362c73d94c83751cbe3"
+    },
+    {
+      "path": "templates/admin_gaming.html",
+      "size_bytes": 5494,
+      "sha256": "88a16b91bc620ee63529f27b9b4e06d159372455b542f27f42f6bc6bd1ce4cc8"
+    },
+    {
+      "path": "templates/admin_health.html",
+      "size_bytes": 3804,
+      "sha256": "1ce6e81c37efa3e9900faf35bc58550df4b75436ab009892d07ad4281849cef0"
+    },
+    {
+      "path": "templates/admin_overview.html",
+      "size_bytes": 3792,
+      "sha256": "cee4c83b69038cb132e25da7ab278956bc73becd051142b6e7b88a5bf922a2d8"
+    },
+    {
+      "path": "templates/admin_players.html",
+      "size_bytes": 4162,
+      "sha256": "a990728ff525a8eba3dd5528c029d5e3eef2a55df547919aa602a1ce74d7f5db"
+    },
+    {
+      "path": "templates/admin_provider_summary.html",
+      "size_bytes": 2437,
+      "sha256": "4f3e7124829b6b21af325f10fa63e17874f31effa7160d82bd3e53b59c4b0c80"
+    },
+    {
+      "path": "templates/admin_race.html",
+      "size_bytes": 3525,
+      "sha256": "7209b69f81a3d1b4494cebe4e338f129f37e74052305f569e3991fc1c639c76d"
+    },
+    {
+      "path": "templates/admin_settings.html",
+      "size_bytes": 9409,
+      "sha256": "0961266898c7325dcd6824a971aa0e37df12abc6e9a7ca86077ca4df252dfd6a"
+    },
+    {
+      "path": "templates/admin_shuffle.html",
+      "size_bytes": 4345,
+      "sha256": "54901a97ad2d9cd0e8a0b496df62dc7ad39b772b2a30828b15241eda66037630"
+    },
+    {
+      "path": "templates/base.html",
+      "size_bytes": 4295,
+      "sha256": "b9fe3a9e6c2975fac1259dde927045a61c8ef3ee7270bca0c0043bbd3c3de1da"
+    },
+    {
+      "path": "templates/change_review.html",
+      "size_bytes": 690,
+      "sha256": "c5469e3b96c979eaf815c6599180de30ef81c83112d786e468ccbb056cc17450"
+    },
+    {
+      "path": "templates/error.html",
+      "size_bytes": 768,
+      "sha256": "be1f1fee8e2dac72a7ef8f9e896d9fea8383458d93a105abdcf60f904c6f2832"
+    },
+    {
+      "path": "templates/gaming.html",
+      "size_bytes": 20342,
+      "sha256": "6275f00f158d53384b783cb1cbcf73e0fdbfd8f799ea276947d80a30143ac6c3"
+    },
+    {
+      "path": "templates/gaming_fairness.html",
+      "size_bytes": 16732,
+      "sha256": "4394209892a373313997b1035e0a804d3ca04cb482ac67fb175f1537646489ce"
+    },
+    {
+      "path": "templates/history.html",
+      "size_bytes": 4758,
+      "sha256": "efa4e5e92593a4af6396488aaa0537452f690d631ba8d457c67d7d32aa8af5bd"
+    },
+    {
+      "path": "templates/holdem_table.html",
+      "size_bytes": 3106,
+      "sha256": "64dc8f185fe6ede951203f5a38e5db8b11d1a6213db8b1c4c98dd4518fab6354"
+    },
+    {
+      "path": "templates/icons.html",
+      "size_bytes": 687,
+      "sha256": "7d99dc9ee58e6f0827b2a3583cb028477ae304b078f3b1311e766594f189ce3c"
+    },
+    {
+      "path": "templates/index.html",
+      "size_bytes": 11538,
+      "sha256": "dd8a56c5de50c5fe273760ad7cbe67991c37baa5695d5d03cb099a0087d79f00"
+    },
+    {
+      "path": "templates/login.html",
+      "size_bytes": 1292,
+      "sha256": "569a7023dbcb632ac9dd356660b23ea8e08b7d946b3905122c063cdb09b01a25"
+    },
+    {
+      "path": "templates/macros.html",
+      "size_bytes": 2374,
+      "sha256": "dcc2f78651e45b452fadb774dc8d6ab3677402ee386f83dc0c3ad2a324e861ef"
+    },
+    {
+      "path": "templates/recovery_panel.html",
+      "size_bytes": 3497,
+      "sha256": "6c263b9e21cf5cb746c7f9170c37b6c0d89e4774df8a30aa579f85cdc626fdb6"
+    },
+    {
+      "path": "tests/assert_visual_pixels.py",
+      "size_bytes": 880,
+      "sha256": "6352f504d6e1c0826c38547d5a0af6bf4b6df554c4b08b13eaad256ed4c76a2a"
+    },
+    {
+      "path": "tests/fairness_v2_vectors.json",
+      "size_bytes": 72668,
+      "sha256": "3006777db51e721f913e2a21443ae011f21a2c65bf41394b1d90dbcba36f3f76"
+    },
+    {
+      "path": "tests/fairness_v3_vectors.json",
+      "size_bytes": 82872,
+      "sha256": "82cdcd34c238bb5e944d39d69ca2cb07227df2e43c8b1922cf5d76b6aa832f43"
+    },
+    {
+      "path": "tests/fairness_v4_vectors.json",
+      "size_bytes": 126773,
+      "sha256": "4783618412a83dd3683b9d4a0190438ab06efd14c96814040e1b20a973551fa2"
+    },
+    {
+      "path": "tests/fairness_vectors.json",
+      "size_bytes": 36427,
+      "sha256": "95767d3a4e9c22dcdc2694f8562553b01b08827aff96d61bb7f674872661345c"
+    },
+    {
+      "path": "tests/fixtures/empiredrop_race_success.json",
+      "size_bytes": 1025,
+      "sha256": "f632eea3c8617dcd3478e5ca6d3ad96f73765f523f00d2483df661778806cca5"
+    },
+    {
+      "path": "tests/gaming_motion.cjs",
+      "size_bytes": 11588,
+      "sha256": "6293e30ff72fd5e3af1d7643208201479f929ab427bd47d565ebc23c6bb0b7f0"
+    },
+    {
+      "path": "tests/generate_fairness_vectors.py",
+      "size_bytes": 1232,
+      "sha256": "0a0691096fe384593ef0e4dda5f3d63479fbd4d0b9d0372be38c5fc97ddb4ad4"
+    },
+    {
+      "path": "tests/generate_v4_vectors.py",
+      "size_bytes": 1585,
+      "sha256": "287376f770ed610d3f2278e127a34debe299f128347074274176107f07bc7a9b"
+    },
+    {
+      "path": "tests/holdem_vectors.py",
+      "size_bytes": 2629,
+      "sha256": "ed16b0ddbddd86a43f719cb05cbd70f60f94ea04d0cc119f55d5532f7a59ac03"
+    },
+    {
+      "path": "tests/package.json",
+      "size_bytes": 266,
+      "sha256": "7635016f8526e3e9864bbeaa1c7b89ae4c3efa117efd61bf2c0d5c72da07f621"
+    },
+    {
+      "path": "tests/serve_admin_gaming_fixture.py",
+      "size_bytes": 3400,
+      "sha256": "2c880340c1bd06a399be6558d0c852135e6ecd5a40f6081cf26d0b820ab94fde"
+    },
+    {
+      "path": "tests/serve_game_fixture.py",
+      "size_bytes": 759,
+      "sha256": "1ddbd387a1d7fa5092076f8827b62f71b1799517e5c80fb4d233fca9e8f28a8b"
+    },
+    {
+      "path": "tests/serve_gaming_motion_fixture.py",
+      "size_bytes": 740,
+      "sha256": "7de76a4b7503552b511dac69db7fdbf82369a14c7fc3f69ec4a32a147601d04a"
+    },
+    {
+      "path": "tests/test_admin_controls.py",
+      "size_bytes": 3707,
+      "sha256": "c100755107b1c95e64d71cf1b45012b3979f5ca6bcffd28fefa88f1033f34fc1"
+    },
+    {
+      "path": "tests/test_admin_gaming_frontend.cjs",
+      "size_bytes": 4680,
+      "sha256": "0132ec37919c749e1c507bd2b3fbed82859201cec6a7339bce2dcc1d435590c2"
+    },
+    {
+      "path": "tests/test_admin_reliability_v13.py",
+      "size_bytes": 6780,
+      "sha256": "6b87826d65c0d65142e8ae2db3aa1d8e4d0c7199c7aff58f6b75c4c86bf9038d"
+    },
+    {
+      "path": "tests/test_admin_uniform.py",
+      "size_bytes": 6414,
+      "sha256": "b109d674985a845d797dfbeed0dcb2360d39795675c308deb41f3a093a27f5c8"
+    },
+    {
+      "path": "tests/test_app.py",
+      "size_bytes": 41411,
+      "sha256": "0e5232acfc155c3cbaf391046cd14e7704e9cd1bc6c26d61a981db806bd5164f"
+    },
+    {
+      "path": "tests/test_baccarat.py",
+      "size_bytes": 7947,
+      "sha256": "4711140d79b101a06c8c2d52cc2791e9906db1d74c7b52eff45f9d4fd498e78d"
+    },
+    {
+      "path": "tests/test_blackjack.py",
+      "size_bytes": 7799,
+      "sha256": "c0f0901946c97735faeb49578ac79c6b3202dad9b27f4590e6be023c6b883b0f"
+    },
+    {
+      "path": "tests/test_clarity_update.py",
+      "size_bytes": 1012,
+      "sha256": "5ed208071d16a0f846052d729cb0c8751fe52409e0718ef3af9d07c78507c195"
+    },
+    {
+      "path": "tests/test_deployment_optimization.py",
+      "size_bytes": 916,
+      "sha256": "244aea6ad38177e2cfa921fd795a11c4ce43218b33cd52a8f95f3f142083ab60"
+    },
+    {
+      "path": "tests/test_do_package.py",
+      "size_bytes": 1363,
+      "sha256": "3e871d2fed81d424df493369231b3ba8236e0dd086b2236b58fb39deefc973c9"
+    },
+    {
+      "path": "tests/test_empiredrop.py",
+      "size_bytes": 5613,
+      "sha256": "86fcd897caf6d021dd6ef106129d565ae4d8127e684e18e05d505ef5c666d028"
+    },
+    {
+      "path": "tests/test_empiredrop_contract.py",
+      "size_bytes": 13478,
+      "sha256": "68334cac159112021bbf047b994edc1cefa96f9c618353ef7a492fa99a01d65f"
+    },
+    {
+      "path": "tests/test_empiredrop_frontend.cjs",
+      "size_bytes": 8254,
+      "sha256": "51145537adfa66582249a2a01414764b592b08c9de42d81acf08005b706ff251"
+    },
+    {
+      "path": "tests/test_empiredrop_public_ssr.py",
+      "size_bytes": 2558,
+      "sha256": "b9c1f266fb7419c3479538a81b7ac1dffc5e46eaa40a029e452bd25ce102f9d4"
+    },
+    {
+      "path": "tests/test_empiredrop_qol.py",
+      "size_bytes": 10444,
+      "sha256": "c1f1f3ca6225f6dcf13eae73689cfdf7256adedfe00d047e03f937126eef310f"
+    },
+    {
+      "path": "tests/test_empiredrop_races.py",
+      "size_bytes": 9338,
+      "sha256": "9ad330b5e03e8384ae8ef68370d3db5382e3854a1d26af5db4df0ceaa6eaf83c"
+    },
+    {
+      "path": "tests/test_empiredrop_slug_recovery.py",
+      "size_bytes": 4250,
+      "sha256": "3ca569964ef871ab60069d4c6eae8ce5c3154b2c7610f043d0d12c388b9596b8"
+    },
+    {
+      "path": "tests/test_extra_games.py",
+      "size_bytes": 11165,
+      "sha256": "1527ba6487d58fc103e8c3499961af1210491136c4be0e6da6c7380d074ae911"
+    },
+    {
+      "path": "tests/test_fairness_frontend.cjs",
+      "size_bytes": 2002,
+      "sha256": "0fc38987f73c0a9b7caec171079552eda62b89ffe59dabe2c0d17b5da2a1a394"
+    },
+    {
+      "path": "tests/test_gaming_ip.py",
+      "size_bytes": 17406,
+      "sha256": "3e3413d5eeec0a362cd9d63f7d84cabe1ea3da99e8d446f8f8e97fa2ddedb6fb"
+    },
+    {
+      "path": "tests/test_health_release.py",
+      "size_bytes": 6528,
+      "sha256": "5915d9e8f609bfa64bac06222288f6ae8532d7410c448be6a553c6b2cb52bd35"
+    },
+    {
+      "path": "tests/test_history_frontend.cjs",
+      "size_bytes": 4934,
+      "sha256": "50ea245d416cc5a2a281c9f303751271f4a9ab4c66d254512d9fbd78356f7aa8"
+    },
+    {
+      "path": "tests/test_holdem.py",
+      "size_bytes": 12541,
+      "sha256": "df5157926645e2f8e88a867ab3096e025a55687413a7dd260a679c294e355b05"
+    },
+    {
+      "path": "tests/test_navigation_v12.py",
+      "size_bytes": 4798,
+      "sha256": "66436dd06b87232d912ee3323ac45bd121ff3fd5cad64e4eeed9bc7d426242f3"
+    },
+    {
+      "path": "tests/test_public_menu_v10.cjs",
+      "size_bytes": 1563,
+      "sha256": "e5b7465604e723cdc8a7784058b9ec224a9e210b3da035e23294855c6455c53f"
+    },
+    {
+      "path": "tests/test_redpoints.py",
+      "size_bytes": 18040,
+      "sha256": "858c1510148094a41874b05b31e2402eda72d53e337d76d2826f603409e125c7"
+    },
+    {
+      "path": "tests/test_shuffle_admin_browser.cjs",
+      "size_bytes": 2073,
+      "sha256": "52f61540a7a5fb090eb6090ea8978ee8bace8a0337cce7776ae9259ae1f369ef"
+    },
+    {
+      "path": "tests/test_shuffle_admin_hotfix.py",
+      "size_bytes": 4057,
+      "sha256": "2df414e65f4d9a26e053ad85164a1c07bc4fcd2aa2f9f34fa6ef9bbc9626ee21"
+    },
+    {
+      "path": "tests/test_v11_flask_navigation.py",
+      "size_bytes": 2423,
+      "sha256": "1949b7f86eae49db9a853cd4c3f6b4684a70da634ad11137e0c479f4e5e3e32a"
+    },
+    {
+      "path": "tests/test_weekly_history.py",
+      "size_bytes": 12546,
+      "sha256": "24e8abe1b7ce2e1d6bac286bed2d1772a7963558354b01f8da9109dca34852e0"
+    },
+    {
+      "path": "tools/admin_acceptance_v13.py",
+      "size_bytes": 887,
+      "sha256": "fc63897b922b9a91c5a16e390578fb04251681574b231a9b83cb8d506ed0af0e"
+    },
+    {
+      "path": "tools/deployment_diagnostics.py",
+      "size_bytes": 5027,
+      "sha256": "ea4d3768002e718662a195e1e988d3f4093694af08708b9d8b205ee0c69bfe0f"
+    },
+    {
+      "path": "tools/live_smoke_v12.py",
+      "size_bytes": 4575,
+      "sha256": "ce571395b014ce68ba87694315d9efb4e60ca33fbd84be72310822b730ee9dcf"
+    },
+    {
+      "path": "tools/live_smoke_v13.py",
+      "size_bytes": 4575,
+      "sha256": "5a76d94c397428d1dbc92080db93ea507c1a005839d6197af8a56ef47b996f7b"
+    },
+    {
+      "path": "tools/verify_redpoints.py",
+      "size_bytes": 1394,
+      "sha256": "4962ed214b2a83570e7683e18cebb42cd10126d7dc1e9aa12344d78dfef4c656"
+    },
+    {
+      "path": "wager_backend.py",
+      "size_bytes": 83289,
+      "sha256": "f769d34676890d861e3d608d3e7efe83282bc665543fa0a87aa12b4a28b3b2d0"
+    },
+    {
+      "path": "weekly_history.py",
+      "size_bytes": 19483,
+      "sha256": "dac409a7db91758ba70156445f58eb4714f9d348a262b2e901a880638aa8d5b1"
+    }
+  ]
 }

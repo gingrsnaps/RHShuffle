@@ -2,7 +2,7 @@
 
 One small JSON document holds current state. A process lock serializes writers,
 including a brief local deployment overlap. Writes use fsync + atomic replace;
-a failed write never publishes half a raid. Keep one App Platform instance.
+a failed write never publishes partial state. Keep one App Platform instance.
 """
 from contextlib import contextmanager
 import copy
@@ -19,12 +19,11 @@ from werkzeug.security import generate_password_hash
 from race_support import read_json, clean_snapshots, race_key
 from store_schema import upgrade_store
 from race import empty
-from boss import validate_boss
-from boss_avatar import validate_avatar
 from presentation import valid_marker
 from weekly_history import clean_history
-from gaming import validate_gaming
+from gaming import validate_gaming, migrate_legacy_profiles
 from telemetry import Measurements
+from spaces_state import SpacesMirror, SpacesError
 
 LOG = logging.getLogger("redhunllef")
 
@@ -71,6 +70,12 @@ class Store:
         self.cached, self.stamp = None, None
         self.measurements = Measurements()
         self._probe, self._probe_until = None, 0
+        # Optional remote authority: never treat an old bundled JSON snapshot as
+        # current when durable Spaces state has been configured.
+        self.mirror = SpacesMirror.from_environment(self.key)
+        if self.mirror:
+            self.mirror.prepare(self.path, state_key=self.key,
+                                bootstrap=os.getenv('RH_SPACES_BOOTSTRAP_LOCAL') == '1')
         self.initialize()
 
     @contextmanager
@@ -135,6 +140,12 @@ class Store:
                     yield value
                     if transaction and value != current:
                         writing = time.perf_counter()
+                        if self.mirror:
+                            # Write the remote authority before acknowledging a save.
+                            # Fail closed rather than silently falling back to a
+                            # disposable App Platform filesystem.
+                            value['_mirror_sequence'] = int(current.get('_mirror_sequence', 0)) + 1
+                            self.mirror.persist(value, expected=current)
                         atomic_json(self.path, value)
                         self._remember(value)
                         written = (time.perf_counter()-writing)*1000
@@ -181,12 +192,25 @@ class Store:
                 upgrade_store(existing["admin"], self.config.site, {})
                 if not existing['admin'].get('users'):
                     raise StoreError('Saved account store contains no accounts. It was not replaced.')
-                if existing.get('boss') is not None:
-                    validate_boss(existing['boss'])
-                validate_avatar(existing.get('avatar'))
                 validate_gaming(existing.get('gaming'))
-                LOG.info("ACCOUNTS Existing accounts, settings and raid retained from JSON.")
+                if existing.get('boss') is not None or existing.get('avatar') is not None:
+                    upgraded = copy.deepcopy(existing)
+                    migrated = migrate_legacy_profiles(upgraded.get('gaming'), upgraded.get('boss'))
+                    self.backup_in(upgraded, 'before-retired-profile-removal',
+                                   {'boss': upgraded.get('boss'), 'avatar': upgraded.get('avatar')})
+                    upgraded.pop('boss', None)
+                    upgraded.pop('avatar', None)
+                    upgraded['revision'] += 1
+                    atomic_json(self.path, upgraded)
+                    self._remember(upgraded)
+                    existing = upgraded
+                    LOG.info('MIGRATION Retired profile data removed; %s Gaming recovery record(s) preserved by unique name match.', migrated)
+                LOG.info("ACCOUNTS Existing accounts, settings and RedPoints retained from JSON.")
                 return
+            # Optional fail-closed guard: deployers who have moved state out of
+            # the container can refuse an accidental reset to an ancient seed.
+            if self.config.production and os.getenv('RH_REQUIRE_EXISTING_STATE') == '1':
+                raise StoreError('No persisted state found; refusing to bootstrap accounts or restore an older race seed.')
             value = self._import_sqlite()
             if value is None:
                 legacy, source = None, "first-run defaults"
@@ -201,9 +225,10 @@ class Store:
                 admin, _ = upgrade_store(legacy, self.config.site, {})
                 weekly = clean_history(admin.pop('weekly_history', None))
                 redpoints = validate_gaming(admin.pop('redpoints', None))
-                game = admin.pop("community_boss", None)
-                game = validate_boss(game) if game is not None else None
-                avatar = validate_avatar(admin.pop("community_boss_avatar", None))
+                # Retired profile data is intentionally removed. The untouched legacy document
+                # is retained in the automatic import recovery file below.
+                admin.pop("community_boss", None)
+                admin.pop("community_boss_avatar", None)
                 marker = valid_marker(admin.pop("recovery_export", None))
                 if not admin["users"]:
                     raise StoreError("Saved account store contains no accounts. The original was not replaced.")
@@ -217,7 +242,7 @@ class Store:
                 saved["source"] = [dict(username=r["username"], weighted=r["original_weighted_wager"],
                                         raw=r["raw_wager"], row_count=r["row_count"]) for r in saved["rows"]]
                 value = dict(format=1, key=self.key, revision=1, admin=admin, live={"shuffle": saved, "weekly_history":weekly},
-                             boss=game, gaming=redpoints, avatar=avatar, checkpoint=marker, recoveries=[])
+                             gaming=redpoints, checkpoint=marker, recoveries=[])
                 self.backup_in(value, "before-rebuild-import", {"admin": legacy, "source": source})
                 LOG.info("MIGRATION Imported %s; original accounts, hashes and dates retained.", source)
             atomic_json(self.path, value)
@@ -244,34 +269,20 @@ class Store:
                 value = dict(format=1, key=self.key, revision=row[0], admin=admin,
                              live={r[0]: json.loads(r[1]) for r in old.execute("SELECT service,document FROM rh_live WHERE name=?", (self.key,))},
                              recoveries=[])
-                for field, table in (("boss", "rh_boss"), ("avatar", "rh_boss_avatar"), ("checkpoint", "rh_checkpoint")):
-                    row = old.execute(f"SELECT document FROM {table} WHERE name=?", (self.key,)).fetchone() if table in tables else None
-                    value[field] = json.loads(row[0]) if row else None
-                if value['boss'] is not None: validate_boss(value['boss'])
-                validate_avatar(value['avatar'])
+                row = old.execute("SELECT document FROM rh_checkpoint WHERE name=?", (self.key,)).fetchone() if 'rh_checkpoint' in tables else None
+                value['checkpoint'] = json.loads(row[0]) if row else None
+                value['gaming'] = None
                 if 'rh_recovery' in tables:
                     for reason, created, document in old.execute("SELECT reason,created,document FROM rh_recovery WHERE name=? ORDER BY created DESC LIMIT 10", (self.key,)):
                         self.backup_in(value, reason, json.loads(document), created=created)
         except (sqlite3.Error, ValueError) as exc:
-            raise StoreError("The old local save could not be imported. Keep it intact; no default accounts or raid replaced it.") from exc
+            raise StoreError("The old local save could not be imported. Keep it intact; no default accounts or state replaced it.") from exc
         LOG.info("MIGRATION Previous SQLite save imported into JSON; old file left intact. New writes use JSON only.")
         return value
 
     def admin(self):
         with self.connection() as value:
             return value['revision'], copy.deepcopy(value['admin'])
-
-    def boss_read(self, conn):
-        return copy.deepcopy(conn.get('boss'))
-
-    def boss_write(self, conn, value):
-        conn['boss'] = copy.deepcopy(value)
-
-    def avatar(self, conn):
-        return copy.deepcopy(conn.get('avatar'))
-
-    def avatar_in(self, conn, value):
-        conn['avatar'] = copy.deepcopy(value)
 
     def checkpoint(self, marker=None):
         if marker is not None:

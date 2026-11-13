@@ -13,8 +13,8 @@
     "site_name": "RedHunllef",
     "race_title": "RedHunllef Wager Race",
     "race_description": "Track the top weighted wagerers for RedHunllef's active race.",
-    "start_time": 1785880800,
-    "end_time": 1786485600,
+    "start_time": 1794351600,
+    "end_time": 1794956400,
     "refresh_seconds": 60,
     "leaderboard_size": 15,
     "prizes": {
@@ -224,5 +224,67 @@
     ],
     "updated_at": 1786043029
   },
-  "updated_at": 1786043053
+  "updated_at": 1794551811,
+  "empiredrop_race": {
+    "mode": "custom",
+    "start_time": 1794351600,
+    "end_time": 1794956400
+  },
+  "empiredrop_races": {
+    "source_mode": "races",
+    "api_base_url": "https://api.empiredrop.com",
+    "race_slug": "",
+    "auto_select": true,
+    "race_auth_mode": "dual_headers",
+    "race_private_header": "X-Private-Key",
+    "race_public_header": "X-Public-Key",
+    "race_rows_path": "ranking",
+    "race_name_field": "user.name",
+    "race_user_id_field": "user.hash_id",
+    "race_wager_field": "total",
+    "race_currency": "EUR",
+    "race_wager_divisor": "100",
+    "race_window_policy": "local",
+    "race_start_field": "race.start_date",
+    "race_end_field": "race.end_date",
+    "race_verified_fields": true
+  },
+  "empiredrop_rewards": {
+    "currency": "EUR",
+    "enabled": false,
+    "prizes": {
+      "1": "0.00",
+      "2": "0.00",
+      "3": "0.00",
+      "4": "0.00",
+      "5": "0.00",
+      "6": "0.00",
+      "7": "0.00",
+      "8": "0.00",
+      "9": "0.00",
+      "10": "0.00"
+    },
+    "revision": 1,
+    "updated_at": 0,
+    "updated_by": ""
+  },
+  "empiredrop_rewards_draft": {
+    "currency": "EUR",
+    "enabled": false,
+    "prizes": {
+      "1": "0.00",
+      "2": "0.00",
+      "3": "0.00",
+      "4": "0.00",
+      "5": "0.00",
+      "6": "0.00",
+      "7": "0.00",
+      "8": "0.00",
+      "9": "0.00",
+      "10": "0.00"
+    },
+    "revision": 1,
+    "updated_at": 0,
+    "updated_by": ""
+  }
 }

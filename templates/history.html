@@ -3,7 +3,7 @@
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='history.css', v=asset_version) }}">{% endblock %}
 {% block content %}
 {% set week = history.selected %}
-<main id="main" class="shell history-page" data-selected-week="{{ week.id }}">
+<main id="main" class="shell history-page public-interior-page" data-selected-week="{{ week.id }}">
   <header class="history-heading">
     <div><p class="eyebrow">THE LAST FOUR WEEKS</p><h1>Race history<span class="accent">.</span></h1>
     <p class="lead">The community's top 25. Every Tuesday at 6 PM Eastern, a new week closes.</p></div>

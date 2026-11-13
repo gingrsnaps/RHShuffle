@@ -1,5 +1,4 @@
-/* The minute feed owns health; the local gaming feed also updates the boss card.
-   No extra polling timer or provider request is created by this controller. */
+/* The minute feed owns provider and storage health. No extra provider requests are created here. */
 (() => {
   "use strict";
   const root = document.getElementById("systemHealth");
@@ -12,8 +11,7 @@
     value ? new Date(value * 1000).toLocaleString() : "Not recorded";
   let health,
     issueKey = "",
-    metricsKey = "",
-    bossState;
+    metricsKey = "";
   function attention() {
     const issues = (health?.components || []).filter(
       (item) => item.state !== "good",
@@ -51,48 +49,6 @@
             : "Updates delayed. Saved results remain visible; retrying automatically.");
         return li;
       }),
-    );
-  }
-  function renderBoss(value) {
-    const card = id("overviewBoss");
-    if (
-      !card ||
-      !value ||
-      !Number.isSafeInteger(value.hp) ||
-      !Number.isSafeInteger(value.max_hp) ||
-      value.max_hp <= 0 ||
-      value.hp < 0 ||
-      value.hp > value.max_hp
-    )
-      return;
-    // A slower minute response must never undo a newer local snapshot.
-    if (
-      bossState &&
-      (value.raid_id === bossState.raid_id
-        ? value.version < bossState.version
-        : value.created_at < bossState.created_at)
-    )
-      return;
-    bossState = value;
-    put(id("overviewBossName"), value.name);
-    put(
-      id("overviewBossStatus"),
-      value.status === "victory"
-        ? "Defeated"
-        : value.status === "paused"
-          ? "Paused"
-          : "Active",
-    );
-    const bar = id("overviewBossHP");
-    bar.max = value.max_hp;
-    bar.value = value.hp;
-    bar.setAttribute(
-      "aria-valuetext",
-      `${value.hp.toLocaleString()} of ${value.max_hp.toLocaleString()} HP remaining`,
-    );
-    put(
-      id("overviewBossDetail"),
-      `${value.hp.toLocaleString()} / ${value.max_hp.toLocaleString()} HP · ${value.raiders} raiders`,
     );
   }
   function render(value) {
@@ -142,10 +98,8 @@
       }),
     );
   }
-  globalThis.RedHealth = { render, renderBoss, attention };
+  globalThis.RedHealth = { render, attention };
   render(JSON.parse(root.dataset.health));
-  if (id("overviewBoss"))
-    renderBoss(JSON.parse(id("overviewBoss").dataset.boss));
   id("copyHealthReport").addEventListener("click", async (event) => {
     const feedback = id("healthReportFeedback"),
       button = event.currentTarget;

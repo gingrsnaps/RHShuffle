@@ -1,7 +1,7 @@
 """Small view models for change review and private recovery status."""
 import re
 
-from boss_progress import MAX_NUMBER
+MAX_NUMBER = 2**53 - 1
 from race import token
 from race_support import fmt_et, money
 
@@ -41,49 +41,42 @@ def gaming_fingerprint(value):
     return token({key: [p['version'], p['season'], p['name']] for key,p in value['players'].items()}) if value else ''
 
 
-def export_marker(admin, snapshot, boss, generated_at, gaming=None):
+def export_marker(admin, snapshot, generated_at, gaming=None):
     return dict(generated_at=generated_at, admin_token=admin_fingerprint(admin),
-                standings_token=token(snapshot['last_top15']), raid_id=boss['id'],
-                boss_version=boss['version'], attacks=boss['total_attacks'], damage=boss['total_damage'],
+                standings_token=token(snapshot['last_top15']),
                 gaming_token=gaming_fingerprint(gaming))
 
 
 def valid_marker(value):
-    """Ignore damaged optional metadata without discarding recovered game data."""
+    """Accept new checkpoints and safely upgrade older checkpoint markers."""
     if not isinstance(value, dict):
         return None
-    for key in ('generated_at', 'boss_version', 'attacks', 'damage'):
-        if type(value.get(key)) is not int or not 0 <= value[key] <= (10**12 if key == 'generated_at' else MAX_NUMBER):
-            return None
-    for key, length in (('admin_token', 20), ('standings_token', 20), ('raid_id', 32)):
+    generated = value.get('generated_at')
+    if type(generated) is not int or not 0 <= generated <= 10**12:
+        return None
+    for key, length in (('admin_token', 20), ('standings_token', 20)):
         if not isinstance(value.get(key), str) or not re.fullmatch(r'[a-f0-9]{%d}' % length, value[key]):
             return None
-    result = {key: value[key] for key in ('generated_at', 'boss_version', 'attacks', 'damage',
-                                       'admin_token', 'standings_token', 'raid_id')}
-    if isinstance(value.get('gaming_token'), str) and re.fullmatch(r'[a-f0-9]{20}|', value['gaming_token']):
-        result['gaming_token'] = value['gaming_token']
+    result = {key: value[key] for key in ('generated_at', 'admin_token', 'standings_token')}
+    token_value = value.get('gaming_token', '')
+    if isinstance(token_value, str) and re.fullmatch(r'[a-f0-9]{20}|', token_value):
+        result['gaming_token'] = token_value
     return result
 
 
-def checkpoint_status(marker, admin, rows, boss, gaming=None):
+def checkpoint_status(marker, admin, rows, gaming=None):
     marker = valid_marker(marker)
     if not marker:
         return dict(generated_at=0, label='No recovery export recorded', changes=True,
                     details='Generate a private recovery file to protect this checkpoint.')
-    new_raid = marker.get('raid_id') != boss['raid_id']
-    attacks = max(0, boss['total_attacks'] - marker.get('attacks', 0)) if not new_raid else boss['total_attacks']
-    damage = max(0, boss['total_damage'] - marker.get('damage', 0)) if not new_raid else boss['total_damage']
     changed = admin_fingerprint(admin) != marker.get('admin_token')
     standings = token(rows[:15]) != marker.get('standings_token')
-    raid_changed = new_raid or boss['version'] != marker.get('boss_version')
     gaming_changed = marker.get('gaming_token', '') != gaming_fingerprint(gaming)
-    notes = ([f'{attacks:,} new hits · {damage:,} damage'] if attacks else [])
-    if new_raid: notes.append('a different raid is active')
-    elif raid_changed and not attacks: notes.append('raid controls changed')
+    notes = []
     if changed: notes.append('account or race settings changed')
     if standings: notes.append('standings changed')
     if gaming_changed: notes.append('RedPoints wallets or fairness receipts changed')
-    return dict(generated_at=marker.get('generated_at', 0), changes=changed or standings or raid_changed or gaming_changed,
+    return dict(generated_at=marker.get('generated_at', 0),
+                changes=changed or standings or gaming_changed,
                 label='Changes since last export' if notes else 'Checkpoint matches current progress',
-                details='; '.join(notes) or 'No new saved progress since this export.',
-                attacks=attacks, damage=damage, new_raid=new_raid)
+                details='; '.join(notes) or 'No new saved progress since this export.')

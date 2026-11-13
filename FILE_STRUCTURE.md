@@ -1,166 +1,33 @@
-# Complete file structure — 2026.10.08-community-clarity7
+# RedHunllef V13 file structure
 
-Extract the ZIP to find redhunllef-rebuilt/. Run only wager_backend.py. All modules
-below are included; supporting Python files are imports. Runtime data/ is created
-automatically and must be preserved when updating an existing host.
+## Deployment root
 
-```text
-redhunllef-rebuilt/
-  .env.example
-  .github/workflows/test.yml
-  .gitignore
-  BUILD_MANIFEST.json
-  CHANGES.md
-  FILE_STRUCTURE.md
-  Procfile
-  RAID_UPDATE.md
-  README.md
-  START_HERE.md
-  UPDATE.md
-  abuse_guard.py
-  app.yaml
-  baccarat.py
-  blackjack.py
-  boss.py
-  boss_avatar.py
-  boss_extras.py
-  boss_progress.py
-  config.py
-  docs/ADMIN_GAMING.png
-  docs/BACCARAT_MOBILE.png
-  docs/BLACKJACK_DESKTOP.png
-  docs/BOSS_CONTROLS_DESKTOP.png
-  docs/BOSS_CONTROLS_MOBILE.png
-  docs/BOSS_MOBILE.png
-  docs/COINFLIP_MOBILE.png
-  docs/COMMUNITY_BOSS.md
-  docs/COMMUNITY_UPDATE.md
-  docs/GAMING_DESKTOP.png
-  docs/GAMING_MOBILE.png
-  docs/HEALTH_DESKTOP.png
-  docs/HEALTH_MOBILE.png
-  docs/HISTORY_MOBILE.png
-  docs/LIMBO_MOBILE.png
-  docs/PERFORMANCE.md
-  docs/PLINKO_DESKTOP.png
-  docs/POKER_DESKTOP.png
-  docs/POKER_MOBILE.png
-  docs/PREVIEW_DESKTOP.png
-  docs/PREVIEW_MOBILE.png
-  docs/REDPOINTS.md
-  docs/VALIDATION.md
-  fairness.py
-  gaming.py
-  holdem.py
-  integrations.py
-  poker.py
-  presentation.py
-  private/admin_store.seed.json
-  private/settings.json
-  race.py
-  race_support.py
-  release_check.py
-  requirements.txt
-  runtime.py
-  runtime.txt
-  static/admin-feedback.js
-  static/admin-gaming.js
-  static/admin-health.js
-  static/app.js
-  static/boss-preview.js
-  static/boss.css
-  static/boss.js
-  static/experience.css
-  static/experience.js
-  static/fairness.js
-  static/gaming.css
-  static/gaming.js
-  static/history.css
-  static/history.js
-  static/holdem-fairness.js
-  static/holdem-ui.js
-  static/holdem.css
-  static/homepage.js
-  static/plinko.js
-  static/receipt-verifier.js
-  static/redlogo.ico
-  static/redlogo.png
-  static/style.css
-  storage.py
-  store_schema.py
-  telemetry.py
-  templates/admin.html
-  templates/admin_attention.html
-  templates/admin_boss.html
-  templates/admin_gaming.html
-  templates/admin_health.html
-  templates/admin_overview.html
-  templates/admin_players.html
-  templates/admin_race.html
-  templates/admin_settings.html
-  templates/base.html
-  templates/boss.html
-  templates/change_review.html
-  templates/error.html
-  templates/gaming.html
-  templates/gaming_fairness.html
-  templates/history.html
-  templates/holdem_table.html
-  templates/icons.html
-  templates/index.html
-  templates/login.html
-  templates/macros.html
-  templates/recovery_panel.html
-  tests/assert_visual_pixels.py
-  tests/clarity_motion.cjs
-  tests/experience_motion.cjs
-  tests/fairness_v2_vectors.json
-  tests/fairness_v3_vectors.json
-  tests/fairness_v4_vectors.json
-  tests/fairness_vectors.json
-  tests/gaming_motion.cjs
-  tests/generate_fairness_vectors.py
-  tests/generate_v4_vectors.py
-  tests/holdem_motion.cjs
-  tests/holdem_vectors.py
-  tests/package.json
-  tests/render_fixtures.py
-  tests/serve_admin_gaming_fixture.py
-  tests/serve_game_fixture.py
-  tests/serve_gaming_motion_fixture.py
-  tests/serve_gui_fixture.py
-  tests/test_admin_controls.py
-  tests/test_admin_gaming_frontend.cjs
-  tests/test_app.py
-  tests/test_baccarat.py
-  tests/test_blackjack.py
-  tests/test_boss.py
-  tests/test_boss_admin.py
-  tests/test_boss_frontend.cjs
-  tests/test_clarity_update.py
-  tests/test_comfort_update.py
-  tests/test_community.py
-  tests/test_extra_games.py
-  tests/test_fairness_frontend.cjs
-  tests/test_frontend.cjs
-  tests/test_gaming_ip.py
-  tests/test_gui_update.py
-  tests/test_health_release.py
-  tests/test_history_frontend.cjs
-  tests/test_holdem.py
-  tests/test_homepage_frontend.cjs
-  tests/test_player_access.py
-  tests/test_raid_update.py
-  tests/test_redpoints.py
-  tests/test_username_http.cjs
-  tests/test_username_save.py
-  tests/test_weekly_history.py
-  tests/visual_checks.cjs
-  tools/verify_redpoints.py
-  wager_backend.py
-  weekly_history.py
-```
+- `wager_backend.py` — Flask application, routes, admin actions and Waitress entry point
+- `requirements.txt` — production dependencies
+- `runtime.txt` — Python runtime pin
+- `app.yaml` / `Procfile` — deployment markers
+- `config.py`, `runtime.py`, `storage.py` — configuration, workers and atomic JSON persistence
+- `empiredrop*.py` — EmpireDrop API and public/admin projections
+- `gaming.py`, game modules, `fairness.py` — RedPoints and provably fair games
+- `admin_navigation.py` — canonical administrator destinations
+- `operations_log.py`, `telemetry.py` — sanitized operations and health views
 
-All source uses UTF-8. Bytecode caches, local test fixtures, installed test tools
-and live runtime data are excluded. Original private configuration is included;
-keep your customized/newer configuration when installing this update.
+## Web assets
+
+- `templates/` — public and protected Jinja templates
+- `static/` — JavaScript, CSS and images
+
+## Private runtime data
+
+- `private/settings.json`
+- `private/admin_store.seed.json`
+- `data/state.json`
+
+## Development-only content in the full archive
+
+- `tests/`
+- `tools/`
+- `docs/`
+- `FULL_CODE_BLOCKS.md`
+
+Community Boss runtime files remain removed. Games and RedPoints use their own player identity and recovery system.

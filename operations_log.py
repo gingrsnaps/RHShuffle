@@ -16,6 +16,8 @@ _ALLOWED_EVENT = {
     'refresh_ok', 'refresh_failed', 'refresh_queued', 'settings_saved',
     'connection_test', 'backup_export', 'storage_warning', 'server_error',
     'worker_started', 'api_rate_limited', 'data_quality',
+    'empire_rewards_draft', 'empire_rewards_published',
+    'empire_rewards_save_failed',
 }
 # Explanatory categories, NOT free-form provider error text.
 _ALLOWED_CODE = {
@@ -23,7 +25,7 @@ _ALLOWED_CODE = {
     'configuration', 'connection', 'connect_timeout', 'timeout', 'http',
     'upstream', 'response_limit', 'redirect', 'credentials', 'partial',
     'storage', 'unknown', 'empire_settings', 'empire_rewards',
-    'empire_schedule', 'shuffle_settings', 'none',
+    'empire_schedule', 'shuffle_settings', 'conflict', 'validation', 'none',
 }
 
 

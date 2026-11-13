@@ -2,14 +2,41 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
 <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}">
-<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"></head>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"></head>
 <body data-release="{{ release }}" {% block attributes %}{% endblock %}>
+{# Login and error pages do not receive the public leaderboard data object. #}
+{% set public_site = data.site if data is defined and data.site is defined else {} %}
 <a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header"><div class="shell header-inner"><a class="brand" href="/"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="36" height="36"><span><span data-site-text="site_name">{{ data.site.site_name if data is defined else 'RedHunllef' }}</span><span class="brand-sub">THE COMMUNITY RACE</span></span></a>
-<nav aria-label="Main navigation">{% block navigation %}<a class="section-nav" href="/#leaderboard" {% if request.endpoint=='index' %}aria-current="page"{% endif %}>Leaderboard</a><a class="section-nav" href="/history" {% if request.endpoint=='public_history' %}aria-current="page"{% endif %}>History</a><a class="play-nav section-nav" href="/play" {% if request.endpoint=='play' %}aria-current="page"{% endif %}>Boss fight</a><a class="section-nav" href="/gaming" {% if request.endpoint in ['gaming_home','gaming_game','gaming_fairness'] %}aria-current="page"{% endif %}>Gaming</a><a class="section-nav" href="https://botrix.live/k/redhunllef/shop" target="_blank" rel="noopener">Points Shop ↗</a><a class="community-nav" data-site-text="community_name" data-site-link="community_url" href="{{ data.site.community_url }}" {% if not data.site.community_url %}hidden{% endif %} target="_blank" rel="noopener">{{ data.site.community_name }}</a><a class="button small" data-site-link="stream_url" href="{{ data.site.stream_url }}" target="_blank" rel="noopener">Watch on Kick <span aria-hidden="true">↗</span></a>{% endblock %}</nav></div></header>
+<header class="site-header public-site-header" id="publicSiteHeader">
+  <div class="shell header-inner public-header-inner">
+    <a class="brand public-brand" href="/" aria-label="RedHunllef homepage">
+      <img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="38" height="38">
+      <span><strong data-site-text="site_name">{{ public_site.site_name|default('RedHunllef') }}</strong><span class="brand-sub">WAGER RACES &amp; REDPOINTS</span></span>
+    </a>
+    <button type="button" class="public-mobile-toggle" id="publicMenuToggle" aria-controls="publicPrimaryNav" aria-expanded="false" aria-label="Open site navigation"><span aria-hidden="true">☰</span><span>Menu</span></button>
+    <nav class="public-navigation" id="publicPrimaryNav" aria-label="Main navigation">
+      {% block navigation %}
+      <div class="public-nav-links">
+        <a class="section-nav" href="/#leaderboard" {% if request.endpoint=='index' %}aria-current="page"{% endif %}>Leaderboards</a>
+        <a class="section-nav" href="/gaming" {% if request.endpoint in ['gaming_home','gaming_game','gaming_fairness'] %}aria-current="page"{% endif %}>Games</a>
+        <a class="section-nav" href="/history" {% if request.endpoint=='public_history' %}aria-current="page"{% endif %}>History</a>
+      </div>
+      <div class="public-nav-right">
+        <details class="public-more" id="publicMore"><summary>Community <span aria-hidden="true">⌄</span></summary>
+          <div class="public-more-panel">
+            <a href="https://botrix.live/k/redhunllef/shop" target="_blank" rel="noopener noreferrer">Points Shop <span aria-hidden="true">↗</span></a>
+            <a class="community-nav" data-site-text="community_name" data-site-link="community_url" href="{{ public_site.community_url|default('') }}" {% if not public_site.community_url|default('') %}hidden{% endif %} target="_blank" rel="noopener noreferrer">{{ public_site.community_name|default('Community') }}</a>
+          </div>
+        </details>
+        <a class="button small public-watch" data-site-link="stream_url" href="{{ public_site.stream_url|default('') }}" {% if not public_site.stream_url|default('') %}hidden{% endif %} target="_blank" rel="noopener noreferrer">Watch on Kick <span aria-hidden="true">↗</span></a>
+      </div>
+      {% endblock %}
+    </nav>
+  </div>
+</header>
 {% block content %}{% endblock %}
-{% block site_footer %}<footer class="shell footer"><span>RedHunllef <span class="muted">· Community first.</span></span><span class="muted">{% block footer %}<a data-site-link="responsible_gambling_url" href="{{ data.site.responsible_gambling_url }}" {% if not data.site.responsible_gambling_url %}hidden{% endif %} target="_blank" rel="noopener">Play responsibly · 18+</a>{% endblock %}</span></footer>{% endblock %}
+{% block site_footer %}<footer class="shell footer"><span>RedHunllef <span class="muted">· Races and RedPoints.</span></span><span class="muted">{% block footer %}<a data-site-link="responsible_gambling_url" href="{{ public_site.responsible_gambling_url|default('') }}" {% if not public_site.responsible_gambling_url|default('') %}hidden{% endif %} target="_blank" rel="noopener">Play responsibly · 18+</a>{% endblock %}</span></footer>{% endblock %}
 <div id="toast" class="toast" role="status" hidden></div>
 <script src="{{ url_for('static',filename='app.js',v=asset_version) }}" defer></script>
-<script src="{{ url_for('static',filename='experience.js',v=asset_version) }}" defer></script>{% block scripts %}{% endblock %}
+<script src="{{ url_for('static',filename='experience.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='public-control.js',v=asset_version) }}" defer></script>{% block scripts %}{% endblock %}
 </body></html>

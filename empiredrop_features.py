@@ -10,14 +10,19 @@ import re
 # EmpireDrop advertises ten local payout positions; Shuffle remains Top 15.
 EMPIRE_PLACES = 10
 DEFAULT_REWARDS = {'currency': 'EUR', 'enabled': False,
-                   'prizes': {str(i): '0.00' for i in range(1, EMPIRE_PLACES + 1)}}
+                   'prizes': {str(i): '0.00' for i in range(1, EMPIRE_PLACES + 1)},
+                   'revision': 1, 'updated_at': 0, 'updated_by': ''}
 CURRENCY_SIGNS = {'EUR': '€', 'USD': '$'}
 _AMOUNT = re.compile(r'^(?:\d{1,7})(?:\.\d{1,2})?$')
 
 
 def validate_rewards(value):
-    """Reject negative/oversized/ambiguous payouts before saving any state."""
-    if not isinstance(value, dict) or set(value) - {'currency', 'enabled', 'prizes'}:
+    """Reject negative/oversized/ambiguous payouts before saving any state.
+
+    Private revision/audit metadata is validated here but stripped by the public
+    projection. Old exports without metadata are upgraded additively.
+    """
+    if not isinstance(value, dict) or set(value) - {'currency', 'enabled', 'prizes', 'revision', 'updated_at', 'updated_by'}:
         raise ValueError('Invalid EmpireDrop payout settings.')
     currency = value.get('currency', 'EUR')
     if currency not in CURRENCY_SIGNS:
@@ -38,7 +43,17 @@ def validate_rewards(value):
         if amt > Decimal('1000000'):
             raise ValueError('Place ' + key + ': payout cannot exceed 1,000,000.')
         result[key] = f'{amt:.2f}'
-    return {'currency': currency, 'enabled': value.get('enabled') is True, 'prizes': result}
+    revision = value.get('revision', 1)
+    updated_at = value.get('updated_at', 0)
+    updated_by = value.get('updated_by', '')
+    if type(revision) is not int or revision < 1 or revision > 2**31-1:
+        raise ValueError('Invalid EmpireDrop payout revision.')
+    if type(updated_at) is not int or not 0 <= updated_at <= 4102444799:
+        raise ValueError('Invalid EmpireDrop payout timestamp.')
+    if not isinstance(updated_by, str) or len(updated_by) > 64 or not updated_by.isprintable():
+        raise ValueError('Invalid EmpireDrop payout editor.')
+    return {'currency': currency, 'enabled': value.get('enabled') is True, 'prizes': result,
+            'revision': revision, 'updated_at': updated_at, 'updated_by': updated_by}
 
 
 def format_reward(value, currency):
@@ -49,7 +64,8 @@ def rewards_public(raw):
     """Only prize amounts and currency are public, never admin metadata."""
     value = validate_rewards(raw if raw else {})
     pool = sum((Decimal(v) for v in value['prizes'].values()), Decimal(0))
-    return {**value, 'total': format_reward(pool, value['currency']),
+    return {'currency': value['currency'], 'enabled': value['enabled'],
+            'prizes': value['prizes'], 'total': format_reward(pool, value['currency']),
             'formatted': {k: format_reward(v, value['currency']) for k, v in value['prizes'].items()}}
 
 

@@ -1,4 +1,4 @@
-"""Exercise account/log controls in addition to the existing race/boss suites."""
+"""Exercise account/log controls in addition to the existing race and Gaming suites."""
 import copy
 import re
 import unittest
@@ -16,7 +16,7 @@ class AdminControlTests(unittest.TestCase):
         helper = self.app.test_client()
         csrf = re.search('name="csrf" value="([^"]+)"', helper.get('/admin').text).group(1)
         self.assertEqual(helper.post('/admin', data={'csrf':csrf, 'username':'helper', 'password':password}).status_code, 303)
-        for tab in ('overview','race','players','boss','settings'):
+        for tab in ('overview','race','players','gaming','settings'):
             response = helper.get('/admin?tab='+tab)
             self.assertEqual(response.status_code, 200)
             self.assertIn('CONTROL CENTER', response.text)

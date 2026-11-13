@@ -17,9 +17,9 @@ class ProviderUiContractTests(unittest.TestCase):
     def test_admin_has_two_independent_tabs(self):
         for name in ('admin_shuffle.html', 'admin_empiredrop.html'):
             self.assertTrue((ROOT/'templates'/name).is_file())
-        content = (ROOT/'wager_backend.py').read_text(encoding='utf-8')
-        self.assertIn('"shuffle":"Shuffle"', content)
-        self.assertIn('"empiredrop":"EmpireDrop"', content)
+        content = (ROOT/'templates/admin.html').read_text(encoding='utf-8')
+        self.assertIn('Shuffle <span>Top 15</span>', content)
+        self.assertIn('EmpireDrop <span>Top 10</span>', content)
 
 
 if __name__ == '__main__':

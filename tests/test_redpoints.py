@@ -74,7 +74,7 @@ class RedPointsTests(unittest.TestCase):
         self.assertEqual(renamed.status_code,200,renamed.text)
         self.assertEqual(renamed.json['wallet']['balance'],expected)
         self.assertEqual(client.get('/gaming/api/state').json['wallet']['nonce'],len(GAMES))
-        self.assertEqual(client.get('/play/api/state').json['state']['you']['display_name'],'NewRedName')
+        self.assertEqual(client.get('/gaming/api/state').json['wallet']['name'],'NewRedName')
 
     def test_duplicate_response_after_lost_reply_and_concurrent_tabs(self):
         client,value=self.player()
@@ -157,7 +157,7 @@ class RedPointsTests(unittest.TestCase):
         target=self.root/'restored';(target/'private').mkdir(parents=True)
         (target/'private/recovery.seed.json').write_bytes(backup.data)
         restored=create_app(target,testing=True);self.addCleanup(restored.extensions['runtime'].store.close)
-        other=restored.test_client();other.set_cookie('rh_raider',client.get_cookie('rh_raider').value)
+        other=restored.test_client();other.set_cookie('rh_player',client.get_cookie('rh_player').value)
         after=other.get('/gaming/api/state').json['wallet']
         self.assertEqual(after['balance'],100000)  # Restoring starts a new server.
         for key in ('name','needs_profile','stats','receipts','nonce','commitment','blackjack'):
@@ -246,7 +246,7 @@ class RedPointsTests(unittest.TestCase):
         restored = create_app(target, testing=True)
         self.addCleanup(restored.extensions['runtime'].store.close)
         other = restored.test_client()
-        other.set_cookie('rh_raider', client.get_cookie('rh_raider').value)
+        other.set_cookie('rh_player', client.get_cookie('rh_player').value)
         wallet = other.get('/gaming/api/state').json['wallet']
         self.assertEqual(wallet['balance'], 100000)  # Startup restores the allowance.
         for key in ('name', 'stats', 'nonce', 'commitment', 'receipts', 'blackjack'):

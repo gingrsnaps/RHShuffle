@@ -199,7 +199,7 @@ class GamingIPTests(unittest.TestCase):
             for field in ('name','community_name_confirmed','stats','receipts','server_seed','nonce'):
                 self.assertEqual(saved[field],original[field],field)
         for client in clients:
-            restored=restarted.test_client();restored.set_cookie('rh_raider',client.get_cookie('rh_raider').value)
+            restored=restarted.test_client();restored.set_cookie('rh_player',client.get_cookie('rh_player').value)
             state=restored.get('/gaming/api/state').json
             self.assertFalse(state['wallet']['needs_profile'])
             result=restored.post('/gaming/api/bet',json=self.body(state['wallet']),headers={'X-CSRF-Token':state['player_csrf']})

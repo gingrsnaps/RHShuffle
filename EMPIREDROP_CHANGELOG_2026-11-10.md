@@ -1,14 +1,13 @@
-# EmpireDrop OpenAPI 2.0.1 corrective release — Nov 10, 2026
+# EmpireDrop Integration Changelog
 
-- Correct host (`api.empiredrop.com`), mandatory dual-header auth on **both** current endpoints.
-- Replace retired public-key discovery with current running-races listing.
-- Race details use direct slug; no extra timestamp query parameters.
-- Normalize ranking/user/amount schema and ties from OpenAPI; distinguish wagers, deposits, tickets.
-- Read provider race dates, `is_active`, `ranks_limit`, and cache TTL; back off on 429.
-- Preserve historical data and previously validated standings through network failures and closed races.
-- Fix missing `race_configuration` and `race_history` template context.
-- Preserve user-provided production keys in private config and a Git-trackable server-only fallback.
-- Keep existing game, Shuffle, admin, history and site code intact.
-- Add fixture-driven offline regression tests and the full provided API spec.
+The integration now follows Partner Public API v2.0.1:
 
-See `docs/EMPIREDROP_OPENAPI_FIX_2026-11-10.md` for rollout and security notes.
+- Production host `https://api.empiredrop.com`.
+- Dual `X-Public-Key` and `X-Private-Key` authentication.
+- Running-race discovery through `/api/v1/affiliate-partner/races`.
+- Race detail and standings through `/api/v1/affiliate-partner/races/{slug}`.
+- Top 10 display, official ranks and ties, provider cache timing, and amount-unit validation.
+- Consistent public masking while preserving provider-anonymized names and public IDs in Admin.
+- Independent local payouts with draft and publication states.
+
+V12 adds a dedicated payout revision, atomic verification, and public-projection confirmation.

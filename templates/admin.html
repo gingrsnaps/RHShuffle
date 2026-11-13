@@ -1,37 +1,76 @@
-{% extends 'base.html' %}{% from 'macros.html' import form_fields,field,player_rows,action_feedback with context %}
-{% block title %}{{ tabs[tab] }} · RedHunllef Admin{% endblock %}
-{% block attributes %}data-page="admin" data-admin-tab="{{ tab }}" data-feed="/admin/status" data-bootstrap="{{ {'server_time':data.server_time,'site':data.site}|tojson|forceescape }}"{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='gaming.css',v=asset_version) }}">{% if tab=='boss' %}<link rel="stylesheet" href="{{ url_for('static',filename='boss.css',v=asset_version) }}">{% endif %}{% endblock %}
-{% block scripts %}<script src="{{ url_for('static',filename='admin-health.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='admin-logs.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='admin-providers.js',v=asset_version) }}" defer></script>{% if tab=='empiredrop' %}<script src="{{ url_for('static',filename='admin-empiredrop.js',v=asset_version) }}" defer></script>{% endif %}{% if tab in ['overview','gaming'] %}<script src="{{ url_for('static',filename='admin-gaming.js',v=asset_version) }}" defer></script>{% endif %}<script src="{{ url_for('static',filename='admin-feedback.js',v=asset_version) }}" defer></script>{% if tab=='boss' %}<script src="{{ url_for('static',filename='boss.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='boss-preview.js',v=asset_version) }}" defer></script>{% endif %}{% endblock %}
-{% block navigation %}<a class="button small" href="/admin/gaming">Gaming top 5</a><a href="/" target="_blank" rel="noopener">View website ↗</a><form method="post" action="/admin/logout"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="text-button" type="submit">Sign out</button></form>{% endblock %}
-{% block content %}<main id="main" class="shell admin-main"><div class="admin-heading"><div><p class="eyebrow">REDHUNLLEF · CONTROL CENTER</p><h1>{{ 'Community overview' if tab=='overview' else tabs[tab] }}<span class="accent">.</span></h1><p class="muted">Signed in as {{ user }} <span class="tag">{{ 'Superadmin' if superadmin else 'Admin' }}</span></p></div>{% if tab in ['overview','shuffle','race','players'] %}<form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<button type="submit" class="button primary">↻ Refresh Shuffle &amp; Kick</button></form>{% else %}<a class="button" href="/admin?tab=activity">View activity</a>{% endif %}</div>
-<nav class="tabs" aria-label="Administration">{% for key,label in tabs.items() %}<a href="{{ url_for('login',tab=key) }}" {% if tab==key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}<span class="auto-label"><span class="dot"></span> {{ 'Boss · 5 sec / Sources · 60 sec' if tab=='boss' else 'Gaming · 5 sec / Sources · 60 sec' if tab in ['overview','gaming'] else 'Sources update automatically' }}</span></nav>
-{% if hosted_local and tab=='settings' %}<p class="notice warning">Local storage is active. On App Platform, saved changes can be lost when the app is redeployed or replaced. {% if superadmin %}<a class="text-link" href="/admin?tab=settings#recovery">Save a private recovery file →</a>{% else %}Ask the Superadmin to save a private recovery file after important changes.{% endif %}</p>{% endif %}
-{% with messages=get_flashed_messages() %}{% for message in messages %}<p class="notice success" role="status">{{ message }}</p>{% endfor %}{% endwith %}
-{% if errors %}<div class="notice warning" role="alert"><strong>Review before saving.</strong><ul>{% for key,message in errors.items() %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
-{% if tab in ['overview','race','players'] %}<p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>{% endif %}
-{% include 'admin_attention.html' %}
-{% if tab in ['overview','race','players'] %}<div id="endedNotice" class="notice ended-notice" {% if data.site.race_state!='ended' %}hidden{% endif %}><div><strong>This saved race has ended.</strong><span>New wagers outside its dates do not count toward these results.</span></div><a class="button small" href="{{ url_for('login',tab='race') }}">Prepare next race →</a></div>{% endif %}
-{% include 'admin_' ~ tab ~ '.html' %}
-<details class="panel admin-diagnostics" id="diagnostics" {% if tab=='activity' %}hidden{% endif %} {% if admin_receipt and admin_receipt.target=='historyConnection' %}open{% endif %}>
-<summary><span><strong>Diagnostics</strong><small>Connections, history checks &amp; performance</small></span><span aria-hidden="true">+</span></summary>
-<div class="diagnostics-content">
-{% if tab!='activity' %}{% include 'admin_health.html' %}{% endif %}
-<p id="sourceWarning" class="notice warning" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
-<details class="panel refresh-progress" id="connectionDetails" >
-<summary class="connection-summary"><span><strong>Live connections</strong><span class="connection-chips"><span id="shuffleSummary">Shuffle · {{ 'Needs attention' if data.jobs.shuffle.error else 'Checking automatically' }}</span><span id="kickSummary">Kick · {{ 'Needs attention' if data.jobs.kick.error else 'Checking automatically' }}</span><span>EmpireDrop · <a href="/admin?tab=empiredrop">Manage race</a></span></span></span><span class="small muted">Details <span aria-hidden="true">⌄</span></span></summary>
-<div class="connection-details"><div class="progress-heading"><p id="publishedWindow" class="muted small">Published window: {{ data.site.start_et }} → {{ data.site.end_et }}</p><a class="text-link" href="/admin/diagnostics">Download diagnostics</a></div>
-<div class="progress-services">{% for name,label in [('shuffle','Shuffle · Leaderboard'),('kick','Kick · Stream status')] %}<div><strong>{{ label }}</strong><p id="{{ name }}Freshness" class="small muted"></p><p id="{{ name }}Progress" role="status">{{ data.jobs[name].error or 'Automatic check queued.' }}</p><form method="post" action="/admin/action" data-refresh>{{ form_fields('refresh',tab,revision) }}<input type="hidden" name="service" value="{{ name }}"><button class="text-button small" type="submit">Check {{ name|capitalize }} now</button></form></div>{% endfor %}</div></div>
-</details>
-<details class="panel refresh-progress" id="historyConnection" {% if admin_receipt and admin_receipt.target=='historyConnection' %}open{% endif %}>
-<summary class="connection-summary"><strong>Completed-week history</strong><span class="small muted">Four weeks · details ⌄</span></summary>
-<div class="connection-details">{{ action_feedback('historyConnection') }}
-<p class="muted small">Each week is checked separately. Saved results stay visible during retries. Access errors and provider rate limits delay the shared queue.</p>
-<div id="historyDiagnostics" class="history-diagnostics">{% for week in data.history.weeks %}<article><strong>{{ week.label }}</strong><p>{{ week.message or 'Results confirmed.' }}{% if week.http_status %} HTTP {{ week.http_status }}.{% endif %}</p><small class="muted">Last result: {{ fmt_et(week.updated_at) }}{% if week.retry_at %} · Retry: {{ fmt_et(week.retry_at) }}{% endif %}</small></article>{% endfor %}</div>
-<form method="post" action="/admin/history/refresh"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="button" type="submit">Check history now</button> <a class="text-link" href="/history" target="_blank" rel="noopener">View public history ↗</a></form>
-</div></details>
-</div></details>
-
-<div class="admin-foot"><span id="browserCheck">Connecting to automatic updates…</span><span>Release {{ release }}</span></div>
-<noscript><p class="notice">Forms and navigation work without JavaScript. Reload for current statistics.</p></noscript></main>{% endblock %}
+{% extends 'base.html' %}
+{% from 'macros.html' import form_fields,action_feedback,field,player_rows with context %}
+{% set area = 'leaderboards' if tab in ['shuffle','empiredrop','race','players'] else 'gaming' if tab=='gaming' else 'settings' if tab in ['settings','activity'] else 'overview' %}
+{% set section_title = {'overview':'Overview','leaderboards':'Leaderboards','gaming':'Games & RedPoints','settings':'Settings'}[area] %}
+{% block title %}{{ tabs[tab] }} · RedHunllef Control Center{% endblock %}
+{% block attributes %}data-page="admin" data-admin-tab="{{ tab }}" data-admin-area="{{ area }}" data-feed="/admin/status" data-release="{{ release }}" data-bootstrap="{{ {'server_time':data.server_time,'site':data.site}|tojson|forceescape }}"{% endblock %}
+{% block styles %}{% if tab=='gaming' %}<link rel="stylesheet" href="{{ url_for('static',filename='gaming.css',v=asset_version) }}">{% endif %}{% endblock %}
+{% block final_styles %}<link rel="stylesheet" href="{{ url_for('static',filename='admin-workspace.css',v=asset_version) }}">{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static',filename='admin-health.js',v=asset_version) }}" defer></script>
+<script src="{{ url_for('static',filename='admin-logs.js',v=asset_version) }}" defer></script>
+<script src="{{ url_for('static',filename='admin-providers.js',v=asset_version) }}" defer></script>
+{% if tab=='empiredrop' %}<script src="{{ url_for('static',filename='admin-empiredrop.js',v=asset_version) }}" defer></script>{% endif %}
+{% if tab=='gaming' %}<script src="{{ url_for('static',filename='admin-gaming.js',v=asset_version) }}" defer></script>{% endif %}
+<script src="{{ url_for('static',filename='admin-feedback.js',v=asset_version) }}" defer></script>
+<script src="{{ url_for('static',filename='admin-workspace.js',v=asset_version) }}" defer></script>
+{% endblock %}
+{% block content %}
+<div class="admin-app" id="adminApp">
+  <div class="admin-veil" id="adminVeil" hidden></div>
+  <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin navigation">
+    <div class="admin-sidebar-head">
+      <a class="admin-brand" href="{{ admin_link('overview') }}"><img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="36" height="36"><span><strong>RedHunllef</strong><small>Control center</small></span></a>
+      <button type="button" class="admin-mobile-close" id="adminCloseMenu" aria-label="Close navigation">×</button>
+    </div>
+    <p class="admin-sidebar-caption">WORKSPACE</p>
+    <nav class="admin-primary-nav" aria-label="Primary admin sections">
+      <a href="{{ admin_link('overview') }}" {% if area=='overview' %}aria-current="page"{% endif %}><span class="admin-nav-icon" aria-hidden="true">◫</span>Overview</a>
+      <a href="{{ admin_link('shuffle') }}" {% if area=='leaderboards' %}aria-current="page"{% endif %}><span class="admin-nav-icon" aria-hidden="true">♛</span>Leaderboards</a>
+      <a href="{{ admin_link('gaming') }}" {% if area=='gaming' %}aria-current="page"{% endif %}><span class="admin-nav-icon" aria-hidden="true">◆</span>Games &amp; RedPoints</a>
+      <a href="{{ admin_link('settings') }}" {% if area=='settings' %}aria-current="page"{% endif %}><span class="admin-nav-icon" aria-hidden="true">⚙</span>Settings</a>
+    </nav>
+    <div class="admin-side-status" aria-label="Provider status">
+      <p class="admin-sidebar-caption">SOURCES</p>
+      {% for key in ['shuffle','empiredrop'] %}{% set source = data.providers[key] %}
+      <a href="{{ admin_link(key) }}" class="admin-side-provider"><span class="admin-status-dot" data-provider-indicator="{{ key }}" data-state="{{ source.state }}"></span><span>{{ source.name }}</span><small>{{ source.status }}</small></a>
+      {% endfor %}
+      <a class="admin-sidebar-log" href="{{ admin_link('activity') }}">◷ &nbsp; Activity &amp; logs</a>
+    </div>
+    <div class="admin-side-bottom">
+      <div class="admin-user-mini"><span class="admin-user-avatar" aria-hidden="true">{{ user[:1]|upper }}</span><div><strong>{{ user }}</strong><small>{{ 'Superadmin' if superadmin else 'Administrator' }}</small></div></div>
+      <a class="admin-external" href="/" target="_blank" rel="noopener noreferrer">View public website ↗</a>
+      <form action="/admin/logout" method="post"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="admin-logout" type="submit">Sign out</button></form>
+    </div>
+  </aside>
+  <div class="admin-content">
+    <header class="admin-topbar">
+      <div class="admin-top-left"><button id="adminOpenMenu" type="button" class="admin-menu-button" aria-label="Open admin navigation" aria-controls="adminSidebar" aria-expanded="false">☰</button><span class="admin-crumb">Control center <span aria-hidden="true">/</span> <strong>{{ section_title }}</strong></span></div>
+      <div class="admin-top-actions"><button class="admin-command-button" type="button" id="adminCommandOpen" aria-haspopup="dialog" aria-controls="adminCommandDialog"><span>⌕ &nbsp; Jump to…</span><kbd>Ctrl K</kbd></button><a class="admin-top-activity" href="{{ admin_link('activity') }}">◷ <span>Activity</span></a><a class="admin-top-public" href="/" target="_blank" rel="noopener noreferrer">Website ↗</a></div>
+    </header>
+    <main id="main" class="admin-workspace shell" data-area="{{ area }}" data-focus="{{ section_focus|default('') }}">
+      <div class="admin-page-heading"><div><p class="admin-page-kicker">CONTROL CENTER</p><h1>{{ section_title }}</h1><p class="admin-page-description">{{ {'overview':'The information that needs your attention now.','leaderboards':'Standings, schedules, prizes and source health.','gaming':'Player wallets, game results and RedPoints controls.','settings':'Accounts, integrations, backups and security.'}[area] }}</p></div><div class="admin-heading-actions"><span class="admin-saved-chip" id="adminSaveStatus" data-validation="{{ 'true' if errors or confirm_race or restore or recovery_review else 'false' }}" role="status">{{ 'Review required — not saved' if errors or confirm_race else 'Server confirmed' }}</span></div></div>
+      {% if area=='leaderboards' %}
+      <nav class="admin-workspace-nav" aria-label="Leaderboard provider"><a href="{{ admin_link('shuffle') }}" class="admin-provider-tab" {% if tab in ['shuffle','race','players'] %}aria-current="page"{% endif %}>Shuffle <span>Top 15</span></a><a href="{{ admin_link('empiredrop') }}" class="admin-provider-tab" {% if tab=='empiredrop' %}aria-current="page"{% endif %}>EmpireDrop <span>Top 10</span></a></nav>
+      {% if tab in ['shuffle','race','players'] %}<nav class="admin-subnav" aria-label="Shuffle management"><a href="{{ admin_link('shuffle') }}" {% if tab=='shuffle' %}aria-current="page"{% endif %}>Standings</a><a href="{{ admin_link('race') }}" {% if tab=='race' %}aria-current="page"{% endif %}>Schedule &amp; prizes</a><a href="{{ admin_link('players') }}" {% if tab=='players' %}aria-current="page"{% endif %}>Players &amp; adjustments</a></nav>
+      {% else %}<nav class="admin-subnav admin-anchor-nav" aria-label="EmpireDrop management"><a href="#empirePlayersHeading">Standings</a><a href="/admin/leaderboards/empiredrop/schedule">Schedule</a><a href="/admin/leaderboards/empiredrop/payouts">Prizes</a><a href="/admin/leaderboards/empiredrop/source">Source health</a><a href="#empireBackup">Backup</a></nav>{% endif %}
+      {% elif area=='settings' %}<nav class="admin-workspace-nav" aria-label="Settings management"><a class="admin-provider-tab" href="{{ admin_link('settings') }}" {% if tab=='settings' %}aria-current="page"{% endif %}>Configuration</a><a class="admin-provider-tab" href="{{ admin_link('activity') }}" {% if tab=='activity' %}aria-current="page"{% endif %}>Activity &amp; Logs</a></nav>{% endif %}
+      {% with messages=get_flashed_messages() %}{% for message in messages %}<p class="notice success" role="status">{{ message }}</p>{% endfor %}{% endwith %}
+      {% if admin_receipt %}<p id="feedback-{{ admin_receipt.target }}" class="notice success" role="status"><strong>Saved.</strong> {{ admin_receipt.message }}</p>{% endif %}
+      {% if errors %}<div class="notice warning" role="alert"><strong>Nothing was changed.</strong><ul>{% for key,message in errors.items() %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
+      {% if hosted_local and tab=='settings' %}<p class="notice warning">This deployment is using local JSON. Newer changes can be lost when App Platform replaces the container. {% if superadmin %}<a href="#recovery">Download a recovery checkpoint</a>.{% endif %}</p>{% endif %}
+      {% if area=='overview' or tab=='activity' %}{% include 'admin_attention.html' %}{% endif %}
+      {% if tab in ['overview','race','players'] %}<p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>{% endif %}
+      {% if tab in ['overview','race','players'] %}<div id="endedNotice" class="notice ended-notice" {% if data.site.race_state!='ended' %}hidden{% endif %}><div><strong>Saved Shuffle race ended</strong><span>New wagers outside this race window are not included.</span></div><a class="button small" href="{{ admin_link('race') }}">Set next race →</a></div>{% endif %}
+      {% include 'admin_' ~ tab ~ '.html' %}
+      {% if tab=='overview' %}<details class="admin-detail-diagnostics panel" id="diagnostics"><summary><strong>System diagnostics</strong><span>Service health and request metrics</span></summary><div class="admin-details-pad">{% include 'admin_health.html' %}<a class="button small" href="{{ admin_link('activity') }}">Open full activity log</a></div></details>{% endif %}
+      <footer class="admin-bottom"><span id="browserCheck" role="status">Checking release compatibility…</span><span>Release {{ release }}</span></footer>
+    </main>
+  </div>
+  <dialog id="adminCommandDialog" class="admin-command-dialog" aria-labelledby="adminCommandTitle"><div class="admin-command-title"><strong id="adminCommandTitle">Jump to a workspace</strong><button type="button" id="adminCommandClose" aria-label="Close quick navigation">×</button></div><label class="admin-command-label" for="adminCommandSearch">Search admin actions</label><input id="adminCommandSearch" type="search" autocomplete="off" placeholder="Try EmpireDrop, prizes, wallets, backup…"><nav class="admin-command-results" aria-label="Quick navigation results">
+  {% set commands = [('Overview',admin_link('overview'),'Service health and recent activity'),('Shuffle standings',admin_link('shuffle'),'Verified wagers and source status'),('Shuffle schedule',admin_link('race'),'Dates and 15-place rewards'),('Shuffle players',admin_link('players'),'Search and adjustments'),('EmpireDrop',admin_link('empiredrop'),'Top 10, schedule and payouts'),('EmpireDrop payouts',admin_link('empiredrop','empireRewards'),'Draft and published prizes'),('Games and RedPoints',admin_link('gaming'),'Wallets, results and grants'),('Settings',admin_link('settings'),'Accounts, integrations and recovery'),('Activity and logs',admin_link('activity'),'Inspect and export diagnostics')] %}
+  {% for label,link,description in commands %}<a href="{{ link }}" data-command-link data-search="{{ (label ~ ' ' ~ description)|lower }}"><strong>{{ label }}</strong><small>{{ description }}</small></a>{% endfor %}
+</nav><p id="adminCommandEmpty" hidden>No matching actions.</p><small>Esc closes · Ctrl+K opens</small></dialog>
+</div>
+{% endblock %}
 {% block site_footer %}{% endblock %}

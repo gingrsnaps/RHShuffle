@@ -86,7 +86,7 @@ def health_view(runtime, measurements, status):
                           status='Needs attention' if state == 'warning' else 'Connected', detail=detail,
                           last_success=last, last_check=job.get('attempt_at', 0),
                           last_change=job.get('changed_at', 0), next_check=job.get('next_check', 0),
-                          action='/admin?tab=settings#diagnostics'))
+                          action='/admin/settings#configurationDetails'))
     # EmpireDrop is an independent source with provider-controlled cache TTL.
     empire = runtime.empiredrop.private_status()
     age = time.time() - (empire.get('updated_at') or 0) if empire.get('updated_at') else None
@@ -99,13 +99,13 @@ def health_view(runtime, measurements, status):
                               else 'Provider cache respected; automatic race updates running.'),
                       last_success=empire.get('updated_at') or 0,
                       last_check=empire.get('attempt_at') or 0,
-                      action='/admin?tab=empiredrop'))
+                      action='/admin/leaderboards/empiredrop'))
     cards.append(dict(key='games', label='Games', state='good' if probe['ok'] else 'error',
                       status='Ready to save play' if probe['ok'] else 'Saving unavailable',
                       detail='Results are acknowledged after their save completes. Retry receipts prevent duplicate bets.',
                       last_success=storage['last_write'], action='/admin/gaming'))
     cards.append(dict(key='storage', label='Saved data', state='good' if probe['ok'] else 'error',
                       status='Readable and writable' if probe['ok'] else 'Needs attention',
-                      detail=probe['message'], last_success=probe['checked_at'], action='/admin?tab=settings#recovery'))
+                      detail=probe['message'], last_success=probe['checked_at'], action='/admin/recovery'))
     return dict(release=RELEASE, generated_at=int(time.time()), ready=probe['ok'], components=cards,
                 metrics={**stats, 'storage':storage}, retention='Recent 512 requests and 256 store operations; reset on restart.')

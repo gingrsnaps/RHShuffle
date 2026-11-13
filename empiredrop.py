@@ -611,9 +611,17 @@ class EmpireDropBoard:
             value = {'rows':[], 'updated_at':0, 'attempt_at':0, 'error':'', 'error_kind':''}
         return value
 
-    def _rewards(self):
+    def _published_reward_settings(self):
         _, admin = self.store.admin()
-        return rewards_public(admin.get('empiredrop_rewards', {}))
+        return validate_rewards(admin.get('empiredrop_rewards', {}))
+
+    def _draft_reward_settings(self):
+        _, admin = self.store.admin()
+        return validate_rewards(admin.get('empiredrop_rewards_draft',
+                                          admin.get('empiredrop_rewards', {})))
+
+    def _rewards(self):
+        return rewards_public(self._published_reward_settings())
 
     def _next_check_at(self):
         """UTC epoch seconds of the next scheduled provider check, if known.
@@ -714,7 +722,13 @@ class EmpireDropBoard:
                          if (snapshot.get('race_meta') or {}).get('selection') == 'recovered'
                          else ''),
                      race_history=(self.store.live('empiredrop_history') or [])[:4],
-                     private_rewards=self._rewards(),
+                     private_rewards={**rewards_public(self._draft_reward_settings()),
+                         'revision': self._draft_reward_settings()['revision'],
+                         'updated_at': self._draft_reward_settings()['updated_at'],
+                         'updated_by': self._draft_reward_settings()['updated_by'],
+                         'published': self._draft_reward_settings() == self._published_reward_settings(),
+                         'published_total': self._rewards()['total'],
+                         'published_enabled': self._rewards()['enabled']},
                      refresh_interval=self.interval,
                      running=bool(self.thread and self.thread.is_alive()),
                      checking=self.checking, queued_at=self.queued_at)

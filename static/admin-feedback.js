@@ -19,7 +19,6 @@
     if (
       ![
         "/admin/action",
-        "/admin/boss/action",
         "/admin/history/refresh",
       ].includes(endpoint) ||
       form.hasAttribute("data-refresh")
@@ -76,7 +75,7 @@
         const next = new URL(result.redirect, location.origin);
         if (
           next.origin !== location.origin ||
-          !["/admin", "/admin/login"].includes(next.pathname)
+          !next.pathname.startsWith("/admin")
         )
           throw Error(
             "Save confirmed, but the return link is invalid. Reload to verify the saved value.",

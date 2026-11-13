@@ -1,0 +1,119 @@
+/* REDHUNLLEF V11 — unified, deliberately quiet visual system.
+ * Presentation only. Never add wagering, balance or provider logic here.
+ * Load last so older page-specific styles cannot produce conflicting borders.
+ */
+:root {
+  --rh-bg:#111116; --rh-surface:#1b1a22; --rh-surface-raised:#21202a;
+  --rh-border:#38333e; --rh-text:#f4f0f4; --rh-muted:#bfb5c1;
+  --rh-brand:#d83f56; --rh-brand-soft:#452531; --rh-focus:#f2a1ad;
+  --rh-radius:12px; --rh-radius-lg:16px; --rh-gap:16px;
+}
+body {background-color:var(--rh-bg);color:var(--rh-text)}
+:where(a, button, input, select, textarea, summary):focus-visible {outline:2px solid var(--rh-focus);outline-offset:3px}
+:where(.button,button,input,select,textarea) {font-family:inherit}
+:where(.panel, .podium-card, .game-card) {box-shadow:none}
+:where(.muted,.small) {line-height:1.55}
+/* A single hierarchy: one prominent page heading; restrained secondary copy. */
+body[data-page="admin"] {--admin-background:var(--rh-bg);--admin-sidebar:#15141b;--admin-card:var(--rh-surface);--admin-border:var(--rh-border);--admin-soft:var(--rh-muted)}
+body[data-page="admin"] .admin-page-heading {margin-bottom:20px}
+body[data-page="admin"] .admin-page-heading h1 {font-size:clamp(1.85rem,2.3vw,2.2rem);letter-spacing:-.04em}
+body[data-page="admin"] .admin-page-kicker {font-weight:680;color:#aa9eaa;letter-spacing:.1em}
+body[data-page="admin"] .admin-page-description {font-size:.86rem;max-width:52ch}
+body[data-page="admin"] .admin-workspace.shell {max-width:1300px;padding-top:31px}
+body[data-page="admin"] .admin-sidebar {width:226px;flex-basis:226px;background:#15141b;padding-top:21px}
+body[data-page="admin"] .admin-sidebar-head {margin-bottom:23px}
+body[data-page="admin"] .admin-primary-nav a {min-height:44px;padding:9px 12px;font-size:.87rem;border-radius:10px}
+body[data-page="admin"] .admin-primary-nav a[aria-current="page"] {background:#32232c;border-color:#5b3845}
+body[data-page="admin"] .admin-side-status {margin-top:25px}
+body[data-page="admin"] .admin-topbar {height:62px;background:#15131a}
+body[data-page="admin"] .admin-provider-tab {min-height:42px;border-radius:9px;background:#201d25;padding:8px 14px}
+body[data-page="admin"] .admin-provider-tab[aria-current="page"] {background:#3a2630;border-color:#8a4554}
+body[data-page="admin"] .admin-subnav {margin-bottom:21px;gap:3px}
+body[data-page="admin"] .admin-subnav a {min-height:38px;font-size:.81rem;padding:9px 12px}
+body[data-page="admin"] .admin-subnav a[aria-current="page"] {background:#302730}
+body[data-page="admin"] .panel {border-color:#38333c;border-radius:var(--rh-radius)}
+body[data-page="admin"] .panel.form-panel {margin-bottom:15px}
+body[data-page="admin"] .section-title h2 {font-size:1.13rem}
+body[data-page="admin"] .admin-heading-actions {margin-left:auto}
+body[data-page="admin"] .admin-saved-chip {font-size:.73rem}
+/* Less competition on Overview: one primary action, one backup action, a dropdown. */
+body[data-page="admin"] .admin-overview-actions {display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 20px}
+body[data-page="admin"] .admin-action-menu {position:relative}
+body[data-page="admin"] .admin-action-menu > summary {border:1px solid var(--rh-border);padding:10px 15px;border-radius:9px;min-height:42px;display:flex;align-items:center;cursor:pointer;list-style:none;font-size:.84rem;color:#ede9ef}
+body[data-page="admin"] .admin-action-menu > summary::-webkit-details-marker {display:none}
+body[data-page="admin"] .admin-action-menu > summary::after {content:'⌄';margin-left:15px;font-size:1rem;color:var(--rh-muted)}
+body[data-page="admin"] .admin-action-menu[open] > summary {border-color:#986473}
+body[data-page="admin"] .admin-action-menu nav {position:absolute;z-index:22;top:calc(100% + 7px);left:0;min-width:195px;display:grid;gap:3px;background:#24202a;border:1px solid #55414d;padding:8px;border-radius:10px;box-shadow:0 15px 40px #0008}
+body[data-page="admin"] .admin-action-menu nav a {padding:11px 10px;color:#eee8ed;text-decoration:none;border-radius:7px;font-size:.84rem;white-space:nowrap}
+body[data-page="admin"] .admin-action-menu nav a:hover {background:#3e2d38}
+/* Settings is a compact section selector, not four oversized competing cards. */
+body[data-page="admin"] .admin-settings-compactnav {display:flex;flex-wrap:wrap;gap:7px;padding:0 0 17px;margin-bottom:17px;border-bottom:1px solid var(--rh-border)}
+body[data-page="admin"] .admin-settings-compactnav a {text-decoration:none;color:#d8ceda;background:#221e27;border:1px solid #39323d;padding:9px 11px;min-height:40px;border-radius:8px;font-size:.82rem}
+body[data-page="admin"] .admin-settings-compactnav a:hover {background:#362a35;color:white}
+body[data-page="admin"] .form-grid {gap:13px}
+body[data-page="admin"] .form-panel details > summary {cursor:pointer}
+body[data-page="admin"] .save-bar {border-radius:11px}
+/* Keep status truthful, but make routine provider details secondary. */
+body[data-page="admin"] .notice.warning {border-radius:11px}
+body[data-page="admin"] .provider-overview-grid {gap:11px}
+body[data-page="admin"] .admin-settings-shortcuts {gap:8px}
+body[data-page="admin"] .admin-settings-shortcuts a {padding:13px;border-radius:9px}
+body[data-page="admin"] .admin-workspace table {font-variant-numeric:tabular-nums}
+body[data-page="admin"] .admin-workspace table td,body[data-page="admin"] .admin-workspace table th {border-color:#35313b}
+/* Public homepage: remove redundant links and let each block breathe. */
+body:not([data-page="admin"]) .public-home {padding-bottom:46px}
+body:not([data-page="admin"]) .public-hero {padding-block:clamp(26px,3.3vw,42px) 21px;gap:27px}
+body:not([data-page="admin"]) .public-hero h1 {font-size:clamp(2.1rem,4.2vw,3.55rem);letter-spacing:-.054em;line-height:1.08;max-width:660px;margin:9px 0 13px}
+body:not([data-page="admin"]) .public-hero .lead {font-size:1rem;line-height:1.6;margin-bottom:16px;color:#c3b9c6}
+body:not([data-page="admin"]) .public-hero .race-clock {background:#211b25;border-color:#4a3b45;box-shadow:none;padding:clamp(20px,2.4vw,27px)}
+body:not([data-page="admin"]) .public-hero .clock {font-size:clamp(1.9rem,3.5vw,2.9rem);margin:9px 0}
+body:not([data-page="admin"]) .public-hero .sponsor {background:#1e1a24;border-color:#3f343e}
+
+
+
+body:not([data-page="admin"]) .public-leaderboards > .section-title {margin-bottom:14px}
+body:not([data-page="admin"]) .public-board-hint {display:none}
+body:not([data-page="admin"]) .public-provider-tabs {border-color:#3b333e;background:#1a1921}
+body:not([data-page="admin"]) .public-provider-tabs .button {min-width:135px}
+body:not([data-page="admin"]) .public-provider-tabs .button[aria-selected="true"] {background:#3a2731!important;border-color:#755160!important}
+body:not([data-page="admin"]) .source-status {background:#1d1a22;border-color:#39323e}
+body:not([data-page="admin"]) .public-podium .podium-card {background:#1e1b25;border:1px solid #3e3642;padding:clamp(15px,2vw,22px)}
+body:not([data-page="admin"]) .public-podium .podium-card.place-1 {background:#32222e;border-color:#885062;box-shadow:none}
+body:not([data-page="admin"]) .public-podium .podium-card .eyebrow {letter-spacing:.07em}
+body:not([data-page="admin"]) .public-table th {background:#211f28;color:#c9bfcc}
+body:not([data-page="admin"]) .public-table tbody tr:nth-child(even) {background:#ffffff02}
+body:not([data-page="admin"]) .public-table tbody tr:hover {background:#ffffff08}
+
+body:not([data-page="admin"]) :is(.game-card,.history-weeks a):hover {border-color:#9c6271}
+body:not([data-page="admin"]) :is(.history-heading,.gaming-heading) h1 {font-size:clamp(1.8rem,3.6vw,2.65rem);letter-spacing:-.04em}
+body:not([data-page="admin"]) :is(.game-card,.history-weeks a) {transition:border-color .15s ease,background .15s ease}
+
+body:not([data-page="admin"]) .site-header {border-bottom:1px solid #332c37}
+body:not([data-page="admin"]) .public-nav-links a[aria-current="page"] {background:#32222d;border-color:#794454;color:#fff}
+body:not([data-page="admin"]) .public-more summary:hover {background:#29212d}
+@media(max-width:900px) {
+  body[data-page="admin"] .admin-workspace.shell {padding:20px 16px 40px}
+  body:not([data-page="admin"]) .public-hero {grid-template-columns:1fr}
+}
+@media(max-width:790px) {
+  body[data-page="admin"] .admin-sidebar {width:270px;flex-basis:auto}
+  body[data-page="admin"] .admin-settings-compactnav {flex-wrap:nowrap;overflow-x:auto;padding-bottom:13px}
+  body[data-page="admin"] .admin-settings-compactnav a {white-space:nowrap}
+}
+@media(max-width:550px) {
+  body[data-page="admin"] .admin-overview-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  body[data-page="admin"] .admin-action-menu {grid-column:1/-1}
+  body[data-page="admin"] .admin-action-menu > summary {justify-content:center}
+  body[data-page="admin"] .admin-action-menu nav {width:100%}
+  body:not([data-page="admin"]) .public-hero h1 {font-size:2.3rem}
+  body:not([data-page="admin"]) .public-podium .podium-card {padding:16px}
+}
+@media(prefers-reduced-motion:reduce) {
+  :where(*, *::before, *::after) {scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+body[data-page="admin"] .admin-state-card {padding:17px 20px;display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px;background:#25202b}
+body[data-page="admin"] .admin-state-card >div {display:grid;gap:5px}
+body[data-page="admin"] .admin-state-card strong {font-size:1.03rem}
+body[data-page="admin"] .admin-state-card span:not(.eyebrow) {color:var(--rh-muted);font-size:.79rem}
+@media(max-width:600px) {body[data-page="admin"] .admin-state-card {align-items:stretch;flex-direction:column}}

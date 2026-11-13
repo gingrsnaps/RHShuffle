@@ -461,7 +461,7 @@
         const action = cell(""),
           link = document.createElement("a");
         link.href =
-          "/admin?tab=players&edit=" +
+          "/admin/leaderboards/shuffle/players?edit=" +
           encodeURIComponent(r.username) +
           "#override";
         link.className = "text-link";
@@ -529,9 +529,10 @@
       id("sponsorLink").href = site.sponsor_url;
     if (isAdmin) {
       jobs = value.jobs || {};
+      // Shared admin sidebar consumes the existing status response; no extra poll.
+      document.dispatchEvent(new CustomEvent("admin:status", { detail: value }));
       if (value.health) globalThis.RedHealth?.render(value.health);
       if (value.providers) globalThis.RedProviderCards?.render(value);
-      if (value.boss) globalThis.RedHealth?.renderBoss(value.boss);
       if (value.checkpoint && id("recoveryReminder")) {
         id("recoveryReminder").hidden = !value.checkpoint.changes;
         text(id("recoveryReminderDetail"), value.checkpoint.details);
@@ -644,12 +645,6 @@
       });
       if (value.empiredrop)
         document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site, server_time:value.server_time} }));
-      if (value.boss)
-        document.dispatchEvent(
-          new CustomEvent("boss:summary", {
-            detail: { boss: value.boss, server_time: value.server_time },
-          }),
-        );
       text(
         id("streamStatus"),
         !value.stream?.available

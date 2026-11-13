@@ -9,7 +9,7 @@ from pathlib import Path
 from jinja2 import Environment, StrictUndefined, select_autoescape
 
 INDEX = (Path(__file__).resolve().parents[1] / 'templates/index.html').read_text(encoding='utf-8')
-# Render the actual fragment (the complete page also requires Shuffle and Boss context).
+# Render the actual fragment (the complete page also requires the complete Shuffle context).
 FRAGMENT = INDEX[INDEX.index('{# Server-render verified standings'): INDEX.index('<p class="leaderboard-foot">Names masked')]
 
 

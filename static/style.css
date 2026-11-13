@@ -1,9 +1,5 @@
-/* Logo red (#ff2d2d), warm charcoal panels, and lighter red for readable text.
-   Filled action buttons use a deeper red so their white labels stay readable. */
-.play-invite img.custom-avatar {
-  image-rendering: auto;
-  object-fit: contain;
-}
+
+
 :root {
   color-scheme: dark;
   --bg: #110e11;
@@ -1389,37 +1385,11 @@ details[open] > summary .expand-icon {
   }
 }
 
-/* The homepage invitation is visible on mobile as well as desktop. */
-.play-invite {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  padding: 23px 25px;
-  margin: 0 0 36px;
-  background: linear-gradient(105deg, #431b25, #22141c);
-  border-color: #853344;
-}
-.play-invite img {
-  image-rendering: pixelated;
-  object-fit: contain;
-  border-radius: 10px;
-}
-.play-invite > div {
-  flex: 1;
-}
-.play-invite h2 {
-  font-size: 1.3rem;
-  margin-bottom: 6px;
-}
-.play-invite .eyebrow {
-  font-size: 0.57rem;
-  margin-bottom: 6px;
-}
-.play-invite p:last-child {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin: 0;
-}
+
+
+
+
+
 .site-header .play-nav {
   color: var(--accent);
   font-weight: 650;
@@ -1430,24 +1400,11 @@ details[open] > summary .expand-icon {
   }
 }
 @media (max-width: 700px) {
-  .play-invite {
-    flex-wrap: wrap;
-    padding: 20px;
-    gap: 16px;
-  }
-  .play-invite img {
-    width: 45px;
-    height: 45px;
-  }
-  .play-invite .button {
-    width: 100%;
-  }
-  .play-invite h2 {
-    font-size: 1.17rem;
-  }
-  .play-invite > div {
-    min-width: 180px;
-  }
+
+
+
+
+
   .site-header nav {
     gap: 10px;
   }
@@ -1486,46 +1443,6 @@ details[open] > summary .expand-icon {
 }
 .clock {
   margin: 18px 0 12px;
-}
-.play-invite {
-  padding: 16px 20px;
-  gap: 17px;
-  margin-bottom: 28px;
-}
-.play-invite h2 {
-  font-size: 1.13rem;
-}
-.play-invite p:last-of-type {
-  font-size: 0.79rem;
-}
-.play-invite .eyebrow {
-  font-size: 0.63rem;
-}
-.invite-copy {
-  min-width: 0;
-}
-#inviteHealth {
-  appearance: none;
-  -webkit-appearance: none;
-  height: 5px;
-  display: block;
-  width: min(100%, 390px);
-  border: 0;
-  background: #4b2934;
-  border-radius: 6px;
-  margin-top: 9px;
-  accent-color: var(--brand);
-}
-#inviteHealth::-webkit-progress-bar {
-  background: #4b2934;
-  border-radius: 6px;
-}
-#inviteHealth::-webkit-progress-value {
-  background: var(--brand);
-  border-radius: 6px;
-}
-#inviteHealth::-moz-progress-bar {
-  background: var(--brand);
 }
 .source-status small,
 .leaderboard-foot,
@@ -1697,20 +1614,10 @@ details[open] > summary .expand-icon {
   .clock-footer {
     font-size: 0.73rem;
   }
-  .play-invite {
-    padding: 17px;
-    gap: 12px;
-  }
-  .play-invite .button {
-    width: 100%;
-  }
-  .play-invite > div {
-    min-width: 190px;
-  }
-  .play-invite img {
-    width: 42px;
-    height: 42px;
-  }
+
+
+
+
   .podium-values small {
     font-size: 0.67rem;
   }
@@ -1834,72 +1741,13 @@ details[open] > summary .expand-icon {
 .podium-card {
   box-shadow: none;
 }
-.play-invite {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-  gap: 18px;
-  padding: 20px;
-  margin-bottom: 24px;
-  background: linear-gradient(110deg, #2b1b23, #1b191f 65%);
-  border-color: #71303e;
-}
-.play-invite > img {
-  width: 72px;
-  height: 72px;
-  border-radius: 14px;
-  background: #110d12;
-}
-.play-invite h2 {
-  margin: 4px 0 12px;
-  font-size: 1.05rem;
-}
-.invite-progress-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-#invitePercent {
-  font-size: 1.4rem;
-  font-variant-numeric: tabular-nums;
-  color: #fff2f3;
-}
-#inviteChecked {
-  font-size: 0.7rem;
-}
-#inviteHealth {
-  appearance: none;
-  width: 100%;
-  height: 10px;
-  border: 0;
-  border-radius: 99px;
-  overflow: hidden;
-  background: #100e12;
-  margin: 8px 0 5px;
-}
-#inviteHealth::-webkit-progress-bar {
-  background: #100e12;
-}
-#inviteHealth::-webkit-progress-value {
-  background: linear-gradient(90deg, #bf2639, #ff6269);
-  transition: width 0.35s ease;
-}
-#inviteHealth::-moz-progress-bar {
-  background: linear-gradient(90deg, #bf2639, #ff6269);
-}
 #inviteProgress {
   font-size: 0.77rem;
   color: var(--muted);
   margin: 0;
 }
-.play-invite.confirmed-hit {
-  animation: confirmed-progress 0.65s ease-out;
-}
-.play-invite.is-victory {
-  border-color: #ff6671;
-  box-shadow: 0 0 24px #ed34401c;
-}
+
+
 @keyframes confirmed-progress {
   0% {
     border-color: #ff9399;
@@ -1922,10 +1770,7 @@ details[open] > summary .expand-icon {
 .saved-receipt {
   scroll-margin-top: 170px;
 }
-.boss-settings-grid .boss-setting {
-  border-color: var(--line);
-  background: var(--panel);
-}
+
 @media (max-width: 900px) {
   .hero {
     gap: 18px;
@@ -1986,45 +1831,13 @@ details[open] > summary .expand-icon {
     margin: 8px 0;
     font-size: 1.45rem;
   }
-  .play-invite {
-    grid-template-columns: 56px minmax(0, 1fr);
-    padding: 16px;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .play-invite > img {
-    width: 56px;
-    height: 56px;
-    align-self: start;
-  }
-  .play-invite > div {
-    min-width: 0;
-  }
-  .play-invite > .button {
-    grid-column: 1 / -1;
-    min-height: 44px;
-  }
-  .play-invite h2 {
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-  }
-  #invitePercent {
-    font-size: 1.24rem;
-  }
-  #inviteChecked {
-    font-size: 0.64rem;
-  }
-  .section-title {
+.section-title {
     gap: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #inviteHealth::-webkit-progress-value {
-    transition: none;
-  }
-  .play-invite.confirmed-hit {
-    animation: none;
-  }
+
+
 }
 
 /* Keep the first competitor in view on phones, with the full table readable. */
@@ -2041,42 +1854,12 @@ details[open] > summary .expand-icon {
   .hero .clock {
     margin: 6px 0;
   }
-  .play-invite .invite-copy > .eyebrow {
-    display: block;
-    margin: 0 0 4px;
-  }
-  .play-invite .invite-kind {
-    display: none;
-  }
-  .play-invite h2 {
-    margin: 2px 0 6px;
-  }
-  .podium-name {
+.podium-name {
     margin-top: 12px;
   }
 }
 
 /* Small factual updates stay secondary to the health bar and play button. */
-.invite-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  justify-content: space-between;
-  align-items: baseline;
-}
-.invite-activity {
-  margin-top: 5px;
-  font-size: 0.75rem;
-}
-.invite-activity summary {
-  cursor: pointer;
-  color: var(--muted);
-  padding: 4px 0;
-}
-.invite-activity p {
-  margin: 4px 0 0;
-  overflow-wrap: anywhere;
-}
 .invite-health-notice {
   margin: 7px 0;
   color: #ffd5ac;
@@ -2193,30 +1976,10 @@ details[open] > summary .expand-icon {
     padding-top: 8px;
     margin-top: 8px;
   }
-  .play-invite {
-    padding: 14px;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .invite-progress-label {
-    gap: 6px;
-  }
-  .invite-progress-label label {
-    font-size: 0.67rem;
-  }
-  #invitePercent {
-    font-size: 1.03rem;
-  }
-  .invite-health-notice {
+.invite-health-notice {
     font-size: 0.69rem;
     line-height: 1.4;
     margin: 5px 0;
-  }
-  .invite-activity {
-    margin-top: 2px;
-  }
-  .invite-activity summary {
-    padding: 2px 0;
   }
 }
 /* Accessible, responsive operational event viewer (independent of browser logs). */

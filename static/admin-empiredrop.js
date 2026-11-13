@@ -146,7 +146,19 @@
     const currency = form.querySelector('[name="currency"]').value;
     output.textContent = new Intl.NumberFormat('en-US', {style:'currency',currency}).format(total);
   }
-  form.addEventListener('input',preview);form.addEventListener('change',preview);preview();
+  const status = document.getElementById('empireRewardSaveState');
+  const original = new FormData(form);
+  const baseline = JSON.stringify([...original].filter(([key]) => !['csrf'].includes(key)));
+  function state() {
+    const current = JSON.stringify([...new FormData(form)].filter(([key]) => !['csrf'].includes(key)));
+    if (status) status.textContent = current === baseline ? 'No unsaved changes' : 'Unsaved prize changes';
+  }
+  form.addEventListener('input',()=>{preview();state();});
+  form.addEventListener('change',()=>{preview();state();});
+  form.addEventListener('submit',event=>{
+    if (status) status.textContent = event.submitter?.value === 'publish' ? 'Saving and verifying public prizes…' : 'Saving draft…';
+  });
+  preview();state();
 })();
 
 /* Local search over the admin-only provider names and stable public IDs. */

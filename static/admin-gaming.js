@@ -15,7 +15,6 @@
   const rowKeys = new Map();
   function render(data) {
     if (expired) return;
-    if (data.boss) globalThis.RedHealth?.renderBoss(data.boss);
     if (
       Number(data.season.id) < season ||
       (Number(data.season.id) === season && data.revision < revision)

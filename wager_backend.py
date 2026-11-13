@@ -29,9 +29,6 @@ from werkzeug.exceptions import BadRequest, HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config, RELEASE
-from abuse_guard import AbuseGuard
-from boss import BossError, CommunityBoss, DEFAULT_HP, rules as boss_rules, validate_boss
-from boss_avatar import from_upload, validate_avatar
 from presentation import changes, checkpoint_status, export_marker
 from store_schema import upgrade_store
 from race import calculate, empty, phase, token
@@ -50,9 +47,12 @@ from operations_log import ActivityLog
 from provider_admin import summarize_providers
 from integrations import ProviderError
 from telemetry import Measurements, health_view
+from admin_navigation import admin_link, ADMIN_TABS, ADMIN_SECTION_ALIASES
 
 LOG = logging.getLogger("redhunllef")
-TABS = {"overview":"Overview", "shuffle":"Shuffle", "empiredrop":"EmpireDrop", "race":"Shuffle race", "players":"Shuffle players", "boss":"Community boss", "gaming":"Gaming", "activity":"Activity & logs", "settings":"Settings"}
+TABS = {"overview":"Overview", "shuffle":"Shuffle standings", "race":"Shuffle schedule", "players":"Shuffle players", "empiredrop":"EmpireDrop", "gaming":"Games & RedPoints", "activity":"Activity & logs", "settings":"Settings"}
+if frozenset(TABS) != ADMIN_TABS:
+    raise RuntimeError("Admin navigation and rendered tabs disagree")
 
 
 def account(users, name):
@@ -81,16 +81,26 @@ def create_app(root=None, testing=False):
     activity = app.extensions["activity"] = ActivityLog()
     runtime.empiredrop.events = activity
     runtime.activity_log = activity
+
+    def safe_activity(*args, **kwargs):
+        """Operational logging must never turn a completed admin write into HTTP 500."""
+        try:
+            return activity.record(*args, **kwargs)
+        except Exception:
+            # Arguments are deliberately not logged because they may come from
+            # future call sites that contain private operational context.
+            LOG.exception('ACTIVITY A structured event could not be recorded.')
+            return None
     app.extensions["settings"] = config
     measurements = app.extensions['measurements'] = Measurements()
-    boss = app.extensions["boss"] = CommunityBoss(runtime.store)
     gaming = app.extensions['gaming'] = Gaming(runtime.store)
     # One launch restores playable points for everyone, without clearing results.
-    # Page requests and five-second live updates never run this bulk reset.
+    # Page requests and automatic status checks never run this bulk reset.
     gaming.restart_balances()
-    guest_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
-    recovery_signer = URLSafeSerializer(app.secret_key, salt="community-boss-recovery-v1")
-    abuse = app.extensions["boss_abuse"] = AbuseGuard(app.secret_key)
+    player_signer = URLSafeTimedSerializer(app.secret_key, salt="redpoints-player-v1")
+    legacy_player_signer = URLSafeTimedSerializer(app.secret_key, salt="community-boss-guest-v1")
+    recovery_signer = URLSafeSerializer(app.secret_key, salt="redpoints-recovery-v1")
+    legacy_recovery_signer = URLSafeSerializer(app.secret_key, salt="community-boss-recovery-v1")
     review_signer = URLSafeTimedSerializer(app.secret_key, salt="race-review-v1")
     failures, previews, access_log = {}, {}, deque(maxlen=150)
     auth_lock = threading.Lock()
@@ -117,8 +127,8 @@ def create_app(root=None, testing=False):
 
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
-        return request.path.startswith(("/play/api/", "/gaming/api/")) or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/admin/operations/events", "/admin/operations/export", "/healthz", "/readyz"
+        return request.path.startswith("/gaming/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
+            "/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/admin/operations/events", "/admin/operations/export", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -164,8 +174,7 @@ def create_app(root=None, testing=False):
                 g.user = name
                 g.superadmin = name.casefold() == g.admin.get("superadmin", config.superadmin).casefold()
             if request.endpoint == 'recovery_preview' and g.superadmin:
-                # A complete community export can exceed an ordinary form or
-                # avatar. Only authenticated Superadmins get this larger limit.
+                # A complete private recovery export can exceed an ordinary form. Only authenticated Superadmins get this larger limit.
                 request.max_content_length = 64 * 1024 * 1024
         if request.path not in {"/healthz", "/readyz"} and g.client_ip in runtime.admin.get("banned_ips", []):
             abort(403, description="Access from this address has been disabled.")
@@ -173,11 +182,16 @@ def create_app(root=None, testing=False):
     @app.after_request
     def after(response):
         response.headers['X-Request-ID'] = getattr(g, 'request_id', '')
+        if request.path.startswith('/admin'):
+            # Admin HTML includes version-specific navigation and private data.
+            # Stale CDN/browser HTML caused links to outlive their route version.
+            response.headers['Cache-Control'] = 'private, no-store, max-age=0'
+
         elapsed = (time.perf_counter()-g.began)*1000
         if request.endpoint not in {'static', 'health', 'ready'}:
             measurements.request(request.endpoint, response.status_code, elapsed)
         if response.status_code >= 500:
-            activity.record('system','error','server_error',http_status=response.status_code,
+            safe_activity('system','error','server_error',http_status=response.status_code,
                             duration_ms=round(elapsed))
             LOG.error('REQUEST id=%s route=%s status=%s elapsed_ms=%.1f',
                       g.request_id, request.endpoint or 'unmatched', response.status_code, elapsed)
@@ -189,14 +203,14 @@ def create_app(root=None, testing=False):
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         if request.path == "/public-state" and response.status_code in {200, 304}:
             response.headers["Cache-Control"] = "public, no-cache"
-        if request.endpoint == 'boss_avatar_image' and response.status_code in {200, 304}:
-            response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
         if getattr(g, "new_guest", None):
-            response.set_cookie("rh_raider", guest_signer.dumps(g.new_guest), max_age=365*86400,
+            response.set_cookie("rh_player", player_signer.dumps(g.new_guest), max_age=365*86400,
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/boss-summary", "/history-state", "/config", "/stream", "/admin/status", "/admin/boss/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/play/api/")):
+            if request.cookies.get("rh_raider"):
+                response.delete_cookie("rh_raider", secure=app.session_interface.get_cookie_secure(app), samesite="Lax")
+        if request.path not in {"/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/gaming/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -205,9 +219,9 @@ def create_app(root=None, testing=False):
     @app.context_processor
     def context():
         return dict(release=RELEASE, asset_version=assets, csrf=csrf, money=money, fmt_et=fmt_et,
+                    admin_link=admin_link,
                     local_input=local_input, tabs=TABS, weighting=WEIGHTING_RULES,
-                    local_storage=not runtime.store.pg, hosted_local=config.production and not runtime.store.pg,
-                    boss_rules=boss_rules())
+                    local_storage=not runtime.store.pg, hosted_local=config.production and not runtime.store.mirror)
 
     @app.errorhandler(StoreError)
     def storage_error(error):
@@ -218,9 +232,16 @@ def create_app(root=None, testing=False):
 
     @app.errorhandler(HTTPException)
     def page_error(error):
-        LOG.warning("HTTP %s %s returned %s (%s).", request.method, request.endpoint or "unmatched route", error.code, error.name)
-        if request.endpoint in {'boss_profile', 'boss_profile_form'} and not wants_json():
-            return render_play(name_error=error.description, name_draft=request.form.get('username', '')[:64]), error.code
+        # A safe route hint makes 404s actionable without logging query strings,
+        # API credentials, usernames, private IDs or arbitrary client path data.
+        if error.code == 404:
+            known_prefix = next((prefix for prefix in ("/admin", "/gaming", "/history", "/static")
+                                 if request.path == prefix or request.path.startswith(prefix + "/")), None)
+            safe_path = request.path[:100] if known_prefix and re.fullmatch(r"/[A-Za-z0-9/_-]+", request.path) else "unknown-route"
+            LOG.warning("HTTP 404 method=%s path=%s request=%s (unregistered destination)",
+                        request.method, safe_path, g.request_id)
+        else:
+            LOG.warning("HTTP %s %s returned %s (%s).", request.method, request.endpoint or "unmatched route", error.code, error.name)
         if wants_json():
             return json_error(error.description, error.code, getattr(error, 'problem_code', None))
         return render_template("error.html", title="Page unavailable" if error.code == 404 else "Request could not be completed",
@@ -228,6 +249,15 @@ def create_app(root=None, testing=False):
 
     @app.errorhandler(500)
     def internal_error(error):
+        original = getattr(error, 'original_exception', None)
+        if original is not None:
+            LOG.error('REQUEST id=%s endpoint=%s failed with %s.',
+                      getattr(g, 'request_id', 'unknown'), request.endpoint or 'unmatched',
+                      type(original).__name__,
+                      exc_info=(type(original), original, original.__traceback__))
+        else:
+            LOG.error('REQUEST id=%s endpoint=%s returned HTTP 500.',
+                      getattr(g, 'request_id', 'unknown'), request.endpoint or 'unmatched')
         if wants_json():
             return json_error("The backend could not complete this request. Check the runtime logs and try again.", 500)
         return render_template("error.html", title="Something interrupted this request", message="Reload and try again. Existing saved data remains in place."), 500
@@ -241,11 +271,6 @@ def create_app(root=None, testing=False):
         # This request reads a small saved snapshot; it never calls Shuffle.
         return render_template('history.html', data=runtime.public(),
                                history=runtime.history.public(request.args.get('week')))
-
-    @app.get('/boss-summary')
-    def public_boss_summary():
-        # Anonymous local snapshot: never contacts a provider or creates a player.
-        return jsonify(boss=boss.summary(), server_time=time.time(), release=RELEASE)
 
     @app.get('/history-state')
     def history_state():
@@ -263,9 +288,7 @@ def create_app(root=None, testing=False):
                            'overview', 'historyConnection')
 
     def public_snapshot():
-        value = runtime.public()
-        value["boss"] = boss.summary()
-        return value
+        return runtime.public()
 
     @app.get("/public-state")
     def public_state():
@@ -279,59 +302,52 @@ def create_app(root=None, testing=False):
         return response.make_conditional(request)
 
     def guest():
+        """Return the signed Gaming identity, migrating the retired player cookie."""
         if not hasattr(g, "guest"):
+            value = None
             try:
-                value = guest_signer.loads(request.cookies.get("rh_raider", ""), max_age=365*86400)
-                if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{32}", value):
-                    raise BadSignature("Invalid raider identifier")
-                g.guest = value
+                value = player_signer.loads(request.cookies.get("rh_player", ""), max_age=365*86400)
             except BadSignature:
-                g.guest = g.new_guest = secrets.token_hex(16)
+                try:
+                    value = legacy_player_signer.loads(request.cookies.get("rh_raider", ""), max_age=365*86400)
+                    g.new_guest = value  # Reissue under the new cookie/salt.
+                except BadSignature:
+                    value = g.new_guest = secrets.token_hex(16)
+            if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{32}", value):
+                value = g.new_guest = secrets.token_hex(16)
+            g.guest = value
         return g.guest
 
     def player_csrf():
-        """Bind game writes to the signed raider, independently of admin login.
-
-        The secret-bearing cookie stays HttpOnly. A different browser cannot
-        reuse this token, and expiring/logging out of admin does not break play.
-        """
+        """Bind game writes to the signed player independently of admin login."""
         secret = app.secret_key.encode() if isinstance(app.secret_key, str) else app.secret_key
-        return hmac.new(secret, ('boss-write-v1:' + guest()).encode(), hashlib.sha256).hexdigest()
+        return hmac.new(secret, ('redpoints-write-v1:' + guest()).encode(), hashlib.sha256).hexdigest()
 
     def require_player_csrf():
         guest()
-        if getattr(g, 'new_guest', None):
+        if getattr(g, 'new_guest', None) and not request.cookies.get(('rh_player')) and not request.cookies.get('rh_raider'):
             failure = BadRequest(description='Your browser did not return the player cookie. Open the game directly on its HTTPS site, allow site cookies, then reload. Use http://localhost:8080 for local testing.')
             failure.problem_code = 'player_cookie_required'
             raise failure
         supplied = request.headers.get('X-CSRF-Token') or request.form.get('csrf', '')
         if isinstance(supplied, str) and supplied.isascii() and hmac.compare_digest(supplied, player_csrf()):
             return
-        # Previously open game pages remain compatible while the new assets load.
-        # Admin endpoints still accept only their authenticated session token.
         try:
             require_csrf()
         except BadRequest as failure:
             failure.problem_code = 'csrf_expired'
             raise
 
-    def render_play(**values):
-        return render_template('boss.html', data=runtime.public(),
-                               boss_data=boss.status(guest(), g.client_ip), player_csrf=player_csrf(), **values)
-
     def gaming_wallet():
-        identity = guest()
-        profile = boss.status(identity, g.client_ip)['you']
-        return gaming.view(identity, profile['display_name'] if profile['identity_ready'] else '', client_ip=g.client_ip)
+        return gaming.view(guest(), '', client_ip=g.client_ip)
 
     def gaming_player_name():
-        # A saved boss profile alone does not bypass Gaming's community-name step.
         wallet = gaming_wallet()
         if wallet.get('play_blocked'):
             issue = wallet['play_blocked']
             raise GamingError(issue['message'], issue['code'], 409)
         if wallet['needs_profile']:
-            raise GamingError('Save your community name on Gaming before playing.', 'community_name_required', 409)
+            raise GamingError('Save your Gaming name before playing.', 'community_name_required', 409)
         return wallet['name']
 
     @app.get('/gaming')
@@ -371,13 +387,48 @@ def create_app(root=None, testing=False):
     def gaming_profile():
         require_player_csrf()
         body = request.get_json(silent=True)
-        if not isinstance(body, dict): return json_error('Enter a valid player name.', 422)
+        if not isinstance(body, dict):
+            return json_error('Enter a valid player name.', 422)
         try:
-            profile = boss.register(guest(), g.client_ip, None, body.get('username'))['you']
-            wallet = gaming.confirm_community_name(guest(), profile['display_name'], client_ip=g.client_ip)
+            wallet = gaming.confirm_community_name(guest(), body.get('username'), client_ip=g.client_ip)
             return jsonify(ok=True, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_name'))
+
+    @app.post('/gaming/api/recovery-code')
+    def gaming_recovery_code():
+        require_player_csrf()
+        identity = guest()
+        try:
+            code = recovery_signer.dumps({'player': identity, 'nonce': secrets.token_hex(16)})
+            wallet = gaming.save_recovery(identity, hashlib.sha256(code.encode()).hexdigest())
+            return jsonify(ok=True, code=code, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
+            return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_recovery'))
+
+    @app.post('/gaming/api/recover')
+    def gaming_recover():
+        require_player_csrf()
+        body = request.get_json(silent=True) or {}
+        code = body.get('code', '') if isinstance(body, dict) else ''
+        if not isinstance(code, str) or not 20 <= len(code) <= 512:
+            return json_error('That recovery code is invalid or was replaced.', 400, 'invalid_recovery')
+        decoded = None
+        for signer in (recovery_signer, legacy_recovery_signer):
+            try:
+                decoded = signer.loads(code)
+                break
+            except BadSignature:
+                continue
+        original = (decoded.get('player') or decoded.get('guest')) if isinstance(decoded, dict) else None
+        if not isinstance(original, str) or not re.fullmatch(r'[a-f0-9]{32}', original):
+            return json_error('That recovery code is invalid or was replaced.', 400, 'invalid_recovery')
+        try:
+            wallet = gaming.recover(original, hashlib.sha256(code.encode()).hexdigest(), client_ip=g.client_ip)
+            g.guest = g.new_guest = original
+            return jsonify(ok=True, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)
+        except ValueError as exc:
+            return json_error(str(exc), getattr(exc, 'status', 400), getattr(exc, 'code', 'invalid_recovery'))
 
     @app.post('/gaming/api/bet')
     def gaming_bet():
@@ -426,9 +477,8 @@ def create_app(root=None, testing=False):
     @app.get('/admin/gaming/status')
     @protected
     def admin_gaming_status():
-        # The overview reuses this five-second local read for its boss card.
-        # Neither this endpoint nor its conditional response contacts providers.
-        response = jsonify(ok=True, **gaming.leaders(), boss=boss.summary(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
+        # Local Gaming statistics only; this endpoint never contacts providers.
+        response = jsonify(ok=True, **gaming.leaders(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
         response.set_etag(token(response.get_json()))
         return response.make_conditional(request)
 
@@ -453,163 +503,6 @@ def create_app(root=None, testing=False):
                 return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_grant'))
             return render_admin('gaming', errors={'gaming':str(exc)}, status=getattr(exc, 'status', 422))
 
-    @app.get("/play")
-    def play():
-        return render_play()
-
-    @app.get("/play/api/state")
-    def boss_state():
-        return jsonify(ok=True, state=boss.status(guest(), g.client_ip), csrf=csrf(),
-                       player_csrf=player_csrf(), player_cookie_ready=not bool(getattr(g, 'new_guest', None)))
-
-    def guard_key(identity, category):
-        # Rejected requests belong to a signed browser, not every person behind
-        # its proxy. One bad client must never lock a shared community network.
-        return abuse.key(identity, '')
-
-    def throttled(category, identity, alias):
-        wait = abuse.retry_after(category, guard_key(identity, category))
-        if not wait: return None
-        response = jsonify(ok=False, code='request_throttle',
-                           error=f'Too many rejected requests. Wait {wait} seconds, then try again.')
-        response.headers['Retry-After'] = str(wait)
-        return response, 429
-
-    @app.post('/play/api/recovery-code')
-    def boss_recovery_code():
-        require_player_csrf()
-        identity = guest()
-        limited = throttled('registration', identity, '')
-        if limited: return limited
-        try:
-            code = recovery_signer.dumps({'guest': identity, 'nonce': secrets.token_hex(16)})
-            boss.save_recovery(identity, hashlib.sha256(code.encode()).hexdigest())
-            return jsonify(ok=True, code=code, state=boss.status(identity, g.client_ip), csrf=csrf(), player_csrf=player_csrf())
-        except BossError as exc:
-            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
-            return json_error(str(exc), exc.status)
-
-    @app.post('/play/api/recover')
-    def boss_recover():
-        require_player_csrf()
-        identity = guest()
-        limited = throttled('recovery', identity, '')
-        if limited: return limited
-        body = request.get_json(silent=True) or {}
-        try:
-            code = body.get('code', '') if isinstance(body, dict) else ''
-            if not isinstance(code, str) or not 20 <= len(code) <= 512:
-                raise BadSignature('Invalid recovery code')
-            decoded = recovery_signer.loads(code)
-            original = decoded.get('guest') if isinstance(decoded, dict) else None
-            if not isinstance(original, str) or not re.fullmatch(r'[a-f0-9]{32}', original):
-                raise BadSignature('Invalid recovery code')
-            value = boss.recover_profile(original, g.client_ip, hashlib.sha256(code.encode()).hexdigest(), body.get('raid_id'))
-            g.guest = g.new_guest = original
-            return jsonify(ok=True, state=value, csrf=csrf(), player_csrf=player_csrf())
-        except (BadSignature, BossError) as exc:
-            abuse.rejected('recovery', guard_key(identity, 'recovery'), 'Profile recovery')
-            return json_error('That recovery code is invalid or was replaced.' if isinstance(exc, BadSignature) else str(exc),
-                              getattr(exc, 'status', 400))
-
-    @app.post('/play/profile', endpoint='boss_profile_form')
-    @app.post('/play/api/profile')
-    def boss_profile():
-        require_player_csrf()
-        identity = guest()
-        native = not wants_json()
-        limited = throttled('registration', identity, '')
-        if limited:
-            if not native:
-                return limited
-            response, status = limited
-            return render_play(name_error=response.get_json()['error'], name_draft=request.form.get('username', '')[:64]), status
-        body = request.form if native else request.get_json(silent=True)
-        if native:
-            body = body.to_dict()
-        if not isinstance(body, dict):
-            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
-            return json_error('Send a valid username request.', 400)
-        try:
-            view = boss.register(identity, g.client_ip, body.get('raid_id'), body.get('username'))
-            LOG.info('BOSS Player name saved; browser identity retained (%s).', RELEASE)
-            if native:
-                return redirect(url_for('play', saved='1', _anchor='yourTurn'), code=303)
-            return jsonify(ok=True, state=view, csrf=csrf(), player_csrf=player_csrf())
-        except (ValueError, BossError) as exc:
-            abuse.rejected('registration', guard_key(identity, 'registration'), 'Player setup')
-            status = getattr(exc, 'status', 422)
-            LOG.warning('BOSS Player name rejected (%s); existing player was kept.', getattr(exc, 'code', 'invalid_name'))
-            if native:
-                return render_play(name_error=str(exc), name_draft=str(body.get('username', ''))[:64]), status
-            response = jsonify(ok=False, error=str(exc), code=getattr(exc, 'code', 'invalid_name'), state=boss.status(identity, g.client_ip))
-            if getattr(exc, 'retry_after', 0):
-                response.headers['Retry-After'] = str(exc.retry_after)
-            return response, status
-
-    def boss_admin_view():
-        value = boss.admin_status()
-        value["abuse_flags"] = abuse.status()
-        with runtime.lock:
-            # This is a spelling match only. No provider IP mapping or account
-            # ownership proof exists in the current Shuffle leaderboard contract.
-            names = {r['username'].casefold() for r in runtime.shuffle['rows']}
-        for row in value['admin_leaders']:
-            row['shuffle_name_in_feed'] = row['name_provided'] and row['name'].casefold() in names
-        return value
-
-    @app.get('/admin/boss/status')
-    @protected
-    def boss_admin_state():
-        return jsonify(ok=True, state=boss_admin_view(), csrf=csrf())
-
-    @app.get('/play/avatar/<digest>.png')
-    def boss_avatar_image(digest):
-        if not re.fullmatch(r'[a-f0-9]{64}', digest):
-            abort(404)
-        data = boss.avatar_image(digest)
-        if data is None:
-            abort(404)
-        response = Response(data, mimetype='image/png')
-        response.set_etag(digest)
-        return response.make_conditional(request)
-
-    @app.get("/play/api/contributors")
-    def boss_contributors():
-        # Keep a host restart from mixing one raid's ID with another's recap.
-        with boss.lock:
-            current = boss.summary()
-            if request.args.get("raid_id") != current["raid_id"] or current["status"] != "victory":
-                return json_error("The victory recap belongs to a completed raid. Refresh to see the current raid.", 409)
-            return jsonify(ok=True, raid_id=current["raid_id"], health_revision=current["health_revision"],
-                           contributors=boss.contributors())
-
-    @app.post("/play/api/attack")
-    def boss_attack():
-        require_player_csrf()
-        identity = guest()
-        body = request.get_json(silent=True)
-        view = boss.status(identity, g.client_ip)
-        valid_body = (isinstance(body, dict) and isinstance(body.get('style'), str)
-                      and body['style'] in boss_rules()['styles'])
-        receipt = body.get('request_id') if isinstance(body, dict) else None
-        valid_body = valid_body and isinstance(receipt, str) and bool(re.fullmatch(r'[A-Za-z0-9_-]{8,64}', receipt)) and body.get('raid_id') == view['raid_id']
-        retry = valid_body and receipt == view['you']['last_request']
-        if not (valid_body and view['you']['can_attack']) and not retry:
-            limited = throttled('attack', identity, view['you']['name'])
-            if limited: return limited
-        if not isinstance(body, dict):
-            abuse.rejected('attack', guard_key(identity, 'attack'), view['you']['name'])
-            return json_error("Send a valid attack request.", 400)
-        try:
-            return jsonify(boss.attack(identity, g.client_ip, body.get("style"), body.get("raid_id"), body.get("request_id"), require_profile=True))
-        except BossError as exc:
-            abuse.rejected('attack', guard_key(identity, 'attack'), view['you']['name'])
-            response = jsonify(ok=False, error=str(exc), code=exc.code, state=boss.status(identity, g.client_ip))
-            if exc.retry_after:
-                response.headers["Retry-After"] = str(exc.retry_after)
-            return response, exc.status
-
     @app.get("/data")
     def data():
         return jsonify(runtime.public())
@@ -633,10 +526,10 @@ def create_app(root=None, testing=False):
 
     def recovery_status():
         with runtime.lock:
-            return checkpoint_status(runtime.store.checkpoint(), runtime.admin, runtime.shuffle["rows"], boss.summary(), gaming.recovery())
+            return checkpoint_status(runtime.store.checkpoint(), runtime.admin, runtime.shuffle["rows"], gaming.recovery())
 
     def render_admin(tab=None, draft=None, errors=None, confirm_race=False, restore=None, status=200,
-                     change_review=None, review_token=None, recovery_review=None):
+                     change_review=None, review_token=None, recovery_review=None, section_focus=None):
         if status >= 400 and wants_json():
             return json_error(' '.join((errors or {}).values()) or 'This change could not be saved.', status)
         tab = tab or request.args.get("tab", "overview")
@@ -644,11 +537,14 @@ def create_app(root=None, testing=False):
             tab = "overview"
         values = runtime.status()
         values['gaming'] = gaming.leaders()
-        values['boss'] = boss.summary()
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
         values["providers"] = summarize_providers(values, empire_status)
+        values["durability"] = dict(mode='Spaces mirror' if runtime.store.mirror else 'Local JSON',
+                                    remote=bool(runtime.store.mirror),
+                                    revision=g.revision,
+                                    last_mirrored=(runtime.store.mirror.last_verified if runtime.store.mirror else 0))
         visible = filtered(values["rows"], values["edits"], request.args)
         form = copy.deepcopy(g.admin["site_settings"])
         form.update(start_et=local_input(form["start_time"]), end_et=local_input(form["end_time"]))
@@ -662,11 +558,10 @@ def create_app(root=None, testing=False):
                                revision=(draft or {}).get("revision", g.revision), admin=g.admin, user=g.user,
                                superadmin=g.superadmin, participants=visible, confirm_race=confirm_race, restore=restore,
                                access_log=list(access_log), defaults=DEFAULT_PRIZES, limit=config.limit,
-                               boss_data=boss_admin_view() if tab == "boss" else None,
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review, admin_receipt=receipt,
                                gaming_grant_id=secrets.token_hex(16),
-                               empire_admin=empire_status), status
+                               empire_admin=empire_status, section_focus=section_focus), status
 
     def admin_saved(message, tab, target):
         """A receipt is created only after the state commit succeeds.
@@ -677,76 +572,12 @@ def create_app(root=None, testing=False):
         """
         session['admin_receipt'] = dict(message=message, user=g.user, tab=tab,
                                         target=target, at=int(time.time()))
-        destination = url_for('login', tab=tab, _anchor='feedback-'+target)
+        destination = admin_link(tab) + '#feedback-' + target
         if wants_json():
             return jsonify(ok=True, message=message, redirect=destination, release=RELEASE)
         return redirect(destination, 303)
 
-    @app.post("/admin/boss/action")
-    @protected
-    def boss_control():
-        # g.user is populated only from a current administrator account and its
-        # auth_version, never from a guest cookie or a client-supplied role flag.
-        # Keep every boss configuration write behind this guard, including image decoding.
-        require_csrf()
-        try:
-            action = request.form.get("action", "")
-            if action == "restart" and request.form.get("confirm_restart") != "yes":
-                raise ValueError("Confirm that you want to archive the current raid and start a new one.")
-            if action in {'health', 'remaining_health'} and request.form.get('confirm_health') != 'yes':
-                raise ValueError('Confirm that you want to change this raid\'s health.')
-            if action in {'avatar', 'avatar_reset'}:
-                boss.set_avatar(request.form.get('raid_id'), from_upload(request.files.get('avatar')) if action == 'avatar' else None, actor=g.user)
-            elif action == 'release_player':
-                if request.form.get('confirm_release') != 'yes':
-                    raise ValueError('Confirm the connection release.')
-                boss.release_profile(request.form.get('raid_id'), request.form.get('player_name'), actor=g.user)
-            elif action == 'household':
-                boss.household(request.form.get('raid_id'), request.form.get('player_name'), int(request.form.get('slots', '')), actor=g.user)
-            elif action in {'settings', 'name', 'damage'}:
-                try:
-                    values = {}
-                    if action in {'settings', 'name'}:
-                        values['name'] = request.form.get('boss_name', '')
-                    if action in {'settings', 'damage'}:
-                        values.update(damage=int(request.form.get('base_damage', '')),
-                                      weak_damage=int(request.form.get('weak_damage', '')),
-                                      burst_bonus=int(request.form.get('burst_bonus', '')))
-                    settings_revision = int(request.form.get('settings_revision', '-1'))
-                except ValueError:
-                    raise ValueError('Enter whole numbers for damage and reload if this form is out of date.') from None
-                boss.configure(request.form.get('raid_id'), values, settings_revision,
-                               actor=g.user, partial=action != 'settings')
-            else:
-                boss.control(action, request.form.get("raid_id"), int(request.form.get("health", DEFAULT_HP)),
-                             health_revision=int(request.form.get('health_revision', '-1')) if action in {'health', 'remaining_health'} else None, actor=g.user)
-            message = {'restart':'New community raid is ready.', 'pause':'Community raid paused.', 'resume':'Community raid resumed.',
-                   'health':'Maximum HP updated. Saved damage and cooldowns were kept.',
-                   'remaining_health':'Remaining HP updated. Saved damage and cooldowns were kept.',
-                   'household':'Shared connection allowance saved. Each approved player keeps a 30-second cooldown.',
-                   'release_player':'Connection released. The original browser retains its name and achievements.',
-                   'settings':'Boss name and damage settings saved. New damage values apply to future hits.',
-                   'name':'Boss name saved. Health and damage settings were kept.',
-                   'damage':'Damage settings saved. These apply to future hits; existing progress was kept.',
-                   'avatar':'Boss avatar updated.', 'avatar_reset':'Original boss avatar restored.'}[action]
-            saved = boss.summary()
-            if action in {'health', 'remaining_health', 'restart'}:
-                message += f" Remaining HP: {saved['hp']:,}; maximum HP: {saved['max_hp']:,}."
-            elif action == 'settings':
-                message += f" Name: {values['name']}; base: {values['damage']:,}; weakness: {values['weak_damage']:,}; burst: {values['burst_bonus']:,}."
-            elif action == 'name':
-                message += f" Name: {values['name'].strip()}."
-            elif action == 'damage':
-                message += f" Base: {values['damage']:,}; weakness: {values['weak_damage']:,}; burst: {values['burst_bonus']:,}."
-            LOG.info('BOSS Admin action %s accepted for account %r.', action, g.user)
-            target = {'avatar':'avatarHeading', 'avatar_reset':'avatarHeading', 'health':'healthHeading',
-                      'remaining_health':'healthHeading', 'settings':'bossSettingsHeading',
-                      'name':'bossNameHeading', 'damage':'bossSettingsHeading', 'restart':'bossRestart'}.get(action, 'bossControls')
-            return admin_saved(message, 'boss', target)
-        except ValueError as exc:
-            return render_admin("boss", errors={"boss":str(exc)}, status=422)
-
-    @app.route("/admin", methods=["GET", "POST"])
+    @app.route("/admin", methods=["GET", "POST"], endpoint="admin_main")
     @app.route("/admin/login", methods=["GET", "POST"])
     def login():
         if request.method == "GET":
@@ -775,7 +606,109 @@ def create_app(root=None, testing=False):
         session.update(user=canonical, auth_version=record.get("auth_version", 1), csrf=secrets.token_urlsafe(32))
         session.permanent = True
         LOG.info("ADMIN Sign-in successful.")
-        return redirect(url_for("login", tab="overview"), 303)
+        return redirect(admin_link("overview"), 303)
+
+    # Stable V13 workspace routes. Each visible navigation target resolves
+    # directly to an authenticated page instead of depending on query parsing.
+    def workspace(tab, focus=None):
+        return render_admin(tab, section_focus=focus)
+
+    @app.get('/admin/leaderboards/shuffle')
+    @protected
+    def admin_shuffle_page():
+        return workspace('shuffle')
+
+    @app.get('/admin/leaderboards/shuffle/schedule')
+    @protected
+    def admin_shuffle_schedule_page():
+        return workspace('race')
+
+    @app.get('/admin/leaderboards/shuffle/players')
+    @protected
+    def admin_shuffle_players_page():
+        return workspace('players')
+
+    @app.get('/admin/leaderboards/empiredrop')
+    @protected
+    def admin_empiredrop_page():
+        return workspace('empiredrop')
+
+    @app.get('/admin/leaderboards/empiredrop/schedule')
+    @protected
+    def admin_empiredrop_schedule_page():
+        return workspace('empiredrop', 'empireDatesTitle')
+
+    @app.get('/admin/leaderboards/empiredrop/payouts')
+    @protected
+    def admin_empiredrop_payouts_page():
+        return workspace('empiredrop', 'empireRewards')
+
+    @app.get('/admin/leaderboards/empiredrop/source')
+    @protected
+    def admin_empiredrop_source_page():
+        return workspace('empiredrop', 'empireRaceDetails')
+
+    @app.get('/admin/settings')
+    @protected
+    def admin_settings_page():
+        return workspace('settings')
+
+    @app.get('/admin/recovery')
+    @protected
+    def admin_recovery_page():
+        return workspace('settings', 'recovery')
+
+    @app.get('/admin/activity')
+    @protected
+    def admin_activity_page():
+        return workspace('activity')
+
+    # Cached V9/V10/V11 links remain safe compatibility aliases.
+    @app.get('/admin/section/<section>')
+    @protected
+    def admin_section_compat(section):
+        tab = ADMIN_SECTION_ALIASES.get(section.strip().lower())
+        if tab is None:
+            abort(404, description="Unknown admin section. Open Control Center and try again.")
+        anchor = {'recovery': 'recovery', 'accounts': 'adminAccounts',
+                  'connections': 'configurationDetails'}.get(section)
+        return redirect(admin_link(tab, anchor) if anchor else admin_link(tab), code=302)
+
+    # Old bookmarked paths redirect to canonical destinations.
+    legacy_destinations = {
+        '/admin/overview': 'overview', '/admin/leaderboards': 'shuffle',
+        '/admin/shuffle': 'shuffle', '/admin/race': 'race',
+        '/admin/schedule': 'race', '/admin/players': 'players',
+        '/admin/empiredrop': 'empiredrop', '/admin/community': 'gaming',
+        '/admin/logs': 'activity',
+    }
+    for legacy_path, legacy_tab in legacy_destinations.items():
+        def legacy_admin_destination(_tab=legacy_tab):
+            return redirect(admin_link(_tab), code=302)
+        endpoint = 'admin_compat_' + legacy_path.strip('/').replace('/', '_')
+        app.add_url_rule(legacy_path, endpoint=endpoint, view_func=protected(legacy_admin_destination), methods=['GET'])
+
+    required_actions = {
+        '/admin', '/admin/section/<section>', '/admin/action', '/admin/logout',
+        '/admin/leaderboards/shuffle', '/admin/leaderboards/shuffle/schedule',
+        '/admin/leaderboards/shuffle/players', '/admin/leaderboards/empiredrop',
+        '/admin/leaderboards/empiredrop/schedule', '/admin/leaderboards/empiredrop/payouts',
+        '/admin/leaderboards/empiredrop/source', '/admin/gaming', '/admin/settings',
+        '/admin/recovery', '/admin/activity',
+        '/admin/empiredrop/refresh', '/admin/empiredrop/schedule',
+        '/admin/empiredrop/rewards', '/admin/empiredrop/races/config',
+        '/admin/empiredrop/keys'
+    }
+
+    @app.get('/admin/navigation-status')
+    @protected
+    def admin_navigation_status():
+        """Safe diagnostic: destinations and methods only, no credentials."""
+        return jsonify(ok=True, release=RELEASE, sections={
+            name: admin_link(tab) for name, tab in ADMIN_SECTION_ALIASES.items()
+        }, registered=[{'path': rule.rule, 'methods': sorted(rule.methods - {'HEAD','OPTIONS'})}
+                      for rule in app.url_map.iter_rules()
+                      if rule.rule.startswith('/admin') and not '<' in rule.rule])
 
     @app.post("/admin/logout")
     def logout():
@@ -791,7 +724,6 @@ def create_app(root=None, testing=False):
         # receive them unless they explicitly opt out of this duplicate body.
         if request.args.get('gaming') != '0':
             value['gaming'] = gaming.leaders()
-        value['boss'] = boss.summary()
         value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
         value["providers"] = summarize_providers(value, runtime.empiredrop.private_status(g.admin["site_settings"]))
@@ -816,7 +748,7 @@ def create_app(root=None, testing=False):
         require_csrf()
         if runtime.started:
             queued = runtime.empiredrop.request_refresh()
-            if queued: activity.record('empiredrop','info','refresh_queued')
+            if queued: safe_activity('empiredrop','info','refresh_queued')
             message = ('EmpireDrop refresh requested; check status for the confirmed result.' if queued
                        else 'A refresh was requested recently; the 15-second limit is still active.')
         else:
@@ -850,7 +782,7 @@ def create_app(root=None, testing=False):
             result = {'ok': True, 'kind': 'verified', 'message': 'Authenticated result validated. No standings were changed.',
                       'qualified_players': len(rows)}
             status = 200
-        activity.record('empiredrop','success' if status==200 else 'warning','connection_test',count=len(rows) if status==200 else None,
+        safe_activity('empiredrop','success' if status==200 else 'warning','connection_test',count=len(rows) if status==200 else None,
                         code=exc.kind if status!=200 and isinstance(exc,ProviderError) else None)
         return jsonify(result), status
 
@@ -900,7 +832,7 @@ def create_app(root=None, testing=False):
             candidate['empiredrop_races'] = validate_race_settings(values)
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
-            activity.record('admin','info','settings_saved',code='empire_settings')
+            safe_activity('admin','info','settings_saved',code='empire_settings')
             return admin_saved('EmpireDrop race API settings saved; a refresh was queued. Verify results before publishing.',
                                'empiredrop', 'empireRaces')
         except (ValueError, Conflict) as exc:
@@ -938,7 +870,7 @@ def create_app(root=None, testing=False):
             candidate['empiredrop_races'] = race_options
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
-            activity.record('admin','info','settings_saved',code='empire_schedule')
+            safe_activity('admin','info','settings_saved',code='empire_schedule')
             return admin_saved('EmpireDrop schedule saved independently of Shuffle.', 'empiredrop', 'empireSchedule')
         except (ValueError, Conflict) as exc:
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
@@ -947,30 +879,65 @@ def create_app(root=None, testing=False):
     @app.post('/admin/empiredrop/rewards')
     @protected
     def empire_admin_rewards():
-        """Save *independent* locally advertised rank prizes, not payments.
+        """Atomically save a draft or publish ten independent rank prizes.
 
-        Never copy Shuffle amounts implicitly, change provider ranking data,
-        or infer that an API prize has been paid. Tied ranks share a local
-        advertised rank prize as documented in the public UI.
+        This form has its own revision counter. Unrelated Shuffle, account or
+        integration changes no longer invalidate an open payout editor.
         """
         require_csrf()
-        if not g.superadmin: abort(403)
+        if not g.superadmin:
+            abort(403)
         try:
-            expected = int(request.form.get('revision','-1'))
-            if expected != g.revision:
-                raise Conflict('Another administrator changed settings. Reload before saving.')
-            payload = dict(currency=request.form.get('currency','EUR'),
-                           enabled=request.form.get('enabled')=='yes',
-                           prizes={str(n):request.form.get('prize_'+str(n),'') for n in range(1,11)})
-            value = validate_rewards(payload)
-            candidate = copy.deepcopy(g.admin)
-            candidate['empiredrop_rewards'] = value
-            runtime.commit(candidate, expected)
-            activity.record('admin','info','settings_saved',code='empire_rewards')
-            return admin_saved('EmpireDrop reward schedule saved. Shuffle prizes were not changed.',
-                               'empiredrop','empireRewards')
-        except (ValueError, Conflict) as exc:
-            return render_admin('empiredrop', errors={'empiredrop':str(exc)},
+            expected = int(request.form.get('reward_revision', '0'))
+            mode = request.form.get('save_mode', 'draft')
+            if mode not in {'draft', 'publish'}:
+                raise ValueError('Choose Save draft or Save and publish.')
+            with runtime.store.connection(transaction=True) as conn:
+                published = validate_rewards(conn['admin'].get('empiredrop_rewards', {}))
+                current = validate_rewards(conn['admin'].get('empiredrop_rewards_draft',
+                                                             conn['admin'].get('empiredrop_rewards', {})))
+                if expected != current['revision']:
+                    raise Conflict('EmpireDrop prizes changed in another tab. Reload and review the saved values.')
+                payload = dict(
+                    currency=request.form.get('currency', 'EUR'),
+                    enabled=mode == 'publish',
+                    prizes={str(n): request.form.get('prize_' + str(n), '') for n in range(1, 11)},
+                    revision=current['revision'] + 1,
+                    updated_at=int(time.time()),
+                    updated_by=g.user,
+                )
+                value = validate_rewards(payload)
+                runtime.store.backup_in(conn, 'before-empiredrop-payout-change',
+                                        {'empiredrop_rewards': published,
+                                         'empiredrop_rewards_draft': current})
+                conn['admin']['empiredrop_rewards_draft'] = copy.deepcopy(value)
+                if mode == 'publish':
+                    conn['admin']['empiredrop_rewards'] = copy.deepcopy(value)
+                conn['admin']['settings_revision'] = int(conn['admin'].get('settings_revision', 1)) + 1
+                conn['admin']['updated_at'] = int(time.time())
+                conn['revision'] += 1
+            runtime.sync()
+            _, persisted_admin = runtime.store.admin()
+            persisted = validate_rewards(persisted_admin.get('empiredrop_rewards_draft',
+                                                                persisted_admin.get('empiredrop_rewards', {})))
+            if persisted != value:
+                raise StoreError('The payout write could not be verified. Existing public prizes were not changed.')
+            public_prizes = runtime.empiredrop.public().get('prizes', {})
+            expected_public = rewards_public(value)
+            if mode == 'publish' and public_prizes != expected_public:
+                raise StoreError('The payout was saved but the public projection did not refresh. Reload before retrying.')
+            safe_activity('admin', 'success', 'empire_rewards_published' if mode == 'publish' else 'empire_rewards_draft',
+                            code='empire_rewards', count=10)
+            message = (
+                'EmpireDrop prizes saved and published on the public Top 10.'
+                if mode == 'publish' else
+                'EmpireDrop prize draft saved. The public leaderboard still shows the previously published state.'
+            )
+            return admin_saved(message, 'empiredrop', 'empireRewards')
+        except (ValueError, Conflict, StoreError) as exc:
+            safe_activity('admin', 'warning', 'empire_rewards_save_failed',
+                            code='conflict' if isinstance(exc, Conflict) else 'validation')
+            return render_admin('empiredrop', errors={'empiredrop': str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
 
     @app.get('/admin/empiredrop/settings-backup')
@@ -980,12 +947,13 @@ def create_app(root=None, testing=False):
         if not g.superadmin: abort(403)
         _, current = runtime.store.admin()
         document = {
-            'format': 'redhunllef-empiredrop-settings-1',
+            'format': 'redhunllef-empiredrop-settings-2',
             'empiredrop_races': validate_race_settings(current.get('empiredrop_races', {})),
             'empiredrop_race': copy.deepcopy(current.get('empiredrop_race', {'mode':'weekly'})),
             'empiredrop_rewards': validate_rewards(current.get('empiredrop_rewards', {})),
+            'empiredrop_rewards_draft': validate_rewards(current.get('empiredrop_rewards_draft', current.get('empiredrop_rewards', {}))),
         }
-        activity.record('admin','info','backup_export')
+        safe_activity('admin','info','backup_export')
         return Response(json.dumps(document,indent=2),mimetype='application/json',
                         headers={'Content-Disposition':'attachment; filename=empiredrop-settings-backup.json'})
 
@@ -1012,9 +980,13 @@ def create_app(root=None, testing=False):
                 incoming = json.load(upload)
             except (ValueError,UnicodeDecodeError):
                 raise ValueError('The selected file is not valid JSON.') from None
-            if not isinstance(incoming,dict) or set(incoming)!={
-                'format','empiredrop_races','empiredrop_race','empiredrop_rewards'} or                incoming.get('format')!='redhunllef-empiredrop-settings-1':
+            if not isinstance(incoming, dict) or incoming.get('format') not in {
+                    'redhunllef-empiredrop-settings-1', 'redhunllef-empiredrop-settings-2'}:
                 raise ValueError('This is not a supported EmpireDrop settings backup.')
+            required = {'format','empiredrop_races','empiredrop_race','empiredrop_rewards'}
+            allowed = required | {'empiredrop_rewards_draft'}
+            if not required.issubset(incoming) or set(incoming) - allowed:
+                raise ValueError('This EmpireDrop settings backup has unexpected fields.')
             race = incoming['empiredrop_race']
             if not isinstance(race,dict) or race.get('mode') not in {'weekly','custom'}:
                 raise ValueError('Invalid EmpireDrop race schedule in backup.')
@@ -1026,13 +998,14 @@ def create_app(root=None, testing=False):
             else:
                 race={'mode':'weekly'}
             reward = validate_rewards(incoming['empiredrop_rewards'])
+            reward_draft = validate_rewards(incoming.get('empiredrop_rewards_draft', reward))
             opts = validate_race_settings(incoming['empiredrop_races'])
             candidate = copy.deepcopy(g.admin)
-            candidate.update(empiredrop_races=opts,empiredrop_race=race,
-                             empiredrop_rewards=reward)
+            candidate.update(empiredrop_races=opts, empiredrop_race=race,
+                             empiredrop_rewards=reward, empiredrop_rewards_draft=reward_draft)
             runtime.commit(candidate,expected,reason='before-empiredrop-settings-restore')
             runtime.empiredrop.request_refresh()
-            activity.record('admin','info','settings_saved')
+            safe_activity('admin','info','settings_saved')
             return admin_saved('EmpireDrop settings restored. Accounts, games, Shuffle and API keys were not changed.',
                                'empiredrop','empireBackup')
         except (ValueError,Conflict) as exc:
@@ -1153,7 +1126,7 @@ def create_app(root=None, testing=False):
     @app.get("/admin/backup")
     @protected
     def backup():
-        activity.record('admin','info','backup_export')
+        safe_activity('admin','info','backup_export')
         return Response(json.dumps(safe_backup(), indent=2), mimetype="application/json",
                         headers={"Content-Disposition":"attachment; filename=redhunllef-race-backup.json"})
 
@@ -1171,11 +1144,9 @@ def create_app(root=None, testing=False):
             saved = conn['live']['shuffle']
             value['leaderboard_snapshots'] = dict(race_key=saved['key'], last_top15=copy.deepcopy(saved['rows'][:15]),
                 prev_top15=copy.deepcopy(saved.get('previous_top', [])), updated_at=saved['updated_at'])
-            value['community_boss'] = copy.deepcopy(conn['boss'])
-            value['community_boss_avatar'] = copy.deepcopy(conn.get('avatar'))
             value['weekly_history'] = copy.deepcopy(conn['live'].get('weekly_history'))
             value['redpoints'] = copy.deepcopy(conn.get('gaming'))
-            marker = export_marker(conn['admin'], value["leaderboard_snapshots"], value["community_boss"], int(time.time()), value["redpoints"])
+            marker = export_marker(conn['admin'], value["leaderboard_snapshots"], int(time.time()), value["redpoints"])
             value["recovery_export"] = marker
             conn['checkpoint'] = marker
         return Response(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False), mimetype="application/json",
@@ -1194,14 +1165,13 @@ def create_app(root=None, testing=False):
             value, _ = upgrade_store(json.load(upload), config.site, {})
             if not value["users"]:
                 raise ValueError("The recovery file contains no administrator accounts.")
-            game = validate_boss(value["community_boss"]) if value.get("community_boss") is not None else None
-            avatar = validate_avatar(value.get('community_boss_avatar'))
+            # Older recovery files may include retired profile fields; they are
+            # ignored rather than restored into the current application.
             redpoints = validate_gaming(value.get('redpoints'))
             review = dict(accounts=len(value["users"]), overrides=len(value["overrides"]),
                           history=len(value["race_history"]), rows=len(value["leaderboard_snapshots"]["last_top15"]),
                           start=fmt_et(value["site_settings"]["start_time"]), end=fmt_et(value["site_settings"]["end_time"]),
-                          game=game and dict(hp=game["hp"], max_hp=game["max_hp"], raiders=len(game["players"]), attacks=game["total_attacks"]),
-                          avatar=bool(avatar), redpoints=len(redpoints['players']) if redpoints else 0)
+                          redpoints=len(redpoints['players']) if redpoints else 0)
             with runtime.store.connection() as conn:
                 old_players = (conn.get('gaming') or {}).get('players', {})
                 new_players = (redpoints or {}).get('players', {})
@@ -1277,7 +1247,7 @@ def create_app(root=None, testing=False):
                 return jsonify(ok=True, message="Refresh queued. Its progress and result appear below.",
                                **receipt, jobs=runtime.job_status()), 202
             flash("Check requested. Results update automatically.")
-            return redirect(url_for("login", tab=tab), 303)
+            return redirect(admin_link(tab if tab in TABS else "overview"), 303)
         try:
             expected = int(request.form.get("revision", "0"))
             if expected != g.revision:
@@ -1409,7 +1379,7 @@ def create_app(root=None, testing=False):
             # One sanitized operational event for the control panel. The detailed
             # account/adjustment audit remains in the protected persistent audit.
             if action_name in {'save_race', 'override', 'restore'}:
-                activity.record('admin', 'info', 'settings_saved', code='shuffle_settings')
+                safe_activity('admin', 'info', 'settings_saved', code='shuffle_settings')
             LOG.info("ADMIN %s completed.", action_name)
             if action_name == 'save_race':
                 detail = f"Race saved: {candidate['site_settings']['race_title']}. {fmt_et(site['start_time'])} → {fmt_et(site['end_time'])}. Fresh source check queued."
@@ -1421,6 +1391,9 @@ def create_app(root=None, testing=False):
             return render_admin(tab, dict(request.form) if tab == "race" else None,
                                 errors={"form":str(exc)}, status=409 if isinstance(exc, Conflict) else 422)
 
+    missing_admin_actions = required_actions - {rule.rule for rule in app.url_map.iter_rules()}
+    if missing_admin_actions:
+        raise RuntimeError("Missing admin routes: " + ", ".join(sorted(missing_admin_actions)))
     return app
 
 
@@ -1453,12 +1426,13 @@ def main():
         listener_seconds = time.perf_counter() - boot_started - preflight_seconds - application_seconds
         LOG.info("BOOT stages: preflight=%.3fs application=%.3fs listener=%.3fs",
                  preflight_seconds, application_seconds, listener_seconds)
-        LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port, "local JSON")
+        LOG.info("START RedHunllef %s listening on 0.0.0.0:%s; storage=%s.", RELEASE, config.port,
+                 'JSON + Spaces mirror' if runtime.store.mirror else 'local JSON')
         LOG.info('HEALTH /healthz checks the process; /readyz checks local reads and writes. Provider delays appear separately in Admin Overview.')
-        LOG.info("BOSS Shared raid at /play; screens update every 5s, attacks every 30s, no daily cap. Identity and cooldowns follow signed browser cookies, never shared IPs. Names are self-reported; public feeds stay anonymous. Host controls: /admin?tab=boss.")
+        LOG.info("GAMING RedPoints identities, wallets and recovery are handled independently at /gaming.")
         if not runtime.store.pg:
             LOG.info("STORAGE Local file ready; no external database is required.")
-            if config.production:
+            if config.production and not runtime.store.mirror:
                 LOG.warning("STORAGE On App Platform, local changes are lost on redeploy/container replacement. Download the private recovery file from Settings after important changes.")
         for key, details in config.diagnostics().items():
             LOG.info("CONFIG %s: %s (%s).", key, "configured" if details["configured"] else "missing", details["source"])

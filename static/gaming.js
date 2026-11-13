@@ -301,6 +301,7 @@
     }
     id("gamingIdentity").hidden = next.needs_profile;
     id("gamingPlayerName").textContent = next.name;
+    if (id("gamingCreateRecovery")) id("gamingCreateRecovery").disabled = next.needs_profile;
     if (id("fairCommitment"))
       id("fairCommitment").textContent =
         next.commitment || "Save your name to prepare a commitment.";
@@ -1207,6 +1208,67 @@
       message();
     } catch (error) {
       message(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  function openRecovery() {
+    const panel = id("gamingRecovery");
+    if (!panel) return;
+    panel.open = true;
+    panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    id("gamingRecoveryCode")?.focus();
+  }
+  id("openGamingRecovery")?.addEventListener("click", openRecovery);
+  id("openGamingRecoveryIdentity")?.addEventListener("click", openRecovery);
+  id("editGamingName")?.addEventListener("click", () => {
+    id("gamingProfile").hidden = false;
+    id("gamingUsername").value = wallet?.name || "";
+    id("gamingUsername").focus();
+  });
+  id("gamingCreateRecovery")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    const status = id("gamingRecoveryMessage");
+    try {
+      const value = await api("/gaming/api/recovery-code", {});
+      renderWallet(value.wallet);
+      id("gamingRecoveryCode").value = value.code;
+      id("gamingCopyRecovery").hidden = false;
+      status.textContent = "New recovery code created. Save it somewhere private; older codes no longer work.";
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      button.disabled = Boolean(wallet?.needs_profile);
+    }
+  });
+  id("gamingCopyRecovery")?.addEventListener("click", async () => {
+    const code = id("gamingRecoveryCode").value.trim();
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      id("gamingRecoveryMessage").textContent = "Recovery code copied.";
+    } catch {
+      id("gamingRecoveryCode").select();
+      id("gamingRecoveryMessage").textContent = "Copy the selected recovery code.";
+    }
+  });
+  id("gamingRecoverPlayer")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const status = id("gamingRecoveryMessage");
+    const code = id("gamingRecoveryCode").value.trim();
+    if (!code) { status.textContent = "Paste a recovery code first."; return; }
+    button.disabled = true;
+    try {
+      const value = await api("/gaming/api/recover", { code });
+      renderWallet(value.wallet);
+      id("gamingRecovery").open = false;
+      id("gamingRecoveryCode").value = "";
+      id("gamingCopyRecovery").hidden = true;
+      message();
+      status.textContent = "Player restored on this browser.";
+    } catch (error) {
+      status.textContent = error.message;
     } finally {
       button.disabled = false;
     }
