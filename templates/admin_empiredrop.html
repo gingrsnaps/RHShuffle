@@ -109,13 +109,15 @@
   <form method="post" action="/admin/empiredrop/races/config" class="stack" data-dirty>
     <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
     {% set rc = empire_admin.race_configuration %}
+    <input type="hidden" name="source_mode" value="races">
+    <input type="hidden" name="race_window_policy" value="provider">
     <div class="form-grid">
-      <div class="field"><label for="empireSourceMode">Leaderboard source</label><select name="source_mode" id="empireSourceMode"><option value="races" {% if rc.source_mode=='races' %}selected{% endif %}>Official EmpireDrop race · provider-controlled dates (recommended)</option><option value="legacy_window" {% if rc.source_mode=='legacy_window' %}selected{% endif %}>Weekly/custom dates · deprecated time-range API</option><option value="legacy" {% if rc.source_mode=='legacy' %}selected{% endif %}>Old advanced adapter (compatibility only)</option></select></div>
-      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = auto-select the only running wager race"><small>For a finished or scheduled race, enter its slug from your EmpireDrop dashboard.</small></div>
-      <div class="field"><label for="empireRacePolicy">Race reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Official EmpireDrop start_date / end_date (recommended)</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Require a match with local Tuesday 6 PM ET</option></select></div>
-      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is running</label></div>
+      <div class="field"><label for="empireSourceModeReadonly">Leaderboard source</label><input id="empireSourceModeReadonly" value="Official EmpireDrop partner race API" readonly aria-readonly="true"><small>Uses the documented race slug endpoint and both production API-key headers.</small></div>
+      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = choose the best active wager race"><small>Enter the exact slug to lock the board to one race. Leave blank to match the active WAGER/RANKING race to the saved week.</small></div>
+      <div class="field"><label for="empireRacePolicyReadonly">Race reporting period</label><input id="empireRacePolicyReadonly" value="EmpireDrop start_date / end_date" readonly aria-readonly="true"><small>The provider's official race dates control the returned standings.</small></div>
+      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select the active wager race</label></div>
     </div>
-    <p class="small muted">Official race dates cannot be edited here. To run a different official week, create/select the corresponding race in EmpireDrop and enter its slug. Custom date windows use the documented but deprecated API; it may stop working. The website displays up to 10 positions, and the API may return fewer than 10 when race.ranks_limit is smaller.</p>
+    <p class="small muted">The deprecated timestamp endpoint is no longer selected by ordinary schedule edits. The website displays up to 10 official positions and respects EmpireDrop's race.ranks_limit.</p>
     <button type="submit" class="button primary">Save race API connection</button>
   </form>
   {% else %}<p class="small muted">Race API diagnostics are available to the Superadmin only.</p>{% endif %}

@@ -503,14 +503,17 @@
     site = value.site;
     offset = value.server_time * 1000 - (began + Date.now()) / 2;
     sourceAt = value.freshness.updated_at;
-    text(id("raceTitle"), site.race_title);
-    text(id("raceDescription"), site.race_description);
     text(id("sponsorName"), site.sponsor_name);
     text(id("poolTotal"), site.total_prize);
     text(id("playerCount"), value.count);
     text(id("dataState"), value.freshness.label);
     text(id("sourceTime"), date(sourceAt));
-    notice("leaderboardMessage", value.leaderboard_message || "");
+    // Visitors get a single calm availability state. Provider diagnostics and
+    // request details remain in the authenticated Admin Control Center.
+    notice(
+      "leaderboardMessage",
+      isAdmin ? value.leaderboard_message || "" : value.rows?.length ? "" : "Standings are temporarily unavailable.",
+    );
     notice(
       "sourceWarning",
       [value.freshness.warning, isAdmin ? value.freshness.error : ""]
@@ -776,7 +779,7 @@
       )
         notice(
           "networkError",
-          "A newer version was deployed. Save your draft, then reload.",
+          isAdmin ? "A newer version was deployed. Save your draft, then reload." : "Standings are temporarily unavailable.",
         );
     } catch (error) {
       notice(

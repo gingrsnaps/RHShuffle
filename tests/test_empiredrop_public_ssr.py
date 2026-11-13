@@ -10,7 +10,7 @@ from jinja2 import Environment, StrictUndefined, select_autoescape
 
 INDEX = (Path(__file__).resolve().parents[1] / 'templates/index.html').read_text(encoding='utf-8')
 # Render the actual fragment (the complete page also requires the complete Shuffle context).
-FRAGMENT = INDEX[INDEX.index('{# Server-render verified standings'): INDEX.index('<p class="leaderboard-foot">Names masked')]
+FRAGMENT = INDEX[INDEX.index('{# Server-render verified standings start #}'): INDEX.index('{# Server-render verified standings end #}')]
 
 
 def render(rows, limit=15, enabled=False):
@@ -38,7 +38,7 @@ class InitialHTMLTests(unittest.TestCase):
             self.assertIn(f'{wager}="{i}">€{i*100}.00', html)
         for i in range(11,16):
             self.assertNotIn(f'data-empire-row-name="{i}"', html)
-        self.assertIn('Showing 10 of 10 leaderboard positions',html)
+        self.assertEqual(html.count('data-empire-row-name='), 7)
 
     def test_fifteen_provider_players_display_only_top_ten(self):
         html=render(sample(15),limit=15,enabled=True)
@@ -46,7 +46,7 @@ class InitialHTMLTests(unittest.TestCase):
             self.assertIn(f'P{i:02}******',html)
         for i in range(11,16):
             self.assertNotIn(f'P{i:02}******',html)
-        self.assertIn('Top 10 of 15 supplied by EmpireDrop',html)
+        self.assertEqual(html.count('data-empire-row-name='), 7)
         self.assertNotIn('Not reported by EmpireDrop',html)
 
     def test_tied_ranks_and_escaping(self):

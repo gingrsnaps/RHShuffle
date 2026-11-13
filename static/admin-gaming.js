@@ -23,8 +23,12 @@
     season = Number(data.season.id);
     revision = data.revision;
     id("gamingAdminReset").textContent = `Weekly reset: ${data.season.end_et}.`;
+    const publicActivity = data.public_activity || {};
     id("gamingAdminSummary").textContent =
-      `Players: ${fmt(data.player_count)} · Rounds: ${fmt(data.completed_rounds)} · Active hands: ${fmt(data.active_hands)}`;
+      `Players: ${fmt(data.player_count)} · Rounds: ${fmt(data.completed_rounds)} · Active hands: ${fmt(data.active_hands)} · Publicly active: ${fmt(publicActivity.active_count || 0)}`;
+    if (id('gamingPublicActive')) id('gamingPublicActive').textContent = fmt(publicActivity.active_count || 0);
+    if (id('gamingPublicLeadersCount')) id('gamingPublicLeadersCount').textContent = fmt((publicActivity.weekly_leaders || []).length);
+    if (id('gamingPublicRevision')) id('gamingPublicRevision').textContent = fmt(publicActivity.revision || 0);
     const grant = data.last_grant;
     id("gamingLastGrant").textContent = grant
       ? `Last grant: ${grant.actor} · +${fmt(grant.amount)} each · ${fmt(grant.players)} ${grant.players === 1 ? "wallet" : "wallets"} · ${new Date(grant.at * 1000).toLocaleString()}`
@@ -87,6 +91,7 @@
                 `${fmt(row.balance)} available RP · player ${row.player_tag}`,
                 `IPs: ${row.ips.join(", ") || "Not linked this week yet"}`,
                 `Funding adjustments: ${(row.funding_adjustment || 0) >= 0 ? "+" : ""}${fmt(row.funding_adjustment || 0)} RP · excluded from winnings`,
+                `Public Gaming name: ${row.public_visibility ? "Visible" : "Hidden"}${row.last_game ? ` · last game ${row.last_game === "poker" ? "Hold’em" : row.last_game}` : ""}${row.last_action_at ? ` · ${new Date(row.last_action_at * 1000).toLocaleString()}` : ""}`,
               ]) {
                 const node = document.createElement("small");
                 node.textContent = value;

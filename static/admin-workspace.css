@@ -169,3 +169,13 @@ body[data-page="admin"] .admin-subnav a[aria-disabled="true"] {pointer-events:no
 /* V12 reliability-first editors */
 .admin-payout-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}.admin-payout-summary>div{display:flex;flex-direction:column;gap:4px;padding:14px;border:1px solid var(--line,#3b303a);border-radius:12px;background:#17151c}.admin-payout-summary strong{font-size:1.05rem}.admin-payout-summary small{display:block}.admin-sticky-form{padding-bottom:78px}.admin-save-bar{position:sticky;z-index:8;bottom:12px;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #49343e;border-radius:14px;background:rgba(23,20,27,.97);box-shadow:0 16px 42px #0008;backdrop-filter:blur(14px)}.admin-save-bar>div{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}.admin-save-bar small{color:var(--muted,#aaa)}.compact-field{max-width:320px}
 @media(max-width:760px){.admin-payout-summary{grid-template-columns:1fr}.admin-save-bar{align-items:stretch;flex-wrap:wrap}.admin-save-bar>div{flex-basis:100%}.admin-save-bar .button{flex:1}}
+
+.gaming-admin-live{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:20px;margin:0 0 18px}
+.gaming-admin-live h3{margin:4px 0 6px}
+.gaming-admin-live p{margin:0}
+.gaming-admin-live dl{display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:10px;margin:0}
+.gaming-admin-live dl div{padding:12px;border-radius:10px;background:#17151b;border:1px solid #39323b}
+.gaming-admin-live dt{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.gaming-admin-live dd{margin:5px 0 0;font-size:1.1rem;font-weight:750;font-variant-numeric:tabular-nums}
+@media(max-width:780px){.gaming-admin-live{align-items:flex-start;flex-direction:column}.gaming-admin-live dl{width:100%}}
+@media(max-width:520px){.gaming-admin-live dl{grid-template-columns:1fr}}

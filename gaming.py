@@ -10,6 +10,7 @@ import ipaddress
 import logging
 import re
 import secrets
+import threading
 import time
 
 from fairness import VERSION, BLACKJACK_VERSIONS, POKER_VERSIONS, GAMES, commitment, options_for, outcome, max_payout
@@ -22,6 +23,10 @@ MAX_PLAYERS = 10000
 RECEIPTS = 30
 MAX_IP_BINDINGS = MAX_PLAYERS * 4
 MAX_GRANTS = 100
+PUBLIC_LIVE_SECONDS = 120
+PUBLIC_NOW_SECONDS = 30
+PUBLIC_LEADER_LIMIT = 10
+PUBLIC_LIVE_LIMIT = 20
 
 
 class GamingError(ValueError):
@@ -142,6 +147,15 @@ def validate_gaming(value):
             raise ValueError('Invalid RedPoints display name.')
         if type(player.get('community_name_confirmed', False)) is not bool:
             raise ValueError('Invalid community-name confirmation.')
+        if type(player.get('public_visibility', False)) is not bool:
+            raise ValueError('Invalid public Gaming visibility.')
+        last_game = player.get('last_game', '')
+        if not isinstance(last_game, str) or (last_game and last_game not in GAMES):
+            raise ValueError('Invalid recent Gaming activity.')
+        for field in ('last_action_at', 'last_round_at'):
+            value_at = player.get(field, 0)
+            if type(value_at) not in (int, float) or not 0 <= value_at <= 10**12:
+                raise ValueError('Invalid recent Gaming timestamp.')
         recovery_hash = player.get('recovery_hash')
         if recovery_hash is not None and (not isinstance(recovery_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', recovery_hash)):
             raise ValueError('Invalid Gaming recovery digest.')
@@ -220,6 +234,9 @@ def validate_gaming(value):
                 seen.add(receipt['request_id'])
             except (KeyError, TypeError, ValueError):
                 raise ValueError('A saved RedPoints receipt failed verification.') from None
+    activity_revision = value.get('activity_revision', 0)
+    if type(activity_revision) is not int or not 0 <= activity_revision <= MAX_NUMBER:
+        raise ValueError('Invalid public Gaming activity revision.')
     grants = value.get('admin_grants', [])
     if not isinstance(grants, list) or len(grants) > MAX_GRANTS:
         raise ValueError('Invalid RedPoints grant history.')
@@ -264,15 +281,28 @@ def validate_gaming(value):
 class Gaming:
     def __init__(self, store):
         self.store = store
+        self._public_cache_lock = threading.RLock()
+        self._public_cache_key = None
+        self._public_cache_value = None
+        self._public_cache_expires_at = 0
         with store.connection() as conn:
             validate_gaming(conn.get('gaming'))
         # Adding a game never resets an existing wallet, seed or receipt.
+        # Public activity fields are additive and default private for existing
+        # players until they explicitly opt in from the Gaming profile.
         with store.connection(transaction=True) as conn:
-            data = conn.get('gaming') or {}
+            if conn.get('gaming') is None:
+                conn['gaming'] = dict(version=1, players={}, activity_revision=0)
+            data = conn['gaming']
+            data.setdefault('activity_revision', 0)
             for player in data.get('players', {}).values():
                 upgrade_poker_stats(player)
                 for game, stats in fresh_stats().items():
                     player['stats'].setdefault(game, stats)
+                player.setdefault('public_visibility', False)
+                player.setdefault('last_game', '')
+                player.setdefault('last_action_at', 0)
+                player.setdefault('last_round_at', 0)
             self._upgrade_networks(data.get('ip_guard'))
 
     def restart_balances(self, now=None):
@@ -314,14 +344,17 @@ class Gaming:
     def _player(self, conn, identity, name, now):
         current = season(now)
         if conn.get('gaming') is None:
-            conn['gaming'] = dict(version=1, players={})
+            conn['gaming'] = dict(version=1, players={}, activity_revision=0)
+        conn['gaming'].setdefault('activity_revision', 0)
         players = conn['gaming']['players']
         key = player_key(identity)
         if key not in players:
             if len(players) >= MAX_PLAYERS:
                 raise GamingError('The player registry is full. Contact the host.', 'capacity', 409)
             players[key] = dict(name=name, season=current['id'], balance=START_POINTS, stats=fresh_stats(),
-                                nonce=0, version=1, poker_stats_version=2, server_seed=secrets.token_hex(32), receipts=[], last_bet_at=0)
+                                nonce=0, version=1, poker_stats_version=2, server_seed=secrets.token_hex(32),
+                                receipts=[], last_bet_at=0, public_visibility=False, last_game='',
+                                last_action_at=0, last_round_at=0)
         player = players[key]
         upgrade_poker_stats(player)
         for game, stats in fresh_stats().items():
@@ -331,6 +364,22 @@ class Gaming:
             player['name'] = name
             player['version'] += 1
         return player, current
+
+    @staticmethod
+    def _touch_activity(data, player, game, now, *, round_completed=False):
+        """Record only server-confirmed game actions for the public activity feed.
+
+        Page views and five-second wallet polls never call this helper, so they
+        cannot make a visitor appear to be actively playing.
+        """
+        if game not in GAMES:
+            return
+        stamp = int(now)
+        player['last_game'] = game
+        player['last_action_at'] = stamp
+        if round_completed:
+            player['last_round_at'] = stamp
+        data['activity_revision'] = min(MAX_NUMBER, int(data.get('activity_revision', 0)) + 1)
 
     @staticmethod
     def _rollover(player, current):
@@ -432,6 +481,7 @@ class Gaming:
                     poker_button='player' if player['stats'].get('poker', {}).get('bets', 0) % 2 == 0 else 'computer',
                     receipts=copy.deepcopy(player['receipts']),
                     needs_profile=not player.get('community_name_confirmed', False),
+                    public_visibility=bool(player.get('public_visibility', False)),
                     rules_version=VERSION, ip_bound=False, play_blocked=None,
                     blackjack=Gaming._hand_view(player), poker=Gaming._poker_view(player))
 
@@ -441,7 +491,7 @@ class Gaming:
         key = player_key(identity)
         def preview():
             return dict(season=current, balance=START_POINTS, name=name or '', nonce=0, version=0,
-                        commitment='', stats=fresh_stats(), receipts=[], needs_profile=True,
+                        commitment='', stats=fresh_stats(), receipts=[], needs_profile=True, public_visibility=False,
                         rules_version=VERSION, ip_bound=False, play_blocked=None, blackjack=None, poker=None,
                         poker_button='player', legacy_poker=None)
         # Routine five-second reads neither copy the complete community save nor
@@ -462,7 +512,7 @@ class Gaming:
             self._record_ip(conn['gaming'], key, client_ip, current)
             return self._view(player, current)
 
-    def confirm_community_name(self, identity, name, now=None, *, client_ip=None):
+    def confirm_community_name(self, identity, name, public_visibility=None, now=None, *, client_ip=None):
         """Activate the shared wallet once, retaining wins, receipts and its owner.
 
         Names migrated from the retired profile system remain suggestions until confirmed on Gaming. Older
@@ -471,9 +521,17 @@ class Gaming:
         """
         name = player_name(name)
         now = time.time() if now is None else now
+        if public_visibility is not None and type(public_visibility) is not bool:
+            raise GamingError('Choose whether your Gaming name appears publicly.', 'invalid_visibility', 422)
         with self.store.connection(transaction=True) as conn:
+            if conn.get('gaming') is None:
+                conn['gaming'] = dict(version=1, players={}, activity_revision=0)
+            data = conn['gaming']
+            data.setdefault('activity_revision', 0)
+            before_name = (data.get('players', {}).get(player_key(identity)) or {}).get('name')
+            before_visibility = (data.get('players', {}).get(player_key(identity)) or {}).get('public_visibility', False)
             player, current = self._player(conn, identity, name, now)
-            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
+            self._record_ip(data, player_key(identity), client_ip, current)
             if not player.get('community_name_confirmed', False):
                 extra = max(0, START_POINTS - player['balance'])
                 adjustment = player.get('balance_adjustment', 0) + extra
@@ -481,6 +539,11 @@ class Gaming:
                     raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
                 player.update(community_name_confirmed=True, balance=player['balance']+extra,
                               balance_adjustment=adjustment, version=player['version']+1)
+            if public_visibility is not None and player.get('public_visibility', False) != public_visibility:
+                player['public_visibility'] = public_visibility
+                player['version'] += 1
+            if before_name != player['name'] or before_visibility != player.get('public_visibility', False):
+                data['activity_revision'] = min(MAX_NUMBER, int(data.get('activity_revision', 0)) + 1)
             return self._view(player, current)
 
     def save_recovery(self, identity, code_hash, now=None):
@@ -642,8 +705,10 @@ class Gaming:
             if game in ('blackjack', 'poker') and not result['ended']:
                 player[game] = receipt
                 player['version'] += 1
+                self._touch_activity(conn['gaming'], player, game, now, round_completed=False)
                 return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
             self._settle(player, receipt, result)
+            self._touch_activity(conn['gaming'], player, game, now, round_completed=True)
             return dict(ok=True, duplicate=False, receipt=copy.deepcopy(receipt), wallet=self._view(player, current))
 
     @staticmethod
@@ -698,8 +763,10 @@ class Gaming:
                 player['balance'] -= receipt['wager']
             if result['ended']:
                 self._settle(player, receipt, result)
+                self._touch_activity(conn['gaming'], player, 'blackjack', now, round_completed=True)
                 return dict(ok=True, duplicate=False, receipt=copy.deepcopy(receipt), wallet=self._view(player, current))
             player['version'] += 1
+            self._touch_activity(conn['gaming'], player, 'blackjack', now, round_completed=False)
             return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
 
     def poker_action(self, identity, name, body, now=None, *, client_ip=None):
@@ -731,6 +798,7 @@ class Gaming:
                 raise GamingError('Use the Hold’em action controls.', 'stale_hand', 409)
             hand.update(holds=holds, draw_id=action_id)
             self._settle(player, hand, outcome(player['server_seed'], hand))
+            self._touch_activity(conn['gaming'], player, 'poker', now, round_completed=True)
             return dict(ok=True, duplicate=False, receipt=copy.deepcopy(hand), wallet=self._view(player, current))
 
     def holdem_action(self, identity, name, body, now=None, *, client_ip=None):
@@ -764,9 +832,100 @@ class Gaming:
             result = outcome(player['server_seed'], hand)  # Illegal actions roll back the transaction.
             if result['ended']:
                 self._settle(player, hand, result)
+                self._touch_activity(conn['gaming'], player, 'poker', now, round_completed=True)
                 return dict(ok=True, duplicate=False, receipt=copy.deepcopy(hand), wallet=self._view(player, current))
             player['version'] += 1
+            self._touch_activity(conn['gaming'], player, 'poker', now, round_completed=False)
             return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
+
+    @staticmethod
+    def _game_label(game):
+        return {
+            'poker': "Texas Hold’em",
+            'video_poker': 'Video Poker',
+            'coinflip': 'Coinflip',
+        }.get(game, game.capitalize())
+
+    def public_leaderboard(self, now=None):
+        """Return a compact, privacy-safe five-second Gaming community feed.
+
+        The projection contains no wallet IDs, IP addresses, balances, recovery
+        data, seeds, receipts or funding adjustments. Rankings use settled
+        server-side ledger statistics only. Page views and polling never create
+        activity; only confirmed game actions call ``_touch_activity``.
+        """
+        now = time.time() if now is None else now
+        current = season(now)
+        with self.store.connection() as conn:
+            data = conn.get('gaming') or {}
+            revision = int(data.get('activity_revision', 0))
+            cache_key = (current['id'], revision)
+            with self._public_cache_lock:
+                if (cache_key == self._public_cache_key and self._public_cache_value is not None and
+                        now < self._public_cache_expires_at):
+                    return copy.deepcopy(self._public_cache_value)
+            players = data.get('players', {})
+            game_counts = {game: 0 for game in GAMES}
+            live = []
+            next_change = None
+            leaders = []
+            per_game = {game: [] for game in GAMES}
+            for player in players.values():
+                if player.get('season') != current['id'] or not player.get('community_name_confirmed'):
+                    continue
+                stats = player.get('stats') or {}
+                net = rounds = 0
+                visible = bool(player.get('public_visibility', False))
+                for game in GAMES:
+                    record = stats.get(game) or {}
+                    game_net = int(record.get('net', 0))
+                    game_rounds = int(record.get('bets', 0))
+                    net += game_net
+                    rounds += game_rounds
+                    if visible and game_rounds:
+                        per_game[game].append(dict(name=player['name'], net=game_net, rounds=game_rounds))
+                legacy = stats.get('video_poker') or {}
+                net += int(legacy.get('net', 0))
+                rounds += int(legacy.get('bets', 0))
+                if visible and rounds:
+                    leaders.append(dict(name=player['name'], net=net, rounds=rounds))
+                last_action = float(player.get('last_action_at', 0) or 0)
+                age = max(0, now - last_action) if last_action else PUBLIC_LIVE_SECONDS + 1
+                recent_game = 'blackjack' if player.get('blackjack') else 'poker' if player.get('poker') else player.get('last_game', '')
+                if last_action and age <= PUBLIC_LIVE_SECONDS and recent_game in GAMES:
+                    game_counts[recent_game] += 1
+                    transition = (last_action + PUBLIC_NOW_SECONDS
+                                  if age <= PUBLIC_NOW_SECONDS and not (player.get('blackjack') or player.get('poker'))
+                                  else last_action + PUBLIC_LIVE_SECONDS)
+                    if transition > now:
+                        next_change = transition if next_change is None else min(next_change, transition)
+                    if visible:
+                        status = 'In a hand' if player.get('blackjack') or player.get('poker') else ('Playing now' if age <= PUBLIC_NOW_SECONDS else 'Recently active')
+                        live.append(dict(name=player['name'], game=recent_game, game_label=self._game_label(recent_game),
+                                         status=status, last_action_at=int(last_action)))
+
+            def ranked(rows):
+                rows.sort(key=lambda row: (-row['net'], -row['rounds'], row['name'].casefold()))
+                result = rows[:PUBLIC_LEADER_LIMIT]
+                for index, row in enumerate(result, 1):
+                    row['rank'] = index
+                return result
+
+            leaders = ranked(leaders)
+            game_leaders = {game: ranked(rows) for game, rows in per_game.items()}
+            live.sort(key=lambda row: (-row['last_action_at'], row['name'].casefold()))
+            value = dict(
+                generated_at=int(now), season=current, revision=revision,
+                live_players=live[:PUBLIC_LIVE_LIMIT], weekly_leaders=leaders,
+                game_leaders=game_leaders,
+                game_counts={game: count for game, count in game_counts.items() if count},
+                active_count=sum(game_counts.values()),
+            )
+            with self._public_cache_lock:
+                self._public_cache_key = cache_key
+                self._public_cache_value = copy.deepcopy(value)
+                self._public_cache_expires_at = next_change if next_change is not None else float('inf')
+            return value
 
     def leaders(self, now=None):
         """Private rankings from settled ledger totals, never client-reported wins."""
@@ -793,7 +952,10 @@ class Gaming:
                 return player['stats'].get(game, {})
             for game in (*GAMES, 'video_poker'):
                 rows = [dict(name=p['name'], player_tag=key[:12], ips=sorted(networks.get(key, [])),
-                             balance=p['balance'], funding_adjustment=p.get('balance_adjustment', 0), **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
+                             balance=p['balance'], funding_adjustment=p.get('balance_adjustment', 0),
+                             public_visibility=bool(p.get('public_visibility', False)),
+                             last_game=p.get('last_game', ''), last_action_at=p.get('last_action_at', 0),
+                             **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
                 rows.sort(key=lambda p:(-p['net'], -p['paid'], p['player_tag']))
                 # Count the complete ledger before slicing the five leaders.
                 counts[game] = dict(players=len(rows), rounds=sum(row['bets'] for row in rows))

@@ -328,7 +328,10 @@ class EmpireDropBoard:
             selected = {'slug': slug, 'name': slug}
         else:
             races, _ = api.discover()
-            selected = select_race(races, api.settings)
+            site = self._schedule()
+            selected = select_race(races, api.settings,
+                                   preferred_start=site['start_time'],
+                                   preferred_end=site['end_time'])
         result = api.probe(selected['slug'])
         result['race'] = selected
         result['fields_verified'] = api.settings['race_verified_fields']
@@ -367,7 +370,9 @@ class EmpireDropBoard:
                     raise
                 catalog, _ = api.discover()
                 try:
-                    fallback = select_race(catalog, {**api.settings, 'race_slug': ''})
+                    fallback = select_race(catalog, {**api.settings, 'race_slug': ''},
+                                           preferred_start=site['start_time'],
+                                           preferred_end=site['end_time'])
                 except ProviderError as selection_error:
                     raise ProviderError(
                         'Saved EmpireDrop slug is unavailable (404). ' +
@@ -388,7 +393,9 @@ class EmpireDropBoard:
                     'running wager race. Confirm and save its current slug in Admin.')
         else:
             catalog, _ = api.discover()
-            selected = select_race(catalog, api.settings)
+            selected = select_race(catalog, api.settings,
+                                   preferred_start=site['start_time'],
+                                   preferred_end=site['end_time'])
             payload = api.details(selected['slug'])
         race = payload.get('race')
         if not isinstance(race, dict) or race.get('slug') != selected['slug']:
@@ -412,7 +419,8 @@ class EmpireDropBoard:
         meta = {
             'slug': race['slug'], 'name': str(race.get('name') or race['slug'])[:90],
             # Safe metadata only; keys and unmasked player names are not logged.
-            'selection': 'recovered' if recovered_from else 'configured',
+            'selection': ('recovered' if recovered_from else
+                          'configured' if api.settings['race_slug'] else 'automatic'),
             'start_time': start, 'end_time': end,
             'date_policy': api.settings['race_window_policy'],
             'currency': race['currency'],

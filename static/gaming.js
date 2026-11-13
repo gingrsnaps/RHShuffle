@@ -11,6 +11,9 @@
       (typeof n === "bigint" ? n : Number(n)).toLocaleString("en-US"),
     points = (n) => (n > 0 ? "+" : "") + number(n);
   let wallet,
+    community = null,
+    communityFilter = "all",
+    communityRanks = new Map(),
     csrf = root.dataset.csrf,
     busy = false,
     refreshing = false,
@@ -235,6 +238,98 @@
       id("retryBet").disabled = busy || fatal || !secure || !verifierReady || Boolean(wallet?.needs_profile);
     }
   }
+  function gameLabel(value) {
+    return value === "poker" ? "Hold’em" : value ? value[0].toUpperCase() + value.slice(1) : "All games";
+  }
+  function renderCommunity(next) {
+    if (!next || !id("gamingPublicLeaders")) return;
+    community = next;
+    const available = new Set(["all", ...(rules.games || [])]);
+    if (!available.has(communityFilter)) communityFilter = "all";
+    const count = id("gamingActivityCount");
+    if (count) {
+      const strong = count.querySelector("strong");
+      if (strong) strong.textContent = number(next.active_count || 0);
+    }
+    id("gamingGameFilters")?.querySelectorAll("[data-community-filter]").forEach(button => {
+      const filter = button.dataset.communityFilter;
+      const total = filter === "all" ? next.active_count || 0 : next.game_counts?.[filter] || 0;
+      const amount = button.querySelector("b");
+      if (amount) amount.textContent = number(total);
+      const active = filter === communityFilter;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    const live = id("gamingLivePlayers");
+    if (live) {
+      const players = (Array.isArray(next.live_players) ? next.live_players : [])
+        .filter(row => communityFilter === "all" || row.game === communityFilter);
+      live.replaceChildren(...(players.length ? players.map(row => {
+        const article = document.createElement("article");
+        const avatar = document.createElement("span");
+        avatar.className = "gaming-live-avatar";
+        avatar.textContent = (row.name || "?").slice(0, 1).toUpperCase();
+        const detail = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = row.name || "Player";
+        const meta = document.createElement("small");
+        meta.textContent = `${row.game_label || gameLabel(row.game)} · ${row.status || "Recently active"}`;
+        detail.append(name, meta);
+        article.append(avatar, detail);
+        return article;
+      }) : [Object.assign(document.createElement("p"), {
+        className: "empty",
+        textContent: communityFilter === "all" ? "No public players are active right now." : `No public ${gameLabel(communityFilter)} players are active right now.`,
+      })]));
+    }
+    const title = id("gamingWeeklyTitle");
+    if (title) title.textContent = communityFilter === "all" ? "RedPoints leaders" : `${gameLabel(communityFilter)} leaders`;
+    const leaders = id("gamingPublicLeaders");
+    if (leaders) {
+      const source = communityFilter === "all" ? next.weekly_leaders : next.game_leaders?.[communityFilter];
+      const rows = Array.isArray(source) ? source : [];
+      const nextRanks = new Map(communityRanks);
+      leaders.replaceChildren(...(rows.length ? rows.map(row => {
+        const item = document.createElement("li");
+        const rank = document.createElement("span");
+        rank.className = "gaming-public-rank";
+        rank.textContent = String(row.rank || 0).padStart(2, "0");
+        const name = document.createElement("strong");
+        name.textContent = row.name || "Player";
+        const result = document.createElement("span");
+        const net = document.createElement("b");
+        net.textContent = points(row.net || 0);
+        const rounds = document.createElement("small");
+        rounds.textContent = `${number(row.rounds || 0)} rounds`;
+        const rankKey = `${communityFilter}:${row.name || "Player"}`;
+        const prior = communityRanks.get(rankKey);
+        if (Number.isInteger(prior) && prior !== row.rank) {
+          const movement = document.createElement("i");
+          movement.className = row.rank < prior ? "rank-up" : "rank-down";
+          movement.textContent = row.rank < prior ? "↑" : "↓";
+          movement.setAttribute("aria-label", row.rank < prior ? "Moved up" : "Moved down");
+          result.append(movement);
+        }
+        nextRanks.set(rankKey, row.rank);
+        result.append(net, rounds);
+        item.append(rank, name, result);
+        return item;
+      }) : [Object.assign(document.createElement("li"), {
+        className: "empty",
+        textContent: communityFilter === "all" ? "No public results yet this week." : `No public ${gameLabel(communityFilter)} results yet this week.`,
+      })]));
+      communityRanks = nextRanks;
+    }
+  }
+  id("gamingGameFilters")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-community-filter]");
+    if (!button) return;
+    communityFilter = button.dataset.communityFilter || "all";
+    try { localStorage.setItem("rh.gaming.communityFilter", communityFilter); } catch {}
+    renderCommunity(community);
+  });
+
+
   function renderWallet(next) {
     if (
       !next ||
@@ -301,6 +396,8 @@
     }
     id("gamingIdentity").hidden = next.needs_profile;
     id("gamingPlayerName").textContent = next.name;
+    const publicChoice = id('gamingPublicVisibility');
+    if (publicChoice && document.activeElement !== publicChoice) publicChoice.checked = Boolean(next.public_visibility || next.needs_profile);
     if (id("gamingCreateRecovery")) id("gamingCreateRecovery").disabled = next.needs_profile;
     if (id("fairCommitment"))
       id("fairCommitment").textContent =
@@ -1203,6 +1300,7 @@
     try {
       const value = await api("/gaming/api/profile", {
         username: id("gamingUsername").value,
+        public_visibility: Boolean(id('gamingPublicVisibility')?.checked),
       });
       renderWallet(value.wallet);
       message();
@@ -1373,6 +1471,7 @@
       const value = await api("/gaming/api/state", null, true);
       if (value && !busy) {
         renderWallet(value.wallet);
+        renderCommunity(value.community);
         await recoverSavedRound(value.wallet);
       }
       id("gamingChecked").textContent =
@@ -1388,6 +1487,11 @@
     clearTimeout(timer);
     if (!document.hidden) poll();
   });
+  try {
+    const savedFilter = localStorage.getItem("rh.gaming.communityFilter");
+    if (savedFilter) communityFilter = savedFilter;
+  } catch {}
+  try { renderCommunity(JSON.parse(root.dataset.community || '{}')); } catch {}
   renderWallet(JSON.parse(root.dataset.wallet));
   remember(pending);
   payout();

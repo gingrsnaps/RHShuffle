@@ -1,253 +1,32 @@
-# RedHunllef V13 source reference
-
-Release: `2026.11.13-admin-pages-payouts-v13`
-
-Private settings and runtime JSON snapshots are intentionally omitted from this Markdown reference; they remain in the private ZIP.
-
-## `CHANGES.md`
-
-```markdown
-# RedHunllef changes
-
-## 2026.11.13-admin-pages-payouts-v13
-
-### Fixed
-
-- Imported the `field` and `player_rows` macros in the shared admin layout, eliminating the generic HTTP 500 page on Shuffle schedule, players, and Settings.
-- Allowed EmpireDrop prize draft, publish, and save-failure events in the structured activity log.
-- Wrapped operational logging so a logging problem can never turn a committed admin update into HTTP 500.
-- Made optional EmpireDrop history metadata safe to render.
-- Rendered canonical admin workspace routes directly, including EmpireDrop schedule, payouts, source health, and Recovery.
-- Updated player search and edit links to the canonical Shuffle players route.
-- Added original-exception logging with a request ID for future server errors.
-
-### Configuration
-
-- Bundled Shuffle window: November 10, 2026 6:00 PM EST through November 17, 2026 6:00 PM EST.
-- Bundled EmpireDrop local display window: the same dates.
-- Production dependencies are explicitly pinned in root `requirements.txt`.
-
-### Preserved
-
-- Shuffle Top 15 and weighted wager rules.
-- EmpireDrop Top 10, selected race discovery, masking, and independent payouts.
-- Games, RedPoints, accounts, credentials, history, and JSON state architecture.
-```
-
-## `DEPLOYMENT_EMPIREDROP_RACES.md`
-
-```markdown
-# EmpireDrop race deployment
-
-V13 uses the official partner race endpoints with both API-key headers. Select the correct running race slug in Admin. The local display schedule is November 10–17, 2026 at 6:00 PM Eastern, but the official provider race owns its actual API window.
-
-Prize amounts are independent local website rewards. Use **Save draft** to retain private changes or **Save & publish** to replace the public Top 10 prize schedule after atomic read-back and public-projection verification.
-```
-
-## `DEPLOYMENT_OPTIMIZED.md`
-
-```markdown
-# FastDeploy package
-
-The FastDeploy archive contains all executable Python, templates, static assets, root deployment markers, private configuration, and the bundled JSON state. It excludes tests, screenshots, large source references, historical documentation, and development caches.
-
-The root `requirements.txt` is installed automatically by the DigitalOcean Python buildpack. Leave the custom Build Command blank.
-```
-
-## `DEPLOY_DIGITALOCEAN.md`
-
-```markdown
-# DigitalOcean App Platform — V13
-
-Use a Python Web Service with:
-
-- Source Directory: `/`
-- Build Command: blank
-- Run Command: `python wager_backend.py`
-- HTTP Port: `8080`
-- Health Check: `/healthz`
-- Instances: `1`
-
-`requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml`, and `BUILD_MANIFEST.json` must be visible at the source root. Extract the ZIP before committing it. Do not upload the ZIP as the repository source.
-
-Before deploying, download the current private recovery checkpoint. The bundled JSON is a snapshot and App Platform local storage is replaceable.
-```
-
-## `EMPIREDROP_CHANGELOG_2026-11-10.md`
-
-```markdown
-# EmpireDrop Integration Changelog
-
-The integration now follows Partner Public API v2.0.1:
-
-- Production host `https://api.empiredrop.com`.
-- Dual `X-Public-Key` and `X-Private-Key` authentication.
-- Running-race discovery through `/api/v1/affiliate-partner/races`.
-- Race detail and standings through `/api/v1/affiliate-partner/races/{slug}`.
-- Top 10 display, official ranks and ties, provider cache timing, and amount-unit validation.
-- Consistent public masking while preserving provider-anonymized names and public IDs in Admin.
-- Independent local payouts with draft and publication states.
-
-V12 adds a dedicated payout revision, atomic verification, and public-projection confirmation.
-```
-
-## `FILE_STRUCTURE.md`
-
-```markdown
-# RedHunllef V13 file structure
-
-## Deployment root
-
-- `wager_backend.py` — Flask application, routes, admin actions and Waitress entry point
-- `requirements.txt` — production dependencies
-- `runtime.txt` — Python runtime pin
-- `app.yaml` / `Procfile` — deployment markers
-- `config.py`, `runtime.py`, `storage.py` — configuration, workers and atomic JSON persistence
-- `empiredrop*.py` — EmpireDrop API and public/admin projections
-- `gaming.py`, game modules, `fairness.py` — RedPoints and provably fair games
-- `admin_navigation.py` — canonical administrator destinations
-- `operations_log.py`, `telemetry.py` — sanitized operations and health views
-
-## Web assets
-
-- `templates/` — public and protected Jinja templates
-- `static/` — JavaScript, CSS and images
-
-## Private runtime data
-
-- `private/settings.json`
-- `private/admin_store.seed.json`
-- `data/state.json`
-
-## Development-only content in the full archive
-
-- `tests/`
-- `tools/`
-- `docs/`
-- `FULL_CODE_BLOCKS.md`
-
-Community Boss runtime files remain removed. Games and RedPoints use their own player identity and recovery system.
-```
-
-## `README.md`
-
-```markdown
-# RedHunllef V13
-
-A single-process Flask/Waitress website providing independent Shuffle Top 15 and EmpireDrop Top 10 wager leaderboards, RedPoints games, race history, and a protected administration panel.
-
-## V13 repair
-
-This release fixes the shared administrator rendering defect and the EmpireDrop payout publish failure. The exact causes and acceptance checks are documented in `docs/ADMIN_RELIABILITY_V13.md`.
-
-## Run
-
-```bash
-python -m pip install -r requirements.txt
-python wager_backend.py
-```
-
-DigitalOcean App Platform should use a blank Build Command and `python wager_backend.py` as the Run Command.
-
-## Validate the release
-
-```bash
-python wager_backend.py --check
-python -m unittest tests.test_navigation_v12 tests.test_admin_reliability_v13
-```
-
-## Race dates bundled in this private package
-
-- Start: November 10, 2026 at 6:00 PM Eastern
-- End: November 17, 2026 at 6:00 PM Eastern
-
-## Security and storage
-
-The private package contains production credentials and a saved JSON snapshot. Keep it private. App Platform container storage is not durable; export a current recovery file before every deployment or configure the optional Spaces mirror.
-```
-
-## `RELEASE_METADATA.json`
-
-```json
-{
-  "release": "2026.11.13-admin-pages-payouts-v13",
-  "entry_point": "python wager_backend.py",
-  "python_version": "3.13.12",
-  "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
-  "storage": "atomic local JSON by default; optional single-writer DigitalOcean Spaces mirror",
-  "private_config_included": true,
-  "private_config_warning": "The private packages contain unencrypted production credentials and saved private state. Keep them private.",
-  "shuffle_positions": 15,
-  "empiredrop_positions": 10,
-  "race_window": {
-    "timezone": "America/New_York",
-    "start_epoch": 1794351600,
-    "end_epoch": 1794956400,
-    "display": "Nov 10, 2026 6:00 PM EST to Nov 17, 2026 6:00 PM EST"
-  },
-  "admin_repair": "Undefined macro imports, canonical workspaces, safe optional history fields, no-store admin HTML and request-ID exception logging",
-  "empiredrop_payouts": "Dedicated draft/publish records; atomic read-back and public projection verification; fail-safe structured logging",
-  "runtime_dependencies": [
-    "Flask==3.1.3",
-    "Werkzeug==3.1.9",
-    "requests==2.34.2",
-    "waitress==3.0.2",
-    "tzdata==2026.6"
-  ],
-  "source_validation": "Python compilation, StrictUndefined rendering of all admin workspaces, JavaScript syntax, route/form audit and payout transaction tests",
-  "live_deployment_verified": false,
-  "live_verification_note": "A live DigitalOcean deployment must still be smoke-tested after upload.",
-  "bundled_state_is_snapshot": true
-}
-```
-
-## `START_HERE.md`
-
-```markdown
-# Start here — RedHunllef V13
-
-Release: `2026.11.13-admin-pages-payouts-v13`
-
-## DigitalOcean App Platform
-
-- Source Directory: `/`
-- Build Command: leave blank
-- Run Command: `python wager_backend.py`
-- HTTP Port: `8080`
-- Health Check: `/healthz`
-- Instances: `1`
-
-The source root must contain `requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml`, and `BUILD_MANIFEST.json`.
-
-## Before deployment
-
-1. Export the current private recovery file from the running site.
-2. Extract this package and commit the extracted contents, not the ZIP itself.
-3. Keep the repository private because the private build includes credentials and a state snapshot.
-4. Deploy and verify `/healthz` and `/readyz`.
-5. Sign in and open every primary admin workspace.
-6. Save an EmpireDrop payout draft, reload it, then publish it and verify the public Top 10.
-
-## Bundled race window
-
-Shuffle and the local EmpireDrop display schedule are set to November 10, 2026 at 6:00 PM Eastern through November 17, 2026 at 6:00 PM Eastern. EmpireDrop's official provider race must be the corresponding race selected by its slug/API discovery.
-
-See `docs/ADMIN_RELIABILITY_V13.md` for the repair details.
-```
-
-## `UPDATE.md`
-
-```markdown
-# V13 update
-
-- Repaired HTTP 500 failures across Shuffle schedule, player management, Settings, and related admin pages.
-- Repaired EmpireDrop prize draft and publish transactions.
-- Added safe operational logging so log formatting cannot break successful writes.
-- Added direct canonical workspace routes and strict template regression tests.
-- Set bundled Shuffle and EmpireDrop local windows to November 10–17, 2026 at 6:00 PM Eastern.
-- Preserved Top 15 Shuffle, Top 10 EmpireDrop, Gaming, RedPoints, accounts, credentials, and JSON storage.
-
-See `docs/ADMIN_RELIABILITY_V13.md`.
+# RedHunllef V14 source reference
+
+Release: `2026.11.13-public-uniform-gaming-v14`
+
+Private settings and mutable JSON state are intentionally omitted from this Markdown reference; they remain in the private ZIP.
+
+## `.gitignore`
+
+```text
+# Do not accidentally publish live credentials or customer state.
+private/
+data/
+settings.json
+integrations.json
+admin_store.json
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+.DS_Store
 ```
 
 ## `admin_navigation.py`
@@ -521,6 +300,159 @@ def replay(draw, wager, actions):
                 player_soft=ps, dealer_soft=ds, status=status, total_wager=stake, payout=payout)
 ```
 
+## `BUILD_MANIFEST.json`
+
+```json
+{
+  "version": 7,
+  "release": "2026.11.13-public-uniform-gaming-v14",
+  "purpose": "Runtime files required for the V14 uniform wager-race presentation, privacy-safe public Gaming activity, provider integrations, admin controls and DigitalOcean deployment.",
+  "files": {
+    "Procfile": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83",
+    "admin_navigation.py": "b58ecd17420d447221ba29936a7009bb3a1a62cc7db3a699edfd0fbd188b04b7",
+    "app.yaml": "87976192f030efe5e17fd1081cacca18731bf6d4afe5c029d8ac83e696a97d6e",
+    "baccarat.py": "e859c61a9a101b9e51da02524e5b18d3a915397e2d476f2dbe8899202f88c154",
+    "blackjack.py": "3ea903b34d6329a05bb113ac591db64fbc80d59fa2875f8fae8eee08fbb8abc7",
+    "config.py": "aba803f6f9afa9c2f4da96d30a4329e3a441413ecd93fc55b48d699bea803820",
+    "empiredrop.py": "932cf0e9f46d81e1ee9d3ea9e5d7e31d0162999d014ef037884c4abf886b6bba",
+    "empiredrop_deploy_keys.py": "b7cf2a1172540434abf87902b6e9a6b700364d57289a1f884098009e5b560c32",
+    "empiredrop_features.py": "fe519d83c2b01209d772cce06da5b03eba90a8353eae045f99473bb5def2afcc",
+    "empiredrop_races.py": "c636f72e709796315f061cdc8c56813dd38e61c1a8d7cbfa2bac5dc139a71a30",
+    "fairness.py": "fce747b68b1bc98a46fd46981154abf16af501b4b4272a12c4efa50198a9a08f",
+    "gaming.py": "96b2a66847de2c8701f3a1df551f314aef4edccd0c0b29796f208361e0fbd081",
+    "holdem.py": "bb42721439cf74f291b91e11fdde2a57d4ff2ae6747eb8dc418475630d184764",
+    "integrations.py": "5b0cdef121acd36b36916c3e1f4eab61d77426269f76896fad6fa327529f183b",
+    "operations_log.py": "cda66de19b6ed98349b707fb485ae412c79d88736a1ed6d106143d045330ae67",
+    "poker.py": "11e3f3578e959b12fdb3ced1b3f1ae927c103ec1ccb333e31a5508f277f320a7",
+    "presentation.py": "8b2f7a2e31e62bd8c25c13ee1a35ce268c6d7110088509b9b06f1e4de9085a68",
+    "provider_admin.py": "deebfa9dc69515dc8f2267e35efc2d8cb2e8549ada47e04548d3c195dfbb06d4",
+    "race.py": "d342af11d32d65157c87f96b0cdf942be89446d9657f615f2157887d4cfab7ad",
+    "race_support.py": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96",
+    "release_check.py": "fb7143c9c4be374ad81b3b0df7a8cd7cada24e649934d9804ec1b69f5e190db2",
+    "requirements.txt": "88ef5de1c188158f15949336cebb79dfcf2ab7d9df5c3f2debbc0c643eb80554",
+    "runtime.py": "cadff37a808077b03d5713052e15a25065f0cd290d78a5c7dfa46bf088a33199",
+    "runtime.txt": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d",
+    "shuffle_deploy_key.py": "db967baa6f904b4a30c93e429b9f90ac000575c0a8398c9cc0c6553eb8f4ddbb",
+    "spaces_state.py": "030dc52c6f774b5e3c0bb97b4f291cdc1fa0c9e70708eb4473d02c6a0e6f0bfb",
+    "static/admin-empiredrop.js": "dde1a734827b2cc0df04c10cca2201e15b4492c6e380ec8de2d57ee66754dd28",
+    "static/admin-feedback.js": "9300aa1f4e76a2d76573ff6cc1e5930bef90b17096374aec2f78dd1a95cd5580",
+    "static/admin-gaming.js": "942bf6c81b0a589533092a3ae1a40241378b4621e615e396dbcdd54d9d8b5e59",
+    "static/admin-health.js": "2a7c5bc47dc7fb5ee164c8188d783166de3a24dd5e0194bfb5bd4bca84ca87b7",
+    "static/admin-logs.js": "e947893f8b2a364f8d8f79d759e5526a72d417feb39ae8b66767796c5bf061f9",
+    "static/admin-providers.js": "8c7acfc1defcc9f2154d1090198db2d607bba3c2f3a3c3574bbbefac68b39998",
+    "static/admin-workspace.css": "b795913004e96567a22143f0109d40d34739babf9bdafa80b65e28393bdbd3ed",
+    "static/admin-workspace.js": "1b0997e624275f0a737c3a21360f90e346bc4ac9fea7be9db483d0ac3cd3ec96",
+    "static/app.js": "944845360dde252e47538162805969fdc467524e0c21b0cc9aa5ad0824e8d89e",
+    "static/empiredrop.css": "38dc314830b6aef6072eb112548be55bd7968766697d3ca70da993588fcef309",
+    "static/empiredrop.js": "eb0ee9de4994f4e7bd0ae747577dfe5df9ff245c7181d914a8f5a9b1806cfcac",
+    "static/experience.css": "39dc0c669101783ab7e3de8a26e9b96a235af6d0d6db6d11177232d2e4003cd9",
+    "static/experience.js": "65b1af95d44c1128de2b21fb800c375d0a1fff4837d80cb3349027d5f767f50d",
+    "static/fairness.js": "3c895dc1311a016a83a9fc631e7ece37c9de9d5dd9b073354353d9b771abbe38",
+    "static/gaming.css": "1ed2b89bfbd13c165ac2f88dfac67ea016d70fc2ac705e97124d295392c95295",
+    "static/gaming.js": "bf6e4214dc59c6afbc0c50b6c2db9efe24b1df7a0a5e932a522b039e83a910a3",
+    "static/history.css": "4cfaaaf7258083b167c4afc72638a084a49e8bb4afaec7a30feba8da403627b0",
+    "static/history.js": "1b6a0e7be99c8a47b0f682027bcaecabddccaab0714f4eb476f0da990e3cfe1f",
+    "static/holdem-fairness.js": "a9d2be91b530fbf77ba17376d7991212d40b58b5dc9a3ba1df1ef4854b75dd0a",
+    "static/holdem-ui.js": "502b8e4023e5ecc80301ee50cee5b4a5b795b4fb3754449e82ac35be25aba325",
+    "static/holdem.css": "c3cc930bc5d76a9770f91c797cdf10832a213b106a34ebd24c96dd0bffb3cf68",
+    "static/plinko.js": "8ee550267718142b16da78242c08ae113594b7e1e735bdc8caf63dd2b06b8cf6",
+    "static/public-control.css": "1aab5f3e2436b2e54efbd44ec35a58998b00b33146c3cf1bedff22f35fef3fcc",
+    "static/public-control.js": "44ab93b688c0d8f265d4403959901d592cef3558702861fbafbf60feeb36bc0d",
+    "static/receipt-verifier.js": "6a15de43e40ef4d864dc6d18a6f37a19fe3e518a377b09f2154b1813c488e288",
+    "static/redlogo.ico": "6a2c518c570d0f0357e39f7a8791daa4de681434ca51b2fa17381fd2d6cac63e",
+    "static/redlogo.png": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186",
+    "static/style.css": "7e2f72ffda8b17c54edf2838d199a7dff80e68644b3000edd531e6706cdfaadc",
+    "static/v11-system.css": "626d720a5783c2b1b6b576949e8ae36ba9337d7788de44e9017ae365ff2b427f",
+    "static/v14-modern.css": "12a28b1d29a7a320062e35163797cd60bf49e6252e09f0ebeb4e2d1edce5dcb0",
+    "storage.py": "9440eefe4ff688b788189648c513a7b4955f489c5168ca56392a6566ceee9ddf",
+    "store_schema.py": "5ccf9a649f92afff624e572203a1dfd940435dc6e1248ed3e0768887aeb5fec2",
+    "telemetry.py": "8dd8c4f3c782da94a2c1a2df99ccf771e7e688543e2c1748e7af475cd994e005",
+    "templates/admin.html": "2d36b2c43e6aca96e29dda7bf920ee1b360e5f52d78f22f83b5409dca637addf",
+    "templates/admin_activity.html": "35a6d3c08eef9adc53f900fdbb08643796710d56619f1f59726ad80f942a066b",
+    "templates/admin_attention.html": "166d084c79fb01f5bdd0c236420d4b0dbcbb39216bcf3f1c0b18b606ff3096aa",
+    "templates/admin_empiredrop.html": "5c010e6548c7f55e799326d28d6b795d3f9ddcbea47055e64fc75d0eab274fbe",
+    "templates/admin_gaming.html": "7d6550173b7b6da5fc7252e3e86bcacd2fc6dba8618c6e4e088e5203661692c7",
+    "templates/admin_health.html": "1ce6e81c37efa3e9900faf35bc58550df4b75436ab009892d07ad4281849cef0",
+    "templates/admin_overview.html": "cee4c83b69038cb132e25da7ab278956bc73becd051142b6e7b88a5bf922a2d8",
+    "templates/admin_players.html": "a990728ff525a8eba3dd5528c029d5e3eef2a55df547919aa602a1ce74d7f5db",
+    "templates/admin_provider_summary.html": "4f3e7124829b6b21af325f10fa63e17874f31effa7160d82bd3e53b59c4b0c80",
+    "templates/admin_race.html": "7209b69f81a3d1b4494cebe4e338f129f37e74052305f569e3991fc1c639c76d",
+    "templates/admin_settings.html": "0961266898c7325dcd6824a971aa0e37df12abc6e9a7ca86077ca4df252dfd6a",
+    "templates/admin_shuffle.html": "54901a97ad2d9cd0e8a0b496df62dc7ad39b772b2a30828b15241eda66037630",
+    "templates/base.html": "11e06fae0ffd5e4936a03b9ff98cf76d0b67b613daa72f1eb355ee7e5ebf8e00",
+    "templates/change_review.html": "c5469e3b96c979eaf815c6599180de30ef81c83112d786e468ccbb056cc17450",
+    "templates/error.html": "be1f1fee8e2dac72a7ef8f9e896d9fea8383458d93a105abdcf60f904c6f2832",
+    "templates/gaming.html": "2e3b853e2f8a0a8adbb146fedaf7a82627219c77443d17840feadc71aeeea4e2",
+    "templates/gaming_fairness.html": "4394209892a373313997b1035e0a804d3ca04cb482ac67fb175f1537646489ce",
+    "templates/history.html": "efa4e5e92593a4af6396488aaa0537452f690d631ba8d457c67d7d32aa8af5bd",
+    "templates/holdem_table.html": "64dc8f185fe6ede951203f5a38e5db8b11d1a6213db8b1c4c98dd4518fab6354",
+    "templates/icons.html": "7d99dc9ee58e6f0827b2a3583cb028477ae304b078f3b1311e766594f189ce3c",
+    "templates/index.html": "3535623cb90a1f67226f71d0ab45eb0b2ff27b949e1b0afc113c25aea79d692e",
+    "templates/login.html": "569a7023dbcb632ac9dd356660b23ea8e08b7d946b3905122c063cdb09b01a25",
+    "templates/macros.html": "dcc2f78651e45b452fadb774dc8d6ab3677402ee386f83dc0c3ad2a324e861ef",
+    "templates/recovery_panel.html": "6c263b9e21cf5cb746c7f9170c37b6c0d89e4774df8a30aa579f85cdc626fdb6",
+    "wager_backend.py": "3c68feb81aac2a1a189d2b4ccc4cf65b32a95b2e497b8ac2aa36b8e5d725f010",
+    "weekly_history.py": "dac409a7db91758ba70156445f58eb4714f9d348a262b2e901a880638aa8d5b1"
+  }
+}
+```
+
+## `CHANGES.md`
+
+```markdown
+# RedHunllef changes
+
+## 2026.11.13-public-uniform-gaming-v14
+
+### Public race presentation
+
+- Uses the fixed title **RedHunllef Wager Race** for both Shuffle and EmpireDrop.
+- Uses matching **Powered By** provider cards, typography, spacing, podiums and standings tables.
+- Removes public provider-health, refresh-cadence and last-check noise while retaining full diagnostics in Admin.
+- Keeps clean cached-data and unavailable-data messages without exposing API details.
+- Preserves Shuffle Top 15, EmpireDrop Top 10, independent payouts, masking and provider schedules.
+
+### Public Gaming community board
+
+- Adds a privacy-safe public Live Now and weekly RedPoints leaderboard to `/gaming`.
+- Refreshes through the existing five-second Gaming state request and pauses when the browser tab is hidden.
+- Adds All Games and per-game filters, aggregate recent-player counts and subtle rank-movement indicators.
+- Builds rankings only from settled server-side ledger statistics.
+- Adds an explicit player opt-in for displaying a community name publicly; existing players remain private until they opt in.
+- Excludes wallet IDs, IPs, balances, receipts, seeds, recovery data and administrator funding data from the public projection.
+- Uses ETags and a server-side projection cache that invalidates on confirmed activity and visible status transitions.
+
+### Administration and reliability
+
+- Adds current-game, recent-action and public-visibility details to the private Gaming admin view.
+- Preserves the V13 admin-page, payout-publishing, DigitalOcean optional-Spaces and official EmpireDrop race fixes.
+- Keeps root deployment markers and the production `requirements.txt` unchanged.
+
+## 2026.11.13-admin-pages-payouts-v13
+
+### Fixed
+
+- Imported the `field` and `player_rows` macros in the shared admin layout, eliminating the generic HTTP 500 page on Shuffle schedule, players, and Settings.
+- Allowed EmpireDrop prize draft, publish, and save-failure events in the structured activity log.
+- Wrapped operational logging so a logging problem can never turn a committed admin update into HTTP 500.
+- Made optional EmpireDrop history metadata safe to render.
+- Rendered canonical admin workspace routes directly, including EmpireDrop schedule, payouts, source health, and Recovery.
+- Updated player search and edit links to the canonical Shuffle players route.
+- Added original-exception logging with a request ID for future server errors.
+
+### Configuration
+
+- Bundled Shuffle window: November 10, 2026 6:00 PM EST through November 17, 2026 6:00 PM EST.
+- Bundled EmpireDrop local display window: the same dates.
+- Production dependencies are explicitly pinned in root `requirements.txt`.
+
+### Preserved
+
+- Shuffle Top 15 and weighted wager rules.
+- EmpireDrop Top 10, selected race discovery, masking, and independent payouts.
+- Games, RedPoints, accounts, credentials, history, and JSON state architecture.
+```
+
 ## `config.py`
 
 ```python
@@ -534,7 +466,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.13-admin-pages-payouts-v13"
+RELEASE = "2026.11.13-public-uniform-gaming-v14"
 INTERVAL = 60
 
 
@@ -691,6 +623,54 @@ class Config:
         return True
 ```
 
+## `DEPLOY_DIGITALOCEAN.md`
+
+```markdown
+# DigitalOcean App Platform — V14
+
+Use a Python Web Service with:
+
+- Source Directory: `/`
+- Build Command: blank
+- Run Command: `python wager_backend.py`
+- HTTP Port: `8080`
+- Health Check: `/healthz`
+- Instances: `1`
+- `RH_SPACES_ENABLE=0` unless Spaces is intentionally configured
+
+`requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml`, and `BUILD_MANIFEST.json` must be visible at the source root. Extract the ZIP before committing it; do not commit the ZIP as the repository source.
+
+Before deploying, download the current private recovery checkpoint. The bundled JSON is a snapshot and App Platform local storage is replaceable. After deployment, verify both providers, EmpireDrop payouts, the Gaming public board, and all administrator workspaces.
+```
+
+## `DEPLOYMENT_EMPIREDROP_RACES.md`
+
+```markdown
+# EmpireDrop race deployment — V14
+
+V14 retains the official partner-race integration:
+
+- `GET /api/v1/affiliate-partner/races`
+- `GET /api/v1/affiliate-partner/races/{slug}`
+- `X-Public-Key` and `X-Private-Key`
+
+Select the correct running wager/ranking race slug in Admin. The local display schedule is November 10–17, 2026 at 6:00 PM Eastern; the official provider race owns the actual API window.
+
+The public presentation is now visually identical to Shuffle while preserving EmpireDrop Top 10, provider masking, official amounts and independent RedHunllef payouts. Prize changes retain the V13 atomic draft/publish/read-back/public-projection verification workflow.
+```
+
+## `DEPLOYMENT_OPTIMIZED.md`
+
+```markdown
+# V14 FastDeploy package
+
+The FastDeploy archive contains every executable Python module, template, static asset, root deployment marker, private configuration file, and the bundled JSON snapshot. It excludes tests, screenshots, large source references, historical documentation, caches, and Git metadata.
+
+DigitalOcean installs the root `requirements.txt`. Leave the custom Build Command blank and use `python wager_backend.py` as the Run Command.
+
+Keep `RH_SPACES_ENABLE=0` unless the optional Spaces mirror is intentionally configured with boto3. The normal local-JSON deployment does not require boto3 or botocore.
+```
+
 ## `docs/ADMIN_RELIABILITY_V13.md`
 
 ```markdown
@@ -779,7 +759,7 @@ Use one App Platform instance. Container-local JSON storage may be lost on redep
 
 ## `docs/EMPIREDROP_INTEGRATION.md`
 
-```markdown
+````markdown
 # EmpireDrop integration — independent provider release
 
 ## Run and navigate
@@ -832,238 +812,7 @@ npm --prefix tests test
 Before deploying to DigitalOcean App Platform: export a private recovery checkpoint and retain it outside the container, keep private settings out of public Git hosting, and run **one** App Platform instance. App Platform's local filesystem can be replaced on deploy; local JSON changes and credentials may disappear without a saved recovery. Once authenticated data is available, compare the Top 15 with the EmpireDrop affiliate dashboard for the same date range before advertising accuracy.
 
 **Security:** The keys were provided in chat and intentionally bundled with this package. Rotate production secrets if possible and protect ZIPs, backups, and repository history.
-```
-
-## `docs/EMPIREDROP_VALIDATION.md`
-
-```markdown
-# EmpireDrop independent release — test evidence and limits
-
-- Offline EmpireDrop-specific backend tests: 13 passed (Python 3.13, synthetic requests) on 2026-10-29.
-- Public provider-switching frontend test: 1 passed (Node.js; synthetic DOM).
-- Python source compile: passed for modified files; all project Python modules are checked before packaging.
-- Jinja templates: all templates parsed successfully with Jinja2.
-- JavaScript syntax: new or modified JS files pass `node --check`.
-- Package: SHA-256 manifest hashes and ZIP CRC checked during final packaging.
-- **Not performed:** Live EmpireDrop API call (official contract unknown); full Flask integration regressions (Flask and Waitress unavailable in execution environment); DigitalOcean deployment or live user verification.
-- Tests do not prove an actual provider API response exists, that the keys have required scopes, or that any wager is attributable to referral `red`.
-
-All numeric fixtures are artificial. Failure cases reject 401, 403, 429, redirects, invalid data and unexpected pagination without publishing partial standings. The source tree includes `tests/test_empiredrop.py` for full Flask integration once dependencies are installed.
-```
-
-## `docs/PERFORMANCE.md`
-
-```markdown
-# Performance Notes
-
-V12 removes the former five-second community poller, avatar processing, related state serialization, and associated public/Admin payload fields.
-
-Other optimizations:
-
-- Runtime requirements no longer include Pillow.
-- Provider-specific scripts load only where needed.
-- Repeated operational events are grouped.
-- EmpireDrop honors provider cache duration.
-- Public responses retain conditional caching and ETags.
-- FastDeploy excludes tests, screenshots, caches, and development documentation.
-- A single App Platform instance avoids concurrent JSON writers.
-```
-
-## `docs/REDPOINTS.md`
-
-```markdown
-# RedPoints Gaming
-
-RedPoints wallets are identified by a signed browser identity and stored in JSON. V12 owns community names and recovery directly inside Gaming.
-
-## Player profile
-
-- Confirm or edit the community name on `/gaming`.
-- Generate a recovery code from the Gaming profile area.
-- Store the code privately; the server stores only its digest.
-- Recovering a profile rebinds the browser to the original wallet identity.
-
-## Migration
-
-Existing wallet identifiers, names, balances, receipts, fairness records, and active game hands remain authoritative. V12 accepts the previous signed identity during transition and then issues `rh_player`. Retired profile data is removed after a backup and only contributes a recovery digest when a unique exact name match is safe.
-
-## Administration
-
-Admin → Games & RedPoints shows player count, leaders, receipts, and the controlled grant-all action. It no longer includes unrelated community-game state.
-```
-
-## `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
-
-```markdown
-# RedHunllef: Shuffle 400 and Admin timezone hotfix — 2026-11-10
-
-## Root causes supported by evidence
-
-The provided operations JSON contains five Shuffle HTTP 400 rejections, all
-classified as `window` by older code. That classification was misleading: the
-old client assigned `window` to *every* HTTP 400 without inspecting the error.
-It also contains an EmpireDrop HTTP 200 with 10 ranked entries. EmpireDrop's
-successful source retrieval does not independently prove the public board rendered.
-
-`static/admin-providers.js` and `static/admin-empiredrop.js` used the invalid
-`Intl.DateTimeFormat` combination `dateStyle` + `timeStyle` + `timeZoneName`.
-A browser RangeError interrupted refresh status rendering.
-
-The bundled `data/state.json` has a Shuffle window from August 4–11, 2026,
-which is expired relative to November 2026. It could explain rejection of a
-historical request, but the operational log does not prove that was the specific
-Shuffle provider validation reason. **This update does not overwrite that race.**
-
-## Changes
-
-- Both admin date formatters now use explicit fields with the Eastern timezone
-  abbreviation, avoiding the RangeError.
-- Shuffle HTTP 400 errors are only called `window` when the bounded response
-  mentions known date keys; otherwise they're `bad_request`. Untrusted response
-  text is never written to logs or shown to administrators.
-- Source cards show a practical warning for stale race periods and clarify what
-  HTTP 400 does and does not establish.
-- Repeated warnings of the same service/event/code/status are grouped for up to
-  five minutes, with an occurrence counter in the activity viewer.
-- No API URLs, keys, username data, game data, or prize calculations were changed.
-- Private settings, administrator seed and data/state.json are preserved intact.
-
-## Actions in DigitalOcean after deployment
-
-1. Open **Admin → Shuffle**, confirm the last HTTP status and last verified update.
-2. Open **Schedule & prizes**. Review the saved dates; if the August 2026 race
-   is no longer the intended event, use **Use current week** (for the current competition) or **Prepare next race** (for the next competition) and review the
-   changes before publishing. This will intentionally create a new race window.
-3. Verify the **Shuffle API key** is present in *the running DigitalOcean app*.
-   The original ZIP has a key, but `.gitignore` can exclude private/settings.json
-   from the Git deployment. Configure SHUFFLE_API_KEY as an encrypted secret
-   if deploying through Git.
-4. Request a refresh and check **Activity & logs**. HTTP 400 may still happen
-   if the provider rejects the dates or request parameters. No live provider
-   call has been performed by the test suite.
-5. Open **Admin → EmpireDrop**; the submitted operations report already
-   confirmed a response of HTTP 200 / 10 rows. Review the public board and
-   your race slug before changing any EmpireDrop settings.
-
-**Storage warning:** DigitalOcean App Platform local JSON state may be lost on
-redeploy. Export a fresh private recovery copy before uploading the ZIP. The
-bundled data files represent an earlier snapshot, not your latest live state.
-```
-
-## `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
-
-```markdown
-# V12 Admin Reliability and Feature Removal
-
-## Purpose
-
-V12 resolves two recurring failures: administrator links that opened 404 pages and EmpireDrop prize changes that did not reliably publish. It also removes the Community Boss feature completely while preserving RedPoints players.
-
-## Canonical navigation
-
-Every visible administrator destination has one direct GET route registered in Flask and one centralized entry in `admin_navigation.py`. Older supported bookmarks redirect to the canonical route. JavaScript no longer needs to synthesize destinations.
-
-## EmpireDrop payout transaction
-
-The payout editor has independent draft and published records. A save:
-
-1. validates CSRF and Superadmin access;
-2. checks the dedicated payout revision;
-3. validates currency and exactly ten amounts;
-4. creates a pre-change backup;
-5. writes atomically;
-6. rereads and compares the persisted record;
-7. refreshes runtime state;
-8. for publication, compares the public prize projection;
-9. logs a sanitized success or rejection event.
-
-## Gaming migration
-
-The old browser identity is accepted only as a migration input. Existing Gaming wallets stay authoritative. V12 issues a new Gaming-owned cookie and provides name and recovery controls inside Gaming. No attack, HP, avatar, cooldown, raid, achievement, or damage state remains.
-
-## Removed runtime surface
-
-The release contains no retired feature routes, templates, static files, status cards, public JSON fields, admin actions, image-processing dependency, or scheduled poller.
-
-## Acceptance criteria
-
-- Every visible Admin link returns an authenticated 200 response.
-- Every compatibility route reaches the same canonical destination.
-- EmpireDrop draft survives reload.
-- Publishing appears in the public payload and rendered page.
-- Shuffle and EmpireDrop provider refreshes remain unchanged.
-- Existing RedPoints wallet IDs and balances survive migration.
-- No retired feature entry appears publicly or in Admin.
-- Root deployment markers are present.
-- A state backup is created before migration and payout changes.
-
-## Live verification limitation
-
-Offline checks verify route registration, templates, JavaScript syntax, state validation, manifests, and archives. The final authenticated DigitalOcean behavior must still be confirmed against the deployed application with `tools/live_smoke_v12.py`.
-```
-
-## `docs/V12_VALIDATION_REPORT.md`
-
-```markdown
-# V12 Validation Report
-
-Build date: 2026-11-13 UTC
-
-## Passed offline checks
-
-- 27 root Python modules compiled and parsed.
-- 24 Jinja templates parsed successfully.
-- All browser JavaScript files passed `node --check`.
-- Shared CSS files have balanced blocks.
-- 77 selected offline Python tests passed, including:
-  - canonical admin navigation contract;
-  - visible literal admin-link and form-target registration;
-  - removal of retired routes/templates/assets;
-  - DigitalOcean root-layout checks;
-  - Shuffle admin hotfix behavior;
-  - EmpireDrop OpenAPI mapping, authentication headers, rate-limit preservation, slug recovery, Top 10, masking, ties, minor-unit conversion, and local payout logic;
-  - public server-rendered EmpireDrop standings.
-- `release_check.py --source-only --strict` passed.
-- `tools/deployment_diagnostics.py` passed against the source tree.
-
-## Not executed in the offline build environment
-
-Flask, Werkzeug and Waitress are not installed in the artifact-building container, and network package installation is unavailable. Therefore these checks are included in the project but were not executed here:
-
-- authenticated Flask test-client navigation;
-- live POST/redirect/form behavior;
-- complete application startup under Waitress;
-- live Shuffle and EmpireDrop authentication;
-- DigitalOcean deployment;
-- Playwright/jsdom browser acceptance.
-
-## Required production acceptance
-
-After deployment, run:
-
-```bash
-python tools/live_smoke_v12.py --base-url https://YOUR-DOMAIN --username gingrsnaps
-```
-
-Then manually verify EmpireDrop draft save, reload, publication, and public prize rendering using a low-risk test configuration or the intended final payout schedule.
-```
-
-## `docs/VALIDATION.md`
-
-```markdown
-# V12 Validation Matrix
-
-| Area | Validation |
-|---|---|
-| Admin routes | Canonical and compatibility destinations are registered and audited. |
-| EmpireDrop payouts | Ten-rank validation, dedicated revisions, draft persistence, atomic publication, and public projection checks. |
-| Gaming migration | Existing wallets stay authoritative; old signed identity can migrate to `rh_player`; names and recovery live in Gaming. |
-| Removed feature | No routes, templates, assets, public fields, production dependency, or new-state object remains. |
-| Dependencies | Root runtime requirements are lean; dev and optional Spaces dependencies are separate. |
-| Packaging | Flat-root markers, runtime hashes, archive integrity, and no protected caches. |
-| Security | CSRF, Superadmin checks, same-origin redirects, private credentials server-side, sanitized logs. |
-| Live acceptance | Use `tools/live_smoke_v12.py` after deployment; production provider and browser behavior cannot be proven by offline checks alone. |
-```
+````
 
 ## `docs/empiredrop_partner_openapi_2.0.1.yaml`
 
@@ -1609,6 +1358,332 @@ tags:
       Race data for third-party integrations, authenticated by API key pair.
 ```
 
+## `docs/EMPIREDROP_VALIDATION.md`
+
+```markdown
+# EmpireDrop independent release — test evidence and limits
+
+- Offline EmpireDrop-specific backend tests: 13 passed (Python 3.13, synthetic requests) on 2026-10-29.
+- Public provider-switching frontend test: 1 passed (Node.js; synthetic DOM).
+- Python source compile: passed for modified files; all project Python modules are checked before packaging.
+- Jinja templates: all templates parsed successfully with Jinja2.
+- JavaScript syntax: new or modified JS files pass `node --check`.
+- Package: SHA-256 manifest hashes and ZIP CRC checked during final packaging.
+- **Not performed:** Live EmpireDrop API call (official contract unknown); full Flask integration regressions (Flask and Waitress unavailable in execution environment); DigitalOcean deployment or live user verification.
+- Tests do not prove an actual provider API response exists, that the keys have required scopes, or that any wager is attributable to referral `red`.
+
+All numeric fixtures are artificial. Failure cases reject 401, 403, 429, redirects, invalid data and unexpected pagination without publishing partial standings. The source tree includes `tests/test_empiredrop.py` for full Flask integration once dependencies are installed.
+```
+
+## `docs/PERFORMANCE.md`
+
+```markdown
+# Performance Notes
+
+V12 removes the former five-second community poller, avatar processing, related state serialization, and associated public/Admin payload fields.
+
+Other optimizations:
+
+- Runtime requirements no longer include Pillow.
+- Provider-specific scripts load only where needed.
+- Repeated operational events are grouped.
+- EmpireDrop honors provider cache duration.
+- Public responses retain conditional caching and ETags.
+- FastDeploy excludes tests, screenshots, caches, and development documentation.
+- A single App Platform instance avoids concurrent JSON writers.
+```
+
+## `docs/REDPOINTS.md`
+
+```markdown
+# RedPoints Gaming
+
+RedPoints wallets are identified by a signed browser identity and stored in JSON. V12 owns community names and recovery directly inside Gaming.
+
+## Player profile
+
+- Confirm or edit the community name on `/gaming`.
+- Generate a recovery code from the Gaming profile area.
+- Store the code privately; the server stores only its digest.
+- Recovering a profile rebinds the browser to the original wallet identity.
+
+## Migration
+
+Existing wallet identifiers, names, balances, receipts, fairness records, and active game hands remain authoritative. V12 accepts the previous signed identity during transition and then issues `rh_player`. Retired profile data is removed after a backup and only contributes a recovery digest when a unique exact name match is safe.
+
+## Administration
+
+Admin → Games & RedPoints shows player count, leaders, receipts, and the controlled grant-all action. It no longer includes unrelated community-game state.
+```
+
+## `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
+
+```markdown
+# RedHunllef: Shuffle 400 and Admin timezone hotfix — 2026-11-10
+
+## Root causes supported by evidence
+
+The provided operations JSON contains five Shuffle HTTP 400 rejections, all
+classified as `window` by older code. That classification was misleading: the
+old client assigned `window` to *every* HTTP 400 without inspecting the error.
+It also contains an EmpireDrop HTTP 200 with 10 ranked entries. EmpireDrop's
+successful source retrieval does not independently prove the public board rendered.
+
+`static/admin-providers.js` and `static/admin-empiredrop.js` used the invalid
+`Intl.DateTimeFormat` combination `dateStyle` + `timeStyle` + `timeZoneName`.
+A browser RangeError interrupted refresh status rendering.
+
+The bundled `data/state.json` has a Shuffle window from August 4–11, 2026,
+which is expired relative to November 2026. It could explain rejection of a
+historical request, but the operational log does not prove that was the specific
+Shuffle provider validation reason. **This update does not overwrite that race.**
+
+## Changes
+
+- Both admin date formatters now use explicit fields with the Eastern timezone
+  abbreviation, avoiding the RangeError.
+- Shuffle HTTP 400 errors are only called `window` when the bounded response
+  mentions known date keys; otherwise they're `bad_request`. Untrusted response
+  text is never written to logs or shown to administrators.
+- Source cards show a practical warning for stale race periods and clarify what
+  HTTP 400 does and does not establish.
+- Repeated warnings of the same service/event/code/status are grouped for up to
+  five minutes, with an occurrence counter in the activity viewer.
+- No API URLs, keys, username data, game data, or prize calculations were changed.
+- Private settings, administrator seed and data/state.json are preserved intact.
+
+## Actions in DigitalOcean after deployment
+
+1. Open **Admin → Shuffle**, confirm the last HTTP status and last verified update.
+2. Open **Schedule & prizes**. Review the saved dates; if the August 2026 race
+   is no longer the intended event, use **Use current week** (for the current competition) or **Prepare next race** (for the next competition) and review the
+   changes before publishing. This will intentionally create a new race window.
+3. Verify the **Shuffle API key** is present in *the running DigitalOcean app*.
+   The original ZIP has a key, but `.gitignore` can exclude private/settings.json
+   from the Git deployment. Configure SHUFFLE_API_KEY as an encrypted secret
+   if deploying through Git.
+4. Request a refresh and check **Activity & logs**. HTTP 400 may still happen
+   if the provider rejects the dates or request parameters. No live provider
+   call has been performed by the test suite.
+5. Open **Admin → EmpireDrop**; the submitted operations report already
+   confirmed a response of HTTP 200 / 10 rows. Review the public board and
+   your race slug before changing any EmpireDrop settings.
+
+**Storage warning:** DigitalOcean App Platform local JSON state may be lost on
+redeploy. Export a fresh private recovery copy before uploading the ZIP. The
+bundled data files represent an earlier snapshot, not your latest live state.
+```
+
+## `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
+
+```markdown
+# V12 Admin Reliability and Feature Removal
+
+## Purpose
+
+V12 resolves two recurring failures: administrator links that opened 404 pages and EmpireDrop prize changes that did not reliably publish. It also removes the Community Boss feature completely while preserving RedPoints players.
+
+## Canonical navigation
+
+Every visible administrator destination has one direct GET route registered in Flask and one centralized entry in `admin_navigation.py`. Older supported bookmarks redirect to the canonical route. JavaScript no longer needs to synthesize destinations.
+
+## EmpireDrop payout transaction
+
+The payout editor has independent draft and published records. A save:
+
+1. validates CSRF and Superadmin access;
+2. checks the dedicated payout revision;
+3. validates currency and exactly ten amounts;
+4. creates a pre-change backup;
+5. writes atomically;
+6. rereads and compares the persisted record;
+7. refreshes runtime state;
+8. for publication, compares the public prize projection;
+9. logs a sanitized success or rejection event.
+
+## Gaming migration
+
+The old browser identity is accepted only as a migration input. Existing Gaming wallets stay authoritative. V12 issues a new Gaming-owned cookie and provides name and recovery controls inside Gaming. No attack, HP, avatar, cooldown, raid, achievement, or damage state remains.
+
+## Removed runtime surface
+
+The release contains no retired feature routes, templates, static files, status cards, public JSON fields, admin actions, image-processing dependency, or scheduled poller.
+
+## Acceptance criteria
+
+- Every visible Admin link returns an authenticated 200 response.
+- Every compatibility route reaches the same canonical destination.
+- EmpireDrop draft survives reload.
+- Publishing appears in the public payload and rendered page.
+- Shuffle and EmpireDrop provider refreshes remain unchanged.
+- Existing RedPoints wallet IDs and balances survive migration.
+- No retired feature entry appears publicly or in Admin.
+- Root deployment markers are present.
+- A state backup is created before migration and payout changes.
+
+## Live verification limitation
+
+Offline checks verify route registration, templates, JavaScript syntax, state validation, manifests, and archives. The final authenticated DigitalOcean behavior must still be confirmed against the deployed application with `tools/live_smoke_v12.py`.
+```
+
+## `docs/V12_VALIDATION_REPORT.md`
+
+````markdown
+# V12 Validation Report
+
+Build date: 2026-11-13 UTC
+
+## Passed offline checks
+
+- 27 root Python modules compiled and parsed.
+- 24 Jinja templates parsed successfully.
+- All browser JavaScript files passed `node --check`.
+- Shared CSS files have balanced blocks.
+- 77 selected offline Python tests passed, including:
+  - canonical admin navigation contract;
+  - visible literal admin-link and form-target registration;
+  - removal of retired routes/templates/assets;
+  - DigitalOcean root-layout checks;
+  - Shuffle admin hotfix behavior;
+  - EmpireDrop OpenAPI mapping, authentication headers, rate-limit preservation, slug recovery, Top 10, masking, ties, minor-unit conversion, and local payout logic;
+  - public server-rendered EmpireDrop standings.
+- `release_check.py --source-only --strict` passed.
+- `tools/deployment_diagnostics.py` passed against the source tree.
+
+## Not executed in the offline build environment
+
+Flask, Werkzeug and Waitress are not installed in the artifact-building container, and network package installation is unavailable. Therefore these checks are included in the project but were not executed here:
+
+- authenticated Flask test-client navigation;
+- live POST/redirect/form behavior;
+- complete application startup under Waitress;
+- live Shuffle and EmpireDrop authentication;
+- DigitalOcean deployment;
+- Playwright/jsdom browser acceptance.
+
+## Required production acceptance
+
+After deployment, run:
+
+```bash
+python tools/live_smoke_v12.py --base-url https://YOUR-DOMAIN --username gingrsnaps
+```
+
+Then manually verify EmpireDrop draft save, reload, publication, and public prize rendering using a low-risk test configuration or the intended final payout schedule.
+````
+
+## `docs/V14_PUBLIC_RACES_AND_GAMING.md`
+
+```markdown
+# V14 public races and Gaming community board
+
+## Purpose
+
+V14 reduces public visual competition while keeping complete operational detail in the authenticated Admin Control Center. It also introduces a public Gaming community feed without exposing private player or wallet data.
+
+## Uniform wager-race presentation
+
+Both provider views use:
+
+- `RedHunllef Wager Race` as the fixed page title
+- `Powered By` as the provider label
+- equal provider cards and typography
+- the same race-summary, podium and standings components
+- the same Place, Player, Wagered and Prize columns
+- one segmented provider selector
+
+Provider behavior remains independent:
+
+- Shuffle: Top 15 and weighted wager rules
+- EmpireDrop: Top 10 and official partner-race data
+- independent schedules, prizes and API refreshes
+
+The public page no longer displays provider health, HTTP state, retry cadence, cache duration, next check or last provider attempt. Those fields remain available in Admin. Visitors receive only a calm unavailable or cached-data message when needed.
+
+## Public Gaming feed
+
+`GET /gaming/api/public-leaderboard` returns a deliberately small allowlisted projection:
+
+- current RedPoints season
+- recent aggregate activity count
+- opted-in named recent players
+- opted-in weekly Top 10
+- opted-in per-game Top 10 rankings
+- recent aggregate counts by game
+
+It does not return:
+
+- player or wallet IDs
+- IP addresses or network metadata
+- balances
+- receipts or pending wagers
+- server seeds or commitments
+- recovery information
+- administrator grants or funding adjustments
+
+### Activity rules
+
+Only a confirmed server-side game action updates activity. Opening a page, refreshing a wallet, or receiving a five-second poll does not make a visitor appear active.
+
+- Playing now: confirmed activity in the last 30 seconds
+- Recently active: confirmed activity in the last two minutes
+- Active card hand: shown as `In a hand`
+
+### Public-name privacy
+
+Players explicitly choose whether their community name appears publicly. Existing wallets migrate with public visibility disabled. New players see the choice when confirming a name. Aggregate activity counts can include private players, but private names never enter the public response.
+
+### Refresh and performance
+
+The Gaming page uses its existing five-second state request for both the private wallet and the public community board. Polling pauses when the browser tab is hidden. The server caches the sanitized projection and invalidates it only after confirmed activity or when a visible activity status must change. ETags permit unchanged responses to use conditional delivery.
+
+## Administrator additions
+
+The private Gaming admin view includes:
+
+- current or last game
+- last confirmed action time
+- public-name visibility
+- public recent-player count
+- public feed revision
+
+Existing wallet, funding and network details remain protected by administrator authorization.
+
+## Deployment
+
+The root `requirements.txt` remains the production dependency source. The optional Spaces SDK is not required while `RH_SPACES_ENABLE=0`. Use a forced DigitalOcean rebuild after replacing the source tree.
+
+## Validation
+
+The package includes `tests/test_v14_public_experience.py`, which checks:
+
+- public name opt-in behavior
+- aggregate-only inclusion of private activity
+- removal of private fields
+- activity expiration and status transitions
+- settled-stat rankings
+- provider-title and branding consistency
+- absence of public operational status text
+- public Gaming route and hidden-tab polling support
+```
+
+## `docs/VALIDATION.md`
+
+```markdown
+# V12 Validation Matrix
+
+| Area | Validation |
+|---|---|
+| Admin routes | Canonical and compatibility destinations are registered and audited. |
+| EmpireDrop payouts | Ten-rank validation, dedicated revisions, draft persistence, atomic publication, and public projection checks. |
+| Gaming migration | Existing wallets stay authoritative; old signed identity can migrate to `rh_player`; names and recovery live in Gaming. |
+| Removed feature | No routes, templates, assets, public fields, production dependency, or new-state object remains. |
+| Dependencies | Root runtime requirements are lean; dev and optional Spaces dependencies are separate. |
+| Packaging | Flat-root markers, runtime hashes, archive integrity, and no protected caches. |
+| Security | CSRF, Superadmin checks, same-origin redirects, private credentials server-side, sanitized logs. |
+| Live acceptance | Use `tools/live_smoke_v12.py` after deployment; production provider and browser behavior cannot be proven by offline checks alone. |
+```
+
 ## `empiredrop.py`
 
 ```python
@@ -1942,7 +2017,10 @@ class EmpireDropBoard:
             selected = {'slug': slug, 'name': slug}
         else:
             races, _ = api.discover()
-            selected = select_race(races, api.settings)
+            site = self._schedule()
+            selected = select_race(races, api.settings,
+                                   preferred_start=site['start_time'],
+                                   preferred_end=site['end_time'])
         result = api.probe(selected['slug'])
         result['race'] = selected
         result['fields_verified'] = api.settings['race_verified_fields']
@@ -1981,7 +2059,9 @@ class EmpireDropBoard:
                     raise
                 catalog, _ = api.discover()
                 try:
-                    fallback = select_race(catalog, {**api.settings, 'race_slug': ''})
+                    fallback = select_race(catalog, {**api.settings, 'race_slug': ''},
+                                           preferred_start=site['start_time'],
+                                           preferred_end=site['end_time'])
                 except ProviderError as selection_error:
                     raise ProviderError(
                         'Saved EmpireDrop slug is unavailable (404). ' +
@@ -2002,7 +2082,9 @@ class EmpireDropBoard:
                     'running wager race. Confirm and save its current slug in Admin.')
         else:
             catalog, _ = api.discover()
-            selected = select_race(catalog, api.settings)
+            selected = select_race(catalog, api.settings,
+                                   preferred_start=site['start_time'],
+                                   preferred_end=site['end_time'])
             payload = api.details(selected['slug'])
         race = payload.get('race')
         if not isinstance(race, dict) or race.get('slug') != selected['slug']:
@@ -2026,7 +2108,8 @@ class EmpireDropBoard:
         meta = {
             'slug': race['slug'], 'name': str(race.get('name') or race['slug'])[:90],
             # Safe metadata only; keys and unmasked player names are not logged.
-            'selection': 'recovered' if recovered_from else 'configured',
+            'selection': ('recovered' if recovered_from else
+                          'configured' if api.settings['race_slug'] else 'automatic'),
             'start_time': start, 'end_time': end,
             'date_policy': api.settings['race_window_policy'],
             'currency': race['currency'],
@@ -2393,6 +2476,24 @@ class EmpireDropBoard:
             self.thread.join(timeout=1)
 ```
 
+## `EMPIREDROP_CHANGELOG_2026-11-10.md`
+
+```markdown
+# EmpireDrop Integration Changelog
+
+The integration now follows Partner Public API v2.0.1:
+
+- Production host `https://api.empiredrop.com`.
+- Dual `X-Public-Key` and `X-Private-Key` authentication.
+- Running-race discovery through `/api/v1/affiliate-partner/races`.
+- Race detail and standings through `/api/v1/affiliate-partner/races/{slug}`.
+- Top 10 display, official ranks and ties, provider cache timing, and amount-unit validation.
+- Consistent public masking while preserving provider-anonymized names and public IDs in Admin.
+- Independent local payouts with draft and publication states.
+
+V12 adds a dedicated payout revision, atomic verification, and public-projection confirmation.
+```
+
 ## `empiredrop_deploy_keys.py`
 
 ```python
@@ -2614,6 +2715,11 @@ def validate_race_settings(candidate):
     settings['auto_select'] = settings['auto_select'] is True
     if settings['race_window_policy'] not in ('provider', 'local'):
         raise ValueError('Choose provider or local date matching.')
+    # Current partner races own their reporting window. Local dates remain in
+    # the admin record for display/backup, but must not reject valid provider
+    # standings or switch the application to the deprecated endpoint.
+    if settings['source_mode'] == 'races':
+        settings['race_window_policy'] = 'provider'
     return settings
 
 
@@ -2674,11 +2780,15 @@ def race_catalog(payload):
     return output
 
 
-def select_race(races, options, now=None):
-    """Select the sole running race unless an explicit slug is configured.
+def select_race(races, options, now=None, preferred_start=0, preferred_end=0):
+    """Select the intended running wager race without guessing blindly.
 
-    The running-races API does *not* list completed/scheduled races, so an
-    explicit slug may be fetched directly from the detail endpoint.
+    An explicit slug always wins. With automatic selection enabled, a single
+    active WAGER/RANKING race is selected immediately. When EmpireDrop returns
+    multiple active wager races, prefer the unique race whose provider dates
+    match (or are closest to) the saved local November window. This keeps the
+    official slug-based rankings working after a redeploy that lost the saved
+    slug, while still refusing an ambiguous tie.
     """
     settings = validate_race_settings(options)
     if settings['race_slug']:
@@ -2686,18 +2796,41 @@ def select_race(races, options, now=None):
                     {'slug': settings['race_slug'], 'name': settings['race_slug']})
     if not settings['auto_select']:
         raise ProviderError('Select an EmpireDrop race slug or enable automatic selection.', kind='selection')
-    # This leaderboard awards wager-volume positions. A raffle or deposit race
-    # must be selected explicitly rather than becoming an unexpected auto pick.
     eligible = [item for item in races if item['is_active'] and
                 item['type'] == 'WAGER' and item['engine'] == 'RANKING']
-    if len(eligible) != 1:
-        message = (
+    if not eligible:
+        raise ProviderError(
             'No active WAGER/RANKING EmpireDrop races are available. '
-            'Check the partner dashboard or select a valid race slug in Admin.'
-            if not eligible else
-            'Multiple active wager races exist; select the intended slug in Admin.')
-        raise ProviderError(message, kind='selection')
-    return eligible[0]
+            'Check the partner dashboard or select a valid race slug in Admin.',
+            kind='selection')
+    if len(eligible) == 1:
+        return eligible[0]
+
+    start = int(preferred_start or 0)
+    end = int(preferred_end or 0)
+    if 0 < start < end:
+        exact = [race for race in eligible
+                 if race.get('start_time') == start and
+                 abs(int(race.get('end_time') or 0) - end) <= 1]
+        if len(exact) == 1:
+            return exact[0]
+
+        scored = []
+        for race in eligible:
+            race_start = int(race.get('start_time') or 0)
+            race_end = int(race.get('end_time') or 0)
+            if not (0 < race_start < race_end):
+                continue
+            overlaps = race_start < end and race_end >= start
+            score = (0 if overlaps else 10**12) + abs(race_start - start) + abs(race_end - end)
+            scored.append((score, race['slug'], race))
+        scored.sort(key=lambda item: (item[0], item[1]))
+        if scored and (len(scored) == 1 or scored[0][0] < scored[1][0]):
+            return scored[0][2]
+
+    raise ProviderError(
+        'Multiple active wager races exist and no unique date match was found; '
+        'select the intended slug in Admin.', kind='selection')
 
 
 def extract_race_rows(payload, unused_path=''):
@@ -3161,6 +3294,50 @@ def verify(receipt, expected_commitment=None):
         return False
 ```
 
+## `FILE_STRUCTURE.md`
+
+```markdown
+# RedHunllef V14 file structure
+
+## Deployment root
+
+- `wager_backend.py` — Flask application, public/admin routes and Waitress entry point
+- `requirements.txt` — production dependencies installed by DigitalOcean
+- `runtime.txt` — Python runtime pin
+- `app.yaml` / `Procfile` — deployment markers
+- `config.py`, `runtime.py`, `storage.py` — configuration, workers and atomic JSON persistence
+- `empiredrop*.py` — official EmpireDrop partner-race API and projections
+- `gaming.py`, game modules, `fairness.py` — RedPoints wallets, public community activity and provably fair games
+- `admin_navigation.py` — canonical administrator destinations
+- `operations_log.py`, `telemetry.py` — sanitized operations and health views
+- `release_check.py` — source, template, asset and optional-dependency validation
+
+## Web assets
+
+- `templates/index.html` — uniform Shuffle and EmpireDrop public race view
+- `templates/gaming.html` — Gaming dashboard, public community board and games
+- `templates/admin*.html` — protected Control Center workspaces
+- `static/v14-modern.css` — final public design layer loaded after legacy styles
+- `static/empiredrop.js` — uniform provider switching and EmpireDrop Top 10 rendering
+- `static/gaming.js` — wallet/gameplay plus five-second community updates
+- remaining `static/` files — shared, game-specific and admin assets
+
+## Private runtime data
+
+- `private/settings.json`
+- `private/admin_store.seed.json`
+- `data/state.json`
+
+## Development-only content in the full archive
+
+- `tests/`
+- `tools/`
+- `docs/`
+- `FULL_CODE_BLOCKS.md`
+
+The FastDeploy archive excludes development-only content but retains every executable file, template, static asset, private configuration file and root deployment marker.
+```
+
 ## `gaming.py`
 
 ```python
@@ -3176,6 +3353,7 @@ import ipaddress
 import logging
 import re
 import secrets
+import threading
 import time
 
 from fairness import VERSION, BLACKJACK_VERSIONS, POKER_VERSIONS, GAMES, commitment, options_for, outcome, max_payout
@@ -3188,6 +3366,10 @@ MAX_PLAYERS = 10000
 RECEIPTS = 30
 MAX_IP_BINDINGS = MAX_PLAYERS * 4
 MAX_GRANTS = 100
+PUBLIC_LIVE_SECONDS = 120
+PUBLIC_NOW_SECONDS = 30
+PUBLIC_LEADER_LIMIT = 10
+PUBLIC_LIVE_LIMIT = 20
 
 
 class GamingError(ValueError):
@@ -3308,6 +3490,15 @@ def validate_gaming(value):
             raise ValueError('Invalid RedPoints display name.')
         if type(player.get('community_name_confirmed', False)) is not bool:
             raise ValueError('Invalid community-name confirmation.')
+        if type(player.get('public_visibility', False)) is not bool:
+            raise ValueError('Invalid public Gaming visibility.')
+        last_game = player.get('last_game', '')
+        if not isinstance(last_game, str) or (last_game and last_game not in GAMES):
+            raise ValueError('Invalid recent Gaming activity.')
+        for field in ('last_action_at', 'last_round_at'):
+            value_at = player.get(field, 0)
+            if type(value_at) not in (int, float) or not 0 <= value_at <= 10**12:
+                raise ValueError('Invalid recent Gaming timestamp.')
         recovery_hash = player.get('recovery_hash')
         if recovery_hash is not None and (not isinstance(recovery_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', recovery_hash)):
             raise ValueError('Invalid Gaming recovery digest.')
@@ -3386,6 +3577,9 @@ def validate_gaming(value):
                 seen.add(receipt['request_id'])
             except (KeyError, TypeError, ValueError):
                 raise ValueError('A saved RedPoints receipt failed verification.') from None
+    activity_revision = value.get('activity_revision', 0)
+    if type(activity_revision) is not int or not 0 <= activity_revision <= MAX_NUMBER:
+        raise ValueError('Invalid public Gaming activity revision.')
     grants = value.get('admin_grants', [])
     if not isinstance(grants, list) or len(grants) > MAX_GRANTS:
         raise ValueError('Invalid RedPoints grant history.')
@@ -3430,15 +3624,28 @@ def validate_gaming(value):
 class Gaming:
     def __init__(self, store):
         self.store = store
+        self._public_cache_lock = threading.RLock()
+        self._public_cache_key = None
+        self._public_cache_value = None
+        self._public_cache_expires_at = 0
         with store.connection() as conn:
             validate_gaming(conn.get('gaming'))
         # Adding a game never resets an existing wallet, seed or receipt.
+        # Public activity fields are additive and default private for existing
+        # players until they explicitly opt in from the Gaming profile.
         with store.connection(transaction=True) as conn:
-            data = conn.get('gaming') or {}
+            if conn.get('gaming') is None:
+                conn['gaming'] = dict(version=1, players={}, activity_revision=0)
+            data = conn['gaming']
+            data.setdefault('activity_revision', 0)
             for player in data.get('players', {}).values():
                 upgrade_poker_stats(player)
                 for game, stats in fresh_stats().items():
                     player['stats'].setdefault(game, stats)
+                player.setdefault('public_visibility', False)
+                player.setdefault('last_game', '')
+                player.setdefault('last_action_at', 0)
+                player.setdefault('last_round_at', 0)
             self._upgrade_networks(data.get('ip_guard'))
 
     def restart_balances(self, now=None):
@@ -3480,14 +3687,17 @@ class Gaming:
     def _player(self, conn, identity, name, now):
         current = season(now)
         if conn.get('gaming') is None:
-            conn['gaming'] = dict(version=1, players={})
+            conn['gaming'] = dict(version=1, players={}, activity_revision=0)
+        conn['gaming'].setdefault('activity_revision', 0)
         players = conn['gaming']['players']
         key = player_key(identity)
         if key not in players:
             if len(players) >= MAX_PLAYERS:
                 raise GamingError('The player registry is full. Contact the host.', 'capacity', 409)
             players[key] = dict(name=name, season=current['id'], balance=START_POINTS, stats=fresh_stats(),
-                                nonce=0, version=1, poker_stats_version=2, server_seed=secrets.token_hex(32), receipts=[], last_bet_at=0)
+                                nonce=0, version=1, poker_stats_version=2, server_seed=secrets.token_hex(32),
+                                receipts=[], last_bet_at=0, public_visibility=False, last_game='',
+                                last_action_at=0, last_round_at=0)
         player = players[key]
         upgrade_poker_stats(player)
         for game, stats in fresh_stats().items():
@@ -3497,6 +3707,22 @@ class Gaming:
             player['name'] = name
             player['version'] += 1
         return player, current
+
+    @staticmethod
+    def _touch_activity(data, player, game, now, *, round_completed=False):
+        """Record only server-confirmed game actions for the public activity feed.
+
+        Page views and five-second wallet polls never call this helper, so they
+        cannot make a visitor appear to be actively playing.
+        """
+        if game not in GAMES:
+            return
+        stamp = int(now)
+        player['last_game'] = game
+        player['last_action_at'] = stamp
+        if round_completed:
+            player['last_round_at'] = stamp
+        data['activity_revision'] = min(MAX_NUMBER, int(data.get('activity_revision', 0)) + 1)
 
     @staticmethod
     def _rollover(player, current):
@@ -3598,6 +3824,7 @@ class Gaming:
                     poker_button='player' if player['stats'].get('poker', {}).get('bets', 0) % 2 == 0 else 'computer',
                     receipts=copy.deepcopy(player['receipts']),
                     needs_profile=not player.get('community_name_confirmed', False),
+                    public_visibility=bool(player.get('public_visibility', False)),
                     rules_version=VERSION, ip_bound=False, play_blocked=None,
                     blackjack=Gaming._hand_view(player), poker=Gaming._poker_view(player))
 
@@ -3607,7 +3834,7 @@ class Gaming:
         key = player_key(identity)
         def preview():
             return dict(season=current, balance=START_POINTS, name=name or '', nonce=0, version=0,
-                        commitment='', stats=fresh_stats(), receipts=[], needs_profile=True,
+                        commitment='', stats=fresh_stats(), receipts=[], needs_profile=True, public_visibility=False,
                         rules_version=VERSION, ip_bound=False, play_blocked=None, blackjack=None, poker=None,
                         poker_button='player', legacy_poker=None)
         # Routine five-second reads neither copy the complete community save nor
@@ -3628,7 +3855,7 @@ class Gaming:
             self._record_ip(conn['gaming'], key, client_ip, current)
             return self._view(player, current)
 
-    def confirm_community_name(self, identity, name, now=None, *, client_ip=None):
+    def confirm_community_name(self, identity, name, public_visibility=None, now=None, *, client_ip=None):
         """Activate the shared wallet once, retaining wins, receipts and its owner.
 
         Names migrated from the retired profile system remain suggestions until confirmed on Gaming. Older
@@ -3637,9 +3864,17 @@ class Gaming:
         """
         name = player_name(name)
         now = time.time() if now is None else now
+        if public_visibility is not None and type(public_visibility) is not bool:
+            raise GamingError('Choose whether your Gaming name appears publicly.', 'invalid_visibility', 422)
         with self.store.connection(transaction=True) as conn:
+            if conn.get('gaming') is None:
+                conn['gaming'] = dict(version=1, players={}, activity_revision=0)
+            data = conn['gaming']
+            data.setdefault('activity_revision', 0)
+            before_name = (data.get('players', {}).get(player_key(identity)) or {}).get('name')
+            before_visibility = (data.get('players', {}).get(player_key(identity)) or {}).get('public_visibility', False)
             player, current = self._player(conn, identity, name, now)
-            self._record_ip(conn['gaming'], player_key(identity), client_ip, current)
+            self._record_ip(data, player_key(identity), client_ip, current)
             if not player.get('community_name_confirmed', False):
                 extra = max(0, START_POINTS - player['balance'])
                 adjustment = player.get('balance_adjustment', 0) + extra
@@ -3647,6 +3882,11 @@ class Gaming:
                     raise GamingError('This wallet reached its supported numeric range.', 'capacity', 409)
                 player.update(community_name_confirmed=True, balance=player['balance']+extra,
                               balance_adjustment=adjustment, version=player['version']+1)
+            if public_visibility is not None and player.get('public_visibility', False) != public_visibility:
+                player['public_visibility'] = public_visibility
+                player['version'] += 1
+            if before_name != player['name'] or before_visibility != player.get('public_visibility', False):
+                data['activity_revision'] = min(MAX_NUMBER, int(data.get('activity_revision', 0)) + 1)
             return self._view(player, current)
 
     def save_recovery(self, identity, code_hash, now=None):
@@ -3808,8 +4048,10 @@ class Gaming:
             if game in ('blackjack', 'poker') and not result['ended']:
                 player[game] = receipt
                 player['version'] += 1
+                self._touch_activity(conn['gaming'], player, game, now, round_completed=False)
                 return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
             self._settle(player, receipt, result)
+            self._touch_activity(conn['gaming'], player, game, now, round_completed=True)
             return dict(ok=True, duplicate=False, receipt=copy.deepcopy(receipt), wallet=self._view(player, current))
 
     @staticmethod
@@ -3864,8 +4106,10 @@ class Gaming:
                 player['balance'] -= receipt['wager']
             if result['ended']:
                 self._settle(player, receipt, result)
+                self._touch_activity(conn['gaming'], player, 'blackjack', now, round_completed=True)
                 return dict(ok=True, duplicate=False, receipt=copy.deepcopy(receipt), wallet=self._view(player, current))
             player['version'] += 1
+            self._touch_activity(conn['gaming'], player, 'blackjack', now, round_completed=False)
             return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
 
     def poker_action(self, identity, name, body, now=None, *, client_ip=None):
@@ -3897,6 +4141,7 @@ class Gaming:
                 raise GamingError('Use the Hold’em action controls.', 'stale_hand', 409)
             hand.update(holds=holds, draw_id=action_id)
             self._settle(player, hand, outcome(player['server_seed'], hand))
+            self._touch_activity(conn['gaming'], player, 'poker', now, round_completed=True)
             return dict(ok=True, duplicate=False, receipt=copy.deepcopy(hand), wallet=self._view(player, current))
 
     def holdem_action(self, identity, name, body, now=None, *, client_ip=None):
@@ -3930,9 +4175,100 @@ class Gaming:
             result = outcome(player['server_seed'], hand)  # Illegal actions roll back the transaction.
             if result['ended']:
                 self._settle(player, hand, result)
+                self._touch_activity(conn['gaming'], player, 'poker', now, round_completed=True)
                 return dict(ok=True, duplicate=False, receipt=copy.deepcopy(hand), wallet=self._view(player, current))
             player['version'] += 1
+            self._touch_activity(conn['gaming'], player, 'poker', now, round_completed=False)
             return dict(ok=True, duplicate=False, receipt=None, wallet=self._view(player, current))
+
+    @staticmethod
+    def _game_label(game):
+        return {
+            'poker': "Texas Hold’em",
+            'video_poker': 'Video Poker',
+            'coinflip': 'Coinflip',
+        }.get(game, game.capitalize())
+
+    def public_leaderboard(self, now=None):
+        """Return a compact, privacy-safe five-second Gaming community feed.
+
+        The projection contains no wallet IDs, IP addresses, balances, recovery
+        data, seeds, receipts or funding adjustments. Rankings use settled
+        server-side ledger statistics only. Page views and polling never create
+        activity; only confirmed game actions call ``_touch_activity``.
+        """
+        now = time.time() if now is None else now
+        current = season(now)
+        with self.store.connection() as conn:
+            data = conn.get('gaming') or {}
+            revision = int(data.get('activity_revision', 0))
+            cache_key = (current['id'], revision)
+            with self._public_cache_lock:
+                if (cache_key == self._public_cache_key and self._public_cache_value is not None and
+                        now < self._public_cache_expires_at):
+                    return copy.deepcopy(self._public_cache_value)
+            players = data.get('players', {})
+            game_counts = {game: 0 for game in GAMES}
+            live = []
+            next_change = None
+            leaders = []
+            per_game = {game: [] for game in GAMES}
+            for player in players.values():
+                if player.get('season') != current['id'] or not player.get('community_name_confirmed'):
+                    continue
+                stats = player.get('stats') or {}
+                net = rounds = 0
+                visible = bool(player.get('public_visibility', False))
+                for game in GAMES:
+                    record = stats.get(game) or {}
+                    game_net = int(record.get('net', 0))
+                    game_rounds = int(record.get('bets', 0))
+                    net += game_net
+                    rounds += game_rounds
+                    if visible and game_rounds:
+                        per_game[game].append(dict(name=player['name'], net=game_net, rounds=game_rounds))
+                legacy = stats.get('video_poker') or {}
+                net += int(legacy.get('net', 0))
+                rounds += int(legacy.get('bets', 0))
+                if visible and rounds:
+                    leaders.append(dict(name=player['name'], net=net, rounds=rounds))
+                last_action = float(player.get('last_action_at', 0) or 0)
+                age = max(0, now - last_action) if last_action else PUBLIC_LIVE_SECONDS + 1
+                recent_game = 'blackjack' if player.get('blackjack') else 'poker' if player.get('poker') else player.get('last_game', '')
+                if last_action and age <= PUBLIC_LIVE_SECONDS and recent_game in GAMES:
+                    game_counts[recent_game] += 1
+                    transition = (last_action + PUBLIC_NOW_SECONDS
+                                  if age <= PUBLIC_NOW_SECONDS and not (player.get('blackjack') or player.get('poker'))
+                                  else last_action + PUBLIC_LIVE_SECONDS)
+                    if transition > now:
+                        next_change = transition if next_change is None else min(next_change, transition)
+                    if visible:
+                        status = 'In a hand' if player.get('blackjack') or player.get('poker') else ('Playing now' if age <= PUBLIC_NOW_SECONDS else 'Recently active')
+                        live.append(dict(name=player['name'], game=recent_game, game_label=self._game_label(recent_game),
+                                         status=status, last_action_at=int(last_action)))
+
+            def ranked(rows):
+                rows.sort(key=lambda row: (-row['net'], -row['rounds'], row['name'].casefold()))
+                result = rows[:PUBLIC_LEADER_LIMIT]
+                for index, row in enumerate(result, 1):
+                    row['rank'] = index
+                return result
+
+            leaders = ranked(leaders)
+            game_leaders = {game: ranked(rows) for game, rows in per_game.items()}
+            live.sort(key=lambda row: (-row['last_action_at'], row['name'].casefold()))
+            value = dict(
+                generated_at=int(now), season=current, revision=revision,
+                live_players=live[:PUBLIC_LIVE_LIMIT], weekly_leaders=leaders,
+                game_leaders=game_leaders,
+                game_counts={game: count for game, count in game_counts.items() if count},
+                active_count=sum(game_counts.values()),
+            )
+            with self._public_cache_lock:
+                self._public_cache_key = cache_key
+                self._public_cache_value = copy.deepcopy(value)
+                self._public_cache_expires_at = next_change if next_change is not None else float('inf')
+            return value
 
     def leaders(self, now=None):
         """Private rankings from settled ledger totals, never client-reported wins."""
@@ -3959,7 +4295,10 @@ class Gaming:
                 return player['stats'].get(game, {})
             for game in (*GAMES, 'video_poker'):
                 rows = [dict(name=p['name'], player_tag=key[:12], ips=sorted(networks.get(key, [])),
-                             balance=p['balance'], funding_adjustment=p.get('balance_adjustment', 0), **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
+                             balance=p['balance'], funding_adjustment=p.get('balance_adjustment', 0),
+                             public_visibility=bool(p.get('public_visibility', False)),
+                             last_game=p.get('last_game', ''), last_action_at=p.get('last_action_at', 0),
+                             **game_stats(p, game)) for key,p in active.items() if game_stats(p, game).get('bets')]
                 rows.sort(key=lambda p:(-p['net'], -p['paid'], p['player_tag']))
                 # Count the complete ledger before slicing the five leaders.
                 counts[game] = dict(players=len(rows), rounds=sum(row['bets'] for row in rows))
@@ -4709,6 +5048,12 @@ def checkpoint_status(marker, admin, rows, gaming=None):
                 details='; '.join(notes) or 'No new saved progress since this export.')
 ```
 
+## `Procfile`
+
+```text
+web: python wager_backend.py
+```
+
 ## `provider_admin.py`
 
 ```python
@@ -5276,6 +5621,49 @@ def read_json(path: Path) -> dict:
         raise RuntimeError("Cannot read " + str(path) + ". The original file was left untouched. Restore a verified recovery copy.") from exc
 ```
 
+## `README.md`
+
+````markdown
+# RedHunllef V14
+
+A single-process Flask/Waitress website providing independent Shuffle Top 15 and EmpireDrop Top 10 wager leaderboards, public RedPoints community activity, race history, provably fair games, and a protected administration panel.
+
+## V14 update
+
+V14 makes the two public wager races visually uniform, removes provider-operation noise from visitor pages, and adds a privacy-safe public Gaming leaderboard. The working V13 administrator, EmpireDrop, DigitalOcean and payout repairs remain included.
+
+Detailed implementation notes are in `docs/V14_PUBLIC_RACES_AND_GAMING.md`.
+
+## Run
+
+```bash
+python -m pip install -r requirements.txt
+python wager_backend.py
+```
+
+DigitalOcean App Platform should use a blank Build Command and `python wager_backend.py` as the Run Command.
+
+## Validate
+
+```bash
+python wager_backend.py --check
+PYTHONPATH=. python tests/test_v14_public_experience.py
+```
+
+The full acceptance suite additionally requires the packages from `requirements-dev.txt`.
+
+## Bundled race window
+
+- Start: November 10, 2026 at 6:00 PM Eastern
+- End: November 17, 2026 at 6:00 PM Eastern
+
+## Security and storage
+
+The private package contains production credentials and a saved JSON snapshot. Keep it private. Public Gaming activity is an allowlisted projection and never returns wallet IDs, IPs, balances, receipts, seeds, recovery details or administrator grants.
+
+App Platform container storage is not durable. Export a current recovery file before every deployment or configure the optional Spaces mirror. Keep `RH_SPACES_ENABLE=0` unless Spaces and its boto3 dependency are intentionally configured.
+````
+
 ## `release_check.py`
 
 ```python
@@ -5284,6 +5672,7 @@ import ast
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import argparse
@@ -5294,11 +5683,27 @@ from jinja2 import Environment, FileSystemLoader, TemplateError, meta
 def check_release(root=None, strict=False, check_dependencies=True):
     root = Path(root or Path(__file__).parent)
     problems, warnings = [], []
-    required = {'flask':'Flask', 'werkzeug':'Flask', 'requests':'requests', 'waitress':'waitress', 'tzdata':'tzdata'}
+    required = {'flask':'Flask', 'werkzeug':'Werkzeug', 'requests':'requests', 'waitress':'waitress', 'tzdata':'tzdata'}
+
+    # DigitalOcean Spaces support is optional. The S3 SDK is imported lazily by
+    # spaces_state.py only when RH_SPACES_ENABLE is explicitly enabled. Do not
+    # fail normal local-JSON deployments merely because boto3/botocore are not
+    # installed.
+    spaces_enabled = os.getenv('RH_SPACES_ENABLE', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    optional_modules = {'boto3', 'botocore'}
+
     if check_dependencies:
         for module, package in required.items():
             if importlib.util.find_spec(module) is None:
                 problems.append('Missing dependency: '+package+'. Install requirements.txt.')
+        if spaces_enabled:
+            for module in sorted(optional_modules):
+                if importlib.util.find_spec(module) is None:
+                    problems.append(
+                        'Spaces storage is enabled but '+module+
+                        ' is not installed. Install requirements-spaces.txt or add boto3 to requirements.txt.'
+                    )
+
     modules = list(root.glob('*.py'))
     for source in modules:
         try:
@@ -5307,6 +5712,8 @@ def check_release(root=None, strict=False, check_dependencies=True):
             for node in ast.walk(tree):
                 if isinstance(node, ast.ImportFrom) and node.module and not node.level:
                     name = node.module.split('.')[0]
+                    if name in optional_modules and not spaces_enabled:
+                        continue
                     if importlib.util.find_spec(name) is None and not (root/(name+'.py')).is_file():
                         if check_dependencies or name not in required:
                             problems.append(source.name+' imports missing module '+name)
@@ -5360,6 +5767,41 @@ def main():
 
 if __name__ == '__main__':
     raise SystemExit(main())
+```
+
+## `RELEASE_METADATA.json`
+
+```json
+{
+  "release": "2026.11.13-admin-pages-payouts-v13",
+  "entry_point": "python wager_backend.py",
+  "python_version": "3.13.12",
+  "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
+  "storage": "atomic local JSON by default; optional single-writer DigitalOcean Spaces mirror",
+  "private_config_included": true,
+  "private_config_warning": "The private packages contain unencrypted production credentials and saved private state. Keep them private.",
+  "shuffle_positions": 15,
+  "empiredrop_positions": 10,
+  "race_window": {
+    "timezone": "America/New_York",
+    "start_epoch": 1794351600,
+    "end_epoch": 1794956400,
+    "display": "Nov 10, 2026 6:00 PM EST to Nov 17, 2026 6:00 PM EST"
+  },
+  "admin_repair": "Undefined macro imports, canonical workspaces, safe optional history fields, no-store admin HTML and request-ID exception logging",
+  "empiredrop_payouts": "Dedicated draft/publish records; atomic read-back and public projection verification; fail-safe structured logging",
+  "runtime_dependencies": [
+    "Flask==3.1.3",
+    "Werkzeug==3.1.9",
+    "requests==2.34.2",
+    "waitress==3.0.2",
+    "tzdata==2026.6"
+  ],
+  "source_validation": "Python compilation, StrictUndefined rendering of all admin workspaces, JavaScript syntax, route/form audit and payout transaction tests",
+  "live_deployment_verified": false,
+  "live_verification_note": "A live DigitalOcean deployment must still be smoke-tested after upload.",
+  "bundled_state_is_snapshot": true
+}
 ```
 
 ## `requirements-dev.txt`
@@ -5887,6 +6329,44 @@ class SpacesMirror:
             raise SpacesError('Spaces state write failed. No local commit was published; retry when storage is reachable.') from None
 ```
 
+## `START_HERE.md`
+
+```markdown
+# Start here — RedHunllef V14
+
+Release: `2026.11.13-public-uniform-gaming-v14`
+
+## DigitalOcean App Platform
+
+- Source Directory: `/`
+- Build Command: leave blank
+- Run Command: `python wager_backend.py`
+- HTTP Port: `8080`
+- Health Check: `/healthz`
+- Instances: `1`
+- `RH_SPACES_ENABLE=0` unless DigitalOcean Spaces is intentionally configured
+
+The source root must contain `requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml`, and `BUILD_MANIFEST.json`.
+
+## Before deployment
+
+1. Export the current private recovery file from the running site.
+2. Extract this package and commit the extracted contents, not the ZIP itself.
+3. Keep the repository private because the private build includes credentials and a state snapshot.
+4. Force Rebuild and Deploy in DigitalOcean.
+5. Verify `/healthz` and `/readyz`.
+6. Verify Shuffle Top 15 and EmpireDrop Top 10 both populate.
+7. Verify the public Gaming dashboard updates after an opted-in player completes a confirmed action.
+8. Verify no private Gaming fields appear in `/gaming/api/public-leaderboard`.
+9. Sign in and verify Leaderboards, Games & RedPoints, Settings and Activity.
+
+## Bundled race window
+
+Shuffle and the local EmpireDrop display schedule are set to November 10, 2026 at 6:00 PM Eastern through November 17, 2026 at 6:00 PM Eastern. EmpireDrop's official API race window is controlled by the selected provider race slug.
+
+See `docs/V14_PUBLIC_RACES_AND_GAMING.md`.
+```
+
 ## `static/admin-empiredrop.js`
 
 ```javascript
@@ -6214,8 +6694,12 @@ function filterEmpirePlayers() {
     season = Number(data.season.id);
     revision = data.revision;
     id("gamingAdminReset").textContent = `Weekly reset: ${data.season.end_et}.`;
+    const publicActivity = data.public_activity || {};
     id("gamingAdminSummary").textContent =
-      `Players: ${fmt(data.player_count)} · Rounds: ${fmt(data.completed_rounds)} · Active hands: ${fmt(data.active_hands)}`;
+      `Players: ${fmt(data.player_count)} · Rounds: ${fmt(data.completed_rounds)} · Active hands: ${fmt(data.active_hands)} · Publicly active: ${fmt(publicActivity.active_count || 0)}`;
+    if (id('gamingPublicActive')) id('gamingPublicActive').textContent = fmt(publicActivity.active_count || 0);
+    if (id('gamingPublicLeadersCount')) id('gamingPublicLeadersCount').textContent = fmt((publicActivity.weekly_leaders || []).length);
+    if (id('gamingPublicRevision')) id('gamingPublicRevision').textContent = fmt(publicActivity.revision || 0);
     const grant = data.last_grant;
     id("gamingLastGrant").textContent = grant
       ? `Last grant: ${grant.actor} · +${fmt(grant.amount)} each · ${fmt(grant.players)} ${grant.players === 1 ? "wallet" : "wallets"} · ${new Date(grant.at * 1000).toLocaleString()}`
@@ -6278,6 +6762,7 @@ function filterEmpirePlayers() {
                 `${fmt(row.balance)} available RP · player ${row.player_tag}`,
                 `IPs: ${row.ips.join(", ") || "Not linked this week yet"}`,
                 `Funding adjustments: ${(row.funding_adjustment || 0) >= 0 ? "+" : ""}${fmt(row.funding_adjustment || 0)} RP · excluded from winnings`,
+                `Public Gaming name: ${row.public_visibility ? "Visible" : "Hidden"}${row.last_game ? ` · last game ${row.last_game === "poker" ? "Hold’em" : row.last_game}` : ""}${row.last_action_at ? ` · ${new Date(row.last_action_at * 1000).toLocaleString()}` : ""}`,
               ]) {
                 const node = document.createElement("small");
                 node.textContent = value;
@@ -6924,6 +7409,16 @@ body[data-page="admin"] .admin-subnav a[aria-disabled="true"] {pointer-events:no
 /* V12 reliability-first editors */
 .admin-payout-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}.admin-payout-summary>div{display:flex;flex-direction:column;gap:4px;padding:14px;border:1px solid var(--line,#3b303a);border-radius:12px;background:#17151c}.admin-payout-summary strong{font-size:1.05rem}.admin-payout-summary small{display:block}.admin-sticky-form{padding-bottom:78px}.admin-save-bar{position:sticky;z-index:8;bottom:12px;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #49343e;border-radius:14px;background:rgba(23,20,27,.97);box-shadow:0 16px 42px #0008;backdrop-filter:blur(14px)}.admin-save-bar>div{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}.admin-save-bar small{color:var(--muted,#aaa)}.compact-field{max-width:320px}
 @media(max-width:760px){.admin-payout-summary{grid-template-columns:1fr}.admin-save-bar{align-items:stretch;flex-wrap:wrap}.admin-save-bar>div{flex-basis:100%}.admin-save-bar .button{flex:1}}
+
+.gaming-admin-live{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:20px;margin:0 0 18px}
+.gaming-admin-live h3{margin:4px 0 6px}
+.gaming-admin-live p{margin:0}
+.gaming-admin-live dl{display:grid;grid-template-columns:repeat(3,minmax(90px,1fr));gap:10px;margin:0}
+.gaming-admin-live dl div{padding:12px;border-radius:10px;background:#17151b;border:1px solid #39323b}
+.gaming-admin-live dt{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.gaming-admin-live dd{margin:5px 0 0;font-size:1.1rem;font-weight:750;font-variant-numeric:tabular-nums}
+@media(max-width:780px){.gaming-admin-live{align-items:flex-start;flex-direction:column}.gaming-admin-live dl{width:100%}}
+@media(max-width:520px){.gaming-admin-live dl{grid-template-columns:1fr}}
 ```
 
 ## `static/admin-workspace.js`
@@ -7638,14 +8133,17 @@ body[data-page="admin"] .admin-subnav a[aria-disabled="true"] {pointer-events:no
     site = value.site;
     offset = value.server_time * 1000 - (began + Date.now()) / 2;
     sourceAt = value.freshness.updated_at;
-    text(id("raceTitle"), site.race_title);
-    text(id("raceDescription"), site.race_description);
     text(id("sponsorName"), site.sponsor_name);
     text(id("poolTotal"), site.total_prize);
     text(id("playerCount"), value.count);
     text(id("dataState"), value.freshness.label);
     text(id("sourceTime"), date(sourceAt));
-    notice("leaderboardMessage", value.leaderboard_message || "");
+    // Visitors get a single calm availability state. Provider diagnostics and
+    // request details remain in the authenticated Admin Control Center.
+    notice(
+      "leaderboardMessage",
+      isAdmin ? value.leaderboard_message || "" : value.rows?.length ? "" : "Standings are temporarily unavailable.",
+    );
     notice(
       "sourceWarning",
       [value.freshness.warning, isAdmin ? value.freshness.error : ""]
@@ -7911,7 +8409,7 @@ body[data-page="admin"] .admin-subnav a[aria-disabled="true"] {pointer-events:no
       )
         notice(
           "networkError",
-          "A newer version was deployed. Save your draft, then reload.",
+          isAdmin ? "A newer version was deployed. Save your draft, then reload." : "Standings are temporarily unavailable.",
         );
     } catch (error) {
       notice(
@@ -8043,45 +8541,53 @@ body[data-page="admin"] .admin-subnav a[aria-disabled="true"] {pointer-events:no
 ## `static/empiredrop.js`
 
 ```javascript
-/* Public EmpireDrop Top 10: no credentials and no direct provider calls.
- * Only /public-state (the server's sanitized projection) is rendered here.
- */
+/* Uniform public provider switcher. The browser renders only the server's
+ * sanitized /public-state projection; credentials never reach this file. */
 (() => {
   'use strict';
   const id = value => document.getElementById(value);
-  const shuffleTab = id('shuffleTab'), empireTab = id('empireTab');
+  const shuffleTab = id('shuffleTab');
+  const empireTab = id('empireTab');
   if (!shuffleTab || !empireTab) return;
-  let latest = null;
-  let dateOffset = 0;
+
   const tabs = [shuffleTab, empireTab];
-  const title = id('raceTitle'), description = id('raceDescription');
-  // The old hero title belongs to Shuffle only.
-  let shuffleTitle = title?.textContent || 'RedHunllef Wager Race';
-  let shuffleDescription = description?.textContent || '';
-  const date = unix => unix ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'}).format(new Date(unix*1000))+' ET' : 'No confirmed update';
+  let latest = null;
+  let serverOffset = 0;
+  let countdownTimer = null;
   const isEmpire = () => empireTab.getAttribute('aria-selected') === 'true';
-  function setHero() {
-    if (isEmpire()) {
-      if (title) title.textContent = 'EmpireDrop ' + (latest?.race_meta?.engine === 'RAFFLE' ? 'Raffle' : latest?.race_meta?.type === 'DEPOSIT' ? 'Deposit' : 'Wager') + ' Race';
-      if (description) description.textContent = latest?.race_meta?.name ? `EmpireDrop race: ${latest.race_meta.name}` : 'EmpireDrop partner race standings, updated from the official API.';
-    } else {
-      if (title) title.textContent = shuffleTitle;
-      if (description) description.textContent = shuffleDescription;
-    }
-    if (id('shuffleRaceClock')) id('shuffleRaceClock').hidden = isEmpire();
-    if (id('empireRaceClock')) id('empireRaceClock').hidden = !isEmpire();
-    const shuffleStatus = id('shuffleSourceStatus');
-    if (shuffleStatus) shuffleStatus.hidden = isEmpire();
-    const empireStatus = id('empireSourceStatus');
-    if (empireStatus) empireStatus.hidden = !isEmpire();
-    if (isEmpire()) updateRefreshStatus();
+  const date = unix => unix
+    ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'}).format(new Date(unix*1000)) + ' ET'
+    : 'Schedule pending';
+
+  function selectedProvider() {
+    return isEmpire() ? 'empiredrop' : 'shuffle';
   }
-  function select(tab, focus=false) {
-    // Capture Shuffle's latest text before switching *away*.
-    if (!isEmpire()) {
-      shuffleTitle = title?.textContent || shuffleTitle;
-      shuffleDescription = description?.textContent || shuffleDescription;
+
+  function rememberProvider(provider) {
+    try { localStorage.setItem('rh.public.provider', provider); } catch {}
+    try {
+      const url = new URL(location.href);
+      if (provider === 'empiredrop') url.searchParams.set('provider', 'empiredrop');
+      else url.searchParams.delete('provider');
+      history.replaceState(null, '', url);
+    } catch {}
+  }
+
+  function updateProviderChrome() {
+    const empire = isEmpire();
+    if (id('shuffleRaceClock')) id('shuffleRaceClock').hidden = empire;
+    if (id('empireRaceClock')) id('empireRaceClock').hidden = !empire;
+    document.querySelectorAll('[data-provider-brand]').forEach(card => {
+      card.classList.toggle('is-selected', card.dataset.providerBrand === selectedProvider());
+    });
+    const join = id('providerJoinLink');
+    if (join) {
+      join.href = empire ? 'https://empiredrop.com/c/red' : (id('sponsorLink')?.href || '#');
+      join.textContent = empire ? 'Join on EmpireDrop ↗' : 'Join on Shuffle ↗';
     }
+  }
+
+  function select(tab, focus=false, remember=true) {
     for (const current of tabs) {
       const active = current === tab;
       current.setAttribute('aria-selected', String(active));
@@ -8090,156 +8596,132 @@ body[data-page="admin"] .admin-subnav a[aria-disabled="true"] {pointer-events:no
       const panel = id(current.getAttribute('aria-controls'));
       if (panel) panel.hidden = !active;
     }
-    setHero();
+    updateProviderChrome();
+    updateCountdowns();
+    if (remember) rememberProvider(selectedProvider());
     if (focus) tab.focus();
   }
-  tabs.forEach((tab,index) => {
+
+  tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => select(tab));
     tab.addEventListener('keydown', event => {
       if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
       event.preventDefault();
       const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length-1 :
-        (index+(event.key === 'ArrowRight' ? 1 : -1)+tabs.length)%tabs.length;
+        (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
       select(tabs[next], true);
     });
   });
+
+  function renderHistory(board) {
+    const history = id('empireHistoryList');
+    if (!history) return;
+    const snapshots = Array.isArray(board.history) ? board.history.slice(0, 4) : [];
+    history.replaceChildren();
+    if (!snapshots.length) {
+      history.append(Object.assign(document.createElement('p'), {
+        className:'small muted', textContent:'No completed race snapshots saved yet.'
+      }));
+      return;
+    }
+    for (const item of snapshots) {
+      const row = document.createElement('article');
+      row.className = 'empire-history-row';
+      const name = document.createElement('strong');
+      name.textContent = item.name || 'Previous race';
+      const info = document.createElement('small');
+      info.textContent = `${date(item.updated_at)} · ${item.rows?.length || 0} saved players`;
+      row.append(name, info);
+      history.append(row);
+    }
+  }
+
   function render(board) {
     if (!board || !Array.isArray(board.rows)) return;
     latest = board;
-    if (Number.isFinite(Number(board.server_time))) dateOffset = Number(board.server_time) - Date.now()/1000;
-    // The regular source poll may update Shuffle's title while EmpireDrop is selected.
-    if (board.shuffle_site) {
-      shuffleTitle = String(board.shuffle_site.race_title || shuffleTitle);
-      shuffleDescription = String(board.shuffle_site.race_description || shuffleDescription);
-    }
-    // Standings are ordered by the provider. Two users can share the same
-    // rank; map by displayed POSITION rather than rank, or ties disappear.
-    const rows = Array.isArray(board.rows) ? board.rows.slice(0, 10) : [];
-    const metric = board.race_meta?.metric || 'Wagered';
-
-    // Read the independently configured EmpireDrop prize schedule BEFORE
-    // rendering player slots. Previously `configured` was accessed inside
-    // this loop before its `const` declaration (temporal dead zone). When
-    // payouts were not announced, a ReferenceError stopped the entire render
-    // after writing the first player's name and wager. Admin still showed
-    // every player because its renderer does not use this payout loop.
+    if (Number.isFinite(Number(board.server_time))) serverOffset = Number(board.server_time) - Date.now()/1000;
+    const rows = board.rows.slice(0, 10);
     const rewards = board.prizes || {};
     const configured = rewards.enabled === true;
     const providerLimit = Number(board.race_meta?.ranks_limit);
-    const hasProviderLimit = Number.isInteger(providerLimit) && providerLimit > 0;
-    const displayLimit = hasProviderLimit ? Math.min(10, providerLimit) : 10;
+    const displayLimit = Number.isInteger(providerLimit) && providerLimit > 0 ? Math.min(10, providerLimit) : 10;
 
-    document.querySelectorAll?.('[data-empire-metric]')?.forEach(node => {
-      node.textContent = 'EmpireDrop ' + metric.toLowerCase();
-    });
-    // The official API can return fewer than 10 places (race.ranks_limit).
-    // Clarify that positions the provider does not expose are not vacant.
+    for (let position=1; position<=10; position++) {
+      const row = rows[position-1];
+      const unreported = !row && position > displayLimit;
+      const name = document.querySelector(position <= 3
+        ? `[data-empire-name="${position}"]`
+        : `[data-empire-row-name="${position}"]`);
+      const amount = document.querySelector(position <= 3
+        ? `[data-empire-wager="${position}"]`
+        : `[data-empire-row-wager="${position}"]`);
+      const place = id('empireBoard')?.querySelector(`[data-empire-place="${position}"]`);
+      const prize = document.querySelector(position <= 3
+        ? `[data-empire-prize="${position}"]`
+        : `[data-empire-row-prize="${position}"]`);
+      if (name) name.textContent = row?.username || (unreported ? 'Unavailable' : 'Open position');
+      if (amount) amount.textContent = row?.wager || '—';
+      if (place) place.textContent = String(row?.rank ?? position).padStart(2, '0');
+      if (prize) {
+        const serverPrize = row?.prize;
+        const prizeRank = String(row?.rank ?? position);
+        prize.textContent = serverPrize && serverPrize !== '—'
+          ? serverPrize
+          : configured ? (rewards.formatted?.[prizeRank] || '—') : 'Not announced';
+      }
+    }
+
+    if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
+    if (board.schedule && id('empireRaceWindow')) {
+      id('empireRaceWindow').textContent = `${board.schedule.start_et || ''} → ${board.schedule.end_et || ''}`;
+    }
     const coverage = id('empireRankingCoverage');
     if (coverage) {
-      coverage.textContent = hasProviderLimit && providerLimit < 10
-        ? `Showing ${rows.length} of ${providerLimit} official positions. EmpireDrop does not expose places ${providerLimit + 1}–10 for this race.`
-        : `Showing ${rows.length} of 10 leaderboard positions${hasProviderLimit && providerLimit > 10 ? ` (Top 10 of ${providerLimit} supplied by EmpireDrop)` : ''}.`;
+      coverage.textContent = providerLimit > 0 && providerLimit < 10
+        ? `EmpireDrop currently exposes ${providerLimit} official positions for this race.`
+        : rows.length < 10 ? 'Open positions will appear when activity is reported.' : '';
+      coverage.hidden = !coverage.textContent;
     }
-    for (let position=1; position<=10; position++) {
-      // Position is the position in the returned array, not necessarily the
-      // provider rank: tied players can both be rank 2 (then rank 4).
-      const r = rows[position - 1];
-      const unreported = !r && position > displayLimit;
-      const name = document.querySelector(position<=3 ? `[data-empire-name="${position}"]` : `[data-empire-row-name="${position}"]`);
-      const amount = document.querySelector(position<=3 ? `[data-empire-wager="${position}"]` : `[data-empire-row-wager="${position}"]`);
-      if (name) name.textContent = r?.username || (unreported ? 'Not reported by EmpireDrop' : 'Open position');
-      const place = id('empireBoard')?.querySelector?.(`[data-empire-place="${position}"]`);
-      if (place) place.textContent = String(r?.rank ?? position).padStart(2, '0');
-      if (amount) amount.textContent = r?.wager || '—';
-      const prize = document.querySelector(position<=3 ? `[data-empire-prize="${position}"]` : `[data-empire-row-prize="${position}"]`);
-      if (prize) {
-        // The server has already allocated provider-rank prizes and split
-        // tied places; prefer that verified value over a local fallback.
-        const serverPrize = r?.prize;
-        const prizeRank = String(r?.rank ?? position);
-        prize.textContent = serverPrize && serverPrize !== '—' ? serverPrize :
-          configured ? (rewards.formatted?.[prizeRank] || '—') : 'Not announced';
-      }
+    const message = id('empireMessage');
+    if (message) {
+      message.textContent = rows.length ? '' : (board.updated_at ? 'Showing the most recent standings.' : 'Standings are temporarily unavailable.');
+      message.hidden = rows.length > 0;
     }
-    // Independent site-managed EmpireDrop payout pool, never Shuffle's.
-    if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
-    if (id('empireMessage')) id('empireMessage').textContent = board.label || 'Awaiting EmpireDrop';
-    // Refresh *status* from a successful provider fetch, not a browser poll.
-    updateRefreshStatus();
-    if (board.schedule) {
-      if (id('empireRaceMode')) id('empireRaceMode').textContent = board.schedule.mode === 'provider' ? 'EmpireDrop official race' : board.schedule.mode === 'weekly' ? 'Weekly · Tuesday 6 PM ET' : 'Custom race';
-      if (id('empireRaceWindow')) id('empireRaceWindow').textContent = (board.schedule.start_et || '')+' → '+(board.schedule.end_et || '');
-    }
-    const showClock = () => {
-      const node = id('empireCountdown');
-      if (!node) return;
-      const sch = latest?.schedule || {};
-      const now = Math.floor(Date.now()/1000) + dateOffset;
-      const start = Number(sch.start_time), end = Number(sch.end_time);
-      if (!start || !end || !Number.isFinite(start) || !Number.isFinite(end)) {
-        node.textContent = 'Race schedule pending'; return;
-      }
-      if (now >= end) { node.textContent = 'Race ended'; return; }
-      const future = now < start;
-      let seconds = Math.max(0, (future ? start : end) - now);
-      const d = Math.floor(seconds/86400); seconds%=86400;
-      const h = Math.floor(seconds/3600); seconds%=3600;
-      const m = Math.floor(seconds/60), sec = seconds%60;
-      node.textContent = `${future ? 'Starts in ' : ''}${d ? d+'d ' : ''}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-    };
-    showClock();
-    const history = id('empireHistoryList');
-    if (history) {
-      const snapshots = Array.isArray(board.history) ? board.history.slice(0,4) : [];
-      history.replaceChildren();
-      if (!snapshots.length) {
-        const note=document.createElement('p');note.className='small muted';
-        note.textContent='No completed race snapshots saved yet.';history.append(note);
-      } else for (const item of snapshots) {
-        const row=document.createElement('article');row.className='empire-history-row';
-        const name=document.createElement('strong');name.textContent=item.name||'Previous race';
-        const info=document.createElement('small');
-        info.textContent='Last verified '+date(item.updated_at)+' · '+
-          (item.rows?.length||0)+' saved players · '+
-          (item.prizes?.enabled?'Pool '+item.prizes.total:'Prizes not announced');
-        row.append(name,info);history.append(row);
-      }
-    }
-    // /public-state refreshes the main hero for Shuffle; restore EmpireDrop's
-    // provider-specific title whenever it is selected.
-    setHero();
+    renderHistory(board);
+    updateProviderChrome();
+    updateCountdowns();
   }
-  // Match Shuffle's live 'Updated Ns ago' indicator, while showing the
-  // next actual EmpireDrop provider check (typically cache_duration=300s).
-  // A failed check NEVER resets the successful-update age.
-  function updateRefreshStatus() {
-    if (!latest) return;
-    const now = Math.floor(Date.now()/1000) + dateOffset;
-    const success = Number(latest.updated_at);
-    const age = Number.isFinite(success) && success > 0 ? Math.max(0, Math.floor(now - success)) : null;
-    const ageLabel = age === null ? 'No successful update yet' : `Updated ${age}s ago`;
-    const next = Number(latest.next_check_at);
-    const interval = Number(latest.refresh_interval);
-    const nextLabel = Number.isFinite(next) && next > 0
-      ? (next > now ? `Next provider check in ${Math.ceil(next - now)}s` : 'Next provider check due')
-      : 'Provider refresh not scheduled';
-    const source = id('empireSourceTime');
-    if (source) source.textContent = ageLabel;
-    const nextNode = id('empireNextCheck');
-    if (nextNode) nextNode.textContent = nextLabel;
-    const label = id('empireSourceLabel');
-    if (label) label.textContent = latest.label?.startsWith('Updates delayed') || latest.label?.startsWith('Source unavailable')
-      ? 'EmpireDrop · updates delayed' : 'EmpireDrop · verified standings';
-    const details = id('empireChecked');
-    if (details) details.textContent = success > 0
-      ? `Last successful update: ${date(success)} · ${nextLabel}`
-      : `No successful update yet · ${nextLabel}`;
+
+  function countdownText(start, end, now) {
+    if (!Number.isFinite(start) || !Number.isFinite(end) || !start || !end) return 'Schedule pending';
+    if (now >= end) return 'Race complete';
+    const upcoming = now < start;
+    let seconds = Math.max(0, (upcoming ? start : end) - now);
+    const days = Math.floor(seconds/86400); seconds %= 86400;
+    const hours = Math.floor(seconds/3600); seconds %= 3600;
+    const minutes = Math.floor(seconds/60); seconds %= 60;
+    return `${upcoming ? 'Starts in ' : ''}${days}d ${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`;
   }
+
+  function updateCountdowns() {
+    if (!latest || !id('empireCountdown')) return;
+    const now = Math.floor(Date.now()/1000 + serverOffset);
+    const schedule = latest.schedule || {};
+    id('empireCountdown').textContent = countdownText(Number(schedule.start_time), Number(schedule.end_time), now);
+  }
+
   document.addEventListener('empiredrop:update', event => render(event.detail));
-  if (typeof setInterval === 'function') setInterval(() => { updateRefreshStatus(); if (!latest || !id('empireCountdown')) return; const sch=latest.schedule||{}; const n=Math.floor(Date.now()/1000); const start=Number(sch.start_time),end=Number(sch.end_time); const box=id('empireCountdown'); if(!start||!end){box.textContent='Race schedule pending';return;} if(n>=end){box.textContent='Race ended';return;} let s=Math.max(0,(n<start?start:end)-n);const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;box.textContent=(n<start?'Starts in ':'')+(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); },1000);
-  try { const bootstrap = JSON.parse(document.body.dataset.bootstrap || '{}'); render({...bootstrap.empiredrop, server_time:bootstrap.server_time}); }
-  catch { /* Keep server-rendered unavailable state if bootstrap cannot load. */ }
-  select(shuffleTab);
+  countdownTimer = setInterval(updateCountdowns, 1000);
+  window.addEventListener('pagehide', () => clearInterval(countdownTimer), {once:true});
+
+  try {
+    const bootstrap = JSON.parse(document.body.dataset.bootstrap || '{}');
+    render({...bootstrap.empiredrop, server_time:bootstrap.server_time});
+  } catch {}
+
+  let requested = '';
+  try { requested = new URL(location.href).searchParams.get('provider') || localStorage.getItem('rh.public.provider') || ''; } catch {}
+  select(requested === 'empiredrop' ? empireTab : shuffleTab, false, false);
 })();
 ```
 
@@ -10861,6 +11343,79 @@ b[data-tone="neutral"] {
 .game-art.blackjack-art { display: flex; align-items: center; justify-content: center; }
 
 .gaming-recovery{margin:14px 0}.gaming-recovery>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer}.gaming-recovery>summary span{font-size:.78rem;color:var(--muted,#aaa)}.gaming-recovery-content{display:grid;gap:12px;padding-top:16px}.gaming-recovery textarea{width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}
+
+/* V14 public community leaderboard. */
+.gaming-public-choice {
+  flex:1 1 100%;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid #433743;
+  border-radius:10px;
+  background:#1b171e;
+  cursor:pointer;
+}
+.gaming-public-choice input {flex:0 0 auto;width:auto;margin-top:3px}
+.gaming-public-choice span {display:grid;gap:3px}
+.gaming-public-choice strong {font-size:.86rem}
+.gaming-public-choice small {color:var(--muted);font-size:.74rem;line-height:1.45}
+.gaming-community {margin:24px 0 28px}
+.gaming-community-heading {align-items:center}
+.gaming-community-heading h2 {margin:4px 0 6px;font-size:clamp(1.7rem,3.2vw,2.5rem)}
+.gaming-activity-count {min-width:105px;display:grid;justify-items:end;gap:2px}
+.gaming-activity-count strong {font-size:2rem;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
+.gaming-activity-count span {font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}
+.gaming-game-counts {display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 14px}
+.gaming-game-counts span {padding:7px 10px;border:1px solid #3c333e;background:#1d1921;border-radius:999px;color:#bcb2be;font-size:.75rem}
+.gaming-game-counts b {color:#fff;font-variant-numeric:tabular-nums}
+.gaming-community-grid {display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px}
+.gaming-live-panel,.gaming-leader-panel {padding:20px;min-width:0}
+.gaming-panel-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.gaming-panel-heading h3 {margin:4px 0 0;font-size:1.18rem}
+.live-dot {width:9px;height:9px;border-radius:50%;background:#60d99d;box-shadow:0 0 0 5px #60d99d18}
+.gaming-live-list {display:grid;gap:8px}
+.gaming-live-list article {display:flex;align-items:center;gap:11px;padding:10px;border-radius:10px;background:#18151b;border:1px solid #302a33}
+.gaming-live-list article div {min-width:0;display:grid;gap:2px}
+.gaming-live-list strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.88rem}
+.gaming-live-list small {color:var(--muted);font-size:.72rem}
+.gaming-live-avatar {display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#442531;color:#ff9caf;font-weight:800}
+.gaming-public-leaders {list-style:none;margin:0;padding:0;display:grid}
+.gaming-public-leaders li {display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:47px;padding:8px 4px;border-bottom:1px solid #302a33}
+.gaming-public-leaders li:last-child {border-bottom:0}
+.gaming-public-leaders li > strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.88rem}
+.gaming-public-leaders li > span:last-child {display:grid;justify-items:end;gap:2px;font-variant-numeric:tabular-nums}
+.gaming-public-leaders li > span:last-child b {font-size:.84rem;color:#ff8ea2}
+.gaming-public-leaders li > span:last-child small {font-size:.68rem;color:var(--muted)}
+.gaming-public-rank {color:#918693;font-size:.75rem;font-variant-numeric:tabular-nums}
+.gaming-live-list .empty,.gaming-public-leaders .empty {margin:0;padding:18px;color:var(--muted);font-size:.8rem;border:1px dashed #3a333c;border-radius:10px;background:transparent}
+.gaming-public-leaders .empty {display:block;min-height:0}
+@media (max-width:820px){.gaming-community-grid{grid-template-columns:1fr}.gaming-activity-count{justify-items:start}.gaming-community-heading{align-items:flex-start}}
+@media (max-width:560px){.gaming-community-heading{display:grid}.gaming-public-leaders li{grid-template-columns:32px minmax(0,1fr) auto}.gaming-live-panel,.gaming-leader-panel{padding:16px}}
+.gaming-filter-bar {overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:thin}
+.gaming-filter-bar button {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 11px;
+  border:1px solid #3c333e;
+  border-radius:999px;
+  background:#1d1921;
+  color:#bcb2be;
+  font:inherit;
+  font-size:.75rem;
+  cursor:pointer;
+  transition:border-color .16s ease,background-color .16s ease,color .16s ease;
+}
+.gaming-filter-bar button b {color:#fff;font-variant-numeric:tabular-nums}
+.gaming-filter-bar button:hover {border-color:#6b4855;color:#fff}
+.gaming-filter-bar button.is-active,
+.gaming-filter-bar button[aria-pressed="true"] {border-color:#a24d61;background:#422530;color:#fff}
+.gaming-filter-bar button:focus-visible {outline:2px solid #ff8299;outline-offset:2px}
+.gaming-public-leaders i {font-style:normal;font-size:.72rem;font-weight:800;margin-right:5px}
+.gaming-public-leaders .rank-up {color:#6be1a8}
+.gaming-public-leaders .rank-down {color:#f2a16f}
 ```
 
 ## `static/gaming.js`
@@ -10879,6 +11434,9 @@ b[data-tone="neutral"] {
       (typeof n === "bigint" ? n : Number(n)).toLocaleString("en-US"),
     points = (n) => (n > 0 ? "+" : "") + number(n);
   let wallet,
+    community = null,
+    communityFilter = "all",
+    communityRanks = new Map(),
     csrf = root.dataset.csrf,
     busy = false,
     refreshing = false,
@@ -11103,6 +11661,98 @@ b[data-tone="neutral"] {
       id("retryBet").disabled = busy || fatal || !secure || !verifierReady || Boolean(wallet?.needs_profile);
     }
   }
+  function gameLabel(value) {
+    return value === "poker" ? "Hold’em" : value ? value[0].toUpperCase() + value.slice(1) : "All games";
+  }
+  function renderCommunity(next) {
+    if (!next || !id("gamingPublicLeaders")) return;
+    community = next;
+    const available = new Set(["all", ...(rules.games || [])]);
+    if (!available.has(communityFilter)) communityFilter = "all";
+    const count = id("gamingActivityCount");
+    if (count) {
+      const strong = count.querySelector("strong");
+      if (strong) strong.textContent = number(next.active_count || 0);
+    }
+    id("gamingGameFilters")?.querySelectorAll("[data-community-filter]").forEach(button => {
+      const filter = button.dataset.communityFilter;
+      const total = filter === "all" ? next.active_count || 0 : next.game_counts?.[filter] || 0;
+      const amount = button.querySelector("b");
+      if (amount) amount.textContent = number(total);
+      const active = filter === communityFilter;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    const live = id("gamingLivePlayers");
+    if (live) {
+      const players = (Array.isArray(next.live_players) ? next.live_players : [])
+        .filter(row => communityFilter === "all" || row.game === communityFilter);
+      live.replaceChildren(...(players.length ? players.map(row => {
+        const article = document.createElement("article");
+        const avatar = document.createElement("span");
+        avatar.className = "gaming-live-avatar";
+        avatar.textContent = (row.name || "?").slice(0, 1).toUpperCase();
+        const detail = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = row.name || "Player";
+        const meta = document.createElement("small");
+        meta.textContent = `${row.game_label || gameLabel(row.game)} · ${row.status || "Recently active"}`;
+        detail.append(name, meta);
+        article.append(avatar, detail);
+        return article;
+      }) : [Object.assign(document.createElement("p"), {
+        className: "empty",
+        textContent: communityFilter === "all" ? "No public players are active right now." : `No public ${gameLabel(communityFilter)} players are active right now.`,
+      })]));
+    }
+    const title = id("gamingWeeklyTitle");
+    if (title) title.textContent = communityFilter === "all" ? "RedPoints leaders" : `${gameLabel(communityFilter)} leaders`;
+    const leaders = id("gamingPublicLeaders");
+    if (leaders) {
+      const source = communityFilter === "all" ? next.weekly_leaders : next.game_leaders?.[communityFilter];
+      const rows = Array.isArray(source) ? source : [];
+      const nextRanks = new Map(communityRanks);
+      leaders.replaceChildren(...(rows.length ? rows.map(row => {
+        const item = document.createElement("li");
+        const rank = document.createElement("span");
+        rank.className = "gaming-public-rank";
+        rank.textContent = String(row.rank || 0).padStart(2, "0");
+        const name = document.createElement("strong");
+        name.textContent = row.name || "Player";
+        const result = document.createElement("span");
+        const net = document.createElement("b");
+        net.textContent = points(row.net || 0);
+        const rounds = document.createElement("small");
+        rounds.textContent = `${number(row.rounds || 0)} rounds`;
+        const rankKey = `${communityFilter}:${row.name || "Player"}`;
+        const prior = communityRanks.get(rankKey);
+        if (Number.isInteger(prior) && prior !== row.rank) {
+          const movement = document.createElement("i");
+          movement.className = row.rank < prior ? "rank-up" : "rank-down";
+          movement.textContent = row.rank < prior ? "↑" : "↓";
+          movement.setAttribute("aria-label", row.rank < prior ? "Moved up" : "Moved down");
+          result.append(movement);
+        }
+        nextRanks.set(rankKey, row.rank);
+        result.append(net, rounds);
+        item.append(rank, name, result);
+        return item;
+      }) : [Object.assign(document.createElement("li"), {
+        className: "empty",
+        textContent: communityFilter === "all" ? "No public results yet this week." : `No public ${gameLabel(communityFilter)} results yet this week.`,
+      })]));
+      communityRanks = nextRanks;
+    }
+  }
+  id("gamingGameFilters")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-community-filter]");
+    if (!button) return;
+    communityFilter = button.dataset.communityFilter || "all";
+    try { localStorage.setItem("rh.gaming.communityFilter", communityFilter); } catch {}
+    renderCommunity(community);
+  });
+
+
   function renderWallet(next) {
     if (
       !next ||
@@ -11169,6 +11819,8 @@ b[data-tone="neutral"] {
     }
     id("gamingIdentity").hidden = next.needs_profile;
     id("gamingPlayerName").textContent = next.name;
+    const publicChoice = id('gamingPublicVisibility');
+    if (publicChoice && document.activeElement !== publicChoice) publicChoice.checked = Boolean(next.public_visibility || next.needs_profile);
     if (id("gamingCreateRecovery")) id("gamingCreateRecovery").disabled = next.needs_profile;
     if (id("fairCommitment"))
       id("fairCommitment").textContent =
@@ -12071,6 +12723,7 @@ b[data-tone="neutral"] {
     try {
       const value = await api("/gaming/api/profile", {
         username: id("gamingUsername").value,
+        public_visibility: Boolean(id('gamingPublicVisibility')?.checked),
       });
       renderWallet(value.wallet);
       message();
@@ -12241,6 +12894,7 @@ b[data-tone="neutral"] {
       const value = await api("/gaming/api/state", null, true);
       if (value && !busy) {
         renderWallet(value.wallet);
+        renderCommunity(value.community);
         await recoverSavedRound(value.wallet);
       }
       id("gamingChecked").textContent =
@@ -12256,6 +12910,11 @@ b[data-tone="neutral"] {
     clearTimeout(timer);
     if (!document.hidden) poll();
   });
+  try {
+    const savedFilter = localStorage.getItem("rh.gaming.communityFilter");
+    if (savedFilter) communityFilter = savedFilter;
+  } catch {}
+  try { renderCommunity(JSON.parse(root.dataset.community || '{}')); } catch {}
   renderWallet(JSON.parse(root.dataset.wallet));
   remember(pending);
   payout();
@@ -15744,6 +16403,162 @@ body[data-page="admin"] .admin-state-card span:not(.eyebrow) {color:var(--rh-mut
 @media(max-width:600px) {body[data-page="admin"] .admin-state-card {align-items:stretch;flex-direction:column}}
 ```
 
+## `static/v14-modern.css`
+
+```css
+/* V14 public race system: one quiet hierarchy for both providers. */
+body:not([data-page="admin"]) {
+  --public-card: #1b1820;
+  --public-card-raised: #211d27;
+  --public-line: #352f3a;
+  --public-line-strong: #5c3a46;
+  --public-soft: #b8adb9;
+  --public-ring: #f06a7f;
+  --public-radius: 14px;
+}
+body:not([data-page="admin"]) .race-hero {
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(310px,.8fr);
+  align-items:center;
+  gap:clamp(26px,5vw,72px);
+  padding:clamp(42px,6vw,82px) 0 34px;
+}
+body:not([data-page="admin"]) .race-hero-copy {min-width:0}
+body:not([data-page="admin"]) .race-hero h1 {
+  margin:12px 0 16px;
+  font-size:clamp(2.7rem,6.2vw,5.4rem);
+  line-height:.98;
+  letter-spacing:-.07em;
+  text-wrap:balance;
+}
+body:not([data-page="admin"]) .race-hero .lead {
+  max-width:680px;
+  margin:0 0 22px;
+  color:#c7bdc8;
+  font-size:clamp(1rem,1.5vw,1.15rem);
+  line-height:1.7;
+}
+body:not([data-page="admin"]) .provider-brand-row {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,220px));
+  gap:10px;
+  margin-top:14px;
+}
+body:not([data-page="admin"]) .provider-brand-card {
+  min-height:64px;
+  display:grid;
+  grid-template-columns:40px 1fr auto;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  color:#d8ced9;
+  background:#1b1820;
+  border:1px solid #342f39;
+  border-radius:12px;
+  text-decoration:none;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease;
+}
+body:not([data-page="admin"]) .provider-brand-card:hover {background:#24202a;border-color:#59444f;transform:translateY(-1px)}
+body:not([data-page="admin"]) .provider-brand-card.is-selected {background:#2b2027;border-color:#a84d60;color:#fff}
+body:not([data-page="admin"]) .provider-brand-card small {display:block;color:#9f95a1;font-size:.66rem;line-height:1.2;letter-spacing:.02em;text-transform:none}
+body:not([data-page="admin"]) .provider-brand-card strong {display:block;margin-top:3px;font-size:1rem;line-height:1.2}
+body:not([data-page="admin"]) .provider-mark {display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:#35242d;color:#ff9cac;font-weight:850;font-size:1.08rem}
+body:not([data-page="admin"]) .public-race-summary {
+  padding:clamp(22px,3vw,32px);
+  background:linear-gradient(145deg,#28202a,#17151c 70%);
+  border-color:#4a3a44;
+  box-shadow:0 24px 70px #0003;
+}
+body:not([data-page="admin"]) .race-summary-top {display:flex;justify-content:space-between;align-items:center;gap:12px}
+body:not([data-page="admin"]) .public-race-summary .clock {
+  margin:18px 0 10px;
+  white-space:normal;
+  font-size:clamp(2rem,4vw,3.2rem);
+  font-weight:850;
+  line-height:1.08;
+  letter-spacing:-.055em;
+}
+body:not([data-page="admin"]) .public-race-summary .muted {margin:0;line-height:1.55}
+body:not([data-page="admin"]) .public-provider-tabs {margin:0;padding:4px;background:#18161c;border-color:#332e37}
+body:not([data-page="admin"]) .public-provider-tabs .button {min-width:168px;padding:10px 15px;font-size:.85rem;font-weight:720}
+body:not([data-page="admin"]) .public-provider-tabs .button[aria-selected="true"] {background:#44242e!important;border-color:#9e4b5e!important}
+body:not([data-page="admin"]) .public-leaderboards {padding-top:28px}
+body:not([data-page="admin"]) .leaderboard-heading {margin-bottom:22px}
+body:not([data-page="admin"]) .leaderboard-heading h2 {font-size:clamp(2rem,4vw,3.1rem)}
+body:not([data-page="admin"]) .public-fallback {max-width:680px;margin:0 0 18px;background:#241f27;border-color:#453a46;color:#ded5de}
+body:not([data-page="admin"]) .public-podium {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;
+  gap:14px;
+  margin:22px 0 18px;
+}
+body:not([data-page="admin"]) .public-podium .podium-card,
+body:not([data-page="admin"]) .public-podium .podium-card.place-1 {
+  min-height:205px;
+  padding:22px;
+  background:#1d1a22;
+  border-color:#38313b;
+  box-shadow:none;
+}
+body:not([data-page="admin"]) .public-podium .podium-card.place-1 {background:linear-gradient(150deg,#38232c,#201b23 72%);border-color:#895061}
+body:not([data-page="admin"]) .public-podium .podium-name,
+body:not([data-page="admin"]) .public-podium .place-1 .podium-name {
+  display:block;
+  margin:28px 0 28px;
+  font-size:clamp(1.15rem,2vw,1.55rem);
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+body:not([data-page="admin"]) .public-podium .podium-values {grid-template-columns:1fr 1fr;align-items:end}
+body:not([data-page="admin"]) .public-podium .podium-values small {font-size:.62rem;letter-spacing:.09em}
+body:not([data-page="admin"]) .public-podium .podium-values strong {font-size:clamp(.95rem,1.5vw,1.2rem)}
+body:not([data-page="admin"]) .public-table {padding:0;background:#19171d;border-color:#342e37}
+body:not([data-page="admin"]) .public-table table {font-size:.88rem}
+body:not([data-page="admin"]) .public-table th {padding:16px 18px;background:#201d24;color:#aaa0ac;font-size:.67rem}
+body:not([data-page="admin"]) .public-table td {height:56px;padding:13px 18px;border-color:#2c2730}
+body:not([data-page="admin"]) .public-table tbody tr:hover {background:#ffffff04}
+body:not([data-page="admin"]) .public-coverage {margin:12px 2px 0;color:#9f95a1;font-size:.78rem}
+body:not([data-page="admin"]) .public-games-cta {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:24px;
+  margin:42px 0 12px;
+  padding:26px 28px;
+  background:linear-gradient(135deg,#211b24,#18161d);
+}
+body:not([data-page="admin"]) .public-games-cta h2 {margin:4px 0 7px;font-size:clamp(1.35rem,2.8vw,2rem)}
+body:not([data-page="admin"]) .public-games-cta p {margin:0}
+body:not([data-page="admin"]) .source-status,
+body:not([data-page="admin"]) .public-board-hint,
+body:not([data-page="admin"]) #streamStatus,
+body:not([data-page="admin"]) .leaderboard-foot {display:none!important}
+
+@media (max-width:880px) {
+  body:not([data-page="admin"]) .race-hero {grid-template-columns:1fr;padding-top:38px}
+  body:not([data-page="admin"]) .public-race-summary {max-width:none}
+}
+@media (max-width:680px) {
+  body:not([data-page="admin"]) .race-hero h1 {font-size:clamp(2.55rem,13vw,4.2rem)}
+  body:not([data-page="admin"]) .provider-brand-row {grid-template-columns:1fr 1fr}
+  body:not([data-page="admin"]) .provider-brand-card {grid-template-columns:34px 1fr;padding:9px;min-height:58px}
+  body:not([data-page="admin"]) .provider-brand-card > span:last-child {display:none}
+  body:not([data-page="admin"]) .provider-mark {width:34px;height:34px}
+  body:not([data-page="admin"]) .public-provider-tabs {display:grid;grid-template-columns:1fr 1fr;width:100%}
+  body:not([data-page="admin"]) .public-provider-tabs .button {min-width:0;padding-inline:8px}
+  body:not([data-page="admin"]) .public-podium {grid-template-columns:1fr}
+  body:not([data-page="admin"]) .public-podium .podium-card:nth-child(2) {order:-1}
+  body:not([data-page="admin"]) .public-podium .podium-card,
+  body:not([data-page="admin"]) .public-podium .podium-card.place-1 {min-height:0}
+  body:not([data-page="admin"]) .public-podium .podium-name,
+  body:not([data-page="admin"]) .public-podium .place-1 .podium-name {margin:18px 0 20px}
+  body:not([data-page="admin"]) .public-table table {min-width:580px}
+  body:not([data-page="admin"]) .public-games-cta {align-items:flex-start;flex-direction:column}
+}
+```
+
 ## `storage.py`
 
 ```python
@@ -15942,6 +16757,29 @@ class Store:
                 if not existing['admin'].get('users'):
                     raise StoreError('Saved account store contains no accounts. It was not replaced.')
                 validate_gaming(existing.get('gaming'))
+                # V13 schedule saves could silently switch EmpireDrop to the
+                # deprecated timestamp endpoint. Migrate only that retired
+                # source choice back to the documented partner-race API while
+                # preserving the selected slug, prizes, accounts and all live
+                # data. A private recovery record is kept before the change.
+                empire_cfg = existing['admin'].get('empiredrop_races')
+                if isinstance(empire_cfg, dict) and empire_cfg.get('source_mode') == 'legacy_window':
+                    upgraded = copy.deepcopy(existing)
+                    previous_cfg = copy.deepcopy(empire_cfg)
+                    migrated_cfg = copy.deepcopy(empire_cfg)
+                    migrated_cfg['source_mode'] = 'races'
+                    migrated_cfg['race_window_policy'] = 'provider'
+                    migrated_cfg['auto_select'] = True
+                    self.backup_in(upgraded, 'before-empiredrop-official-api-migration', {
+                        'empiredrop_races': previous_cfg,
+                        'empiredrop_race': copy.deepcopy(upgraded['admin'].get('empiredrop_race')),
+                    })
+                    upgraded['admin']['empiredrop_races'] = migrated_cfg
+                    upgraded['revision'] += 1
+                    atomic_json(self.path, upgraded)
+                    self._remember(upgraded)
+                    existing = upgraded
+                    LOG.warning('MIGRATION EmpireDrop deprecated date-window source changed to official partner races; saved slug and other state retained.')
                 if existing.get('boss') is not None or existing.get('avatar') is not None:
                     upgraded = copy.deepcopy(existing)
                     migrated = migrate_legacy_profiles(upgraded.get('gaming'), upgraded.get('boss'))
@@ -16516,13 +17354,15 @@ def health_view(runtime, measurements, status):
   <form method="post" action="/admin/empiredrop/races/config" class="stack" data-dirty>
     <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
     {% set rc = empire_admin.race_configuration %}
+    <input type="hidden" name="source_mode" value="races">
+    <input type="hidden" name="race_window_policy" value="provider">
     <div class="form-grid">
-      <div class="field"><label for="empireSourceMode">Leaderboard source</label><select name="source_mode" id="empireSourceMode"><option value="races" {% if rc.source_mode=='races' %}selected{% endif %}>Official EmpireDrop race · provider-controlled dates (recommended)</option><option value="legacy_window" {% if rc.source_mode=='legacy_window' %}selected{% endif %}>Weekly/custom dates · deprecated time-range API</option><option value="legacy" {% if rc.source_mode=='legacy' %}selected{% endif %}>Old advanced adapter (compatibility only)</option></select></div>
-      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = auto-select the only running wager race"><small>For a finished or scheduled race, enter its slug from your EmpireDrop dashboard.</small></div>
-      <div class="field"><label for="empireRacePolicy">Race reporting period</label><select id="empireRacePolicy" name="race_window_policy"><option value="provider" {% if rc.race_window_policy=='provider' %}selected{% endif %}>Official EmpireDrop start_date / end_date (recommended)</option><option value="local" {% if rc.race_window_policy=='local' %}selected{% endif %}>Require a match with local Tuesday 6 PM ET</option></select></div>
-      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select when exactly one race is running</label></div>
+      <div class="field"><label for="empireSourceModeReadonly">Leaderboard source</label><input id="empireSourceModeReadonly" value="Official EmpireDrop partner race API" readonly aria-readonly="true"><small>Uses the documented race slug endpoint and both production API-key headers.</small></div>
+      <div class="field"><label for="empireRaceSlugInput">Race slug (optional)</label><input id="empireRaceSlugInput" name="race_slug" maxlength="100" value="{{ rc.race_slug }}" placeholder="Blank = choose the best active wager race"><small>Enter the exact slug to lock the board to one race. Leave blank to match the active WAGER/RANKING race to the saved week.</small></div>
+      <div class="field"><label for="empireRacePolicyReadonly">Race reporting period</label><input id="empireRacePolicyReadonly" value="EmpireDrop start_date / end_date" readonly aria-readonly="true"><small>The provider's official race dates control the returned standings.</small></div>
+      <div class="field"><label><input type="checkbox" name="auto_select" value="yes" {% if rc.auto_select %}checked{% endif %}> Automatically select the active wager race</label></div>
     </div>
-    <p class="small muted">Official race dates cannot be edited here. To run a different official week, create/select the corresponding race in EmpireDrop and enter its slug. Custom date windows use the documented but deprecated API; it may stop working. The website displays up to 10 positions, and the API may return fewer than 10 when race.ranks_limit is smaller.</p>
+    <p class="small muted">The deprecated timestamp endpoint is no longer selected by ordinary schedule edits. The website displays up to 10 official positions and respects EmpireDrop's race.ranks_limit.</p>
     <button type="submit" class="button primary">Save race API connection</button>
   </form>
   {% else %}<p class="small muted">Race API diagnostics are available to the Superadmin only.</p>{% endif %}
@@ -16568,10 +17408,11 @@ def health_view(runtime, measurements, status):
 ```html
 <section aria-labelledby="gamingAdminHeading" id="gamingAdmin" data-rankings="{{ data.gaming|tojson|forceescape }}">
   <div class="section-title"><div><p class="eyebrow">THIS RACE WEEK · ADMIN ONLY</p><h2 id="gamingAdminHeading">Gaming · top five per game</h2><p class="muted small">Net winnings = returned − wagered. Free points and admin grants do not count.</p></div><a class="button small" href="{{ '/admin/gaming' if tab=='overview' else '/gaming' }}">{{ 'Gaming controls →' if tab=='overview' else 'Open Gaming →' }}</a></div>
-  <div class="ranking-toolbar"><p id="gamingAdminSummary" class="small">Players: {{ data.gaming.player_count }} · Rounds: {{ data.gaming.completed_rounds }} · Active hands: {{ data.gaming.active_hands }}</p><div><button id="refreshGaming" class="text-button small" type="button">Refresh stats</button><span id="gamingAdminChecked" class="small muted">Updating automatically</span></div></div>
+  <div class="ranking-toolbar"><p id="gamingAdminSummary" class="small">Players: {{ data.gaming.player_count }} · Rounds: {{ data.gaming.completed_rounds }} · Active hands: {{ data.gaming.active_hands }} · Publicly active: {{ data.gaming.public_activity.active_count }}</p><div><button id="refreshGaming" class="text-button small" type="button">Refresh stats</button><span id="gamingAdminChecked" class="small muted">Updating automatically</span></div></div>
+  <div class="panel gaming-admin-live"><div><p class="eyebrow">PUBLIC GAMING FEED</p><h3>Live community activity</h3><p class="small muted">The public page shows only opted-in names, current game, recent activity, weekly net and round count.</p></div><dl><div><dt>Active now</dt><dd id="gamingPublicActive">{{ data.gaming.public_activity.active_count }}</dd></div><div><dt>Visible leaders</dt><dd id="gamingPublicLeadersCount">{{ data.gaming.public_activity.weekly_leaders|length }}</dd></div><div><dt>Feed revision</dt><dd id="gamingPublicRevision">{{ data.gaming.public_activity.revision }}</dd></div></dl></div>
   <p id="gamingNoRecords" class="notice" {% if data.gaming.completed_rounds %}hidden{% endif %}>No completed rounds this week. Players appear after finishing a RedPoints game.</p>
   <p id="gamingAdminSession" class="notice warning" role="alert" hidden>Your admin session has expired. Private rankings are hidden. <a class="text-link" href="/admin/gaming">Sign in again →</a></p>
-  <div class="gaming-admin-cards">{% for game,rows in data.gaming.games.items() %}<section class="panel"><div class="ranking-card-heading"><h3>{{ 'Texas Hold’em' if game=='poker' else game|capitalize }}</h3><span class="tag">Top 5</span></div><p id="gamingCount-{{ game }}" class="small muted">Players: {{ data.gaming.counts[game].players }} · Completed rounds: {{ data.gaming.counts[game].rounds }}</p><ol id="gamingLeaders-{{ game }}" class="gaming-leaders">{% for row in rows %}<li data-player-key="{{ game }}:{{ row.player_tag }}" data-tone="{{ 'positive' if row.net>0 else 'negative' if row.net<0 else 'neutral' }}"><details class="player-breakdown"><summary><span class="leader-name"><small>{{ loop.index }}</small><strong>{{ row.name }}</strong></span><b>{{ '{:+,}'.format(row.net) }} <small>RP</small></b></summary><div class="player-record"><small>{{ '{:,}'.format(row.paid) }} returned · {{ '{:,}'.format(row.wagered) }} wagered · {{ row.bets }} rounds</small><small>{{ '{:,}'.format(row.balance) }} available RP · player {{ row.player_tag }}</small><small>IPs: {{ row.ips|join(', ') or 'Not linked this week yet' }}</small><small>Funding adjustments: {{ '{:+,}'.format(row.funding_adjustment) }} RP · excluded from winnings</small></div></details></li>{% else %}<li class="muted">No completed rounds this week.</li>{% endfor %}</ol></section>{% endfor %}</div>
+  <div class="gaming-admin-cards">{% for game,rows in data.gaming.games.items() %}<section class="panel"><div class="ranking-card-heading"><h3>{{ 'Texas Hold’em' if game=='poker' else game|capitalize }}</h3><span class="tag">Top 5</span></div><p id="gamingCount-{{ game }}" class="small muted">Players: {{ data.gaming.counts[game].players }} · Completed rounds: {{ data.gaming.counts[game].rounds }}</p><ol id="gamingLeaders-{{ game }}" class="gaming-leaders">{% for row in rows %}<li data-player-key="{{ game }}:{{ row.player_tag }}" data-tone="{{ 'positive' if row.net>0 else 'negative' if row.net<0 else 'neutral' }}"><details class="player-breakdown"><summary><span class="leader-name"><small>{{ loop.index }}</small><strong>{{ row.name }}</strong></span><b>{{ '{:+,}'.format(row.net) }} <small>RP</small></b></summary><div class="player-record"><small>{{ '{:,}'.format(row.paid) }} returned · {{ '{:,}'.format(row.wagered) }} wagered · {{ row.bets }} rounds</small><small>{{ '{:,}'.format(row.balance) }} available RP · player {{ row.player_tag }}</small><small>IPs: {{ row.ips|join(', ') or 'Not linked this week yet' }}</small><small>Funding adjustments: {{ '{:+,}'.format(row.funding_adjustment) }} RP · excluded from winnings</small><small>Public Gaming name: {{ 'Visible' if row.public_visibility else 'Hidden' }}{% if row.last_game %} · last game {{ 'Hold’em' if row.last_game=='poker' else row.last_game|capitalize }}{% endif %}{% if row.last_action_at %} · {{ fmt_et(row.last_action_at) }}{% endif %}</small></div></details></li>{% else %}<li class="muted">No completed rounds this week.</li>{% endfor %}</ol></section>{% endfor %}</div>
   <details class="panel gaming-tools" id="gamingFunding"><summary><span><strong>Community RedPoints</strong><small>Give every registered player +100,000</small></span><span aria-hidden="true">+</span></summary><div class="details-content"><p class="small muted">Adds to available balances. Saved winnings, names and unfinished hands are kept.</p><form id="grantGamingForm" method="post" action="/admin/gaming/grant"><input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="request_id" value="{{ gaming_grant_id }}"><button id="grantGamingButton" class="button primary" type="submit">Give everyone +100,000 RedPoints</button><p id="gamingGrantMessage" class="small" role="status" aria-live="polite"></p></form><p id="gamingLastGrant" class="small muted">{% if data.gaming.last_grant %}Last grant: {{ data.gaming.last_grant.actor }} · +100,000 each · {{ data.gaming.last_grant.players }} wallets · {{ fmt_et(data.gaming.last_grant.at) }}{% else %}No admin points grant has been saved yet.{% endif %}</p></div></details>
   <details class="panel gaming-tools"><summary><span><strong>Player records &amp; reset schedule</strong><small>Identity, funding and connection information</small></span><span aria-hidden="true">+</span></summary><div class="details-content"><p id="gamingAdminReset" class="small muted">Weekly reset: {{ data.gaming.season.end_et }}.</p><p class="small muted">All eight games share each player's name and wallet. Shared Wi-Fi and VPN connections are allowed. Names are player-submitted; IPs do not verify a Shuffle account or restrict play. Full names and IPs are admin-only.</p><p class="small muted">A browser refresh sets that player's available balance to 100,000; a restart sets all saved wallets to 100,000. Funding is excluded from winnings. Pending card hands keep their committed stake. Weekly reset clears rankings.</p><p id="gamingIpWarning" class="notice warning" hidden>Visitor IP forwarding is not configured. Playing still works. On DigitalOcean App Platform set TRUST_APP_PLATFORM=1 to record each visitor's public IP accurately.</p><p class="small muted">Installed gaming release: <strong id="gamingInstalledRelease">{{ release }}</strong></p></div></details>
   <details class="panel gaming-tools" id="gamingLegacyPoker"><summary>Video Poker · legacy records</summary><div class="details-content"><p class="small muted">Previous Jacks or Better results keep their original rules and proofs.</p><p id="gamingCount-video_poker" class="small muted"></p><ol class="gaming-leaders" id="gamingLeaders-video_poker">{% for row in data.gaming.legacy_poker %}<li><strong>{{ row.name }}</strong> · {{ '{:+,}'.format(row.net) }} net RP</li>{% else %}<li class="muted">No legacy rounds this week.</li>{% endfor %}</ol></div></details>
@@ -16756,7 +17597,7 @@ def health_view(runtime, measurements, status):
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
 <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}">
-<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"></head>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='v14-modern.css',v=asset_version) }}"></head>
 <body data-release="{{ release }}" {% block attributes %}{% endblock %}>
 {# Login and error pages do not receive the public leaderboard data object. #}
 {% set public_site = data.site if data is defined and data.site is defined else {} %}
@@ -16833,7 +17674,7 @@ def health_view(runtime, measurements, status):
 {% block title %}{{ ('Texas Hold’em' if game=='poker' else game|capitalize) ~ ' · ' if game else '' }}Gaming · RedHunllef{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='gaming.css',v=asset_version) }}">{% if game=='poker' %}<link rel="stylesheet" href="{{ url_for('static',filename='holdem.css',v=asset_version) }}">{% endif %}{% endblock %}
 {% block content %}
-<main id="main" class="shell gaming-page public-interior-page" data-game="{{ game or '' }}" data-wallet="{{ wallet|tojson|forceescape }}" data-rules="{{ game_rules|tojson|forceescape }}" data-csrf="{{ player_token }}">
+<main id="main" class="shell gaming-page public-interior-page" data-game="{{ game or '' }}" data-wallet="{{ wallet|tojson|forceescape }}" data-rules="{{ game_rules|tojson|forceescape }}" data-csrf="{{ player_token }}" data-community="{{ community|tojson|forceescape }}">
 <header class="gaming-heading"><div><p class="eyebrow">REDPOINTS ARCADE</p><h1>{{ 'Texas Hold’em' if game=='poker' else game|capitalize if game else 'Gaming' }}<span class="accent">.</span></h1></div><div class="points-wallet panel"><span class="eyebrow" id="pointsLabel">{{ 'STARTING REDPOINTS' if wallet.needs_profile and not wallet.play_blocked else 'AVAILABLE REDPOINTS' }}</span><strong id="pointsBalance">{% if wallet.needs_profile and wallet.play_blocked %}—{% elif wallet.needs_profile %}{{ '{:,}'.format([100000, wallet.balance]|max) }}{% else %}{{ '{:,}'.format(wallet.balance) }}{% endif %}</strong><div class="wallet-detail"><span>In play <b id="pointsInPlay">0</b></span><span>Last net <b id="pointsNet">—</b></span></div><small id="pointsReset">{% if wallet.needs_profile and not wallet.play_blocked %}Save your name to play.{% else %}Resets {{ wallet.season.end_et }}{% endif %}</small></div></header>
 {% if game %}<div class="public-breadcrumb"><a class="button small" href="/gaming">← All games</a><span>{{ 'Texas Hold’em' if game=='poker' else game|capitalize }} · RedPoints only</span></div>{% endif %}
 <div class="game-switcher"><label for="gameSelect">Game</label><select id="gameSelect" aria-label="Choose a game"><option value="/gaming" {% if not game %}selected{% endif %}>Gaming dashboard</option>{% for item in game_rules.games %}<option value="/gaming/{{ item }}" {% if game==item %}selected{% endif %}>{{ 'Texas Hold’em' if item=='poker' else item|capitalize }}</option>{% endfor %}</select><a class="text-link" href="/gaming/fairness">Fairness</a></div><nav class="game-nav" aria-label="Gaming navigation"><a class="button small" href="/gaming" {% if not game %}aria-current="page"{% endif %}>Dashboard</a>{% for item in game_rules.games %}<a class="button small" href="/gaming/{{ item }}" {% if game==item %}aria-current="page"{% endif %}>{{ 'Hold’em' if item=='poker' else item|capitalize }}</a>{% endfor %}<a class="text-link" href="/gaming/fairness">Rules &amp; fairness ↗</a></nav>
@@ -16842,10 +17683,21 @@ def health_view(runtime, measurements, status):
 <p id="pokerResume" class="notice" hidden><strong>Your Hold’em hand is saved.</strong> <a class="button primary small" href="/gaming/poker">Resume hand →</a></p>
 <p id="blackjackResume" class="notice" hidden><strong>Your Blackjack hand is saved.</strong> <a class="button primary small" href="/gaming/blackjack">Resume hand →</a></p>
 <p id="gamingError" class="notice warning" role="alert" hidden></p><button id="retryBet" type="button" class="button" hidden>Recover pending result</button>
-<section id="gamingProfile" class="panel gaming-profile" {% if not wallet.needs_profile %}hidden{% endif %}><div><h2>{{ 'Confirm your name' if wallet.name else 'Your player name' }}</h2><p class="muted small">{{ 'Your saved name is ready. Confirm it to continue.' if wallet.name else 'One name for every game. New players start with 100,000 RedPoints.' }}</p></div><form id="gamingNameForm"><label for="gamingUsername">Player name</label><input id="gamingUsername" name="username" minlength="1" maxlength="64" value="{{ wallet.name or '' }}" autocomplete="nickname" required><button class="button primary" type="submit">{{ 'Confirm & play' if wallet.name else 'Save & play' }}</button></form><button class="text-link small" id="openGamingRecovery" type="button">Recover an existing player →</button></section>
+<section id="gamingProfile" class="panel gaming-profile" {% if not wallet.needs_profile %}hidden{% endif %}><div><h2>{{ 'Confirm your name' if wallet.name else 'Your player name' }}</h2><p class="muted small">{{ 'Your saved name is ready. Confirm it to continue.' if wallet.name else 'One name for every game. New players start with 100,000 RedPoints.' }}</p></div><form id="gamingNameForm"><label for="gamingUsername">Player name</label><input id="gamingUsername" name="username" minlength="1" maxlength="64" value="{{ wallet.name or '' }}" autocomplete="nickname" required><label class="gaming-public-choice" for="gamingPublicVisibility"><input id="gamingPublicVisibility" name="public_visibility" type="checkbox" {% if wallet.public_visibility or wallet.needs_profile %}checked{% endif %}><span><strong>Show my community name publicly</strong><small>Displays only your name, current game, recent activity and weekly RedPoints result. Wallet details stay private.</small></span></label><button class="button primary" type="submit">{{ 'Confirm & play' if wallet.name else 'Save & play' }}</button></form><button class="text-link small" id="openGamingRecovery" type="button">Recover an existing player →</button></section>
 <div id="gamingIdentity" class="gaming-identity" {% if wallet.needs_profile %}hidden{% endif %}><span>Playing as <strong id="gamingPlayerName">{{ wallet.name }}</strong></span><button class="text-link small" id="editGamingName" type="button">Edit name</button><button class="text-link small" id="openGamingRecoveryIdentity" type="button">Recovery</button><small id="gamingChecked" class="muted">Saved</small></div>
 <details id="gamingRecovery" class="panel gaming-recovery"><summary><strong>Player recovery</strong><span>Move this RedPoints profile to another browser</span></summary><div class="gaming-recovery-content"><p class="small muted">A recovery code restores the player name, balance, active hands and fairness receipts. Treat it like a password.</p><div class="button-row"><button class="button" id="gamingCreateRecovery" type="button" {% if wallet.needs_profile %}disabled{% endif %}>Create new recovery code</button><button class="button" id="gamingCopyRecovery" type="button" hidden>Copy code</button></div><label for="gamingRecoveryCode">Recovery code</label><textarea id="gamingRecoveryCode" rows="4" maxlength="512" spellcheck="false" placeholder="Paste a recovery code here"></textarea><button class="button primary" id="gamingRecoverPlayer" type="button">Recover player</button><p id="gamingRecoveryMessage" class="small muted" role="status"></p></div></details>
 {% if not game %}
+<section class="gaming-community" aria-labelledby="gamingCommunityTitle">
+  <div class="section-title gaming-community-heading"><div><p class="eyebrow">COMMUNITY ACTIVITY</p><h2 id="gamingCommunityTitle">Live Gaming leaderboard<span class="accent">.</span></h2><p class="small muted">See recent play and this week’s settled RedPoints results. Players choose whether their community name appears here.</p></div><div id="gamingActivityCount" class="gaming-activity-count"><strong>{{ community.active_count }}</strong><span>active now</span></div></div>
+  <div id="gamingGameFilters" class="gaming-game-counts gaming-filter-bar" role="group" aria-label="Filter Gaming activity">
+    <button type="button" class="is-active" data-community-filter="all" aria-pressed="true"><b>{{ community.active_count }}</b> All games</button>
+    {% for key in game_rules.games %}<button type="button" data-community-filter="{{ key }}" aria-pressed="false"><b>{{ community.game_counts.get(key, 0) }}</b> {{ 'Hold’em' if key=='poker' else key|capitalize }}</button>{% endfor %}
+  </div>
+  <div class="gaming-community-grid">
+    <section class="panel gaming-live-panel" aria-labelledby="gamingLiveTitle"><div class="gaming-panel-heading"><div><p class="eyebrow">LIVE NOW</p><h3 id="gamingLiveTitle">Who is playing</h3></div><span class="live-dot" aria-hidden="true"></span></div><div id="gamingLivePlayers" class="gaming-live-list">{% for row in community.live_players %}<article><span class="gaming-live-avatar">{{ row.name[:1]|upper }}</span><div><strong>{{ row.name }}</strong><small>{{ row.game_label }} · {{ row.status }}</small></div></article>{% else %}<p class="empty">No public players are active right now.</p>{% endfor %}</div></section>
+    <section class="panel gaming-leader-panel" aria-labelledby="gamingWeeklyTitle"><div class="gaming-panel-heading"><div><p class="eyebrow">THIS WEEK</p><h3 id="gamingWeeklyTitle">RedPoints leaders</h3></div><span class="tag">Top 10</span></div><ol id="gamingPublicLeaders" class="gaming-public-leaders">{% for row in community.weekly_leaders %}<li><span class="gaming-public-rank">{{ '%02d'|format(row.rank) }}</span><strong>{{ row.name }}</strong><span><b>{{ '{:+,}'.format(row.net) }}</b><small>{{ row.rounds }} rounds</small></span></li>{% else %}<li class="empty">No public results yet this week.</li>{% endfor %}</ol></section>
+  </div>
+</section>
 <section class="game-cards" aria-label="Choose a game">
 <a href="/gaming/dice" class="panel game-card"><div class="game-art dice-art" aria-hidden="true"><span>⚄</span><span>⚂</span></div><h2>Dice <span>↗</span></h2><span class="button primary">Play Dice</span></a>
 <a href="/gaming/keno" class="panel game-card"><div class="game-art mini-keno" aria-hidden="true">{% for n in range(1,13) %}<span class="{{ 'picked' if n in [2,5,8,10] else '' }}">{{ n }}</span>{% endfor %}</div><h2>Keno <span>↗</span></h2><span class="button primary">Play Keno</span></a>
@@ -17037,54 +17889,76 @@ def health_view(runtime, measurements, status):
 {% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
 <main id="main" class="shell public-home">
-<section class="hero public-hero"><div class="hero-intro"><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><a class="sponsor empire-sponsor" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored" aria-label="EmpireDrop referral link"><span class="sponsor-symbol">E</span><span><small>SPONSOR · CODE RED</small><strong>EmpireDrop</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
-<aside id="shuffleRaceClock" class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside>
-<aside id="empireRaceClock" class="race-clock panel" hidden aria-label="EmpireDrop race schedule">
-  <div class="row"><span class="eyebrow">EMPIREDROP · CODE RED</span><span class="badge">Independent race</span></div>
-  <p class="small muted" id="empireRaceMode">{{ 'Official EmpireDrop race' if data.empiredrop.schedule.mode == 'provider' else 'Weekly · Tuesday 6 PM ET' if data.empiredrop.schedule.mode == 'weekly' else 'Custom race' }}</p>
-  <div class="clock" id="empireCountdown" aria-live="off">—</div>
-  <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
-  <div class="clock-footer"><span>EmpireDrop reward pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>10 places</span></div>
-</aside></section>
+  <section class="race-hero" aria-labelledby="raceTitle">
+    <div class="race-hero-copy">
+      <p class="eyebrow"><span class="dot"></span> REDHUNLLEF COMMUNITY RACE</p>
+      <h1 id="raceTitle">RedHunllef Wager Race</h1>
+      <p id="raceDescription" class="lead">Follow the weekly standings, compare both races, and see who finishes in the paid positions.</p>
+      <div class="provider-tabs public-provider-tabs" role="tablist" aria-label="Choose a leaderboard provider">
+        <button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button>
+        <button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 10</button>
+      </div>
+      <div class="provider-brand-row" aria-label="Race providers">
+        <a id="sponsorLink" class="provider-brand-card is-selected" data-provider-brand="shuffle" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener noreferrer sponsored">
+          <span class="provider-mark" aria-hidden="true">S</span>
+          <span><small>Powered By</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span>
+          <span aria-hidden="true">↗</span>
+        </a>
+        <a class="provider-brand-card" data-provider-brand="empiredrop" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">
+          <span class="provider-mark" aria-hidden="true">E</span>
+          <span><small>Powered By</small><strong>EmpireDrop</strong></span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
 
+    <aside id="shuffleRaceClock" class="race-clock panel public-race-summary">
+      <div class="race-summary-top"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div>
+      <div id="countdown" class="clock" aria-hidden="true">—</div>
+      <p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p>
+      <div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div>
+    </aside>
 
+    <aside id="empireRaceClock" class="race-clock panel public-race-summary" hidden aria-label="EmpireDrop race schedule">
+      <div class="race-summary-top"><span class="eyebrow">RACE SCHEDULE</span><span class="badge">EmpireDrop</span></div>
+      <div class="clock" id="empireCountdown" aria-live="off">—</div>
+      <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
+      <div class="clock-footer"><span>Prize pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>10 paid places</span></div>
+    </aside>
+  </section>
 
-<section id="leaderboard" class="public-leaderboards"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status" id="shuffleSourceStatus"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div><div class="source-status" id="empireSourceStatus" hidden aria-live="off"><span id="empireSourceLabel">EmpireDrop · last verified update</span><small id="empireSourceTime">{% if data.empiredrop.updated_at %}Last verified {{ fmt_et(data.empiredrop.updated_at) }}{% else %}No successful update yet{% endif %}</small><small id="empireNextCheck">Checking refresh schedule…</small></div></div>
-<div class="provider-tabs public-provider-tabs" role="tablist" aria-label="Choose leaderboard provider"><button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button><button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 10</button></div>
-<p class="public-board-hint" id="publicBoardHint">Live standings use the last verified provider results. Select a race to see its rankings and prizes.</p>
-<div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
-<p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
-<p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
-<p id="networkError" class="notice warning" role="status" hidden></p>
-<div class="podium public-podium">{% for n in [2,1,3] %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<article class="podium-card place-{{ n }}" data-rank="{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span><span class="podium-symbol" aria-hidden="true">{{ '♜' if n==1 else '✦' }}</span></div><strong class="podium-name" data-name>{{ r.username if r else 'Open position' }}</strong><div class="podium-values"><div><small>WEIGHTED WAGER</small><strong data-wager>{{ r.wager if r else '$0.00' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-prize>{{ money(data.site.prizes[n|string]) }}</strong></div></div></article>{% endfor %}</div>
-<div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="Leaderboard places four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Weighted wager</th><th class="number">Prize</th></tr></thead><tbody>{% for n in range(4,16) %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<tr data-rank="{{ n }}"><td class="rank">{{ '%02d'|format(n) }}</td><td><strong data-name>{{ r.username if r else 'Open position' }}</strong></td><td class="number" data-wager>{{ r.wager if r else '$0.00' }}</td><td class="number accent" data-prize>{{ money(data.site.prizes[n|string]) }}</td></tr>{% endfor %}</tbody></table></div>
-<div class="leaderboard-foot"><span>Usernames protected · weighted affiliate data</span><span>Automatic updates every 60 seconds</span></div>
-<details class="panel explanation"><summary>How weighted wagers are counted <span aria-hidden="true">+</span></summary><div class="weighting-grid">{% for rule in weighting %}<div><strong>{{ rule.range }}</strong><p>{{ rule.counts }}</p></div>{% endfor %}</div><p class="muted small">Rankings cover the saved race window. Results and prizes may be reviewed or adjusted. Independently operated; not affiliated with Shuffle.com.</p></details>
-</div>
-<div id="empireBoard" role="tabpanel" aria-labelledby="empireTab" hidden>
-  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · CODE RED</p><h3>EmpireDrop leaderboard<span class="accent">.</span></h3></div><a class="button" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">Join with code Red ↗</a></div>
-  <p class="small muted">Each site has its own race, standings, and prizes.</p>
-  <p id="empireMessage" class="notice" role="status">{{ data.empiredrop.label }}</p><p id="empirePrizeNote" class="small muted">Prize amounts are set by the site administrator. A listed prize is not a payment confirmation. Tied players share the prize assigned to their rank.</p>
-  {# Server-render verified standings so a future JavaScript exception never
-     turns a populated race into an empty first paint. The live client still
-     updates these same data-empire-* slots after each successful poll. #}
-  {% set empire_rows = data.empiredrop.rows[:10] %}
-  {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 10)|int or 10 %}
-  <div class="empire-podium podium public-podium" id="empirePodium" aria-label="EmpireDrop top three">
-  {% for n in [2,1,3] %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}
-  <article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</strong><div class="podium-values"><div><small><span data-empire-metric>EMPIREDROP WAGER</span></small><strong data-empire-wager="{{ n }}">{{ r.wager if r else '—' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</strong></div></div></article>
-  {% endfor %}
-  </div>
-  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through ten"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,11) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
-  <p id="empireRankingCoverage" class="small muted" aria-live="polite">{% if empire_limit < 10 %}Showing {{ empire_rows|length }} of {{ empire_limit }} official positions. EmpireDrop does not expose places {{ empire_limit + 1 }}–10 for this race.{% else %}Showing {{ empire_rows|length }} of 10 leaderboard positions{% if empire_limit > 10 %} (Top 10 of {{ empire_limit }} supplied by EmpireDrop){% endif %}.{% endif %}</p>
-  <p class="leaderboard-foot">Names masked (• means a character EmpireDrop already hid) · updates follow EmpireDrop's API cache · <span id="empireChecked">{% if data.empiredrop.updated_at %}Last verified {{ fmt_et(data.empiredrop.updated_at) }}{% else %}Waiting for a confirmed update{% endif %}</span></p>
-  <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><p class="small muted">Saved snapshots from this server, not official payout confirmations. Four completed races maximum.</p><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
-</div>
-<noscript><p class="notice">Live screen updates require JavaScript. Reload to see the latest saved results.</p></noscript>
-</section>
-<section class="panel public-games-cta" aria-labelledby="gamesCtaTitle"><div><p class="eyebrow">REDPOINTS ARCADE</p><h2 id="gamesCtaTitle">Play with your community name.</h2><p class="muted">Eight provably fair games, one wallet, and no cash value.</p></div><a class="button" href="/gaming">Open games →</a></section></main>
+  <section id="leaderboard" class="public-leaderboards" aria-labelledby="leaderboardTitle">
+    <div class="section-title leaderboard-heading"><div><p class="eyebrow">WEEKLY STANDINGS</p><h2 id="leaderboardTitle">The leaderboard<span class="accent">.</span></h2></div><a id="providerJoinLink" class="button small" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener noreferrer sponsored">Join the race ↗</a></div>
+
+    <div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
+      <p id="leaderboardMessage" class="notice public-fallback" role="status" {% if data.rows %}hidden{% endif %}>Standings are temporarily unavailable.</p>
+      <p id="networkError" class="notice public-fallback" role="status" hidden>Standings are temporarily unavailable.</p>
+      <div class="podium public-podium">{% for n in [2,1,3] %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<article class="podium-card place-{{ n }}" data-rank="{{ n }}"><div class="podium-top"><span class="placement">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'FIRST PLACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-name>{{ r.username if r else 'Open position' }}</strong><div class="podium-values"><div><small>WAGERED</small><strong data-wager>{{ r.wager if r else '$0.00' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-prize>{{ money(data.site.prizes[n|string]) }}</strong></div></div></article>{% endfor %}</div>
+      <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="Shuffle leaderboard places four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Wagered</th><th class="number">Prize</th></tr></thead><tbody>{% for n in range(4,16) %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<tr data-rank="{{ n }}"><td class="rank">{{ '%02d'|format(n) }}</td><td><strong data-name>{{ r.username if r else 'Open position' }}</strong></td><td class="number" data-wager>{{ r.wager if r else '$0.00' }}</td><td class="number accent" data-prize>{{ money(data.site.prizes[n|string]) }}</td></tr>{% endfor %}</tbody></table></div>
+      <details class="panel explanation"><summary>How Shuffle wagers are weighted <span aria-hidden="true">+</span></summary><div class="weighting-grid">{% for rule in weighting %}<div><strong>{{ rule.range }}</strong><p>{{ rule.counts }}</p></div>{% endfor %}</div><p class="muted small">Eligible wagers are adjusted by game RTP. Results and prizes may be reviewed or adjusted.</p></details>
+    </div>
+
+    {# Server-render verified standings start #}
+    <div id="empireBoard" role="tabpanel" aria-labelledby="empireTab" hidden>
+      <p id="empireMessage" class="notice public-fallback" role="status" {% if data.empiredrop.rows %}hidden{% endif %}>{{ 'Standings are temporarily unavailable.' if not data.empiredrop.rows else '' }}</p>
+      {% set empire_rows = data.empiredrop.rows[:10] %}
+      {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 10)|int or 10 %}
+      <div class="empire-podium podium public-podium" id="empirePodium" aria-label="EmpireDrop top three">
+      {% for n in [2,1,3] %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}
+        <article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</span><span class="eyebrow">{{ 'FIRST PLACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">{{ r.username if r else ('Unavailable' if n > empire_limit else 'Open position') }}</strong><div class="podium-values"><div><small>WAGERED</small><strong data-empire-wager="{{ n }}">{{ r.wager if r else '—' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</strong></div></div></article>
+      {% endfor %}
+      </div>
+      <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop leaderboard places four through ten"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Wagered</th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,11) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Unavailable' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
+      <p id="empireRankingCoverage" class="public-coverage">{% if empire_limit < 10 %}EmpireDrop currently exposes {{ empire_limit }} official positions for this race.{% elif empire_rows|length < 10 %}Open positions will appear when activity is reported.{% endif %}</p>
+      <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
+    </div>
+    {# Server-render verified standings end #}
+    <noscript><p class="notice">Reload to see the latest saved standings.</p></noscript>
+  </section>
+
+  <section class="panel public-games-cta" aria-labelledby="gamesCtaTitle"><div><p class="eyebrow">REDPOINTS ARCADE</p><h2 id="gamesCtaTitle">See who is playing now.</h2><p class="muted">See recent community activity and weekly RedPoints leaders.</p></div><a class="button primary" href="/gaming">Open Gaming →</a></section>
+</main>
 {% endblock %}
-
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='empiredrop.css',v=asset_version) }}">{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='empiredrop.js',v=asset_version) }}" defer></script>{% endblock %}
 ```
@@ -31249,6 +32123,134 @@ print('Eight desktop/mobile screenshots match decreasing HP fill: 100%, 75%, 25%
 }
 ```
 
+## `tests/gaming_motion.cjs`
+
+```javascript
+const {chromium}=require('playwright');
+const {spawn}=require('node:child_process'),assert=require('node:assert/strict');
+const path=require('node:path'),fs=require('node:fs');
+const root=path.resolve(__dirname,'..'),dir=process.env.RH_SCREENSHOTS||require('node:os').tmpdir();
+fs.mkdirSync(dir,{recursive:true});
+(async()=>{
+ const server=spawn(process.env.RH_TEST_PYTHON||'python3',[path.join(__dirname,'serve_gaming_motion_fixture.py')]);let out='',browser;
+ server.stdout.on('data',b=>out+=b);server.stderr.on('data',b=>process.stderr.write(b));
+ try{
+  for(let n=0;n<100&&!out.includes('\n');n++)await new Promise(r=>setTimeout(r,50));
+  const base='http://127.0.0.1:'+JSON.parse(out.split('\n')[0]).port;
+  browser=await chromium.launch({executablePath:process.env.RH_CHROMIUM||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu'],headless:true,timeout:15000});
+  const ctx=await browser.newContext({viewport:{width:390,height:844},extraHTTPHeaders:{'DO-Connecting-IP':'198.51.100.88'}}),p=await ctx.newPage(),errors=[];
+  p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(12000);
+  await p.goto(base+'/gaming');assert.equal(await p.locator('.game-cards>a').count(),8);
+  await p.locator('#gamingUsername').fill('EightGamePlayer');await p.locator('#gamingNameForm button').click();await p.locator('#gamingIdentity').waitFor();
+  async function bet(){const wait=p.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));await p.locator('#betButton').click();const response=await wait,v=await response.json();assert.equal(response.status(),200,JSON.stringify(v));await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');return v;}
+  async function state(){return (await(await ctx.request.get(base+'/gaming/api/state')).json()).wallet;}
+  for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','baccarat']){
+   await p.goto(base+'/gaming/'+game);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,game+' mobile overflow');
+   if(game==='dice'){
+    const slider=p.locator('#diceBoardChance');await slider.scrollIntoViewIfNeeded();const box=await slider.boundingBox();
+    await p.mouse.move(box.x+box.width*.5,box.y+box.height/2);await p.mouse.down();
+    await p.mouse.move(box.x+box.width*.7,box.y+box.height/2,{steps:8});await p.mouse.up();
+    const chance=Number(await p.locator('#diceChance').inputValue());assert.ok(chance>60&&chance<80);
+    assert.match(await p.locator('#diceChanceLabel').textContent(),new RegExp(String(chance)));
+   }
+   if(game==='keno')await p.locator('#kenoAuto').click();
+   if(game==='limbo'){await p.locator('#limboTarget').fill('2.50');assert.match(await p.locator('#limboPayout').textContent(),/250 points/);}
+   if(game==='coinflip'){await p.locator('.coin-options label').nth(1).click();assert.equal(await p.locator('[name=coinSide][value=tails]').isChecked(),true);}
+   let navigations=0;
+   const navigation=frame=>{if(frame===p.mainFrame())navigations++;};p.on('framenavigated',navigation);
+   const watching=p.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));
+   await p.locator('#betButton').click();const response=await watching;
+   let result=await response.json();assert.equal(response.status(),200,JSON.stringify(result));
+   if(result.receipt){
+    await p.waitForFunction(()=>Boolean(document.querySelector('.gaming-page').dataset.animating));
+    assert.equal(await p.locator('#betProof').textContent(),'','proof appears after motion');
+    if(game==='keno'){
+      await p.waitForFunction(()=>document.querySelectorAll('[data-keno].drawn').length>0);
+      assert.ok(await p.locator('[data-keno].drawn').count()<10,'numbers reveal in order');
+    }
+    if(game==='baccarat'){
+      await p.waitForFunction(()=>document.querySelectorAll('.baccarat-hand [data-card]').length>0);
+      assert.ok(await p.locator('.baccarat-hand [data-card]').count()<result.receipt.result.player.length+result.receipt.result.banker.length,'cards deal in sequence');
+    }
+   }
+   await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');
+   if(result.wallet.blackjack){const wait=p.waitForResponse(r=>r.url().endsWith('/gaming/api/blackjack/action'));await p.locator('[data-blackjack=stand]').click();result=await(await wait).json();}
+   await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
+   assert.equal(navigations,0,game+' must not navigate on play');p.off('framenavigated',navigation);
+   if(game==='baccarat'){
+    const r=result.receipt.result;
+    for(const side of ['player','banker']){
+     const label=side[0].toUpperCase()+side.slice(1);
+     assert.deepEqual(await p.locator('#baccarat'+label+' [data-card]').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.card))),r[side]);
+     assert.equal(await p.locator('#baccarat'+label+'Total').textContent(),String(r[side+'_total']));
+    }
+    await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/baccarat-mobile.png',fullPage:true});
+   }
+   if(game==='limbo'){await p.waitForTimeout(1100);assert.equal(await p.locator('#limboResult').textContent(),(result.receipt.result.multiplier/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'×');await p.screenshot({path:dir+'/limbo-mobile.png',fullPage:true});}
+   if(game==='coinflip'){await p.waitForTimeout(1100);assert.equal(await p.locator('#redCoin').getAttribute('aria-label'),result.receipt.result.side==='heads'?'Heads':'Tails');await p.screenshot({path:dir+'/coinflip-mobile.png',fullPage:true});}
+  }
+  // Keep overlapping drops distinct and alive when the canvas is resized.
+  await p.goto(base+'/gaming/plinko');let last;
+  for(let n=0;n<3;n++)last=await bet();
+  await p.setViewportSize({width:430,height:900});
+  await p.waitForFunction(n=>document.getElementById('betProof').textContent===`Verified · #${n}`,last.receipt.nonce);
+  assert.match(await p.locator('#plinkoResult').textContent(),new RegExp('Slot '+last.receipt.result.slot));
+  await p.setViewportSize({width:390,height:844});
+  // Hidden-tab completion cannot strand a verified round or keep Play locked.
+  await p.goto(base+'/gaming/baccarat');
+  const hiddenBet=p.waitForResponse(r=>r.url().endsWith('/gaming/api/bet'));await p.locator('#betButton').click();
+  const hiddenResult=await(await hiddenBet).json();
+  await p.waitForFunction(()=>document.querySelector('.gaming-page').dataset.animating==='baccarat');
+  await p.evaluate(()=>{Object.defineProperty(document,'hidden',{value:true,configurable:true});document.dispatchEvent(new Event('visibilitychange'));});
+  await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
+  assert.equal(await p.locator('#baccaratBankerTotal').textContent(),String(hiddenResult.receipt.result.banker_total));
+  await p.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'));});
+  await p.goto(base+'/gaming/poker');let opened=await bet();assert.ok(opened.wallet.poker);const initial=opened.wallet.poker.initial;
+  assert.equal(initial.length,2);assert.deepEqual(opened.wallet.poker.computer,[null,null]);
+  assert.equal(await p.locator('#holdemComputerCards .is-hidden').count(),2);
+  await p.waitForTimeout(5200);assert.deepEqual((await state()).poker.initial,initial);
+  const refresh=p.waitForResponse(r=>r.url().endsWith('/gaming/api/refresh'));await p.reload();assert.equal((await(await refresh).json()).wallet.balance,100000);
+  assert.deepEqual((await state()).poker.initial,initial);
+  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Holdem mobile overflow');
+  await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/holdem-mobile.png',fullPage:true});
+  async function pokerMove(action){
+    const watching=p.waitForResponse(r=>r.url().endsWith('/gaming/api/poker/action'));
+    await p.locator('[data-holdem="'+action+'"]').click();const response=await watching,value=await response.json();assert.equal(response.status(),200,JSON.stringify(value));
+    await p.waitForFunction(()=>document.getElementById('betButton').getAttribute('aria-busy')==='false');
+    return value;
+  }
+  let result=opened;
+  while(result.wallet.poker)result=await pokerMove(result.wallet.poker.legal.check?'check':'call');
+  assert.deepEqual(result.receipt.result.initial,initial);await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
+  if(result.receipt.result.reason==='showdown'){
+    assert.equal(await p.locator('#holdemBoard .playing-card').count(),5);
+    assert.equal(await p.locator('#holdemComputerCards .is-hidden').count(),0);
+    assert.ok(await p.locator('.playing-card.is-winning').count()>=5);
+  }
+  await p.setViewportSize({width:1280,height:900});await p.evaluate(()=>{document.activeElement?.blur();window.scrollTo({top:0,behavior:'instant'});});await p.screenshot({path:dir+'/holdem-desktop-result.png',fullPage:true});
+  // Reach the player's button. A folded computer opening hand is still a valid settled round.
+  for(let n=0;n<4;n++){
+    opened=await bet();
+    if(opened.wallet.poker?.button==='player')break;
+    while(opened.wallet.poker)opened=await pokerMove(opened.wallet.poker.legal.check?'check':'call');
+  }
+  assert.equal(opened.wallet.poker.button,'player');const prior=(await state()).stats.poker.bets;let lost=false;
+  await p.route('**/gaming/api/poker/action',async route=>{if(!lost){lost=true;await route.fetch();await route.abort('failed');}else await route.continue();});
+  await p.locator('[data-holdem=fold]').click();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor({timeout:16000});
+  const saved=await state();assert.equal(saved.stats.poker.bets,prior+1);assert.equal(saved.poker,null);assert.equal(saved.receipts[0].actions.at(-1).action,'fold');
+  await p.unroute('**/gaming/api/poker/action');
+  await p.emulateMedia({reducedMotion:'reduce'});await p.goto(base+'/gaming/baccarat');
+  result=await bet();await p.locator('#betProof').filter({hasText:'Verified'}).waitFor();
+  assert.equal(await p.locator('#baccaratPlayerTotal').textContent(),String(result.receipt.result.player_total));
+  await p.emulateMedia({reducedMotion:'no-preference'});
+  const admin=await ctx.newPage();admin.on('pageerror',e=>errors.push(e.message));await admin.goto(base+'/admin/gaming');await admin.locator('#username').fill('fixtureadmin');await admin.locator('#password').fill('fixture-only');await admin.locator('form button[type=submit]').click();await admin.locator('#grantGamingButton').waitFor();await admin.goto(base+'/admin/gaming');
+  for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat'])assert.match(await admin.locator('#gamingLeaders-'+game).textContent(),/EightGamePlayer/);
+  await p.goto(base+'/gaming');await p.screenshot({path:dir+'/dashboard-desktop.png',fullPage:true});
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({eight_games_play_and_verify:true,animated_reveals_without_navigation:true,dice_drag_synced:true,overlapping_plinko_survives_resize:true,hidden_tab_exact_completion:true,holdem_cards_and_stack_persist_after_poll_and_reload:true,holdem_lost_action_recovers_once:true,admin_tracks_eight_games:true,exact_limbo_result:true,coin_face_matches_result:true,mobile_no_overflow:true,page_errors:errors}));
+ }finally{if(browser)await browser.close();server.kill('SIGTERM');}
+})().catch(e=>{console.error(e);process.exitCode=1;});
+```
+
 ## `tests/generate_fairness_vectors.py`
 
 ```python
@@ -31549,6 +32551,77 @@ class AdminControlTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+```
+
+## `tests/test_admin_gaming_frontend.cjs`
+
+```javascript
+/* Private dashboard regression checks using real server-rendered fixture HTML. */
+const {test,after}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {JSDOM}=require('jsdom');
+const root=path.resolve(__dirname,'..');
+let directory=process.env.GAMING_ADMIN_FIXTURES;
+if(!directory){
+ directory=fs.mkdtempSync(path.join(require('node:os').tmpdir(),'red-gaming-test-'));
+ after(()=>fs.rmSync(directory,{recursive:true,force:true}));
+ require('node:child_process').execFileSync(process.env.RH_TEST_PYTHON||'python3',
+  [path.join(__dirname,'serve_admin_gaming_fixture.py'),'--write-fixtures',directory],{stdio:'pipe'});
+}
+const code=fs.readFileSync(path.join(root,'static/admin-gaming.js'),'utf8');
+const tick=async()=>{for(let n=0;n<8;n++)await new Promise(resolve=>setImmediate(resolve));};
+function make(){
+ const data=JSON.parse(fs.readFileSync(path.join(directory,'state.json'),'utf8'));
+ const dom=new JSDOM(fs.readFileSync(path.join(directory,'admin.html'),'utf8'),{url:'https://example.test/admin/gaming',runScripts:'outside-only'});
+ const w=dom.window,timers=new Map();let serial=0;
+ Object.defineProperty(w.document,'hidden',{value:false,configurable:true});
+ w.setTimeout=(fn,delay)=>{timers.set(++serial,{fn,delay});return serial;};w.clearTimeout=id=>timers.delete(id);
+ let response=()=>({ok:true,status:200,headers:new Map([['content-type','application/json'],['etag','saved']]),json:async()=>structuredClone(data)});
+ w.fetch=async()=>response();w.eval(code);
+ return {w,dom,data,timers,respond(fn){response=fn;}};
+}
+test('all eight top-five lists, exact full counts, IPs and no duplicate DOM IDs',async()=>{
+ const p=make();await tick();
+ for(const game of ['dice','keno','plinko','blackjack','limbo','coinflip','poker','baccarat']) {
+  assert.equal(p.w.document.querySelectorAll('#gamingLeaders-'+game+' li').length,5);
+  assert.match(p.w.document.getElementById('gamingCount-'+game).textContent,/Players: 7.*rounds: 7/);
+  assert.match(p.w.document.getElementById('gamingLeaders-'+game).textContent,/192\.0\.2\./);
+ }
+ const ids=[...p.w.document.querySelectorAll('[id]')].map(n=>n.id);assert.equal(ids.length,new Set(ids).size);
+ assert.equal(p.w.document.getElementById('gamingNoRecords').hidden,true);
+ assert.ok([...p.timers.values()].some(t=>t.delay===5000));p.dom.window.close();
+});
+test('expired admin clears private rows and cannot be repopulated by a late response',async()=>{
+ const p=make();await tick();p.respond(()=>({ok:false,status:401,headers:new Map()}));
+ p.w.document.getElementById('refreshGaming').click();await tick();
+ assert.equal(p.w.document.querySelectorAll('[id^=gamingLeaders-] li').length,0);
+ assert.equal(p.w.document.getElementById('gamingAdminSession').hidden,false);
+ assert.equal(p.w.document.getElementById('gamingAdmin').hasAttribute('data-rankings'),false);
+ assert.equal(p.w.document.getElementById('refreshGaming').disabled,true);
+ assert.doesNotMatch(p.w.document.getElementById('gamingAdmin').textContent,/TestPlayer|192\.0\.2\./);
+ p.w.RedGamingAdmin.render(p.data);
+ assert.equal(p.w.document.querySelectorAll('[id^=gamingLeaders-] li').length,0);p.dom.window.close();
+});
+test('mixed release reports a reload message instead of claiming a fresh update',async()=>{
+ const p=make();await tick();p.respond(()=>({ok:true,status:200,headers:new Map([['content-type','application/json']]),json:async()=>({...p.data,release:'different-release'})}));
+ p.w.document.getElementById('refreshGaming').click();await tick();
+ assert.match(p.w.document.getElementById('gamingAdminChecked').textContent,/release changed.*Reload/);
+ assert.equal(p.w.document.querySelectorAll('#gamingLeaders-blackjack li').length,5);p.dom.window.close();
+});
+
+test('unchanged rankings retain DOM nodes; changed scores retain expanded records and focus',async()=>{
+ const p=make();await tick();
+ try {
+  const doc=p.w.document,list=doc.getElementById('gamingLeaders-dice'),first=list.firstElementChild,detail=first.querySelector('details'),summary=first.querySelector('summary');
+  detail.open=true;summary.focus();
+  p.w.RedGamingAdmin.render(p.data);
+  assert.equal(list.firstElementChild,first,'No replacement on unchanged polls');
+  assert.equal(doc.activeElement,summary);
+  p.data.revision++;p.data.games.dice[0].net+=7;p.w.RedGamingAdmin.render(p.data);
+  assert.equal(list.firstElementChild.querySelector('details').open,true);
+  assert.equal(doc.activeElement,list.firstElementChild.querySelector('summary'));
+  assert.match(list.firstElementChild.querySelector('.player-record').textContent,/Funding adjustments.*excluded from winnings/);
+ } finally {p.dom.window.close();}
+});
 ```
 
 ## `tests/test_admin_reliability_v13.py`
@@ -33269,6 +34342,174 @@ class EmpireDropContractTests(unittest.TestCase):
 if __name__ == '__main__':unittest.main()
 ```
 
+## `tests/test_empiredrop_frontend.cjs`
+
+```javascript
+/* Regression tests for the real public EmpireDrop renderer.
+ * Runs under Node without a browser, live credentials, or external services.
+ * The simulated DOM includes payout elements: the old test omitted these and
+ * therefore never exercised the ReferenceError that stopped the public board.
+ */
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+
+const SCRIPT = fs.readFileSync(path.join(__dirname, '..', 'static', 'empiredrop.js'), 'utf8');
+
+function harness(bootstrap) {
+  const handlers = {};
+  const elements = {};
+  const slots = {};
+  const metrics = [];
+  class Element {
+    constructor(id, panel) {
+      this.id = id;
+      this.tabIndex = 0;
+      this.hidden = false;
+      this.textContent = '';
+      this.attributes = {'aria-controls': panel};
+      this.classList = {toggle: (name, active) => { this.active = active; }};
+    }
+    setAttribute(name, value) { this.attributes[name] = value; }
+    getAttribute(name) { return this.attributes[name]; }
+    addEventListener(name, fn) { handlers[this.id + ':' + name] = fn; }
+    focus() { this.focused = true; }
+    querySelector(selector) {
+      const match = selector.match(/^\[data-empire-place="(\d+)"\]$/);
+      return match ? slots[`${match[1]}:place`] : null;
+    }
+  }
+  for (const [id, panel] of [
+    ['shuffleTab', 'shuffleBoard'], ['empireTab', 'empireBoard']
+  ]) elements[id] = new Element(id, panel);
+  for (const id of [
+    'shuffleBoard', 'empireBoard', 'empireMessage', 'empireChecked',
+    'empireRankingCoverage', 'empirePoolTotal', 'empireSourceStatus',
+    'shuffleSourceStatus', 'empireSourceTime', 'empireNextCheck', 'empireSourceLabel', 'empireRaceMode',
+    'empireRaceWindow', 'empireCountdown', 'raceTitle', 'raceDescription'
+  ]) elements[id] = elements[id] || new Element(id);
+  elements.raceTitle.textContent = 'Shuffle Wager Race';
+  elements.raceDescription.textContent = 'Shuffle race';
+  for (let n = 1; n <= 15; n++) {
+    for (const field of ['name', 'wager', 'prize', 'place']) {
+      slots[`${n}:${field}`] = new Element(`slot-${n}-${field}`);
+    }
+  }
+  for (let i=0; i<2; i++) metrics.push(new Element('metric'+i));
+  const doc = {
+    body: {dataset: {bootstrap: JSON.stringify({empiredrop: bootstrap})}},
+    getElementById(id) { return elements[id] || null; },
+    querySelector(selector) {
+      if (selector.includes('.source-status')) return null;
+      const match = selector.match(/^\[data-empire(?:-row)?-(name|wager|prize)="(\d+)"\]$/);
+      return match ? slots[`${match[2]}:${match[1]}`] : null;
+    },
+    querySelectorAll(selector) { return selector === '[data-empire-metric]' ? metrics : []; },
+    addEventListener(name, fn) { handlers['document:' + name] = fn; },
+  };
+  const errors = [];
+  const timers=[];
+  const context = {document: doc, Date, Intl, console:{error:(...x)=>errors.push(x),warn:(...x)=>errors.push(x)},setInterval:(fn)=>{timers.push(fn);return null;}};
+  vm.runInNewContext(SCRIPT, context, {filename:'static/empiredrop.js'});
+  return {slots, elements, handlers, metrics, errors,
+    tick() { for (const tick of timers) tick(); },
+    update(detail) { assert.equal(typeof handlers['document:empiredrop:update'], 'function'); handlers['document:empiredrop:update']({detail}); },
+    selectEmpire() { handlers['empireTab:click'](); },
+    selectShuffle() { handlers['shuffleTab:click'](); }};
+}
+
+function rows(count, opts={}) {
+  return Array.from({length:count}, (_,i)=>({
+    rank: opts.tied && i===2 ? 2 : i+1,
+    username: `P${String(i+1).padStart(2,'0')}******`,
+    wager: `€${(i+1)*100}.00`,
+    prize: opts.prizes ? `€${(i+1)*10}.00` : '—'
+  }));
+}
+
+const blankPrizes = {enabled:false,total:'€0.00',formatted:{}};
+
+test('all ten API entries appear publicly when payouts are NOT announced (initial bootstrap)',()=>{
+  const board = {
+    rows:rows(10),label:'Updated · EmpireDrop race',updated_at:1794375291,
+    prizes:blankPrizes,race_meta:{ranks_limit:10,metric:'Wagered',type:'WAGER',engine:'RANKING'},
+    schedule:{mode:'provider',start_time:1794270000,end_time:1794870000,start_et:'Nov 10',end_et:'Nov 17'}
+  };
+  const h=harness(board);
+  h.selectEmpire();
+  assert.equal(h.elements.empireBoard.hidden,false);
+  assert.equal(h.elements.shuffleBoard.hidden,true);
+  for (let place=1;place<=10;place++) {
+    assert.equal(h.slots[`${place}:name`].textContent,board.rows[place-1].username, `Missing player at place ${place}`);
+    assert.equal(h.slots[`${place}:wager`].textContent,board.rows[place-1].wager);
+    assert.equal(h.slots[`${place}:prize`].textContent,'Not announced');
+  }
+  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 10 of 10 leaderboard positions/);
+  assert.equal(h.elements.empirePoolTotal.textContent,'Not announced');
+  assert.deepEqual(h.errors,[]);
+});
+
+test('up to ten players and official tied ranks render with enabled independent payouts',()=>{
+  const incoming = rows(15,{tied:true,prizes:true});
+  const board={rows:incoming,label:'Confirmed',updated_at:1794375291,
+    prizes:{enabled:true,total:'€1,200.00',formatted:{'2':'€50.00'}},
+    race_meta:{ranks_limit:15,metric:'Wagered',engine:'RANKING',type:'WAGER'}};
+  const h=harness({rows:[],prizes:blankPrizes});
+  h.update(board);
+  for (let place=1;place<=10;place++) {
+    assert.equal(h.slots[`${place}:name`].textContent,incoming[place-1].username);
+    assert.equal(h.slots[`${place}:wager`].textContent,incoming[place-1].wager);
+    assert.equal(h.slots[`${place}:prize`].textContent,incoming[place-1].prize);
+  }
+  assert.equal(h.slots['3:place'].textContent,'02','Provider tie ranks must not disappear');
+  assert.equal(h.slots['4:place'].textContent,'04');
+  assert.equal(h.elements.empirePoolTotal.textContent,'€1,200.00');
+  assert.deepEqual(h.errors,[]);
+  h.selectEmpire();h.selectShuffle();
+  assert.equal(h.elements.shuffleBoard.hidden,false);
+  assert.equal(h.elements.empireBoard.hidden,true);
+});
+
+test('later API refresh replaces every visible slot, not just first place',()=>{
+  const h=harness({rows:rows(10),prizes:blankPrizes,race_meta:{ranks_limit:10}});
+  h.update({rows:rows(7),prizes:blankPrizes,race_meta:{ranks_limit:10},label:'New race results'});
+  for(let n=1;n<=7;n++) assert.equal(h.slots[`${n}:name`].textContent,rows(7)[n-1].username);
+  for(let n=8;n<=10;n++) assert.equal(h.slots[`${n}:name`].textContent,'Open position');
+  assert.equal(h.elements.empireMessage.textContent,'New race results');
+});
+
+test('empty results are safe and provider limit is not invented',()=>{
+  const h=harness({rows:[],prizes:blankPrizes,label:'Awaiting standings'});
+  assert.equal(h.slots['1:name'].textContent,'Open position');
+  assert.equal(h.slots['10:name'].textContent,'Open position');
+  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 0 of 10 leaderboard positions/);
+});
+
+test('last successful update and next provider check tick independently from page refresh',()=>{
+  const now = Math.floor(Date.now()/1000);
+  const h = harness({rows:rows(10),label:'Updated · EmpireDrop race',updated_at:now-10,
+    next_check_at:now+240,refresh_interval:300,prizes:blankPrizes,race_meta:{ranks_limit:10}});
+  h.selectEmpire();
+  assert.equal(h.elements.empireSourceStatus.hidden,false);
+  assert.equal(h.elements.shuffleSourceStatus.hidden,true);
+  assert.match(h.elements.empireSourceTime.textContent,/Updated 1\ds ago/);
+  assert.match(h.elements.empireNextCheck.textContent,/Next provider check in 2[34]\ds/);
+  assert.match(h.elements.empireChecked.textContent,/Last successful update:/);
+  h.tick();
+  assert.match(h.elements.empireNextCheck.textContent,/Next provider check in/);
+  h.update({rows:rows(10),label:'Updates delayed · last verified results',updated_at:now-10,
+    next_check_at:now+350,refresh_interval:600,prizes:blankPrizes,race_meta:{ranks_limit:10}});
+  assert.match(h.elements.empireSourceLabel.textContent,/updates delayed/);
+  assert.match(h.elements.empireSourceTime.textContent,/Updated 1\ds ago/);
+  h.selectShuffle();
+  assert.equal(h.elements.empireSourceStatus.hidden,true);
+  assert.equal(h.elements.shuffleSourceStatus.hidden,false);
+  assert.deepEqual(h.errors,[]);
+});
+```
+
 ## `tests/test_empiredrop_public_ssr.py`
 
 ```python
@@ -33284,7 +34525,7 @@ from jinja2 import Environment, StrictUndefined, select_autoescape
 
 INDEX = (Path(__file__).resolve().parents[1] / 'templates/index.html').read_text(encoding='utf-8')
 # Render the actual fragment (the complete page also requires the complete Shuffle context).
-FRAGMENT = INDEX[INDEX.index('{# Server-render verified standings'): INDEX.index('<p class="leaderboard-foot">Names masked')]
+FRAGMENT = INDEX[INDEX.index('{# Server-render verified standings start #}'): INDEX.index('{# Server-render verified standings end #}')]
 
 
 def render(rows, limit=15, enabled=False):
@@ -33312,7 +34553,7 @@ class InitialHTMLTests(unittest.TestCase):
             self.assertIn(f'{wager}="{i}">€{i*100}.00', html)
         for i in range(11,16):
             self.assertNotIn(f'data-empire-row-name="{i}"', html)
-        self.assertIn('Showing 10 of 10 leaderboard positions',html)
+        self.assertEqual(html.count('data-empire-row-name='), 7)
 
     def test_fifteen_provider_players_display_only_top_ten(self):
         html=render(sample(15),limit=15,enabled=True)
@@ -33320,7 +34561,7 @@ class InitialHTMLTests(unittest.TestCase):
             self.assertIn(f'P{i:02}******',html)
         for i in range(11,16):
             self.assertNotIn(f'P{i:02}******',html)
-        self.assertIn('Top 10 of 15 supplied by EmpireDrop',html)
+        self.assertEqual(html.count('data-empire-row-name='), 7)
         self.assertNotIn('Not reported by EmpireDrop',html)
 
     def test_tied_ranks_and_escaping(self):
@@ -34011,6 +35252,62 @@ class ExtraWalletTests(unittest.TestCase):
 if __name__ == '__main__': unittest.main()
 ```
 
+## `tests/test_fairness_frontend.cjs`
+
+```javascript
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const vectors = [
+  ...require("./fairness_vectors.json"),
+  ...require("./fairness_v2_vectors.json"),
+  ...require("./fairness_v3_vectors.json"),
+  ...require("./fairness_v4_vectors.json"),
+  ...JSON.parse(require("node:child_process").execFileSync(process.env.RH_TEST_PYTHON || "python3", [require("node:path").join(__dirname, "holdem_vectors.py")], {encoding:"utf8",maxBuffer:16*1024*1024})),
+];
+const fair = require("../static/fairness.js");
+test("independent browser verifier reproduces every published Python reference receipt", async () => {
+  for (const receipt of vectors) {
+    assert.equal(
+      await fair.verify(receipt, receipt.commitment),
+      true,
+      receipt.request_id,
+    );
+    assert.equal(
+      await fair.verify(
+        { ...receipt, payout: receipt.payout + 1 },
+        receipt.commitment,
+      ),
+      false,
+    );
+    assert.equal(await fair.verify(receipt, "0".repeat(64)), false);
+  }
+});
+test("browser and backend use identical payout units and committed paths", async () => {
+  for (const receipt of vectors) {
+    const result = await fair.outcome(receipt.server_seed, receipt);
+    assert.deepEqual(result, receipt.result);
+  }
+});
+
+test("v2 edge payouts and doubled Blackjack stake are verified exactly", async () => {
+  assert.equal(Math.max(...fair.table("plinko", 16, "high")), 10000000);
+  const edge = vectors.find(
+    (r) =>
+      r.rules_version === "redpoints-v2" &&
+      r.game === "plinko" &&
+      r.result.multiplier === 10000000,
+  );
+  assert.equal(edge.payout, edge.wager * 1000);
+  const doubled = vectors.find(
+    (r) => r.game === "blackjack" && r.actions.includes("double"),
+  );
+  assert.equal(doubled.result.total_wager, doubled.wager * 2);
+  assert.equal(doubled.net, doubled.payout - doubled.result.total_wager);
+  assert.equal(await fair.verify(doubled), true);
+  assert.equal(await fair.verify({ ...doubled, actions: ["stand"] }), false);
+});
+```
+
 ## `tests/test_gaming_ip.py`
 
 ```python
@@ -34420,6 +35717,160 @@ class PackageTests(unittest.TestCase):
             self.assertIn('index.html requires missing static/missing.js', result['problems'])
 ```
 
+## `tests/test_history_frontend.cjs`
+
+```javascript
+/* Optional development tests; Node/jsdom are not runtime dependencies. */
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { JSDOM } = require("jsdom");
+const root = path.resolve(__dirname, "..");
+const fixture = process.env.DOM_FIXTURES || path.join(root, ".test-fixtures");
+const flush = async () => {
+  for (let n = 0; n < 5; n++) await new Promise((r) => setImmediate(r));
+};
+function page() {
+  const dom = new JSDOM(
+    fs.readFileSync(path.join(fixture, "history.html"), "utf8"),
+    { url: "https://example.test/history", runScripts: "outside-only" },
+  );
+  const w = dom.window,
+    timers = new Map(),
+    calls = [];
+  const value = JSON.parse(
+    fs.readFileSync(path.join(fixture, "history.json"), "utf8"),
+  );
+  let now = 0,
+    serial = 0,
+    fail = false;
+  Object.defineProperty(w.document, "hidden", {
+    value: false,
+    configurable: true,
+  });
+  w.setTimeout = (fn, delay) => {
+    const id = ++serial;
+    timers.set(id, { fn, at: now + delay });
+    return id;
+  };
+  w.clearTimeout = (id) => timers.delete(id);
+  w.fetch = async (url) => {
+    calls.push({ url, now });
+    if (fail) throw Error("offline");
+    return {
+      ok: true,
+      headers: new Map([["content-type", "application/json"]]),
+      json: async () => structuredClone(value),
+    };
+  };
+  w.eval(fs.readFileSync(path.join(root, "static/app.js"), "utf8"));
+  w.eval(fs.readFileSync(path.join(root, "static/history.js"), "utf8"));
+  return {
+    w,
+    value,
+    calls,
+    fail(v) {
+      fail = v;
+    },
+    async advance(ms) {
+      now += ms;
+      for (const [id, t] of [...timers])
+        if (t.at <= now) {
+          timers.delete(id);
+          t.fn();
+        }
+      await flush();
+    },
+    close() {
+      dom.window.close();
+    },
+  };
+}
+test("history renders 25 masked rows, four native links and the active navigation tab", async () => {
+  const p = page();
+  await flush();
+  const d = p.w.document;
+  assert.equal(d.querySelectorAll("#historyRows tr").length, 25);
+  assert.equal(d.querySelectorAll("#historyWeeks a").length, 4);
+  assert.equal(
+    d.querySelectorAll('nav[aria-label="Main navigation"] [aria-current]')
+      .length,
+    1,
+  );
+  for (const a of d.querySelectorAll("#historyWeeks a"))
+    assert.match(a.href, /\/history\?week=\d{4}-\d{2}-\d{2}$/);
+  assert.ok(!d.body.textContent.includes("ExamplePlayer"));
+  assert.equal(d.querySelectorAll("#historyRows img").length, 0);
+  const ids = [...d.querySelectorAll("[id]")].map((x) => x.id);
+  assert.equal(new Set(ids).size, ids.length);
+  p.close();
+});
+test("history polls every minute, pauses hidden tabs and reconnects without erasing results", async () => {
+  const p = page();
+  await flush();
+  await p.advance(60000);
+  await p.advance(60000);
+  assert.deepEqual(
+    p.calls.map((c) => c.now),
+    [0, 60000, 120000],
+  );
+  const before = p.w.document.getElementById("historyRows").textContent;
+  p.fail(true);
+  await p.advance(60000);
+  assert.equal(p.w.document.getElementById("historyNetwork").hidden, false);
+  assert.equal(p.w.document.getElementById("historyRows").textContent, before);
+  Object.defineProperty(p.w.document, "hidden", {
+    value: true,
+    configurable: true,
+  });
+  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
+  await p.advance(180000);
+  assert.equal(p.calls.length, 4);
+  p.fail(false);
+  Object.defineProperty(p.w.document, "hidden", {
+    value: false,
+    configurable: true,
+  });
+  p.w.document.dispatchEvent(new p.w.Event("visibilitychange"));
+  await flush();
+  assert.equal(p.calls.length, 5);
+  assert.equal(p.w.document.getElementById("historyNetwork").hidden, true);
+  p.close();
+});
+test("updates use text nodes and preserve table nodes when the results did not change", async () => {
+  const p = page();
+  await flush();
+  const d = p.w.document;
+  const first = d.querySelector("#historyRows tr");
+  await p.advance(60000);
+  assert.strictEqual(d.querySelector("#historyRows tr"), first);
+  p.value.selected.rows[0].username = "<img src=x onerror=alert(1)>";
+  await p.advance(60000);
+  assert.equal(d.querySelector("#historyRows img"), null);
+  assert.match(d.querySelector("#historyRows").textContent, /<img/);
+  p.close();
+});
+test("weekly rollover rebuilds four links and follows the selected period", async () => {
+  const p = page();
+  await flush();
+  const week = structuredClone(p.value.weeks[0]);
+  week.id = "2030-01-01";
+  week.label = "New week";
+  p.value.weeks = [week, ...p.value.weeks.slice(0, 3)];
+  p.value.selected = week;
+  await p.advance(60000);
+  assert.equal(p.w.document.querySelectorAll("#historyWeeks a").length, 4);
+  assert.equal(
+    p.w.document.querySelector("#historyWeeks [aria-current]").dataset.week,
+    "2030-01-01",
+  );
+  await p.advance(60000);
+  assert.match(p.calls.at(-1).url, /week=2030-01-01/);
+  p.close();
+});
+```
+
 ## `tests/test_holdem.py`
 
 ```python
@@ -34728,6 +36179,47 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
+## `tests/test_public_menu_v10.cjs`
+
+```javascript
+/* Dependency-free responsive menu regression test. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+class Element {
+  constructor() {this.handlers={};this.dataset={};this.attrs={};this.open=false;}
+  addEventListener(type,listener){(this.handlers[type] ||= []).push(listener)}
+  fire(type,event={}){for (const fn of this.handlers[type]||[])fn(event)}
+  setAttribute(key,value){this.attrs[key]=value}
+  getAttribute(key){return this.attrs[key]}
+  contains(){return false}
+  focus(){this.focused=true}
+}
+const toggle=new Element(),nav=new Element(),more=new Element();
+const doc = new Element();
+doc.getElementById = id=>({publicMenuToggle:toggle,publicPrimaryNav:nav,publicMore:more})[id];
+let narrow = true;
+const mq = new Element();
+const win = {matchMedia:query=>query.includes('max-width')?{matches:narrow}:mq};
+vm.runInNewContext(fs.readFileSync('static/public-control.js','utf8'),{document:doc,window:win});
+toggle.fire('click');
+assert.equal(nav.dataset.open,'true');
+assert.equal(toggle.getAttribute('aria-expanded'),'true');
+more.open=true;
+doc.fire('keydown',{key:'Escape'});
+assert.equal(toggle.getAttribute('aria-expanded'),'false');
+assert.equal(nav.dataset.open,'false');
+toggle.fire('click');
+nav.fire('click',{target:{closest:x=> x==='a'}});
+assert.equal(nav.dataset.open,'false');
+toggle.fire('click');
+more.open=true;
+mq.fire('change',{matches:true});
+assert.equal(nav.dataset.open,'false');
+assert.equal(more.open,false);
+console.log('Public navigation: 4 behavior checks passed');
+```
+
 ## `tests/test_redpoints.py`
 
 ```python
@@ -35014,6 +36506,45 @@ class FairMathTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 ```
 
+## `tests/test_shuffle_admin_browser.cjs`
+
+```javascript
+/* Browser-like regression for the invalid Intl option combination in admin cards. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const root = path.join(__dirname,'..');
+const nodes = new Map();
+const forSelector = s => { if(s==='[data-provider-search]')return []; if(!nodes.has(s)) nodes.set(s, [{textContent: '', dataset: {}}]); return nodes.get(s); };
+const sandbox = {
+  document: { querySelectorAll: forSelector, querySelector:()=>null },
+  globalThis: null,
+  Intl, Date, String, Object,
+};
+sandbox.globalThis=sandbox;
+vm.runInNewContext(fs.readFileSync(path.join(root,'static/admin-providers.js'),'utf8'),sandbox);
+assert.equal(typeof sandbox.RedProviderCards.render,'function');
+sandbox.RedProviderCards.render({providers: {
+  shuffle:{state:'warning',status:'Needs attention',last_success:1794375291,last_attempt:1794375510,
+           participants:0, quality:'Waiting',metric:'Weighted wager',refresh_seconds:60,issues:[]},
+  empiredrop:{state:'good',status:'Connected',last_success:1794375291,last_attempt:1794375291,
+           participants:10,quality:'10 verified players',metric:'Wagered',refresh_seconds:300,issues:[]}
+}});
+assert.match(forSelector('[data-provider-field="shuffle:last_success"]')[0].textContent,/2026/);
+assert.match(forSelector('[data-provider-field="empiredrop:last_attempt"]')[0].textContent,/2026/);
+assert.equal(forSelector('[data-provider-state="empiredrop"]')[0].textContent,'Connected');
+assert.equal(forSelector('[data-provider-field="empiredrop:participants"]')[0].textContent,'10');
+// The EmpireDrop controller has its own formatter. Ensure neither uses the
+// unsupported dateStyle/timeStyle plus timeZoneName option combination.
+for(const f of ['admin-providers.js','admin-empiredrop.js']){
+  const source=fs.readFileSync(path.join(root,'static',f),'utf8');
+  assert.ok(!source.includes('dateStyle:'));
+  assert.ok(source.includes("timeZoneName:'short'"));
+}
+console.log('PASS Admin timestamps and independent provider cards');
+```
+
 ## `tests/test_shuffle_admin_hotfix.py`
 
 ```python
@@ -35151,6 +36682,142 @@ def test_forms_reject_bad_post_but_do_not_404(client):
     r=client.post('/admin/action',data={'csrf':'fixed-test-csrf','action':'invalid-unknown-action',
                                         'tab':'settings','revision':'1'})
     assert r.status_code != 404
+```
+
+## `tests/test_v14_public_experience.py`
+
+```python
+"""V14 public race consistency and privacy-safe Gaming activity tests."""
+from contextlib import contextmanager
+import json
+from pathlib import Path
+import time
+import unittest
+
+from gaming import Gaming, player_key
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class MemoryStore:
+    def __init__(self):
+        self.value = {}
+
+    @contextmanager
+    def connection(self, transaction=False):
+        yield self.value
+
+
+class PublicGamingProjectionTests(unittest.TestCase):
+    def setUp(self):
+        self.store = MemoryStore()
+        self.game = Gaming(self.store)
+        self.now = time.time()
+
+    def player(self, identity, name, visible):
+        return self.game.confirm_community_name(identity, name, visible, now=self.now)
+
+    def activity(self, identity, game, *, net, rounds, at=None):
+        with self.store.connection(transaction=True) as conn:
+            data = conn['gaming']
+            player = data['players'][player_key(identity)]
+            stats = player['stats'][game]
+            stats.update(bets=rounds, wagered=100 * rounds,
+                         paid=100 * rounds + net, net=net,
+                         biggest_payout=max(0, 100 + net))
+            Gaming._touch_activity(data, player, game, self.now if at is None else at,
+                                   round_completed=True)
+
+    def test_public_projection_names_only_opted_in_players(self):
+        self.player('visible', 'VisiblePlayer', True)
+        self.player('private', 'PrivatePlayer', False)
+        self.activity('visible', 'dice', net=250, rounds=3)
+        self.activity('private', 'plinko', net=9000, rounds=8)
+
+        value = self.game.public_leaderboard(self.now + 1)
+        self.assertEqual(value['active_count'], 2)  # aggregate counts include private play
+        self.assertEqual([row['name'] for row in value['live_players']], ['VisiblePlayer'])
+        self.assertEqual([row['name'] for row in value['weekly_leaders']], ['VisiblePlayer'])
+        self.assertEqual([row['name'] for row in value['game_leaders']['dice']], ['VisiblePlayer'])
+        self.assertEqual(value['game_leaders']['plinko'], [])
+
+        rendered = json.dumps(value)
+        self.assertNotIn('PrivatePlayer', rendered)
+        def keys(node):
+            if isinstance(node, dict):
+                for key, child in node.items():
+                    yield str(key).lower()
+                    yield from keys(child)
+            elif isinstance(node, list):
+                for child in node:
+                    yield from keys(child)
+        projected_keys = set(keys(value))
+        for private_field in ('wallet', 'player_tag', 'ip', 'balance', 'receipt',
+                              'server_seed', 'recovery', 'funding'):
+            self.assertNotIn(private_field, projected_keys)
+
+    def test_reads_do_not_create_activity_and_status_expires(self):
+        self.player('quiet', 'QuietPlayer', True)
+        self.game.view('quiet', 'QuietPlayer', now=self.now)
+        self.assertEqual(self.game.public_leaderboard(self.now + 1)['active_count'], 0)
+
+        self.activity('quiet', 'blackjack', net=10, rounds=1)
+        first = self.game.public_leaderboard(self.now + 1)
+        self.assertEqual(first['live_players'][0]['status'], 'Playing now')
+        # A cached projection remains byte-for-byte stable until a visible status changes.
+        self.assertEqual(first, self.game.public_leaderboard(self.now + 2))
+        later = self.game.public_leaderboard(self.now + 31)
+        self.assertEqual(later['live_players'][0]['status'], 'Recently active')
+        expired = self.game.public_leaderboard(self.now + 121)
+        self.assertEqual(expired['active_count'], 0)
+        self.assertEqual(expired['live_players'], [])
+
+    def test_game_specific_rankings_use_settled_stats(self):
+        self.player('one', 'One', True)
+        self.player('two', 'Two', True)
+        self.activity('one', 'dice', net=50, rounds=4)
+        self.activity('two', 'dice', net=75, rounds=2)
+        self.activity('one', 'keno', net=100, rounds=1)
+        board = self.game.public_leaderboard(self.now + 1)
+        self.assertEqual([row['name'] for row in board['game_leaders']['dice']], ['Two', 'One'])
+        self.assertEqual([row['name'] for row in board['weekly_leaders']], ['One', 'Two'])
+        self.assertEqual(board['weekly_leaders'][0]['rank'], 1)
+
+
+class PublicTemplateTests(unittest.TestCase):
+    def text(self, name):
+        return (ROOT / name).read_text(encoding='utf-8')
+
+    def test_race_title_and_provider_cards_are_uniform(self):
+        page = self.text('templates/index.html')
+        self.assertIn('<h1 id="raceTitle">RedHunllef Wager Race</h1>', page)
+        self.assertEqual(page.count('<small>Powered By</small>'), 2)
+        self.assertEqual(page.count('class="provider-brand-card'), 2)
+        script = self.text('static/empiredrop.js')
+        self.assertNotIn("raceTitle').textContent", script)
+        self.assertNotIn("raceDescription').textContent", script)
+
+    def test_public_operational_status_is_removed(self):
+        page = self.text('templates/index.html')
+        for technical in ('sourceTime', 'dataState', 'next check', 'Automatic refresh',
+                          'last verified', 'streamStatus'):
+            self.assertNotIn(technical.lower(), page.lower())
+        self.assertIn('Standings are temporarily unavailable.', self.text('static/app.js'))
+
+    def test_public_gaming_feed_and_filters_exist(self):
+        page = self.text('templates/gaming.html')
+        backend = self.text('wager_backend.py')
+        script = self.text('static/gaming.js')
+        self.assertIn('Live Gaming leaderboard', page)
+        self.assertIn('data-community-filter="all"', page)
+        self.assertIn("'/gaming/api/public-leaderboard'", backend)
+        self.assertIn('renderCommunity(value.community)', script)
+        self.assertIn('document.hidden', script)
+        self.assertIn('public_visibility', backend)
+
+
+if __name__ == '__main__':
+    unittest.main()
 ```
 
 ## `tests/test_weekly_history.py`
@@ -35776,6 +37443,152 @@ if __name__ == '__main__':
     raise SystemExit(main())
 ```
 
+## `tools/live_smoke_v14.py`
+
+```python
+#!/usr/bin/env python3
+"""Read-only post-deployment acceptance checks for RedHunllef V14.
+
+The script validates public pages, the allowlisted Gaming community feed and
+all protected administrator destinations. It never changes settings or prints
+credentials, cookies, API keys, player records or response bodies.
+"""
+from argparse import ArgumentParser
+from getpass import getpass
+from html.parser import HTMLParser
+from urllib.parse import urljoin, urlsplit
+import requests
+
+PUBLIC = ('/', '/gaming', '/history', '/public-state',
+          '/gaming/api/public-leaderboard', '/healthz', '/readyz')
+ADMIN = (
+    '/admin', '/admin/leaderboards/shuffle',
+    '/admin/leaderboards/shuffle/schedule',
+    '/admin/leaderboards/shuffle/players',
+    '/admin/leaderboards/empiredrop',
+    '/admin/leaderboards/empiredrop/schedule',
+    '/admin/leaderboards/empiredrop/payouts',
+    '/admin/leaderboards/empiredrop/source',
+    '/admin/gaming', '/admin/settings', '/admin/recovery', '/admin/activity',
+)
+FORBIDDEN_PUBLIC_GAMING_KEYS = {
+    'wallet', 'player_tag', 'ips', 'ip', 'balance', 'receipts', 'receipt',
+    'server_seed', 'recovery_hash', 'funding_adjustment', 'admin_grants',
+}
+
+
+class CSRFParser(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.value = None
+    def handle_starttag(self, tag, attrs):
+        if tag == 'input':
+            data = dict(attrs)
+            if data.get('name') == 'csrf':
+                self.value = data.get('value')
+
+
+def all_keys(value):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield str(key)
+            yield from all_keys(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from all_keys(child)
+
+
+def main() -> int:
+    parser = ArgumentParser(description='V14 read-only deployment smoke test')
+    parser.add_argument('--base-url', required=True)
+    parser.add_argument('--username', required=True)
+    parser.add_argument('--allow-http-localhost', action='store_true')
+    args = parser.parse_args()
+    origin = args.base_url.rstrip('/')
+    parts = urlsplit(origin)
+    local_http = args.allow_http_localhost and parts.scheme == 'http' and parts.hostname in {'localhost', '127.0.0.1'}
+    if parts.scheme != 'https' and not local_http:
+        parser.error('An HTTPS origin is required except for an explicitly allowed localhost test.')
+    if parts.query or parts.fragment or parts.username or parts.password:
+        parser.error('Pass only the origin; do not include credentials, queries, or fragments.')
+
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'RedHunllef-V14-ReadOnly-Smoke/1'})
+    failures = []
+
+    def get(path, expected=200, redirects=True):
+        try:
+            response = session.get(urljoin(origin + '/', path.lstrip('/')), timeout=15,
+                                   allow_redirects=redirects)
+            ok = response.status_code == expected
+            print('PASS' if ok else 'FAIL', path, 'HTTP', response.status_code)
+            if not ok: failures.append((path, response.status_code))
+            return response
+        except requests.RequestException as exc:
+            print('FAIL', path, type(exc).__name__)
+            failures.append((path, 'connection'))
+            return None
+
+    results = {path: get(path) for path in PUBLIC}
+    home = results.get('/')
+    if home is not None and home.status_code == 200:
+        if 'RedHunllef Wager Race' not in home.text or home.text.count('Powered By') < 2:
+            failures.append(('/', 'uniform race branding missing'))
+            print('FAIL / uniform race branding')
+        else:
+            print('PASS / uniform race branding')
+
+    feed = results.get('/gaming/api/public-leaderboard')
+    if feed is not None and feed.status_code == 200:
+        try:
+            value = feed.json()
+            required = {'live_players', 'weekly_leaders', 'game_leaders', 'game_counts', 'active_count'}
+            if not required <= set(value):
+                raise ValueError('missing public feed fields')
+            leaked = FORBIDDEN_PUBLIC_GAMING_KEYS & set(all_keys(value))
+            if leaked:
+                raise ValueError('private keys: ' + ', '.join(sorted(leaked)))
+            print('PASS public Gaming projection allowlist')
+        except (ValueError, TypeError) as exc:
+            print('FAIL public Gaming projection', str(exc))
+            failures.append(('/gaming/api/public-leaderboard', 'invalid projection'))
+
+    login = get('/admin/login')
+    if login is None or login.status_code != 200:
+        return 2
+    csrf = CSRFParser(); csrf.feed(login.text)
+    if not csrf.value:
+        print('FAIL could not find sign-in CSRF token')
+        return 2
+    password = getpass('Admin password (not logged): ')
+    try:
+        auth = session.post(urljoin(origin + '/', 'admin/login'),
+                            data={'csrf': csrf.value, 'username': args.username, 'password': password},
+                            timeout=15, allow_redirects=False)
+    finally:
+        password = ''
+    if auth.status_code != 303:
+        print('FAIL sign-in did not return HTTP 303; got', auth.status_code)
+        return 2
+    print('PASS authenticated session established')
+
+    for path in ADMIN:
+        get(path)
+    status = get('/admin/navigation-status')
+    if status is not None and status.status_code == 200:
+        try:
+            if not status.json().get('ok'):
+                failures.append(('/admin/navigation-status', 'reported not ok'))
+        except ValueError:
+            failures.append(('/admin/navigation-status', 'invalid JSON'))
+
+    print('PASS all checks - read only' if not failures else f'FAIL {len(failures)} checks')
+    return 0 if not failures else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
+```
+
 ## `tools/verify_redpoints.py`
 
 ```python
@@ -35807,6 +37620,25 @@ if __name__ == '__main__':
         label = value.get('request_id', f'receipt-{index}') if isinstance(value, dict) else f'receipt-{index}'
         print(('PASS' if passed else 'FAIL') + ' ' + str(label))
     raise SystemExit(0 if all(checks) else 1)
+```
+
+## `UPDATE.md`
+
+```markdown
+# V14 update
+
+- Standardized both public race views under the title **RedHunllef Wager Race**.
+- Standardized both provider cards to **Powered By** with matching dimensions and typography.
+- Removed visitor-facing source health, polling and last-check noise; full diagnostics remain in Admin.
+- Rebuilt Shuffle and EmpireDrop podium/table presentation around one visual system.
+- Added a privacy-safe public Gaming Live Now and weekly RedPoints leaderboard.
+- Added per-game filters and five-second hidden-tab-aware updates.
+- Added explicit public-name opt-in and kept existing players private by default.
+- Added private Admin details for current game, recent action and public visibility.
+- Preserved V13 admin navigation, EmpireDrop payout publishing, DigitalOcean Spaces optionality and official EmpireDrop stats fixes.
+- Preserved the November 10–17, 2026 Eastern race window and root `requirements.txt`.
+
+See `docs/V14_PUBLIC_RACES_AND_GAMING.md`.
 ```
 
 ## `wager_backend.py`
@@ -36015,7 +37847,7 @@ def create_app(root=None, testing=False):
             "Cache-Control":"public, max-age=31536000, immutable" if request.path.startswith("/static/") and request.args.get("v") == assets else "no-store"})
         if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
-        if request.path == "/public-state" and response.status_code in {200, 304}:
+        if request.path in {"/public-state", "/gaming/api/public-leaderboard"} and response.status_code in {200, 304}:
             response.headers["Cache-Control"] = "public, no-cache"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
@@ -36167,6 +37999,7 @@ def create_app(root=None, testing=False):
     @app.get('/gaming')
     def gaming_home():
         return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
+                               community=gaming.public_leaderboard(),
                                game=None, game_rules=gaming_rules(), player_token=player_csrf())
 
     @app.get('/gaming/fairness')
@@ -36177,13 +38010,27 @@ def create_app(root=None, testing=False):
     def gaming_game(game):
         if game not in GAMES: abort(404)
         return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
+                               community=gaming.public_leaderboard(),
                                game=game, game_rules=gaming_rules(), player_token=player_csrf())
 
     @app.get('/gaming/api/state')
     def gaming_state():
-        value = dict(ok=True, wallet=gaming_wallet(), player_csrf=player_csrf(), release=RELEASE)
+        # The Gaming page uses one five-second request for its private wallet and
+        # the sanitized public community board. This avoids duplicate polling.
+        value = dict(ok=True, wallet=gaming_wallet(), community=gaming.public_leaderboard(),
+                     player_csrf=player_csrf(), release=RELEASE)
         response = jsonify(value)
         response.set_etag(token(value))
+        return response.make_conditional(request)
+
+    @app.get('/gaming/api/public-leaderboard')
+    def gaming_public_leaderboard():
+        # Public allowlist only: no wallet IDs, balances, IPs, seeds, receipts,
+        # recovery data or admin funding adjustments.
+        value = dict(ok=True, **gaming.public_leaderboard(), release=RELEASE)
+        response = jsonify(value)
+        response.set_etag(token(value))
+        response.headers['Cache-Control'] = 'public, no-cache'
         return response.make_conditional(request)
 
     @app.post('/gaming/api/refresh')
@@ -36204,7 +38051,14 @@ def create_app(root=None, testing=False):
         if not isinstance(body, dict):
             return json_error('Enter a valid player name.', 422)
         try:
-            wallet = gaming.confirm_community_name(guest(), body.get('username'), client_ip=g.client_ip)
+            visibility = body.get('public_visibility')
+            # Compatibility for an old cached Gaming asset during a rolling
+            # deployment: preserve the existing choice when the field is absent.
+            if visibility is None:
+                visibility = bool(gaming_wallet().get('public_visibility', False))
+            if type(visibility) is not bool:
+                return json_error('Choose whether your Gaming name appears publicly.', 422, 'invalid_visibility')
+            wallet = gaming.confirm_community_name(guest(), body.get('username'), visibility, client_ip=g.client_ip)
             return jsonify(ok=True, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_name'))
@@ -36292,7 +38146,8 @@ def create_app(root=None, testing=False):
     @protected
     def admin_gaming_status():
         # Local Gaming statistics only; this endpoint never contacts providers.
-        response = jsonify(ok=True, **gaming.leaders(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
+        response = jsonify(ok=True, **gaming.leaders(), public_activity=gaming.public_leaderboard(),
+                           release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
         response.set_etag(token(response.get_json()))
         return response.make_conditional(request)
 
@@ -36351,6 +38206,7 @@ def create_app(root=None, testing=False):
             tab = "overview"
         values = runtime.status()
         values['gaming'] = gaming.leaders()
+        values['gaming']['public_activity'] = gaming.public_leaderboard()
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
@@ -36677,15 +38533,20 @@ def create_app(root=None, testing=False):
                 raise ValueError('Choose a valid EmpireDrop schedule mode.')
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_race'] = value
-            # Saving local dates activates the explicitly deprecated date-range
-            # endpoint. Modern slug race totals cannot be recounted locally.
+            # Local dates are retained for administration and backup, but the
+            # public standings remain on EmpireDrop's documented slug endpoint.
+            # Earlier releases silently switched this form to the deprecated
+            # timestamp endpoint, which could leave the public board empty.
             race_options = validate_race_settings(candidate.get('empiredrop_races', {}))
-            race_options['source_mode'] = 'legacy_window'
-            candidate['empiredrop_races'] = race_options
+            race_options['source_mode'] = 'races'
+            race_options['race_window_policy'] = 'provider'
+            candidate['empiredrop_races'] = validate_race_settings(race_options)
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
             safe_activity('admin','info','settings_saved',code='empire_schedule')
-            return admin_saved('EmpireDrop schedule saved independently of Shuffle.', 'empiredrop', 'empireSchedule')
+            return admin_saved(
+                'EmpireDrop local schedule saved. Official provider standings and dates remain authoritative.',
+                'empiredrop', 'empireSchedule')
         except (ValueError, Conflict) as exc:
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
@@ -37615,3 +39476,4 @@ class WeeklyHistory:
         if self.thread:
             self.thread.join(timeout=1)
 ```
+

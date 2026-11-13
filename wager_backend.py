@@ -201,7 +201,7 @@ def create_app(root=None, testing=False):
             "Cache-Control":"public, max-age=31536000, immutable" if request.path.startswith("/static/") and request.args.get("v") == assets else "no-store"})
         if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
-        if request.path == "/public-state" and response.status_code in {200, 304}:
+        if request.path in {"/public-state", "/gaming/api/public-leaderboard"} and response.status_code in {200, 304}:
             response.headers["Cache-Control"] = "public, no-cache"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
@@ -353,6 +353,7 @@ def create_app(root=None, testing=False):
     @app.get('/gaming')
     def gaming_home():
         return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
+                               community=gaming.public_leaderboard(),
                                game=None, game_rules=gaming_rules(), player_token=player_csrf())
 
     @app.get('/gaming/fairness')
@@ -363,13 +364,27 @@ def create_app(root=None, testing=False):
     def gaming_game(game):
         if game not in GAMES: abort(404)
         return render_template('gaming.html', data=runtime.public(), wallet=gaming_wallet(),
+                               community=gaming.public_leaderboard(),
                                game=game, game_rules=gaming_rules(), player_token=player_csrf())
 
     @app.get('/gaming/api/state')
     def gaming_state():
-        value = dict(ok=True, wallet=gaming_wallet(), player_csrf=player_csrf(), release=RELEASE)
+        # The Gaming page uses one five-second request for its private wallet and
+        # the sanitized public community board. This avoids duplicate polling.
+        value = dict(ok=True, wallet=gaming_wallet(), community=gaming.public_leaderboard(),
+                     player_csrf=player_csrf(), release=RELEASE)
         response = jsonify(value)
         response.set_etag(token(value))
+        return response.make_conditional(request)
+
+    @app.get('/gaming/api/public-leaderboard')
+    def gaming_public_leaderboard():
+        # Public allowlist only: no wallet IDs, balances, IPs, seeds, receipts,
+        # recovery data or admin funding adjustments.
+        value = dict(ok=True, **gaming.public_leaderboard(), release=RELEASE)
+        response = jsonify(value)
+        response.set_etag(token(value))
+        response.headers['Cache-Control'] = 'public, no-cache'
         return response.make_conditional(request)
 
     @app.post('/gaming/api/refresh')
@@ -390,7 +405,14 @@ def create_app(root=None, testing=False):
         if not isinstance(body, dict):
             return json_error('Enter a valid player name.', 422)
         try:
-            wallet = gaming.confirm_community_name(guest(), body.get('username'), client_ip=g.client_ip)
+            visibility = body.get('public_visibility')
+            # Compatibility for an old cached Gaming asset during a rolling
+            # deployment: preserve the existing choice when the field is absent.
+            if visibility is None:
+                visibility = bool(gaming_wallet().get('public_visibility', False))
+            if type(visibility) is not bool:
+                return json_error('Choose whether your Gaming name appears publicly.', 422, 'invalid_visibility')
+            wallet = gaming.confirm_community_name(guest(), body.get('username'), visibility, client_ip=g.client_ip)
             return jsonify(ok=True, wallet=wallet, player_csrf=player_csrf(), release=RELEASE)
         except ValueError as exc:
             return json_error(str(exc), getattr(exc, 'status', 422), getattr(exc, 'code', 'invalid_name'))
@@ -478,7 +500,8 @@ def create_app(root=None, testing=False):
     @protected
     def admin_gaming_status():
         # Local Gaming statistics only; this endpoint never contacts providers.
-        response = jsonify(ok=True, **gaming.leaders(), release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
+        response = jsonify(ok=True, **gaming.leaders(), public_activity=gaming.public_leaderboard(),
+                           release=RELEASE, visitor_ip_configured=not config.production or config.proxy)
         response.set_etag(token(response.get_json()))
         return response.make_conditional(request)
 
@@ -537,6 +560,7 @@ def create_app(root=None, testing=False):
             tab = "overview"
         values = runtime.status()
         values['gaming'] = gaming.leaders()
+        values['gaming']['public_activity'] = gaming.public_leaderboard()
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
@@ -863,15 +887,20 @@ def create_app(root=None, testing=False):
                 raise ValueError('Choose a valid EmpireDrop schedule mode.')
             candidate = copy.deepcopy(g.admin)
             candidate['empiredrop_race'] = value
-            # Saving local dates activates the explicitly deprecated date-range
-            # endpoint. Modern slug race totals cannot be recounted locally.
+            # Local dates are retained for administration and backup, but the
+            # public standings remain on EmpireDrop's documented slug endpoint.
+            # Earlier releases silently switched this form to the deprecated
+            # timestamp endpoint, which could leave the public board empty.
             race_options = validate_race_settings(candidate.get('empiredrop_races', {}))
-            race_options['source_mode'] = 'legacy_window'
-            candidate['empiredrop_races'] = race_options
+            race_options['source_mode'] = 'races'
+            race_options['race_window_policy'] = 'provider'
+            candidate['empiredrop_races'] = validate_race_settings(race_options)
             runtime.commit(candidate, expected)
             runtime.empiredrop.request_refresh()
             safe_activity('admin','info','settings_saved',code='empire_schedule')
-            return admin_saved('EmpireDrop schedule saved independently of Shuffle.', 'empiredrop', 'empireSchedule')
+            return admin_saved(
+                'EmpireDrop local schedule saved. Official provider standings and dates remain authoritative.',
+                'empiredrop', 'empireSchedule')
         except (ValueError, Conflict) as exc:
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)

@@ -193,6 +193,29 @@ class Store:
                 if not existing['admin'].get('users'):
                     raise StoreError('Saved account store contains no accounts. It was not replaced.')
                 validate_gaming(existing.get('gaming'))
+                # V13 schedule saves could silently switch EmpireDrop to the
+                # deprecated timestamp endpoint. Migrate only that retired
+                # source choice back to the documented partner-race API while
+                # preserving the selected slug, prizes, accounts and all live
+                # data. A private recovery record is kept before the change.
+                empire_cfg = existing['admin'].get('empiredrop_races')
+                if isinstance(empire_cfg, dict) and empire_cfg.get('source_mode') == 'legacy_window':
+                    upgraded = copy.deepcopy(existing)
+                    previous_cfg = copy.deepcopy(empire_cfg)
+                    migrated_cfg = copy.deepcopy(empire_cfg)
+                    migrated_cfg['source_mode'] = 'races'
+                    migrated_cfg['race_window_policy'] = 'provider'
+                    migrated_cfg['auto_select'] = True
+                    self.backup_in(upgraded, 'before-empiredrop-official-api-migration', {
+                        'empiredrop_races': previous_cfg,
+                        'empiredrop_race': copy.deepcopy(upgraded['admin'].get('empiredrop_race')),
+                    })
+                    upgraded['admin']['empiredrop_races'] = migrated_cfg
+                    upgraded['revision'] += 1
+                    atomic_json(self.path, upgraded)
+                    self._remember(upgraded)
+                    existing = upgraded
+                    LOG.warning('MIGRATION EmpireDrop deprecated date-window source changed to official partner races; saved slug and other state retained.')
                 if existing.get('boss') is not None or existing.get('avatar') is not None:
                     upgraded = copy.deepcopy(existing)
                     migrated = migrate_legacy_profiles(upgraded.get('gaming'), upgraded.get('boss'))

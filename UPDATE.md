@@ -1,10 +1,14 @@
-# V13 update
+# V14 update
 
-- Repaired HTTP 500 failures across Shuffle schedule, player management, Settings, and related admin pages.
-- Repaired EmpireDrop prize draft and publish transactions.
-- Added safe operational logging so log formatting cannot break successful writes.
-- Added direct canonical workspace routes and strict template regression tests.
-- Set bundled Shuffle and EmpireDrop local windows to November 10–17, 2026 at 6:00 PM Eastern.
-- Preserved Top 15 Shuffle, Top 10 EmpireDrop, Gaming, RedPoints, accounts, credentials, and JSON storage.
+- Standardized both public race views under the title **RedHunllef Wager Race**.
+- Standardized both provider cards to **Powered By** with matching dimensions and typography.
+- Removed visitor-facing source health, polling and last-check noise; full diagnostics remain in Admin.
+- Rebuilt Shuffle and EmpireDrop podium/table presentation around one visual system.
+- Added a privacy-safe public Gaming Live Now and weekly RedPoints leaderboard.
+- Added per-game filters and five-second hidden-tab-aware updates.
+- Added explicit public-name opt-in and kept existing players private by default.
+- Added private Admin details for current game, recent action and public visibility.
+- Preserved V13 admin navigation, EmpireDrop payout publishing, DigitalOcean Spaces optionality and official EmpireDrop stats fixes.
+- Preserved the November 10–17, 2026 Eastern race window and root `requirements.txt`.
 
-See `docs/ADMIN_RELIABILITY_V13.md`.
+See `docs/V14_PUBLIC_RACES_AND_GAMING.md`.

@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
 <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}">
-<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"></head>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='v14-modern.css',v=asset_version) }}"></head>
 <body data-release="{{ release }}" {% block attributes %}{% endblock %}>
 {# Login and error pages do not receive the public leaderboard data object. #}
 {% set public_site = data.site if data is defined and data.site is defined else {} %}

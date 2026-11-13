@@ -84,6 +84,11 @@ def validate_race_settings(candidate):
     settings['auto_select'] = settings['auto_select'] is True
     if settings['race_window_policy'] not in ('provider', 'local'):
         raise ValueError('Choose provider or local date matching.')
+    # Current partner races own their reporting window. Local dates remain in
+    # the admin record for display/backup, but must not reject valid provider
+    # standings or switch the application to the deprecated endpoint.
+    if settings['source_mode'] == 'races':
+        settings['race_window_policy'] = 'provider'
     return settings
 
 
@@ -144,11 +149,15 @@ def race_catalog(payload):
     return output
 
 
-def select_race(races, options, now=None):
-    """Select the sole running race unless an explicit slug is configured.
+def select_race(races, options, now=None, preferred_start=0, preferred_end=0):
+    """Select the intended running wager race without guessing blindly.
 
-    The running-races API does *not* list completed/scheduled races, so an
-    explicit slug may be fetched directly from the detail endpoint.
+    An explicit slug always wins. With automatic selection enabled, a single
+    active WAGER/RANKING race is selected immediately. When EmpireDrop returns
+    multiple active wager races, prefer the unique race whose provider dates
+    match (or are closest to) the saved local November window. This keeps the
+    official slug-based rankings working after a redeploy that lost the saved
+    slug, while still refusing an ambiguous tie.
     """
     settings = validate_race_settings(options)
     if settings['race_slug']:
@@ -156,18 +165,41 @@ def select_race(races, options, now=None):
                     {'slug': settings['race_slug'], 'name': settings['race_slug']})
     if not settings['auto_select']:
         raise ProviderError('Select an EmpireDrop race slug or enable automatic selection.', kind='selection')
-    # This leaderboard awards wager-volume positions. A raffle or deposit race
-    # must be selected explicitly rather than becoming an unexpected auto pick.
     eligible = [item for item in races if item['is_active'] and
                 item['type'] == 'WAGER' and item['engine'] == 'RANKING']
-    if len(eligible) != 1:
-        message = (
+    if not eligible:
+        raise ProviderError(
             'No active WAGER/RANKING EmpireDrop races are available. '
-            'Check the partner dashboard or select a valid race slug in Admin.'
-            if not eligible else
-            'Multiple active wager races exist; select the intended slug in Admin.')
-        raise ProviderError(message, kind='selection')
-    return eligible[0]
+            'Check the partner dashboard or select a valid race slug in Admin.',
+            kind='selection')
+    if len(eligible) == 1:
+        return eligible[0]
+
+    start = int(preferred_start or 0)
+    end = int(preferred_end or 0)
+    if 0 < start < end:
+        exact = [race for race in eligible
+                 if race.get('start_time') == start and
+                 abs(int(race.get('end_time') or 0) - end) <= 1]
+        if len(exact) == 1:
+            return exact[0]
+
+        scored = []
+        for race in eligible:
+            race_start = int(race.get('start_time') or 0)
+            race_end = int(race.get('end_time') or 0)
+            if not (0 < race_start < race_end):
+                continue
+            overlaps = race_start < end and race_end >= start
+            score = (0 if overlaps else 10**12) + abs(race_start - start) + abs(race_end - end)
+            scored.append((score, race['slug'], race))
+        scored.sort(key=lambda item: (item[0], item[1]))
+        if scored and (len(scored) == 1 or scored[0][0] < scored[1][0]):
+            return scored[0][2]
+
+    raise ProviderError(
+        'Multiple active wager races exist and no unique date match was found; '
+        'select the intended slug in Admin.', kind='selection')
 
 
 def extract_race_rows(payload, unused_path=''):

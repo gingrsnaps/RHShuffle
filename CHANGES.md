@@ -1,5 +1,31 @@
 # RedHunllef changes
 
+## 2026.11.13-public-uniform-gaming-v14
+
+### Public race presentation
+
+- Uses the fixed title **RedHunllef Wager Race** for both Shuffle and EmpireDrop.
+- Uses matching **Powered By** provider cards, typography, spacing, podiums and standings tables.
+- Removes public provider-health, refresh-cadence and last-check noise while retaining full diagnostics in Admin.
+- Keeps clean cached-data and unavailable-data messages without exposing API details.
+- Preserves Shuffle Top 15, EmpireDrop Top 10, independent payouts, masking and provider schedules.
+
+### Public Gaming community board
+
+- Adds a privacy-safe public Live Now and weekly RedPoints leaderboard to `/gaming`.
+- Refreshes through the existing five-second Gaming state request and pauses when the browser tab is hidden.
+- Adds All Games and per-game filters, aggregate recent-player counts and subtle rank-movement indicators.
+- Builds rankings only from settled server-side ledger statistics.
+- Adds an explicit player opt-in for displaying a community name publicly; existing players remain private until they opt in.
+- Excludes wallet IDs, IPs, balances, receipts, seeds, recovery data and administrator funding data from the public projection.
+- Uses ETags and a server-side projection cache that invalidates on confirmed activity and visible status transitions.
+
+### Administration and reliability
+
+- Adds current-game, recent-action and public-visibility details to the private Gaming admin view.
+- Preserves the V13 admin-page, payout-publishing, DigitalOcean optional-Spaces and official EmpireDrop race fixes.
+- Keeps root deployment markers and the production `requirements.txt` unchanged.
+
 ## 2026.11.13-admin-pages-payouts-v13
 
 ### Fixed

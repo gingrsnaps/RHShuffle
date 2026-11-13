@@ -1,10 +1,12 @@
-# RedHunllef V13
+# RedHunllef V14
 
-A single-process Flask/Waitress website providing independent Shuffle Top 15 and EmpireDrop Top 10 wager leaderboards, RedPoints games, race history, and a protected administration panel.
+A single-process Flask/Waitress website providing independent Shuffle Top 15 and EmpireDrop Top 10 wager leaderboards, public RedPoints community activity, race history, provably fair games, and a protected administration panel.
 
-## V13 repair
+## V14 update
 
-This release fixes the shared administrator rendering defect and the EmpireDrop payout publish failure. The exact causes and acceptance checks are documented in `docs/ADMIN_RELIABILITY_V13.md`.
+V14 makes the two public wager races visually uniform, removes provider-operation noise from visitor pages, and adds a privacy-safe public Gaming leaderboard. The working V13 administrator, EmpireDrop, DigitalOcean and payout repairs remain included.
+
+Detailed implementation notes are in `docs/V14_PUBLIC_RACES_AND_GAMING.md`.
 
 ## Run
 
@@ -15,18 +17,22 @@ python wager_backend.py
 
 DigitalOcean App Platform should use a blank Build Command and `python wager_backend.py` as the Run Command.
 
-## Validate the release
+## Validate
 
 ```bash
 python wager_backend.py --check
-python -m unittest tests.test_navigation_v12 tests.test_admin_reliability_v13
+PYTHONPATH=. python tests/test_v14_public_experience.py
 ```
 
-## Race dates bundled in this private package
+The full acceptance suite additionally requires the packages from `requirements-dev.txt`.
+
+## Bundled race window
 
 - Start: November 10, 2026 at 6:00 PM Eastern
 - End: November 17, 2026 at 6:00 PM Eastern
 
 ## Security and storage
 
-The private package contains production credentials and a saved JSON snapshot. Keep it private. App Platform container storage is not durable; export a current recovery file before every deployment or configure the optional Spaces mirror.
+The private package contains production credentials and a saved JSON snapshot. Keep it private. Public Gaming activity is an allowlisted projection and never returns wallet IDs, IPs, balances, receipts, seeds, recovery details or administrator grants.
+
+App Platform container storage is not durable. Export a current recovery file before every deployment or configure the optional Spaces mirror. Keep `RH_SPACES_ENABLE=0` unless Spaces and its boto3 dependency are intentionally configured.

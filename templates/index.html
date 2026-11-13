@@ -2,53 +2,75 @@
 {% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
 <main id="main" class="shell public-home">
-<section class="hero public-hero"><div class="hero-intro"><div class="eyebrow"><span class="dot"></span> CODE RED. YOUR COMMUNITY.</div><h1 id="raceTitle">{{ data.site.race_title }}</h1><p id="raceDescription" class="lead">{{ data.site.race_description }}</p><div class="hero-links"><a id="sponsorLink" class="sponsor" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener"><span class="sponsor-symbol">S</span><span><small>POWERED BY</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span><span aria-hidden="true">↗</span></a><a class="sponsor empire-sponsor" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored" aria-label="EmpireDrop referral link"><span class="sponsor-symbol">E</span><span><small>SPONSOR · CODE RED</small><strong>EmpireDrop</strong></span><span aria-hidden="true">↗</span></a><span class="tag" id="streamStatus">Checking Kick</span></div></div>
-<aside id="shuffleRaceClock" class="race-clock panel"><div class="row"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div><div id="countdown" class="clock" aria-hidden="true">—</div><p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p><div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div></aside>
-<aside id="empireRaceClock" class="race-clock panel" hidden aria-label="EmpireDrop race schedule">
-  <div class="row"><span class="eyebrow">EMPIREDROP · CODE RED</span><span class="badge">Independent race</span></div>
-  <p class="small muted" id="empireRaceMode">{{ 'Official EmpireDrop race' if data.empiredrop.schedule.mode == 'provider' else 'Weekly · Tuesday 6 PM ET' if data.empiredrop.schedule.mode == 'weekly' else 'Custom race' }}</p>
-  <div class="clock" id="empireCountdown" aria-live="off">—</div>
-  <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
-  <div class="clock-footer"><span>EmpireDrop reward pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>10 places</span></div>
-</aside></section>
+  <section class="race-hero" aria-labelledby="raceTitle">
+    <div class="race-hero-copy">
+      <p class="eyebrow"><span class="dot"></span> REDHUNLLEF COMMUNITY RACE</p>
+      <h1 id="raceTitle">RedHunllef Wager Race</h1>
+      <p id="raceDescription" class="lead">Follow the weekly standings, compare both races, and see who finishes in the paid positions.</p>
+      <div class="provider-tabs public-provider-tabs" role="tablist" aria-label="Choose a leaderboard provider">
+        <button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button>
+        <button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 10</button>
+      </div>
+      <div class="provider-brand-row" aria-label="Race providers">
+        <a id="sponsorLink" class="provider-brand-card is-selected" data-provider-brand="shuffle" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener noreferrer sponsored">
+          <span class="provider-mark" aria-hidden="true">S</span>
+          <span><small>Powered By</small><strong id="sponsorName">{{ data.site.sponsor_name }}</strong></span>
+          <span aria-hidden="true">↗</span>
+        </a>
+        <a class="provider-brand-card" data-provider-brand="empiredrop" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">
+          <span class="provider-mark" aria-hidden="true">E</span>
+          <span><small>Powered By</small><strong>EmpireDrop</strong></span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
 
+    <aside id="shuffleRaceClock" class="race-clock panel public-race-summary">
+      <div class="race-summary-top"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div>
+      <div id="countdown" class="clock" aria-hidden="true">—</div>
+      <p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p>
+      <div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div>
+    </aside>
 
+    <aside id="empireRaceClock" class="race-clock panel public-race-summary" hidden aria-label="EmpireDrop race schedule">
+      <div class="race-summary-top"><span class="eyebrow">RACE SCHEDULE</span><span class="badge">EmpireDrop</span></div>
+      <div class="clock" id="empireCountdown" aria-live="off">—</div>
+      <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
+      <div class="clock-footer"><span>Prize pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>10 paid places</span></div>
+    </aside>
+  </section>
 
-<section id="leaderboard" class="public-leaderboards"><div class="section-title"><div><p class="eyebrow">EVERY WAGER COUNTS</p><h2>The leaderboard<span class="accent">.</span></h2></div><div class="source-status" id="shuffleSourceStatus"><span id="dataState">{{ data.freshness.label }}</span><small id="sourceTime">{{ fmt_et(data.freshness.updated_at) }}</small></div><div class="source-status" id="empireSourceStatus" hidden aria-live="off"><span id="empireSourceLabel">EmpireDrop · last verified update</span><small id="empireSourceTime">{% if data.empiredrop.updated_at %}Last verified {{ fmt_et(data.empiredrop.updated_at) }}{% else %}No successful update yet{% endif %}</small><small id="empireNextCheck">Checking refresh schedule…</small></div></div>
-<div class="provider-tabs public-provider-tabs" role="tablist" aria-label="Choose leaderboard provider"><button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button><button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 10</button></div>
-<p class="public-board-hint" id="publicBoardHint">Live standings use the last verified provider results. Select a race to see its rankings and prizes.</p>
-<div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
-<p id="sourceWarning" class="notice warning" role="status" {% if not data.freshness.warning %}hidden{% endif %}>{{ data.freshness.warning }}</p>
-<p id="leaderboardMessage" class="notice" role="status" {% if not data.leaderboard_message %}hidden{% endif %}>{{ data.leaderboard_message }}</p>
-<p id="networkError" class="notice warning" role="status" hidden></p>
-<div class="podium public-podium">{% for n in [2,1,3] %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<article class="podium-card place-{{ n }}" data-rank="{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span><span class="podium-symbol" aria-hidden="true">{{ '♜' if n==1 else '✦' }}</span></div><strong class="podium-name" data-name>{{ r.username if r else 'Open position' }}</strong><div class="podium-values"><div><small>WEIGHTED WAGER</small><strong data-wager>{{ r.wager if r else '$0.00' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-prize>{{ money(data.site.prizes[n|string]) }}</strong></div></div></article>{% endfor %}</div>
-<div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="Leaderboard places four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Weighted wager</th><th class="number">Prize</th></tr></thead><tbody>{% for n in range(4,16) %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<tr data-rank="{{ n }}"><td class="rank">{{ '%02d'|format(n) }}</td><td><strong data-name>{{ r.username if r else 'Open position' }}</strong></td><td class="number" data-wager>{{ r.wager if r else '$0.00' }}</td><td class="number accent" data-prize>{{ money(data.site.prizes[n|string]) }}</td></tr>{% endfor %}</tbody></table></div>
-<div class="leaderboard-foot"><span>Usernames protected · weighted affiliate data</span><span>Automatic updates every 60 seconds</span></div>
-<details class="panel explanation"><summary>How weighted wagers are counted <span aria-hidden="true">+</span></summary><div class="weighting-grid">{% for rule in weighting %}<div><strong>{{ rule.range }}</strong><p>{{ rule.counts }}</p></div>{% endfor %}</div><p class="muted small">Rankings cover the saved race window. Results and prizes may be reviewed or adjusted. Independently operated; not affiliated with Shuffle.com.</p></details>
-</div>
-<div id="empireBoard" role="tabpanel" aria-labelledby="empireTab" hidden>
-  <div class="section-title"><div><p class="eyebrow">EMPIREDROP · CODE RED</p><h3>EmpireDrop leaderboard<span class="accent">.</span></h3></div><a class="button" href="https://empiredrop.com/c/red" target="_blank" rel="noopener noreferrer sponsored">Join with code Red ↗</a></div>
-  <p class="small muted">Each site has its own race, standings, and prizes.</p>
-  <p id="empireMessage" class="notice" role="status">{{ data.empiredrop.label }}</p><p id="empirePrizeNote" class="small muted">Prize amounts are set by the site administrator. A listed prize is not a payment confirmation. Tied players share the prize assigned to their rank.</p>
-  {# Server-render verified standings so a future JavaScript exception never
-     turns a populated race into an empty first paint. The live client still
-     updates these same data-empire-* slots after each successful poll. #}
-  {% set empire_rows = data.empiredrop.rows[:10] %}
-  {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 10)|int or 10 %}
-  <div class="empire-podium podium public-podium" id="empirePodium" aria-label="EmpireDrop top three">
-  {% for n in [2,1,3] %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}
-  <article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</span><span class="eyebrow">{{ 'LEADING THE RACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</strong><div class="podium-values"><div><small><span data-empire-metric>EMPIREDROP WAGER</span></small><strong data-empire-wager="{{ n }}">{{ r.wager if r else '—' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</strong></div></div></article>
-  {% endfor %}
-  </div>
-  <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop positions four through ten"><table><thead><tr><th>Place</th><th>Player</th><th class="number"><span data-empire-metric>EmpireDrop wager</span></th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,11) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Not reported by EmpireDrop' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
-  <p id="empireRankingCoverage" class="small muted" aria-live="polite">{% if empire_limit < 10 %}Showing {{ empire_rows|length }} of {{ empire_limit }} official positions. EmpireDrop does not expose places {{ empire_limit + 1 }}–10 for this race.{% else %}Showing {{ empire_rows|length }} of 10 leaderboard positions{% if empire_limit > 10 %} (Top 10 of {{ empire_limit }} supplied by EmpireDrop){% endif %}.{% endif %}</p>
-  <p class="leaderboard-foot">Names masked (• means a character EmpireDrop already hid) · updates follow EmpireDrop's API cache · <span id="empireChecked">{% if data.empiredrop.updated_at %}Last verified {{ fmt_et(data.empiredrop.updated_at) }}{% else %}Waiting for a confirmed update{% endif %}</span></p>
-  <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><p class="small muted">Saved snapshots from this server, not official payout confirmations. Four completed races maximum.</p><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
-</div>
-<noscript><p class="notice">Live screen updates require JavaScript. Reload to see the latest saved results.</p></noscript>
-</section>
-<section class="panel public-games-cta" aria-labelledby="gamesCtaTitle"><div><p class="eyebrow">REDPOINTS ARCADE</p><h2 id="gamesCtaTitle">Play with your community name.</h2><p class="muted">Eight provably fair games, one wallet, and no cash value.</p></div><a class="button" href="/gaming">Open games →</a></section></main>
+  <section id="leaderboard" class="public-leaderboards" aria-labelledby="leaderboardTitle">
+    <div class="section-title leaderboard-heading"><div><p class="eyebrow">WEEKLY STANDINGS</p><h2 id="leaderboardTitle">The leaderboard<span class="accent">.</span></h2></div><a id="providerJoinLink" class="button small" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener noreferrer sponsored">Join the race ↗</a></div>
+
+    <div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
+      <p id="leaderboardMessage" class="notice public-fallback" role="status" {% if data.rows %}hidden{% endif %}>Standings are temporarily unavailable.</p>
+      <p id="networkError" class="notice public-fallback" role="status" hidden>Standings are temporarily unavailable.</p>
+      <div class="podium public-podium">{% for n in [2,1,3] %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<article class="podium-card place-{{ n }}" data-rank="{{ n }}"><div class="podium-top"><span class="placement">{{ '%02d'|format(n) }}</span><span class="eyebrow">{{ 'FIRST PLACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-name>{{ r.username if r else 'Open position' }}</strong><div class="podium-values"><div><small>WAGERED</small><strong data-wager>{{ r.wager if r else '$0.00' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-prize>{{ money(data.site.prizes[n|string]) }}</strong></div></div></article>{% endfor %}</div>
+      <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="Shuffle leaderboard places four through fifteen"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Wagered</th><th class="number">Prize</th></tr></thead><tbody>{% for n in range(4,16) %}{% set r=data.rows|selectattr('rank','equalto',n)|first %}<tr data-rank="{{ n }}"><td class="rank">{{ '%02d'|format(n) }}</td><td><strong data-name>{{ r.username if r else 'Open position' }}</strong></td><td class="number" data-wager>{{ r.wager if r else '$0.00' }}</td><td class="number accent" data-prize>{{ money(data.site.prizes[n|string]) }}</td></tr>{% endfor %}</tbody></table></div>
+      <details class="panel explanation"><summary>How Shuffle wagers are weighted <span aria-hidden="true">+</span></summary><div class="weighting-grid">{% for rule in weighting %}<div><strong>{{ rule.range }}</strong><p>{{ rule.counts }}</p></div>{% endfor %}</div><p class="muted small">Eligible wagers are adjusted by game RTP. Results and prizes may be reviewed or adjusted.</p></details>
+    </div>
+
+    {# Server-render verified standings start #}
+    <div id="empireBoard" role="tabpanel" aria-labelledby="empireTab" hidden>
+      <p id="empireMessage" class="notice public-fallback" role="status" {% if data.empiredrop.rows %}hidden{% endif %}>{{ 'Standings are temporarily unavailable.' if not data.empiredrop.rows else '' }}</p>
+      {% set empire_rows = data.empiredrop.rows[:10] %}
+      {% set empire_limit = data.empiredrop.race_meta.get('ranks_limit', 10)|int or 10 %}
+      <div class="empire-podium podium public-podium" id="empirePodium" aria-label="EmpireDrop top three">
+      {% for n in [2,1,3] %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}
+        <article class="podium-card place-{{ n }}"><div class="podium-top"><span class="placement" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</span><span class="eyebrow">{{ 'FIRST PLACE' if n==1 else 'SECOND PLACE' if n==2 else 'THIRD PLACE' }}</span></div><strong class="podium-name" data-empire-name="{{ n }}">{{ r.username if r else ('Unavailable' if n > empire_limit else 'Open position') }}</strong><div class="podium-values"><div><small>WAGERED</small><strong data-empire-wager="{{ n }}">{{ r.wager if r else '—' }}</strong></div><div><small>PRIZE</small><strong class="accent" data-empire-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</strong></div></div></article>
+      {% endfor %}
+      </div>
+      <div class="panel public-table table-scroll" tabindex="0" role="region" aria-label="EmpireDrop leaderboard places four through ten"><table><thead><tr><th>Place</th><th>Player</th><th class="number">Wagered</th><th class="number">Prize</th></tr></thead><tbody id="empireRows">{% for n in range(4,11) %}{% set r = empire_rows[n-1] if empire_rows|length >= n else none %}<tr><td class="rank" data-empire-place="{{ n }}">{{ '%02d'|format(r.rank if r else n) }}</td><td data-empire-row-name="{{ n }}">{{ r.username if r else ('Unavailable' if n > empire_limit else 'Open position') }}</td><td class="number" data-empire-row-wager="{{ n }}">{{ r.wager if r else '—' }}</td><td class="number accent" data-empire-row-prize="{{ n }}">{{ r.prize if r and r.prize != '—' else (data.empiredrop.prizes.formatted[(r.rank if r else n)|string] if data.empiredrop.prizes.enabled else 'Not announced') }}</td></tr>{% endfor %}</tbody></table></div>
+      <p id="empireRankingCoverage" class="public-coverage">{% if empire_limit < 10 %}EmpireDrop currently exposes {{ empire_limit }} official positions for this race.{% elif empire_rows|length < 10 %}Open positions will appear when activity is reported.{% endif %}</p>
+      <details class="panel explanation" id="empireHistory"><summary>Previous EmpireDrop races <span aria-hidden="true">+</span></summary><div id="empireHistoryList" class="empire-history-list"><p class="small muted">No completed race snapshots saved yet.</p></div></details>
+    </div>
+    {# Server-render verified standings end #}
+    <noscript><p class="notice">Reload to see the latest saved standings.</p></noscript>
+  </section>
+
+  <section class="panel public-games-cta" aria-labelledby="gamesCtaTitle"><div><p class="eyebrow">REDPOINTS ARCADE</p><h2 id="gamesCtaTitle">See who is playing now.</h2><p class="muted">See recent community activity and weekly RedPoints leaders.</p></div><a class="button primary" href="/gaming">Open Gaming →</a></section>
+</main>
 {% endblock %}
-
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='empiredrop.css',v=asset_version) }}">{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='empiredrop.js',v=asset_version) }}" defer></script>{% endblock %}

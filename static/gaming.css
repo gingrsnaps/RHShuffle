@@ -982,3 +982,76 @@
 .game-art.blackjack-art { display: flex; align-items: center; justify-content: center; }
 
 .gaming-recovery{margin:14px 0}.gaming-recovery>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer}.gaming-recovery>summary span{font-size:.78rem;color:var(--muted,#aaa)}.gaming-recovery-content{display:grid;gap:12px;padding-top:16px}.gaming-recovery textarea{width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}
+
+/* V14 public community leaderboard. */
+.gaming-public-choice {
+  flex:1 1 100%;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid #433743;
+  border-radius:10px;
+  background:#1b171e;
+  cursor:pointer;
+}
+.gaming-public-choice input {flex:0 0 auto;width:auto;margin-top:3px}
+.gaming-public-choice span {display:grid;gap:3px}
+.gaming-public-choice strong {font-size:.86rem}
+.gaming-public-choice small {color:var(--muted);font-size:.74rem;line-height:1.45}
+.gaming-community {margin:24px 0 28px}
+.gaming-community-heading {align-items:center}
+.gaming-community-heading h2 {margin:4px 0 6px;font-size:clamp(1.7rem,3.2vw,2.5rem)}
+.gaming-activity-count {min-width:105px;display:grid;justify-items:end;gap:2px}
+.gaming-activity-count strong {font-size:2rem;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
+.gaming-activity-count span {font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}
+.gaming-game-counts {display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 14px}
+.gaming-game-counts span {padding:7px 10px;border:1px solid #3c333e;background:#1d1921;border-radius:999px;color:#bcb2be;font-size:.75rem}
+.gaming-game-counts b {color:#fff;font-variant-numeric:tabular-nums}
+.gaming-community-grid {display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px}
+.gaming-live-panel,.gaming-leader-panel {padding:20px;min-width:0}
+.gaming-panel-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.gaming-panel-heading h3 {margin:4px 0 0;font-size:1.18rem}
+.live-dot {width:9px;height:9px;border-radius:50%;background:#60d99d;box-shadow:0 0 0 5px #60d99d18}
+.gaming-live-list {display:grid;gap:8px}
+.gaming-live-list article {display:flex;align-items:center;gap:11px;padding:10px;border-radius:10px;background:#18151b;border:1px solid #302a33}
+.gaming-live-list article div {min-width:0;display:grid;gap:2px}
+.gaming-live-list strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.88rem}
+.gaming-live-list small {color:var(--muted);font-size:.72rem}
+.gaming-live-avatar {display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#442531;color:#ff9caf;font-weight:800}
+.gaming-public-leaders {list-style:none;margin:0;padding:0;display:grid}
+.gaming-public-leaders li {display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:47px;padding:8px 4px;border-bottom:1px solid #302a33}
+.gaming-public-leaders li:last-child {border-bottom:0}
+.gaming-public-leaders li > strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.88rem}
+.gaming-public-leaders li > span:last-child {display:grid;justify-items:end;gap:2px;font-variant-numeric:tabular-nums}
+.gaming-public-leaders li > span:last-child b {font-size:.84rem;color:#ff8ea2}
+.gaming-public-leaders li > span:last-child small {font-size:.68rem;color:var(--muted)}
+.gaming-public-rank {color:#918693;font-size:.75rem;font-variant-numeric:tabular-nums}
+.gaming-live-list .empty,.gaming-public-leaders .empty {margin:0;padding:18px;color:var(--muted);font-size:.8rem;border:1px dashed #3a333c;border-radius:10px;background:transparent}
+.gaming-public-leaders .empty {display:block;min-height:0}
+@media (max-width:820px){.gaming-community-grid{grid-template-columns:1fr}.gaming-activity-count{justify-items:start}.gaming-community-heading{align-items:flex-start}}
+@media (max-width:560px){.gaming-community-heading{display:grid}.gaming-public-leaders li{grid-template-columns:32px minmax(0,1fr) auto}.gaming-live-panel,.gaming-leader-panel{padding:16px}}
+.gaming-filter-bar {overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:thin}
+.gaming-filter-bar button {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 11px;
+  border:1px solid #3c333e;
+  border-radius:999px;
+  background:#1d1921;
+  color:#bcb2be;
+  font:inherit;
+  font-size:.75rem;
+  cursor:pointer;
+  transition:border-color .16s ease,background-color .16s ease,color .16s ease;
+}
+.gaming-filter-bar button b {color:#fff;font-variant-numeric:tabular-nums}
+.gaming-filter-bar button:hover {border-color:#6b4855;color:#fff}
+.gaming-filter-bar button.is-active,
+.gaming-filter-bar button[aria-pressed="true"] {border-color:#a24d61;background:#422530;color:#fff}
+.gaming-filter-bar button:focus-visible {outline:2px solid #ff8299;outline-offset:2px}
+.gaming-public-leaders i {font-style:normal;font-size:.72rem;font-weight:800;margin-right:5px}
+.gaming-public-leaders .rank-up {color:#6be1a8}
+.gaming-public-leaders .rank-down {color:#f2a16f}
