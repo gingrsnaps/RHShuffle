@@ -1,7 +1,4 @@
 {
-  "version": 6,
-  "release": "2026.11.13-admin-pages-payouts-v13",
-  "purpose": "V13 runtime source, assets, templates and deployment markers; private credentials and live state excluded from startup hash validation.",
   "files": {
     "Procfile": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83",
     "admin_navigation.py": "b58ecd17420d447221ba29936a7009bb3a1a62cc7db3a699edfd0fbd188b04b7",
@@ -23,7 +20,7 @@
     "provider_admin.py": "deebfa9dc69515dc8f2267e35efc2d8cb2e8549ada47e04548d3c195dfbb06d4",
     "race.py": "d342af11d32d65157c87f96b0cdf942be89446d9657f615f2157887d4cfab7ad",
     "race_support.py": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96",
-    "release_check.py": "01332273a017d24d18956fd045b30c1fa3d9d8b9dd5ba8d96e82de91959efde4",
+    "release_check.py": "fb7143c9c4be374ad81b3b0df7a8cd7cada24e649934d9804ec1b69f5e190db2",
     "requirements.txt": "88ef5de1c188158f15949336cebb79dfcf2ab7d9df5c3f2debbc0c643eb80554",
     "runtime.py": "cadff37a808077b03d5713052e15a25065f0cd290d78a5c7dfa46bf088a33199",
     "runtime.txt": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d",
@@ -87,5 +84,8 @@
     "templates/recovery_panel.html": "6c263b9e21cf5cb746c7f9170c37b6c0d89e4774df8a30aa579f85cdc626fdb6",
     "wager_backend.py": "f769d34676890d861e3d608d3e7efe83282bc665543fa0a87aa12b4a28b3b2d0",
     "weekly_history.py": "dac409a7db91758ba70156445f58eb4714f9d348a262b2e901a880638aa8d5b1"
-  }
+  },
+  "purpose": "V13 runtime source, assets, templates and deployment markers; private credentials and live state excluded from startup hash validation.",
+  "release": "2026.11.13-admin-pages-payouts-v13",
+  "version": 6
 }

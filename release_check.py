@@ -3,6 +3,7 @@ import ast
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import re
 import argparse
@@ -13,11 +14,27 @@ from jinja2 import Environment, FileSystemLoader, TemplateError, meta
 def check_release(root=None, strict=False, check_dependencies=True):
     root = Path(root or Path(__file__).parent)
     problems, warnings = [], []
-    required = {'flask':'Flask', 'werkzeug':'Flask', 'requests':'requests', 'waitress':'waitress', 'tzdata':'tzdata'}
+    required = {'flask':'Flask', 'werkzeug':'Werkzeug', 'requests':'requests', 'waitress':'waitress', 'tzdata':'tzdata'}
+
+    # DigitalOcean Spaces support is optional. The S3 SDK is imported lazily by
+    # spaces_state.py only when RH_SPACES_ENABLE is explicitly enabled. Do not
+    # fail normal local-JSON deployments merely because boto3/botocore are not
+    # installed.
+    spaces_enabled = os.getenv('RH_SPACES_ENABLE', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    optional_modules = {'boto3', 'botocore'}
+
     if check_dependencies:
         for module, package in required.items():
             if importlib.util.find_spec(module) is None:
                 problems.append('Missing dependency: '+package+'. Install requirements.txt.')
+        if spaces_enabled:
+            for module in sorted(optional_modules):
+                if importlib.util.find_spec(module) is None:
+                    problems.append(
+                        'Spaces storage is enabled but '+module+
+                        ' is not installed. Install requirements-spaces.txt or add boto3 to requirements.txt.'
+                    )
+
     modules = list(root.glob('*.py'))
     for source in modules:
         try:
@@ -26,6 +43,8 @@ def check_release(root=None, strict=False, check_dependencies=True):
             for node in ast.walk(tree):
                 if isinstance(node, ast.ImportFrom) and node.module and not node.level:
                     name = node.module.split('.')[0]
+                    if name in optional_modules and not spaces_enabled:
+                        continue
                     if importlib.util.find_spec(name) is None and not (root/(name+'.py')).is_file():
                         if check_dependencies or name not in required:
                             problems.append(source.name+' imports missing module '+name)
