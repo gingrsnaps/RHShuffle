@@ -189,6 +189,7 @@
     jobs = {},
     busy = false,
     timer,
+    clockTimer,
     next = 0,
     urgentUntil = 0;
   let pollAgain = false,
@@ -847,8 +848,15 @@
       poll();
     }
   });
+  function startPublicClock() {
+    clearInterval(clockTimer);
+    if (document.hidden) return;
+    clock();
+    clockTimer = setInterval(clock, 1000);
+  }
   document.addEventListener("visibilitychange", () => {
     clearTimeout(timer);
+    startPublicClock();
     if (!document.hidden) {
       next = 0;
       poll();
@@ -860,7 +868,7 @@
       poll();
     }
   });
-  clock();
-  setInterval(clock, 1000);
+  startPublicClock();
+  window.addEventListener("pagehide", () => clearInterval(clockTimer), {once:true});
   poll();
 })();

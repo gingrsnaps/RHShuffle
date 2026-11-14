@@ -16,12 +16,12 @@ class V16ReliabilityTests(unittest.TestCase):
         macro = self.text('templates/macros.html')
         self.assertGreaterEqual(page.count('public_race_summary('), 2)
         self.assertIn('clock race-countdown', macro)
-        css = self.text('static/v16-system.css')
+        css = self.text('static/v19-system.css')
         self.assertIn('--race-countdown-size', css)
         self.assertIn('#empireRaceClock .race-countdown', css)
         self.assertIn('#shuffleRaceClock .race-countdown', css)
         base = self.text('templates/base.html')
-        self.assertIn('v16-system.css', base)
+        self.assertIn('v19-system.css', base)
 
     def test_reward_form_has_idempotency_and_submit_lock(self):
         template = self.text('templates/admin_empiredrop.html')

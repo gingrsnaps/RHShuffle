@@ -18,8 +18,8 @@
   <div class="section-title"><div><p class="eyebrow">EMPIREDROP · PROVIDER RANKS</p><h2 id="empirePlayersHeading">Current Top 10</h2><p class="muted">Names are already anonymized by EmpireDrop. Public IDs help identify the same player between updates.</p></div><span class="tag">{{ empire_admin.private_rewards.total if empire_admin.private_rewards.enabled else 'Prizes not announced' }}</span></div>
   <div class="field"><label for="empireAdminSearch">Find a player or public ID</label><input id="empireAdminSearch" data-provider-search="empireAdminRows" type="search" placeholder="Filter the returned rankings" autocomplete="off"><small>Search covers only positions returned by the provider.</small></div>
   <div class="table-scroll" tabindex="0" role="region" aria-label="EmpireDrop ranked players">
-    <table><thead><tr><th>Rank</th><th>Player (provider masked)</th><th>Public player ID</th><th class="number">{{ empire_admin.race_meta.get('metric') or 'Race total' }}</th><th class="number">Advertised prize</th></tr></thead>
-    <tbody id="empireAdminRows">{% for row in empire_admin.rows[:10] %}<tr><td class="rank">{{ row.rank }}</td><td><strong>{{ row.username }}</strong></td><td class="small">{{ row.user_id or '—' }}</td><td class="number">{{ row.wager }}</td><td class="number">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No ranked players returned. This can be normal before a race starts or after it closes.</td></tr>{% endfor %}</tbody></table>
+    <table class="admin-responsive-table"><thead><tr><th>Rank</th><th>Player (provider masked)</th><th>Public player ID</th><th class="number">{{ empire_admin.race_meta.get('metric') or 'Race total' }}</th><th class="number">Advertised prize</th></tr></thead>
+    <tbody id="empireAdminRows">{% for row in empire_admin.rows[:10] %}<tr><td class="rank" data-label="Rank">{{ row.rank }}</td><td data-label="Player"><strong>{{ row.username }}</strong></td><td class="small" data-label="Public player ID">{{ row.user_id or '—' }}</td><td class="number" data-label="Race total">{{ row.wager }}</td><td class="number" data-label="Advertised prize">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No ranked players returned. This can be normal before a race starts or after it closes.</td></tr>{% endfor %}</tbody></table>
   </div>
   <p class="small muted">Official ranks (including ties) are preserved. Deposit races and raffles are labeled correctly; we never present their totals as wagered currency.</p>
 </section>
@@ -121,8 +121,8 @@
   <h3>Recent verified EmpireDrop races</h3>
   <p class="small muted">The last four completed snapshots are retained in local JSON. The current live race is displayed above. Back up JSON state before deploying; App Platform storage is ephemeral.</p>
   <div class="table-scroll" tabindex="0" role="region" aria-label="Completed EmpireDrop races">
-    <table><thead><tr><th>Race slug</th><th>Last confirmed update</th></tr></thead><tbody>
-    {% for item in empire_admin.race_history %}{% set history_meta = item.get('race_meta') or {} %}<tr><td>{{ history_meta.get('slug') or 'Legacy race' }}</td><td>{{ fmt_et(item.get('updated_at',0)) if item.get('updated_at',0) else 'Not recorded' }}</td></tr>
+    <table class="admin-responsive-table"><thead><tr><th>Race slug</th><th>Last confirmed update</th></tr></thead><tbody>
+    {% for item in empire_admin.race_history %}{% set history_meta = item.get('race_meta') or {} %}<tr><td data-label="Race slug">{{ history_meta.get('slug') or 'Legacy race' }}</td><td data-label="Last confirmed update">{{ fmt_et(item.get('updated_at',0)) if item.get('updated_at',0) else 'Not recorded' }}</td></tr>
     {% else %}<tr><td colspan="2">No completed EmpireDrop snapshots saved yet.</td></tr>{% endfor %}
     </tbody></table>
   </div>

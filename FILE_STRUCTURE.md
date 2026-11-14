@@ -1,202 +1,204 @@
-# RedHunllef V18 file structure
+# RedHunllef V19 file structure
 
-Private credentials and mutable JSON state are included only in the private package.
-
-- `.gitignore`
-- `admin_navigation.py`
-- `app.yaml`
-- `baccarat.py`
-- `blackjack.py`
-- `BUILD_MANIFEST.json`
-- `CHANGES.md`
-- `config.py`
-- `data/state.json`
-- `data/state.json.lock`
-- `DEPLOY_DIGITALOCEAN.md`
-- `DEPLOYMENT_EMPIREDROP_RACES.md`
-- `DEPLOYMENT_OPTIMIZED.md`
-- `docs/ADMIN_GAMING.png`
-- `docs/ADMIN_RELIABILITY_V13.md`
-- `docs/BACCARAT_MOBILE.png`
-- `docs/BLACKJACK_DESKTOP.png`
-- `docs/COINFLIP_MOBILE.png`
-- `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`
-- `docs/EMPIREDROP_INTEGRATION.md`
-- `docs/empiredrop_partner_openapi_2.0.1.yaml`
-- `docs/EMPIREDROP_VALIDATION.md`
-- `docs/GAMING_DESKTOP.png`
-- `docs/GAMING_MOBILE.png`
-- `docs/HEALTH_DESKTOP.png`
-- `docs/HEALTH_MOBILE.png`
-- `docs/HISTORY_MOBILE(1).png`
-- `docs/HISTORY_MOBILE.png`
-- `docs/LIMBO_MOBILE.png`
-- `docs/PERFORMANCE.md`
-- `docs/PLINKO_DESKTOP.png`
-- `docs/POKER_DESKTOP.png`
-- `docs/POKER_MOBILE.png`
-- `docs/PREVIEW_DESKTOP.png`
-- `docs/PREVIEW_MOBILE.png`
-- `docs/redlogo(3).png`
-- `docs/REDPOINTS.md`
-- `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
-- `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
-- `docs/V12_VALIDATION_REPORT.md`
-- `docs/V14_PUBLIC_RACES_AND_GAMING.md`
-- `docs/V15_DESIGN_CALENDAR_GAMING.md`
-- `docs/V16_UNIFORMITY_AND_RELIABILITY.md`
-- `docs/V17_TIMER_CARD_REFINEMENT.md`
-- `docs/V18_EMPIREDROP_PRIZE_PUBLISH_FIX.md`
-- `docs/VALIDATION.md`
-- `empiredrop.py`
-- `EMPIREDROP_CHANGELOG_2026-11-10.md`
-- `empiredrop_deploy_keys.py`
-- `empiredrop_features.py`
-- `empiredrop_races.py`
-- `fairness.py`
-- `FILE_STRUCTURE.md`
-- `FULL_CODE_BLOCKS.md`
-- `gaming.py`
-- `holdem.py`
-- `integrations.py`
-- `operations_log.py`
-- `poker.py`
-- `presentation.py`
-- `private/admin_store.seed.json`
-- `private/settings.json`
-- `Procfile`
-- `provider_admin.py`
-- `race.py`
-- `race_support.py`
-- `README.md`
-- `release_check.py`
-- `RELEASE_METADATA.json`
-- `requirements-dev.txt`
-- `requirements-spaces.txt`
-- `requirements.txt`
-- `runtime.py`
-- `runtime.txt`
-- `shuffle_deploy_key.py`
-- `spaces_state.py`
-- `START_HERE.md`
-- `static/admin-calendar.js`
-- `static/admin-empiredrop.js`
-- `static/admin-feedback.js`
-- `static/admin-gaming.js`
-- `static/admin-health.js`
-- `static/admin-logs.js`
-- `static/admin-providers.js`
-- `static/admin-workspace.css`
-- `static/admin-workspace.js`
-- `static/app.js`
-- `static/empiredrop.css`
-- `static/empiredrop.js`
-- `static/experience.css`
-- `static/experience.js`
-- `static/fairness.js`
-- `static/gaming.css`
-- `static/gaming.js`
-- `static/history.css`
-- `static/history.js`
-- `static/holdem-fairness.js`
-- `static/holdem-ui.js`
-- `static/holdem.css`
-- `static/plinko.js`
-- `static/public-control.css`
-- `static/public-control.js`
-- `static/receipt-verifier.js`
-- `static/redlogo.ico`
-- `static/redlogo.png`
-- `static/style.css`
-- `static/v11-system.css`
-- `static/v14-modern.css`
-- `static/v15-system.css`
-- `static/v16-system.css`
-- `storage.py`
-- `store_schema.py`
-- `telemetry.py`
-- `templates/admin.html`
-- `templates/admin_activity.html`
-- `templates/admin_attention.html`
-- `templates/admin_empiredrop.html`
-- `templates/admin_gaming.html`
-- `templates/admin_health.html`
-- `templates/admin_overview.html`
-- `templates/admin_players.html`
-- `templates/admin_provider_summary.html`
-- `templates/admin_race.html`
-- `templates/admin_settings.html`
-- `templates/admin_shuffle.html`
-- `templates/base.html`
-- `templates/change_review.html`
-- `templates/error.html`
-- `templates/gaming.html`
-- `templates/gaming_fairness.html`
-- `templates/history.html`
-- `templates/holdem_table.html`
-- `templates/icons.html`
-- `templates/index.html`
-- `templates/login.html`
-- `templates/macros.html`
-- `templates/recovery_panel.html`
-- `tests/assert_visual_pixels.py`
-- `tests/fairness_v2_vectors.json`
-- `tests/fairness_v3_vectors.json`
-- `tests/fairness_v4_vectors.json`
-- `tests/fairness_vectors.json`
-- `tests/fixtures/empiredrop_race_success.json`
-- `tests/fixtures/v16_countdown_uniformity.html`
-- `tests/gaming_motion.cjs`
-- `tests/generate_fairness_vectors.py`
-- `tests/generate_v4_vectors.py`
-- `tests/holdem_vectors.py`
-- `tests/package.json`
-- `tests/serve_admin_gaming_fixture.py`
-- `tests/serve_game_fixture.py`
-- `tests/serve_gaming_motion_fixture.py`
-- `tests/test_admin_controls.py`
-- `tests/test_admin_gaming_frontend.cjs`
-- `tests/test_admin_reliability_v13.py`
-- `tests/test_admin_uniform.py`
-- `tests/test_app.py`
-- `tests/test_baccarat.py`
-- `tests/test_blackjack.py`
-- `tests/test_clarity_update.py`
-- `tests/test_deployment_optimization.py`
-- `tests/test_do_package.py`
-- `tests/test_empiredrop.py`
-- `tests/test_empiredrop_contract.py`
-- `tests/test_empiredrop_frontend.cjs`
-- `tests/test_empiredrop_public_ssr.py`
-- `tests/test_empiredrop_qol.py`
-- `tests/test_empiredrop_races.py`
-- `tests/test_empiredrop_slug_recovery.py`
-- `tests/test_extra_games.py`
-- `tests/test_fairness_frontend.cjs`
-- `tests/test_gaming_ip.py`
-- `tests/test_health_release.py`
-- `tests/test_history_frontend.cjs`
-- `tests/test_holdem.py`
-- `tests/test_navigation_v12.py`
-- `tests/test_public_menu_v10.cjs`
-- `tests/test_redpoints.py`
-- `tests/test_shuffle_admin_browser.cjs`
-- `tests/test_shuffle_admin_hotfix.py`
-- `tests/test_v11_flask_navigation.py`
-- `tests/test_v14_public_experience.py`
-- `tests/test_v15_modernization.py`
-- `tests/test_v16_asset_budget.py`
-- `tests/test_v16_reliability.py`
-- `tests/test_v17_timer_card.py`
-- `tests/test_v18_empiredrop_publish.py`
-- `tests/test_weekly_history.py`
-- `tools/admin_acceptance_v13.py`
-- `tools/deployment_diagnostics.py`
-- `tools/live_smoke_v12.py`
-- `tools/live_smoke_v13.py`
-- `tools/live_smoke_v14.py`
-- `tools/verify_redpoints.py`
-- `tools/visual_acceptance_v16.py`
-- `UPDATE.md`
-- `wager_backend.py`
-- `weekly_history.py`
+```text
+.gitignore
+BUILD_MANIFEST.json
+CHANGES.md
+DEPLOYMENT_EMPIREDROP_RACES.md
+DEPLOYMENT_OPTIMIZED.md
+DEPLOY_DIGITALOCEAN.md
+EMPIREDROP_CHANGELOG_2026-11-10.md
+FILE_STRUCTURE.md
+FULL_CODE_BLOCKS.md
+MANIFEST.json
+Procfile
+README.md
+RELEASE_METADATA.json
+START_HERE.md
+UPDATE.md
+admin_navigation.py
+app.yaml
+baccarat.py
+blackjack.py
+config.py
+data/state.json
+data/state.json.lock
+docs/ADMIN_GAMING.png
+docs/ADMIN_RELIABILITY_V13.md
+docs/BACCARAT_MOBILE.png
+docs/BLACKJACK_DESKTOP.png
+docs/COINFLIP_MOBILE.png
+docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md
+docs/EMPIREDROP_INTEGRATION.md
+docs/EMPIREDROP_VALIDATION.md
+docs/GAMING_DESKTOP.png
+docs/GAMING_MOBILE.png
+docs/HEALTH_DESKTOP.png
+docs/HEALTH_MOBILE.png
+docs/HISTORY_MOBILE(1).png
+docs/HISTORY_MOBILE.png
+docs/LIMBO_MOBILE.png
+docs/PERFORMANCE.md
+docs/PLINKO_DESKTOP.png
+docs/POKER_DESKTOP.png
+docs/POKER_MOBILE.png
+docs/PREVIEW_DESKTOP.png
+docs/PREVIEW_MOBILE.png
+docs/REDPOINTS.md
+docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md
+docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md
+docs/V12_VALIDATION_REPORT.md
+docs/V14_PUBLIC_RACES_AND_GAMING.md
+docs/V15_DESIGN_CALENDAR_GAMING.md
+docs/V16_UNIFORMITY_AND_RELIABILITY.md
+docs/V17_TIMER_CARD_REFINEMENT.md
+docs/V18_EMPIREDROP_PRIZE_PUBLISH_FIX.md
+docs/V19_SHUFFLE_FIRST_MOBILE.md
+docs/VALIDATION.md
+docs/empiredrop_partner_openapi_2.0.1.yaml
+docs/redlogo(3).png
+empiredrop.py
+empiredrop_deploy_keys.py
+empiredrop_features.py
+empiredrop_races.py
+fairness.py
+gaming.py
+holdem.py
+integrations.py
+operations_log.py
+poker.py
+presentation.py
+private/admin_store.seed.json
+private/settings.json
+provider_admin.py
+race.py
+race_support.py
+release_check.py
+requirements-dev.txt
+requirements-spaces.txt
+requirements.txt
+runtime.py
+runtime.txt
+shuffle_deploy_key.py
+spaces_state.py
+static/admin-calendar.js
+static/admin-empiredrop.js
+static/admin-feedback.js
+static/admin-gaming.js
+static/admin-health.js
+static/admin-logs.js
+static/admin-providers.js
+static/admin-workspace.css
+static/admin-workspace.js
+static/app.js
+static/empiredrop.css
+static/empiredrop.js
+static/experience.css
+static/experience.js
+static/fairness.js
+static/gaming.css
+static/gaming.js
+static/history.css
+static/history.js
+static/holdem-fairness.js
+static/holdem-ui.js
+static/holdem.css
+static/plinko.js
+static/public-control.css
+static/public-control.js
+static/receipt-verifier.js
+static/redlogo.ico
+static/redlogo.png
+static/style.css
+static/v11-system.css
+static/v19-system.css
+storage.py
+store_schema.py
+telemetry.py
+templates/admin.html
+templates/admin_activity.html
+templates/admin_attention.html
+templates/admin_empiredrop.html
+templates/admin_gaming.html
+templates/admin_health.html
+templates/admin_overview.html
+templates/admin_players.html
+templates/admin_provider_summary.html
+templates/admin_race.html
+templates/admin_settings.html
+templates/admin_shuffle.html
+templates/base.html
+templates/change_review.html
+templates/error.html
+templates/gaming.html
+templates/gaming_fairness.html
+templates/history.html
+templates/holdem_table.html
+templates/icons.html
+templates/index.html
+templates/login.html
+templates/macros.html
+templates/recovery_panel.html
+tests/assert_visual_pixels.py
+tests/fairness_v2_vectors.json
+tests/fairness_v3_vectors.json
+tests/fairness_v4_vectors.json
+tests/fairness_vectors.json
+tests/fixtures/empiredrop_race_success.json
+tests/fixtures/v16_countdown_uniformity.html
+tests/gaming_motion.cjs
+tests/generate_fairness_vectors.py
+tests/generate_v4_vectors.py
+tests/holdem_vectors.py
+tests/package.json
+tests/serve_admin_gaming_fixture.py
+tests/serve_game_fixture.py
+tests/serve_gaming_motion_fixture.py
+tests/test_admin_controls.py
+tests/test_admin_gaming_frontend.cjs
+tests/test_admin_reliability_v13.py
+tests/test_admin_uniform.py
+tests/test_app.py
+tests/test_baccarat.py
+tests/test_blackjack.py
+tests/test_clarity_update.py
+tests/test_deployment_optimization.py
+tests/test_do_package.py
+tests/test_empiredrop.py
+tests/test_empiredrop_contract.py
+tests/test_empiredrop_frontend.cjs
+tests/test_empiredrop_public_ssr.py
+tests/test_empiredrop_qol.py
+tests/test_empiredrop_races.py
+tests/test_empiredrop_slug_recovery.py
+tests/test_extra_games.py
+tests/test_fairness_frontend.cjs
+tests/test_gaming_ip.py
+tests/test_health_release.py
+tests/test_history_frontend.cjs
+tests/test_holdem.py
+tests/test_navigation_v12.py
+tests/test_public_menu_v10.cjs
+tests/test_redpoints.py
+tests/test_shuffle_admin_browser.cjs
+tests/test_shuffle_admin_hotfix.py
+tests/test_v11_flask_navigation.py
+tests/test_v14_public_experience.py
+tests/test_v15_modernization.py
+tests/test_v16_asset_budget.py
+tests/test_v16_reliability.py
+tests/test_v17_timer_card.py
+tests/test_v18_empiredrop_publish.py
+tests/test_v19_mobile.py
+tests/test_weekly_history.py
+tools/admin_acceptance_v13.py
+tools/deployment_diagnostics.py
+tools/live_smoke_v12.py
+tools/live_smoke_v13.py
+tools/live_smoke_v14.py
+tools/live_smoke_v19.py
+tools/verify_redpoints.py
+tools/visual_acceptance_v16.py
+wager_backend.py
+weekly_history.py
+```

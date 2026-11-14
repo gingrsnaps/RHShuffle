@@ -20,13 +20,12 @@
     return isEmpire() ? 'empiredrop' : 'shuffle';
   }
 
-  function rememberProvider(provider) {
-    try { localStorage.setItem('rh.public.provider', provider); } catch {}
+  function writeProviderUrl(provider) {
     try {
       const url = new URL(location.href);
       if (provider === 'empiredrop') url.searchParams.set('provider', 'empiredrop');
       else url.searchParams.delete('provider');
-      history.replaceState(null, '', url);
+      history.replaceState({provider}, '', url);
     } catch {}
   }
 
@@ -34,8 +33,13 @@
     const empire = isEmpire();
     if (id('shuffleRaceClock')) id('shuffleRaceClock').hidden = empire;
     if (id('empireRaceClock')) id('empireRaceClock').hidden = !empire;
+    const provider = selectedProvider();
+    document.documentElement.dataset.publicProvider = provider;
+    document.body.dataset.publicProvider = provider;
     document.querySelectorAll('[data-provider-brand]').forEach(card => {
-      card.classList.toggle('is-selected', card.dataset.providerBrand === selectedProvider());
+      const selected = card.dataset.providerBrand === provider;
+      card.classList.toggle('is-selected', selected);
+      card.setAttribute('aria-current', selected ? 'true' : 'false');
     });
     const join = id('providerJoinLink');
     if (join) {
@@ -44,7 +48,7 @@
     }
   }
 
-  function select(tab, focus=false, remember=true) {
+  function select(tab, focus=false, updateUrl=true) {
     for (const current of tabs) {
       const active = current === tab;
       current.setAttribute('aria-selected', String(active));
@@ -55,7 +59,7 @@
     }
     updateProviderChrome();
     updateCountdowns();
-    if (remember) rememberProvider(selectedProvider());
+    if (updateUrl) writeProviderUrl(selectedProvider());
     if (focus) tab.focus();
   }
 
@@ -122,13 +126,18 @@
       if (prize) {
         const serverPrize = row?.prize;
         const prizeRank = String(row?.rank ?? position);
+        const announced = Boolean(serverPrize && serverPrize !== '—') || configured;
         prize.textContent = serverPrize && serverPrize !== '—'
           ? serverPrize
-          : configured ? (rewards.formatted?.[prizeRank] || '—') : 'Not announced';
+          : configured ? (rewards.formatted?.[prizeRank] || '—') : 'To be announced';
+        prize.classList.toggle('is-unannounced', !announced);
       }
     }
 
-    if (id('empirePoolTotal')) id('empirePoolTotal').textContent = configured ? rewards.total : 'Not announced';
+    if (id('empirePoolTotal')) {
+      id('empirePoolTotal').textContent = configured ? rewards.total : 'To be announced';
+      id('empirePoolTotal').classList.toggle('is-unannounced', !configured);
+    }
     if (board.schedule && id('empireRaceWindow')) {
       id('empireRaceWindow').textContent = `${board.schedule.start_et || ''} → ${board.schedule.end_et || ''}`;
     }
@@ -179,8 +188,15 @@
   }
 
   document.addEventListener('empiredrop:update', event => render(event.detail));
-  countdownTimer = setInterval(updateCountdowns, 1000);
+  function startCountdownTimer() {
+    clearInterval(countdownTimer);
+    if (document.hidden) return;
+    updateCountdowns();
+    countdownTimer = setInterval(updateCountdowns, 1000);
+  }
+  document.addEventListener('visibilitychange', startCountdownTimer);
   globalThis.addEventListener?.('pagehide', () => clearInterval(countdownTimer), {once:true});
+  startCountdownTimer();
 
   try {
     const bootstrap = JSON.parse(document.body.dataset.bootstrap || '{}');
@@ -188,6 +204,11 @@
   } catch {}
 
   let requested = '';
-  try { requested = new URL(location.href).searchParams.get('provider') || localStorage.getItem('rh.public.provider') || ''; } catch {}
+  try { requested = new URL(location.href).searchParams.get('provider') || ''; } catch {}
   select(requested === 'empiredrop' ? empireTab : shuffleTab, false, false);
+  globalThis.addEventListener?.('popstate', () => {
+    let provider = '';
+    try { provider = new URL(location.href).searchParams.get('provider') || ''; } catch {}
+    select(provider === 'empiredrop' ? empireTab : shuffleTab, false, false);
+  });
 })();

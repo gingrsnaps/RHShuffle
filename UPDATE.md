@@ -1,6 +1,3 @@
-# V18 update
+# V19 update
 
-V18 is a targeted EmpireDrop payout-publication repair. Replace the project with
-the V18 package, force a clean DigitalOcean rebuild, and verify that Admin →
-Leaderboards → EmpireDrop → Prizes shows **Published** and a `$2,000.00` public
-pool. The public EmpireDrop board should then show the rank-specific amounts.
+V19 is a public and administrator mobile-quality release. It makes Shuffle the deterministic default for the bare homepage URL, keeps explicit EmpireDrop deep links, removes cross-visit provider persistence, converts dense tables into mobile cards, and improves navigation drawers, calendars, prizes, Gaming and logs on small screens. Provider APIs and game engines are unchanged.

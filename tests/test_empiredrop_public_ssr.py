@@ -16,7 +16,7 @@ FRAGMENT = INDEX[INDEX.index('{# Server-render verified standings start #}'): IN
 def render(rows, limit=15, enabled=False):
     env = Environment(autoescape=select_autoescape(['html']), undefined=StrictUndefined)
     tmpl = env.from_string(FRAGMENT)
-    return tmpl.render(data={'empiredrop':{
+    return tmpl.render(initial_provider='shuffle', data={'empiredrop':{
         'rows':rows,
         'race_meta':{'ranks_limit':limit},
         'prizes':{'enabled':enabled, 'formatted':{str(i):'€1.00' for i in range(1,16)}}

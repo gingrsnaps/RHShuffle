@@ -1,9 +1,9 @@
-# RedHunllef V18
+# RedHunllef V19
 
 A single-process Python/Flask community wager-race and RedPoints application
 with independent Shuffle Top 15 and EmpireDrop Top 10 leaderboards.
 
-V18 fixes EmpireDrop public prize publication, retains the compact matching race
+V19 makes Shuffle the deterministic public default, adds explicit EmpireDrop deep links, and delivers a mobile-first public and administrator experience while retaining the compact matching race
 timer cards, and includes the confirmed ten-place USD payout schedule.
 
 ## Run

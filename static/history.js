@@ -122,6 +122,7 @@
         ].forEach((content, index) => {
           const td = document.createElement("td");
           td.className = ["rank", "", "number", "number accent"][index];
+          td.dataset.label = ["Place", "Player", "Weighted wager", "Recorded prize"][index];
           td.textContent = content;
           tr.append(td);
         });

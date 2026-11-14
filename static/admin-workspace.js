@@ -25,6 +25,8 @@
     menuButton?.setAttribute('aria-expanded', String(open));
     if (veil) veil.hidden = !open;
     syncSidebarAccessibility();
+    document.documentElement.classList.toggle('admin-menu-open', open);
+    document.body.classList.toggle('admin-menu-open', open);
     if (open) {
       lastMenuFocus = document.activeElement;
       get('adminCloseMenu')?.focus();
@@ -36,6 +38,9 @@
   menuButton?.addEventListener('click', () => mobileMenu(true));
   get('adminCloseMenu')?.addEventListener('click', () => mobileMenu(false));
   veil?.addEventListener('click', () => mobileMenu(false));
+  sidebar?.addEventListener('click', event => {
+    if (event.target.closest('a') && window.matchMedia('(max-width: 790px)').matches) mobileMenu(false);
+  });
   window.matchMedia('(min-width: 791px)').addEventListener('change', event => {
     if (event.matches) mobileMenu(false);
     syncSidebarAccessibility();
@@ -73,6 +78,14 @@
     }
   });
   document.addEventListener('keydown', event => {
+    if (event.key === 'Tab' && app?.dataset.menuOpen === 'true' && window.matchMedia('(max-width: 790px)').matches) {
+      const focusable = [...sidebar.querySelectorAll('a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el => !el.hidden && el.offsetParent !== null);
+      if (focusable.length) {
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    }
     if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === 'k') {
       event.preventDefault();
       if (dialog?.open) dialog.close(); else openCommands();
