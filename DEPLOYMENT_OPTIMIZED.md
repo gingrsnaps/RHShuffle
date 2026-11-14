@@ -1,7 +1,17 @@
-# V14 FastDeploy package
+# Optimized DigitalOcean deployment — V18
 
-The FastDeploy archive contains every executable Python module, template, static asset, root deployment marker, private configuration file, and the bundled JSON snapshot. It excludes tests, screenshots, large source references, historical documentation, caches, and Git metadata.
+Use the FastDeploy archive for DigitalOcean App Platform. Its source root
+contains `requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml`, and
+`BUILD_MANIFEST.json`.
 
-DigitalOcean installs the root `requirements.txt`. Leave the custom Build Command blank and use `python wager_backend.py` as the Run Command.
+Settings:
 
-Keep `RH_SPACES_ENABLE=0` unless the optional Spaces mirror is intentionally configured with boto3. The normal local-JSON deployment does not require boto3 or botocore.
+- Source Directory: `/`
+- Custom Build Command: blank
+- Run Command: `python wager_backend.py`
+- HTTP Port: `8080`
+- Health Check: `/healthz`
+- `RH_SPACES_ENABLE=0` unless Spaces is intentionally configured
+
+Use **Force Rebuild and Deploy** so the V18 release and corrected payout
+JavaScript replace cached V17 assets.

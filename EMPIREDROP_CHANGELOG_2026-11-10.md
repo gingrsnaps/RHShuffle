@@ -1,13 +1,17 @@
-# EmpireDrop Integration Changelog
+# EmpireDrop integration changelog
 
-The integration now follows Partner Public API v2.0.1:
+## V18 — November 14, 2026
 
-- Production host `https://api.empiredrop.com`.
-- Dual `X-Public-Key` and `X-Private-Key` authentication.
-- Running-race discovery through `/api/v1/affiliate-partner/races`.
-- Race detail and standings through `/api/v1/affiliate-partner/races/{slug}`.
-- Top 10 display, official ranks and ties, provider cache timing, and amount-unit validation.
-- Consistent public masking while preserving provider-anonymized names and public IDs in Admin.
-- Independent local payouts with draft and publication states.
+- Fixed the browser omitting `save_mode=publish` after payout buttons were disabled.
+- Added `save_mode_intent` with a server-validated no-JavaScript fallback.
+- Preserved payout idempotency, dedicated revisions, atomic writes, read-back checks, and public projection verification.
+- Bundled the confirmed USD Top 10 schedule totaling `$2,000.00`.
 
-V12 adds a dedicated payout revision, atomic verification, and public-projection confirmation.
+## Retained behavior
+
+- Official `/api/v1/affiliate-partner/races` discovery
+- Official `/api/v1/affiliate-partner/races/{slug}` details
+- `X-Public-Key` and `X-Private-Key` headers
+- Top 10 rankings and provider rank preservation
+- Public username normalization
+- Independent local prize configuration

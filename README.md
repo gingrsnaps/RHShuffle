@@ -1,41 +1,20 @@
-# RedHunllef V15
+# RedHunllef V18
 
-A single-process Flask application for the RedHunllef Shuffle Top 15, EmpireDrop Top 10 and RedPoints Games.
+A single-process Python/Flask community wager-race and RedPoints application
+with independent Shuffle Top 15 and EmpireDrop Top 10 leaderboards.
 
-## Run locally
+V18 fixes EmpireDrop public prize publication, retains the compact matching race
+timer cards, and includes the confirmed ten-place USD payout schedule.
+
+## Run
 
 ```bash
 python -m pip install -r requirements.txt
 python wager_backend.py
 ```
 
-Open `http://localhost:8080`.
+DigitalOcean App Platform should use a blank custom Build Command, run
+`python wager_backend.py`, expose port `8080`, and check `/healthz`.
 
-## DigitalOcean App Platform
-
-- Source directory: `/`
-- Build command: leave blank
-- Run command: `python wager_backend.py`
-- Port: `8080`
-- Health check: `/healthz`
-- Instances: `1`
-- Set `RH_SPACES_ENABLE=0` unless Spaces is intentionally configured.
-
-The root `requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml` and `BUILD_MANIFEST.json` must remain at the repository root.
-
-## Important storage warning
-
-App Platform local JSON is temporary across replacement or redeployment. Export a private recovery checkpoint before deploying. Optional DigitalOcean Spaces support remains available through `requirements-spaces.txt`.
-
-## Private package warning
-
-The private archives include production credentials and a saved-state snapshot. Keep the archive and repository private.
-
-## V17 timer-card refinement
-
-V17 keeps the shared Shuffle and EmpireDrop countdown system while restoring a wider, natural-height timer card
-scale and card geometry. It also prevents duplicate EmpireDrop payout writes,
-serializes Shuffle current/history requests, adds bounded retry backoff, and
-shows precise sanitized request/data-quality information in Admin.
-
-See `docs/V17_TIMER_CARD_REFINEMENT.md` for the visual correction and `docs/V16_UNIFORMITY_AND_RELIABILITY.md` for the retained reliability work.
+The private packages contain unencrypted credentials and state. Keep them
+private and export a current recovery file before deployment.

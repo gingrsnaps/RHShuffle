@@ -1,8 +1,6 @@
-# RedHunllef V17 file structure
+# RedHunllef V18 file structure
 
-Total project files (excluding generated references): 192
-
-## Root
+Private credentials and mutable JSON state are included only in the private package.
 
 - `.gitignore`
 - `admin_navigation.py`
@@ -12,21 +10,60 @@ Total project files (excluding generated references): 192
 - `BUILD_MANIFEST.json`
 - `CHANGES.md`
 - `config.py`
+- `data/state.json`
+- `data/state.json.lock`
 - `DEPLOY_DIGITALOCEAN.md`
 - `DEPLOYMENT_EMPIREDROP_RACES.md`
 - `DEPLOYMENT_OPTIMIZED.md`
+- `docs/ADMIN_GAMING.png`
+- `docs/ADMIN_RELIABILITY_V13.md`
+- `docs/BACCARAT_MOBILE.png`
+- `docs/BLACKJACK_DESKTOP.png`
+- `docs/COINFLIP_MOBILE.png`
+- `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`
+- `docs/EMPIREDROP_INTEGRATION.md`
+- `docs/empiredrop_partner_openapi_2.0.1.yaml`
+- `docs/EMPIREDROP_VALIDATION.md`
+- `docs/GAMING_DESKTOP.png`
+- `docs/GAMING_MOBILE.png`
+- `docs/HEALTH_DESKTOP.png`
+- `docs/HEALTH_MOBILE.png`
+- `docs/HISTORY_MOBILE(1).png`
+- `docs/HISTORY_MOBILE.png`
+- `docs/LIMBO_MOBILE.png`
+- `docs/PERFORMANCE.md`
+- `docs/PLINKO_DESKTOP.png`
+- `docs/POKER_DESKTOP.png`
+- `docs/POKER_MOBILE.png`
+- `docs/PREVIEW_DESKTOP.png`
+- `docs/PREVIEW_MOBILE.png`
+- `docs/redlogo(3).png`
+- `docs/REDPOINTS.md`
+- `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
+- `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
+- `docs/V12_VALIDATION_REPORT.md`
+- `docs/V14_PUBLIC_RACES_AND_GAMING.md`
+- `docs/V15_DESIGN_CALENDAR_GAMING.md`
+- `docs/V16_UNIFORMITY_AND_RELIABILITY.md`
+- `docs/V17_TIMER_CARD_REFINEMENT.md`
+- `docs/V18_EMPIREDROP_PRIZE_PUBLISH_FIX.md`
+- `docs/VALIDATION.md`
 - `empiredrop.py`
 - `EMPIREDROP_CHANGELOG_2026-11-10.md`
 - `empiredrop_deploy_keys.py`
 - `empiredrop_features.py`
 - `empiredrop_races.py`
 - `fairness.py`
+- `FILE_STRUCTURE.md`
+- `FULL_CODE_BLOCKS.md`
 - `gaming.py`
 - `holdem.py`
 - `integrations.py`
 - `operations_log.py`
 - `poker.py`
 - `presentation.py`
+- `private/admin_store.seed.json`
+- `private/settings.json`
 - `Procfile`
 - `provider_admin.py`
 - `race.py`
@@ -42,42 +79,6 @@ Total project files (excluding generated references): 192
 - `shuffle_deploy_key.py`
 - `spaces_state.py`
 - `START_HERE.md`
-- `storage.py`
-- `store_schema.py`
-- `telemetry.py`
-- `UPDATE.md`
-- `wager_backend.py`
-- `weekly_history.py`
-
-## templates
-
-- `templates/admin.html`
-- `templates/admin_activity.html`
-- `templates/admin_attention.html`
-- `templates/admin_empiredrop.html`
-- `templates/admin_gaming.html`
-- `templates/admin_health.html`
-- `templates/admin_overview.html`
-- `templates/admin_players.html`
-- `templates/admin_provider_summary.html`
-- `templates/admin_race.html`
-- `templates/admin_settings.html`
-- `templates/admin_shuffle.html`
-- `templates/base.html`
-- `templates/change_review.html`
-- `templates/error.html`
-- `templates/gaming.html`
-- `templates/gaming_fairness.html`
-- `templates/history.html`
-- `templates/holdem_table.html`
-- `templates/icons.html`
-- `templates/index.html`
-- `templates/login.html`
-- `templates/macros.html`
-- `templates/recovery_panel.html`
-
-## static
-
 - `static/admin-calendar.js`
 - `static/admin-empiredrop.js`
 - `static/admin-feedback.js`
@@ -111,9 +112,33 @@ Total project files (excluding generated references): 192
 - `static/v14-modern.css`
 - `static/v15-system.css`
 - `static/v16-system.css`
-
-## tests
-
+- `storage.py`
+- `store_schema.py`
+- `telemetry.py`
+- `templates/admin.html`
+- `templates/admin_activity.html`
+- `templates/admin_attention.html`
+- `templates/admin_empiredrop.html`
+- `templates/admin_gaming.html`
+- `templates/admin_health.html`
+- `templates/admin_overview.html`
+- `templates/admin_players.html`
+- `templates/admin_provider_summary.html`
+- `templates/admin_race.html`
+- `templates/admin_settings.html`
+- `templates/admin_shuffle.html`
+- `templates/base.html`
+- `templates/change_review.html`
+- `templates/error.html`
+- `templates/gaming.html`
+- `templates/gaming_fairness.html`
+- `templates/history.html`
+- `templates/holdem_table.html`
+- `templates/icons.html`
+- `templates/index.html`
+- `templates/login.html`
+- `templates/macros.html`
+- `templates/recovery_panel.html`
 - `tests/assert_visual_pixels.py`
 - `tests/fairness_v2_vectors.json`
 - `tests/fairness_v3_vectors.json`
@@ -162,10 +187,9 @@ Total project files (excluding generated references): 192
 - `tests/test_v15_modernization.py`
 - `tests/test_v16_asset_budget.py`
 - `tests/test_v16_reliability.py`
+- `tests/test_v17_timer_card.py`
+- `tests/test_v18_empiredrop_publish.py`
 - `tests/test_weekly_history.py`
-
-## tools
-
 - `tools/admin_acceptance_v13.py`
 - `tools/deployment_diagnostics.py`
 - `tools/live_smoke_v12.py`
@@ -173,49 +197,6 @@ Total project files (excluding generated references): 192
 - `tools/live_smoke_v14.py`
 - `tools/verify_redpoints.py`
 - `tools/visual_acceptance_v16.py`
-
-## docs
-
-- `docs/ADMIN_GAMING.png`
-- `docs/ADMIN_RELIABILITY_V13.md`
-- `docs/BACCARAT_MOBILE.png`
-- `docs/BLACKJACK_DESKTOP.png`
-- `docs/COINFLIP_MOBILE.png`
-- `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`
-- `docs/EMPIREDROP_INTEGRATION.md`
-- `docs/empiredrop_partner_openapi_2.0.1.yaml`
-- `docs/EMPIREDROP_VALIDATION.md`
-- `docs/GAMING_DESKTOP.png`
-- `docs/GAMING_MOBILE.png`
-- `docs/HEALTH_DESKTOP.png`
-- `docs/HEALTH_MOBILE.png`
-- `docs/HISTORY_MOBILE(1).png`
-- `docs/HISTORY_MOBILE.png`
-- `docs/LIMBO_MOBILE.png`
-- `docs/PERFORMANCE.md`
-- `docs/PLINKO_DESKTOP.png`
-- `docs/POKER_DESKTOP.png`
-- `docs/POKER_MOBILE.png`
-- `docs/PREVIEW_DESKTOP.png`
-- `docs/PREVIEW_MOBILE.png`
-- `docs/redlogo(3).png`
-- `docs/REDPOINTS.md`
-- `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
-- `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
-- `docs/V12_VALIDATION_REPORT.md`
-- `docs/V14_PUBLIC_RACES_AND_GAMING.md`
-- `docs/V15_DESIGN_CALENDAR_GAMING.md`
-- `docs/V16_UNIFORMITY_AND_RELIABILITY.md`
-- `docs/V17_TIMER_CARD_REFINEMENT.md`
-- `docs/VALIDATION.md`
-
-## private
-
-- `private/admin_store.seed.json`
-- `private/settings.json`
-
-## data
-
-- `data/state.json`
-- `data/state.json.lock`
-
+- `UPDATE.md`
+- `wager_backend.py`
+- `weekly_history.py`

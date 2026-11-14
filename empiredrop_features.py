@@ -56,6 +56,23 @@ def validate_rewards(value):
             'revision': revision, 'updated_at': updated_at, 'updated_by': updated_by}
 
 
+
+def resolve_reward_save_mode(form):
+    """Return the administrator's explicit payout action.
+
+    Browsers omit disabled submit buttons from native form serialization. The
+    payout UI disables both buttons immediately to prevent double clicks, so
+    JavaScript also writes ``save_mode_intent`` before disabling them. Prefer
+    that durable intent while retaining the normal submit-button value as the
+    no-JavaScript fallback.
+    """
+    intent = str(form.get('save_mode_intent') or '').strip().lower()
+    button = str(form.get('save_mode') or '').strip().lower()
+    mode = intent or button or 'draft'
+    if mode not in {'draft', 'publish'}:
+        raise ValueError('Choose Save draft or Save and publish.')
+    return mode
+
 def format_reward(value, currency):
     return CURRENCY_SIGNS[currency] + f'{Decimal(str(value)):,.2f}'
 

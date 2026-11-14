@@ -1,11 +1,16 @@
-# EmpireDrop race deployment — V14
+# EmpireDrop race deployment — V18
 
-V14 retains the official partner-race integration:
+V18 keeps the official EmpireDrop partner-race integration and fixes the payout
+publication action. The public leaderboard uses the selected official race slug
+and both API-key headers. Locally advertised Top 10 prizes are independent from
+EmpireDrop payments.
 
-- `GET /api/v1/affiliate-partner/races`
-- `GET /api/v1/affiliate-partner/races/{slug}`
-- `X-Public-Key` and `X-Private-Key`
+After deployment:
 
-Select the correct running wager/ranking race slug in Admin. The local display schedule is November 10–17, 2026 at 6:00 PM Eastern; the official provider race owns the actual API window.
+1. Open Admin → Leaderboards → EmpireDrop → Prizes.
+2. Confirm the public pool is `$2,000.00` and the status is **Published**.
+3. Change a value only if needed, then click **Save & publish** once.
+4. Confirm the public Top 10 displays the rank-specific values.
 
-The public presentation is now visually identical to Shuffle while preserving EmpireDrop Top 10, provider masking, official amounts and independent RedHunllef payouts. Prize changes retain the V13 atomic draft/publish/read-back/public-projection verification workflow.
+The browser now records the clicked publish action before disabling the buttons,
+so the request cannot silently fall back to a draft save.

@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.14-timer-card-refinement-v17",
+  "release": "2026.11.14-empiredrop-prize-publish-v18",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -9,8 +9,8 @@
   "shuffle_positions": 15,
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "Matching Shuffle and EmpireDrop race summaries with natural-height, wide timer cards, unified countdown typography and quiet public fallback states",
-  "admin_experience": "V16 reliability controls retained; no provider, payout or administrator workflow changes in this visual refinement",
+  "public_experience": "V17 compact, matching Shuffle and EmpireDrop timer cards with the published USD EmpireDrop Top 10 prize schedule visible publicly.",
+  "admin_experience": "EmpireDrop Save & publish now preserves the clicked publish intent before submit buttons are disabled, with server-side fallback and verification.",
   "live_deployment_verified": false,
   "bundled_state_is_snapshot": true
 }

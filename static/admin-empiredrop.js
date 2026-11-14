@@ -158,13 +158,20 @@
   let submitting = false;
   form.addEventListener('submit',event=>{
     if (submitting) { event.preventDefault(); return; }
+    const submitter = event.submitter;
+    const mode = submitter?.value === 'publish' ? 'publish' : 'draft';
+    // Disabled submit buttons are omitted from native form serialization.
+    // Persist the click intent in a hidden field before locking the buttons so
+    // Save & publish cannot silently arrive at the server as Save draft.
+    const intent = form.querySelector('[name="save_mode_intent"]');
+    if (intent) intent.value = mode;
     submitting = true;
     form.setAttribute('aria-busy','true');
-    const publish = event.submitter?.value === 'publish';
+    const publish = mode === 'publish';
     if (status) status.textContent = publish ? 'Saving and verifying public prizes…' : 'Saving draft…';
     for (const button of form.querySelectorAll('[data-payout-submit]')) {
       button.disabled = true;
-      if (button === event.submitter) button.textContent = publish ? 'Publishing…' : 'Saving…';
+      if (button === submitter) button.textContent = publish ? 'Publishing…' : 'Saving…';
     }
   });
   preview();state();

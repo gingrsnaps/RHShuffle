@@ -1,7 +1,7 @@
 {
   "format": 1,
   "key": "redhunllef",
-  "revision": 3,
+  "revision": 4,
   "admin": {
     "version": 7,
     "secret_key": "0f471b557fe98828d7ae45022198fe6b7f32d2f5eaa43f0d8dd2e87bd8ef7d57",
@@ -61,8 +61,8 @@
       }
     ],
     "banned_ips": [],
-    "updated_at": 1794551811,
-    "settings_revision": 2,
+    "updated_at": 1794641460,
+    "settings_revision": 3,
     "data_revision": 1,
     "race_history": [],
     "superadmin": "gingrsnaps",
@@ -91,43 +91,44 @@
       "race_verified_fields": true
     },
     "empiredrop_rewards": {
-      "currency": "EUR",
-      "enabled": false,
+      "currency": "USD",
+      "enabled": true,
       "prizes": {
-        "1": "0.00",
-        "2": "0.00",
-        "3": "0.00",
-        "4": "0.00",
-        "5": "0.00",
-        "6": "0.00",
-        "7": "0.00",
-        "8": "0.00",
-        "9": "0.00",
-        "10": "0.00"
+        "1": "1000.00",
+        "2": "450.00",
+        "3": "200.00",
+        "4": "125.00",
+        "5": "75.00",
+        "6": "50.00",
+        "7": "25.00",
+        "8": "25.00",
+        "9": "25.00",
+        "10": "25.00"
       },
-      "revision": 1,
-      "updated_at": 0,
-      "updated_by": ""
+      "revision": 2,
+      "updated_at": 1794641460,
+      "updated_by": "gingrsnaps"
     },
     "empiredrop_rewards_draft": {
-      "currency": "EUR",
-      "enabled": false,
+      "currency": "USD",
+      "enabled": true,
       "prizes": {
-        "1": "0.00",
-        "2": "0.00",
-        "3": "0.00",
-        "4": "0.00",
-        "5": "0.00",
-        "6": "0.00",
-        "7": "0.00",
-        "8": "0.00",
-        "9": "0.00",
-        "10": "0.00"
+        "1": "1000.00",
+        "2": "450.00",
+        "3": "200.00",
+        "4": "125.00",
+        "5": "75.00",
+        "6": "50.00",
+        "7": "25.00",
+        "8": "25.00",
+        "9": "25.00",
+        "10": "25.00"
       },
-      "revision": 1,
-      "updated_at": 0,
-      "updated_by": ""
-    }
+      "revision": 2,
+      "updated_at": 1794641460,
+      "updated_by": "gingrsnaps"
+    },
+    "empiredrop_reward_last_submission": null
   },
   "live": {
     "shuffle": {

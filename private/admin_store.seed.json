@@ -224,7 +224,7 @@
     ],
     "updated_at": 1786043029
   },
-  "updated_at": 1794551811,
+  "updated_at": 1794641460,
   "empiredrop_race": {
     "mode": "custom",
     "start_time": 1794351600,
@@ -250,41 +250,41 @@
     "race_verified_fields": true
   },
   "empiredrop_rewards": {
-    "currency": "EUR",
-    "enabled": false,
+    "currency": "USD",
+    "enabled": true,
     "prizes": {
-      "1": "0.00",
-      "2": "0.00",
-      "3": "0.00",
-      "4": "0.00",
-      "5": "0.00",
-      "6": "0.00",
-      "7": "0.00",
-      "8": "0.00",
-      "9": "0.00",
-      "10": "0.00"
+      "1": "1000.00",
+      "2": "450.00",
+      "3": "200.00",
+      "4": "125.00",
+      "5": "75.00",
+      "6": "50.00",
+      "7": "25.00",
+      "8": "25.00",
+      "9": "25.00",
+      "10": "25.00"
     },
-    "revision": 1,
-    "updated_at": 0,
-    "updated_by": ""
+    "revision": 2,
+    "updated_at": 1794641460,
+    "updated_by": "gingrsnaps"
   },
   "empiredrop_rewards_draft": {
-    "currency": "EUR",
-    "enabled": false,
+    "currency": "USD",
+    "enabled": true,
     "prizes": {
-      "1": "0.00",
-      "2": "0.00",
-      "3": "0.00",
-      "4": "0.00",
-      "5": "0.00",
-      "6": "0.00",
-      "7": "0.00",
-      "8": "0.00",
-      "9": "0.00",
-      "10": "0.00"
+      "1": "1000.00",
+      "2": "450.00",
+      "3": "200.00",
+      "4": "125.00",
+      "5": "75.00",
+      "6": "50.00",
+      "7": "25.00",
+      "8": "25.00",
+      "9": "25.00",
+      "10": "25.00"
     },
-    "revision": 1,
-    "updated_at": 0,
-    "updated_by": ""
+    "revision": 2,
+    "updated_at": 1794641460,
+    "updated_by": "gingrsnaps"
   }
 }

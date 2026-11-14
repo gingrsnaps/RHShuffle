@@ -42,7 +42,7 @@ from fairness import GAMES, SUPPORTED_VERSIONS, rules as gaming_rules
 from gaming import Gaming, GamingError, validate_gaming
 from empiredrop import validate_settings, EDITABLE, schedule as empire_schedule, CODE as EMPIRE_CODE
 from empiredrop_races import RACE_EDITABLE, validate_race_settings
-from empiredrop_features import validate_rewards, rewards_public
+from empiredrop_features import validate_rewards, rewards_public, resolve_reward_save_mode
 from operations_log import ActivityLog
 from provider_admin import summarize_providers
 from integrations import ProviderError
@@ -931,10 +931,8 @@ def create_app(root=None, testing=False):
             abort(403)
         try:
             expected = int(request.form.get('reward_revision', '0'))
-            mode = request.form.get('save_mode', 'draft')
+            mode = resolve_reward_save_mode(request.form)
             submission_id = str(request.form.get('submission_id', '')).strip()
-            if mode not in {'draft', 'publish'}:
-                raise ValueError('Choose Save draft or Save and publish.')
             if not re.fullmatch(r'[A-Za-z0-9_-]{16,80}', submission_id):
                 raise ValueError('This payout form expired. Reload and try again.')
             duplicate = unchanged = False
