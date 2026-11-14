@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../static/v15-system.css">
+<link rel="stylesheet" href="../../static/v16-system.css">
+<style>body{margin:0;padding:30px;background:#0d0b10;color:#fff;font-family:Arial,sans-serif}.fixture{display:grid;grid-template-columns:1fr 1fr;gap:20px}.panel{box-sizing:border-box}.race-summary-top,.clock-footer{display:flex;justify-content:space-between}.muted{color:#aaa0ad}@media(max-width:640px){.fixture{grid-template-columns:1fr}}</style>
+</head><body data-page="public"><main class="public-home"><section class="fixture">
+<aside id="shuffleRaceClock" class="race-clock panel public-race-summary"><div class="race-summary-top"><span>RACE ENDS IN</span><span>Active</span></div><div id="countdown" class="clock race-countdown">5d 18h 42m 16s</div><p class="muted race-date-range">Nov 10, 2026 → Nov 17, 2026</p><div class="clock-footer"><span>Prize pool <strong>$4,950</strong></span><span>15 paid places</span></div></aside>
+<aside id="empireRaceClock" class="race-clock panel public-race-summary"><div class="race-summary-top"><span>RACE ENDS IN</span><span>Active</span></div><div id="empireCountdown" class="clock race-countdown">5d 18h 42m 16s</div><p class="muted race-date-range">Nov 10, 2026 → Nov 17, 2026</p><div class="clock-footer"><span>Prize pool <strong>€3,500</strong></span><span>10 paid places</span></div></aside>
+</section></main><pre id="result"></pre><script>
+const a=document.getElementById('countdown'),b=document.getElementById('empireCountdown');
+const ac=getComputedStyle(a),bc=getComputedStyle(b),ap=a.closest('aside').getBoundingClientRect(),bp=b.closest('aside').getBoundingClientRect();
+document.getElementById('result').textContent=JSON.stringify({fontA:ac.fontSize,fontB:bc.fontSize,lineA:ac.lineHeight,lineB:bc.lineHeight,heightA:Math.round(ap.height),heightB:Math.round(bp.height)});
+</script></body></html>

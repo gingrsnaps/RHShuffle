@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.13-modern-calendar-gaming-v15"
+RELEASE = "2026.11.14-timer-card-refinement-v17"
 INTERVAL = 60
 
 

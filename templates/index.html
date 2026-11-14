@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'macros.html' import public_race_summary %}
 {% block attributes %}data-page="public" data-feed="/public-state" data-bootstrap="{{ data|tojson|forceescape }}"{% endblock %}
 {% block content %}
 <main id="main" class="shell public-home">
@@ -25,19 +26,9 @@
       </div>
     </div>
 
-    <aside id="shuffleRaceClock" class="race-clock panel public-race-summary">
-      <div class="race-summary-top"><span class="eyebrow" id="clockLabel">RACE SCHEDULE</span><span id="raceBadge" class="badge state-{{ data.site.race_state }}">{{ data.site.race_state|capitalize }}</span></div>
-      <div id="countdown" class="clock" aria-hidden="true">—</div>
-      <p id="raceWindow" class="muted">{{ data.site.start_et }} → {{ data.site.end_et }}</p>
-      <div class="clock-footer"><span>Prize pool <strong class="accent" id="poolTotal">{{ data.site.total_prize }}</strong></span><span>15 paid places</span></div>
-    </aside>
+    {{ public_race_summary('shuffleRaceClock', 'clockLabel', 'raceBadge', 'state-' ~ data.site.race_state, data.site.race_state|capitalize, 'countdown', 'raceWindow', data.site.start_et ~ ' → ' ~ data.site.end_et, 'poolTotal', data.site.total_prize, 15, false, 'Shuffle race schedule') }}
 
-    <aside id="empireRaceClock" class="race-clock panel public-race-summary" hidden aria-label="EmpireDrop race schedule">
-      <div class="race-summary-top"><span class="eyebrow">RACE SCHEDULE</span><span class="badge">EmpireDrop</span></div>
-      <div class="clock" id="empireCountdown" aria-live="off">—</div>
-      <p id="empireRaceWindow" class="muted">{{ data.empiredrop.schedule.start_et }} → {{ data.empiredrop.schedule.end_et }}</p>
-      <div class="clock-footer"><span>Prize pool <strong class="accent" id="empirePoolTotal">{{ data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced' }}</strong></span><span>10 paid places</span></div>
-    </aside>
+    {{ public_race_summary('empireRaceClock', 'empireClockLabel', 'empireRaceBadge', 'state-unconfigured', 'Schedule', 'empireCountdown', 'empireRaceWindow', data.empiredrop.schedule.start_et ~ ' → ' ~ data.empiredrop.schedule.end_et, 'empirePoolTotal', data.empiredrop.prizes.total if data.empiredrop.prizes.enabled else 'Not announced', 10, true, 'EmpireDrop race schedule') }}
   </section>
 
   <section id="leaderboard" class="public-leaderboards" aria-labelledby="leaderboardTitle">

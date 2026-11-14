@@ -52,13 +52,18 @@ class Providers:
     def __init__(self, config):
         self.config, self.local = config, threading.local()
         self.token, self.token_until = "", 0
+        # Shuffle's affiliate endpoint has shown intermittent HTTP 400s when
+        # active and historical checks overlap. Serialize only Shuffle calls;
+        # Kick and EmpireDrop retain independent workers.
+        self.shuffle_lock = threading.Lock()
 
     def request(self, method, url, service, *, read_timeout=20, **kwargs):
         self.local.http_status = None
+        self.local.provider_reason = None
         # Each background thread owns its session; cookies/auth do not cross.
         if not hasattr(self.local, "session"):
             self.local.session = requests.Session()
-            self.local.session.headers.update(Accept="application/json", **{"User-Agent":"RedHunllef/9"})
+            self.local.session.headers.update(Accept="application/json", **{"User-Agent":"RedHunllef/16"})
         try:
             # Redirects could leak a key in a URL or Authorization header. Only
             # the configured official endpoint is allowed to handle the request.
@@ -74,6 +79,7 @@ class Providers:
                 if not 200 <= code < 300:
                     if service == "Shuffle" and code == 400:
                         category = classify_shuffle_bad_request(response)
+                        self.local.provider_reason = category
                         # Never surface provider response bodies, request URLs,
                         # keys, or user-specific fields in errors or logs.
                         explanation = (
@@ -105,13 +111,20 @@ class Providers:
         if not key:
             raise ProviderError("Shuffle API key is missing. Add SHUFFLE_API_KEY and restart.", kind="credentials")
         start, end = site["start_time"], min(site["end_time"], int(time.time()))
+        self.local.request_meta = {
+            "method": "GET", "endpoint_kind": str(self.config.endpoint)[:40],
+            "start": int(start), "end": int(end), "timestamp_unit": "seconds",
+            "query_keys": ["startTime", "endTime"],
+        }
         if not 0 < start < end:
+            self.local.provider_reason = "window"
             raise ProviderError("The race does not have an active or completed date window.", kind="window")
-        data = self.request("GET", "https://affiliate.shuffle.com/" + self.config.endpoint + "/" + quote(key, safe=""),
-                            "Shuffle", params={"startTime": start, "endTime": end},
-                            # Completed-week queries may take longer than a live
-                            # window. The wait stays bounded and off web threads.
-                            read_timeout=45 if site["end_time"] <= int(time.time()) else 20)
+        with self.shuffle_lock:
+            data = self.request("GET", "https://affiliate.shuffle.com/" + self.config.endpoint + "/" + quote(key, safe=""),
+                                "Shuffle", params={"startTime": start, "endTime": end},
+                                # Completed-week queries may take longer than a live
+                                # window. The wait stays bounded and off web threads.
+                                read_timeout=45 if site["end_time"] <= int(time.time()) else 20)
         rows = data if isinstance(data, list) else next((data[k] for k in ("data", "results", "leaderboard", "users", "items")
                     if isinstance(data, dict) and isinstance(data.get(k), list)), None)
         if rows is None or len(rows) > 10000:
@@ -158,3 +171,11 @@ class Providers:
 
     def last_http_status(self):
         return getattr(self.local, "http_status", None)
+
+    def last_request_meta(self):
+        value = getattr(self.local, "request_meta", None)
+        return dict(value) if isinstance(value, dict) else {}
+
+    def last_provider_reason(self):
+        value = getattr(self.local, "provider_reason", None)
+        return value if value in {"window", "bad_request"} else None

@@ -149,22 +149,33 @@
     updateCountdowns();
   }
 
-  function countdownText(start, end, now) {
-    if (!Number.isFinite(start) || !Number.isFinite(end) || !start || !end) return 'Schedule pending';
-    if (now >= end) return 'Race complete';
+  function countdownState(start, end, now) {
+    if (!Number.isFinite(start) || !Number.isFinite(end) || !start || !end || end <= start)
+      return {state:'unconfigured', label:'RACE SCHEDULE', text:'Set the race dates'};
+    if (now >= end) return {state:'ended', label:'RACE SCHEDULE', text:'Race complete'};
     const upcoming = now < start;
-    let seconds = Math.max(0, (upcoming ? start : end) - now);
+    let seconds = Math.max(0, Math.ceil((upcoming ? start : end) - now));
     const days = Math.floor(seconds/86400); seconds %= 86400;
     const hours = Math.floor(seconds/3600); seconds %= 3600;
     const minutes = Math.floor(seconds/60); seconds %= 60;
-    return `${upcoming ? 'Starts in ' : ''}${days}d ${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`;
+    return {
+      state: upcoming ? 'upcoming' : 'active',
+      label: upcoming ? 'STARTS IN' : 'RACE ENDS IN',
+      text:`${days}d ${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m ${String(seconds).padStart(2,'0')}s`
+    };
   }
 
   function updateCountdowns() {
     if (!latest || !id('empireCountdown')) return;
     const now = Math.floor(Date.now()/1000 + serverOffset);
     const schedule = latest.schedule || {};
-    id('empireCountdown').textContent = countdownText(Number(schedule.start_time), Number(schedule.end_time), now);
+    const value = countdownState(Number(schedule.start_time), Number(schedule.end_time), now);
+    id('empireCountdown').textContent = value.text;
+    if (id('empireClockLabel')) id('empireClockLabel').textContent = value.label;
+    if (id('empireRaceBadge')) {
+      id('empireRaceBadge').textContent = value.state.charAt(0).toUpperCase()+value.state.slice(1);
+      id('empireRaceBadge').className = 'badge state-'+value.state;
+    }
   }
 
   document.addEventListener('empiredrop:update', event => render(event.detail));

@@ -26,6 +26,7 @@ _ALLOWED_CODE = {
     'upstream', 'response_limit', 'redirect', 'credentials', 'partial',
     'storage', 'unknown', 'empire_settings', 'empire_rewards',
     'empire_schedule', 'shuffle_settings', 'conflict', 'validation', 'none',
+
 }
 
 
@@ -44,7 +45,8 @@ class ActivityLog:
         self.events, self.lock, self.sequence = deque(maxlen=maxlen), RLock(), 0
 
     def record(self, service, level, event, *, duration_ms=None, http_status=None,
-               count=None, code=None):
+               count=None, code=None, received=None, accepted=None, excluded=None,
+               unscoped=None):
         if (service not in _ALLOWED_SERVICE or level not in _ALLOWED_LEVEL or
                 event not in _ALLOWED_EVENT):
             raise ValueError('Unsupported log event.')
@@ -55,9 +57,16 @@ class ActivityLog:
             now = int(time.time())
             status = _bounded(http_status, 599)
             duration = _bounded(duration_ms, 600000)
+            numeric = {
+                'count': _bounded(count, 100000),
+                'received': _bounded(received, 100000),
+                'accepted': _bounded(accepted, 100000),
+                'excluded': _bounded(excluded, 100000),
+                'unscoped': _bounded(unscoped, 100000),
+            }
             # Collapse repeated identical warnings rather than presenting a
-            # separate alarm every minute. Each event retains its last-seen
-            # timestamp and a bounded repetition count.
+            # separate alarm every minute. Each event retains its first/last
+            # timestamps, latest bounded counters and a repetition count.
             if level in ('warning', 'error') and self.events:
                 last = self.events[0]
                 if (last['service'], last['level'], last['event'],
@@ -65,14 +74,15 @@ class ActivityLog:
                         and now - last['at'] <= 300:
                     last['at'] = now
                     last['duration_ms'] = duration
+                    last.update(numeric)
                     last['occurrences'] = min(100000, last.get('occurrences', 1) + 1)
                     return dict(last)
             self.sequence += 1
             item = {
-                'id': self.sequence, 'at': now,
+                'id': self.sequence, 'at': now, 'first_at': now,
                 'service': service, 'level': level, 'event': event,
                 'code': code, 'duration_ms': duration,
-                'http_status': status, 'count': _bounded(count, 100000),
+                'http_status': status, **numeric,
                 'occurrences': 1,
             }
             self.events.appendleft(item)
@@ -102,11 +112,42 @@ class ActivityLog:
             'latest_issue_at': failures[0]['at'] if failures else 0,
         }
 
+    def provider_trends(self, sample=20):
+        """Small rolling provider reliability summaries for Admin only.
+
+        Occurrences are counted so grouped repeat failures still affect the
+        success rate. No provider payload or player information is included.
+        """
+        try:
+            sample = max(1, min(100, int(sample)))
+        except (TypeError, ValueError):
+            sample = 20
+        result = {}
+        with self.lock:
+            rows = list(self.events)
+        for service in ('shuffle', 'empiredrop'):
+            checks = []
+            for row in rows:
+                if row.get('service') != service or row.get('event') not in {'refresh_ok', 'refresh_failed'}:
+                    continue
+                occurrences = max(1, int(row.get('occurrences') or 1))
+                checks.extend([row.get('event') == 'refresh_ok'] * min(occurrences, sample-len(checks)))
+                if len(checks) >= sample:
+                    break
+            successes = sum(1 for ok in checks if ok)
+            result[service] = {
+                'sample': len(checks), 'successes': successes,
+                'failures': len(checks)-successes,
+                'success_rate': round((successes/len(checks))*100) if checks else None,
+            }
+        return result
+
     def export(self, service='all', level='all'):
         return {
-            'format': 'redhunllef-operations-2',
+            'format': 'redhunllef-operations-3',
             'generated_at': datetime.now(timezone.utc).isoformat(),
             'retention': 'Last 300 process-local events; clears after restart',
             'summary': self.summary(service,level),
+            'provider_trends': self.provider_trends(),
             'events': self.list(service,level,300),
         }

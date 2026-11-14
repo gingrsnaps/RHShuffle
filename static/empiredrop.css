@@ -19,7 +19,6 @@
 }
 /* Only the selected provider's race schedule is visible. */
 #shuffleRaceClock[hidden], #empireRaceClock[hidden] {display:none!important}
-#empireRaceClock .clock {font-size:clamp(1.1rem,2vw,1.5rem);white-space:normal}
 
 /* EmpireDrop now mirrors Shuffle's two-column wager/prize presentation. */
 #empireBoard .public-table td:last-child {font-variant-numeric:tabular-nums}

@@ -1,3 +1,7 @@
-# V15 update notes
+# V17 update notes
 
-V15 is a presentation and workflow rebuild over the working V14 integrations. Provider credentials, wager calculations, payouts, wallets, receipts and fairness engines remain server-authoritative. The main changes are unified public typography, calendar-driven administration, direct provider workspaces and a compact RedPoints profile/recovery flow.
+Deploy V17 as a complete source-root replacement. The release changes only the
+public race-summary proportions and release metadata. Provider integrations,
+settings, saved state, payouts, and administrator workflows are unchanged.
+
+Use Force Rebuild and Deploy so the new release identifier invalidates cached CSS.

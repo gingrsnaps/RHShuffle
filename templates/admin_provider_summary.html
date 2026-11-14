@@ -11,13 +11,14 @@
     <article><span>Last verified</span><strong data-provider-field="{{ provider.key }}:last_success" {% if provider.key=='empiredrop' %}id="empireAdminConfirmed"{% endif %}>{{ fmt_et(provider.last_success) if provider.last_success else 'Not verified yet' }}</strong></article>
     <article><span>Last attempted</span><strong data-provider-field="{{ provider.key }}:last_attempt" {% if provider.key=='empiredrop' %}id="empireAdminAttempted"{% endif %}>{{ fmt_et(provider.last_attempt) if provider.last_attempt else 'Not attempted' }}</strong></article>
     <article><span>Ranked players</span><strong data-provider-field="{{ provider.key }}:participants">{{ provider.participants }}</strong></article>
-    <article><span>Automatic checks</span><strong data-provider-field="{{ provider.key }}:cadence">Every {{ provider.refresh_seconds }} seconds</strong></article>
+    <article><span>Recent reliability</span><strong>{% if provider.trend.sample %}{{ provider.trend.successes }}/{{ provider.trend.sample }} successful · {{ provider.trend.success_rate }}%{% else %}Waiting for checks{% endif %}</strong></article>
   </div>
   {% if provider.key=='empiredrop' %}<p class="small muted">Worker: <strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Waiting for next check' }}</strong></p>{% endif %}
   <div class="provider-quality">
     <div><span class="eyebrow">DATA VALIDATION</span><strong data-provider-field="{{ provider.key }}:quality">{{ provider.quality }}</strong></div>
     <div><span class="eyebrow">METRIC</span><strong data-provider-field="{{ provider.key }}:metric">{{ provider.metric }}</strong></div>
   </div>
+  {% if provider.key=='shuffle' and provider.request_meta %}<details class="provider-request-fingerprint"><summary>Last sanitized request</summary><dl><div><dt>Method</dt><dd>{{ provider.request_meta.method }}</dd></div><div><dt>Endpoint</dt><dd>{{ provider.request_meta.endpoint_kind }}</dd></div><div><dt>Start</dt><dd>{{ provider.request_meta.start }}</dd></div><div><dt>End</dt><dd>{{ provider.request_meta.end }}</dd></div><div><dt>Timestamp unit</dt><dd>{{ provider.request_meta.timestamp_unit }}</dd></div></dl></details>{% endif %}
   <div class="provider-issues" data-provider-issues="{{ provider.key }}" {% if not provider.issues %}hidden{% endif %}>
     <strong>Things to check</strong>
     <ul>{% for issue in provider.issues %}<li>{{ issue }}</li>{% endfor %}</ul>

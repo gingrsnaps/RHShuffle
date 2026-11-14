@@ -78,8 +78,15 @@
       const extras=[item.service.charAt(0).toUpperCase()+item.service.slice(1)];
       if(item.http_status!=null) extras.push('HTTP '+item.http_status);
       if(item.duration_ms!=null) extras.push(item.duration_ms+' ms');
-      if(item.count!=null) extras.push(item.count+' records');
-      if(Number(item.occurrences)>1) extras.push('Repeated '+item.occurrences+' times');
+      if(item.count!=null) extras.push(item.count+' ranked');
+      if(item.received!=null) extras.push(item.received+' received');
+      if(item.accepted!=null) extras.push(item.accepted+' accepted');
+      if(item.excluded!=null) extras.push(item.excluded+' excluded');
+      if(item.unscoped!=null) extras.push(item.unscoped+' without campaign');
+      if(Number(item.occurrences)>1) {
+        extras.push('Repeated '+item.occurrences+' times');
+        if(item.first_at && item.first_at !== item.at) extras.push('First '+when(item.first_at));
+      }
       body.append(heading,make('small','operations-details',extras.join(' · ')));
       if(item.code&&advice[item.code])body.append(make('p','operations-advice',advice[item.code]));
       article.append(severity,body);out.append(article);

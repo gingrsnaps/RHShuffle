@@ -1,12 +1,22 @@
-# File structure — V15
+# RedHunllef V17 file structure
 
-## Root Python modules
+Total project files (excluding generated references): 192
 
+## Root
+
+- `.gitignore`
 - `admin_navigation.py`
+- `app.yaml`
 - `baccarat.py`
 - `blackjack.py`
+- `BUILD_MANIFEST.json`
+- `CHANGES.md`
 - `config.py`
+- `DEPLOY_DIGITALOCEAN.md`
+- `DEPLOYMENT_EMPIREDROP_RACES.md`
+- `DEPLOYMENT_OPTIMIZED.md`
 - `empiredrop.py`
+- `EMPIREDROP_CHANGELOG_2026-11-10.md`
 - `empiredrop_deploy_keys.py`
 - `empiredrop_features.py`
 - `empiredrop_races.py`
@@ -17,20 +27,29 @@
 - `operations_log.py`
 - `poker.py`
 - `presentation.py`
+- `Procfile`
 - `provider_admin.py`
 - `race.py`
 - `race_support.py`
+- `README.md`
 - `release_check.py`
+- `RELEASE_METADATA.json`
+- `requirements-dev.txt`
+- `requirements-spaces.txt`
+- `requirements.txt`
 - `runtime.py`
+- `runtime.txt`
 - `shuffle_deploy_key.py`
 - `spaces_state.py`
+- `START_HERE.md`
 - `storage.py`
 - `store_schema.py`
 - `telemetry.py`
+- `UPDATE.md`
 - `wager_backend.py`
 - `weekly_history.py`
 
-## Templates
+## templates
 
 - `templates/admin.html`
 - `templates/admin_activity.html`
@@ -57,7 +76,7 @@
 - `templates/macros.html`
 - `templates/recovery_panel.html`
 
-## Static assets
+## static
 
 - `static/admin-calendar.js`
 - `static/admin-empiredrop.js`
@@ -91,52 +110,17 @@
 - `static/v11-system.css`
 - `static/v14-modern.css`
 - `static/v15-system.css`
+- `static/v16-system.css`
 
-## Private/runtime state
+## tests
 
-- `data/state.json`
-- `data/state.json.lock`
-- `private/admin_store.seed.json`
-- `private/settings.json`
-
-## Tests and documentation
-
-- `docs/ADMIN_GAMING.png`
-- `docs/ADMIN_RELIABILITY_V13.md`
-- `docs/BACCARAT_MOBILE.png`
-- `docs/BLACKJACK_DESKTOP.png`
-- `docs/COINFLIP_MOBILE.png`
-- `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`
-- `docs/EMPIREDROP_INTEGRATION.md`
-- `docs/EMPIREDROP_VALIDATION.md`
-- `docs/GAMING_DESKTOP.png`
-- `docs/GAMING_MOBILE.png`
-- `docs/HEALTH_DESKTOP.png`
-- `docs/HEALTH_MOBILE.png`
-- `docs/HISTORY_MOBILE(1).png`
-- `docs/HISTORY_MOBILE.png`
-- `docs/LIMBO_MOBILE.png`
-- `docs/PERFORMANCE.md`
-- `docs/PLINKO_DESKTOP.png`
-- `docs/POKER_DESKTOP.png`
-- `docs/POKER_MOBILE.png`
-- `docs/PREVIEW_DESKTOP.png`
-- `docs/PREVIEW_MOBILE.png`
-- `docs/REDPOINTS.md`
-- `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
-- `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
-- `docs/V12_VALIDATION_REPORT.md`
-- `docs/V14_PUBLIC_RACES_AND_GAMING.md`
-- `docs/V15_DESIGN_CALENDAR_GAMING.md`
-- `docs/VALIDATION.md`
-- `docs/empiredrop_partner_openapi_2.0.1.yaml`
-- `docs/redlogo(3).png`
 - `tests/assert_visual_pixels.py`
 - `tests/fairness_v2_vectors.json`
 - `tests/fairness_v3_vectors.json`
 - `tests/fairness_v4_vectors.json`
 - `tests/fairness_vectors.json`
-- `tests/fixtures`
+- `tests/fixtures/empiredrop_race_success.json`
+- `tests/fixtures/v16_countdown_uniformity.html`
 - `tests/gaming_motion.cjs`
 - `tests/generate_fairness_vectors.py`
 - `tests/generate_v4_vectors.py`
@@ -176,4 +160,62 @@
 - `tests/test_v11_flask_navigation.py`
 - `tests/test_v14_public_experience.py`
 - `tests/test_v15_modernization.py`
+- `tests/test_v16_asset_budget.py`
+- `tests/test_v16_reliability.py`
 - `tests/test_weekly_history.py`
+
+## tools
+
+- `tools/admin_acceptance_v13.py`
+- `tools/deployment_diagnostics.py`
+- `tools/live_smoke_v12.py`
+- `tools/live_smoke_v13.py`
+- `tools/live_smoke_v14.py`
+- `tools/verify_redpoints.py`
+- `tools/visual_acceptance_v16.py`
+
+## docs
+
+- `docs/ADMIN_GAMING.png`
+- `docs/ADMIN_RELIABILITY_V13.md`
+- `docs/BACCARAT_MOBILE.png`
+- `docs/BLACKJACK_DESKTOP.png`
+- `docs/COINFLIP_MOBILE.png`
+- `docs/EMPIREDROP_DEVELOPER_PORTAL_SETUP.md`
+- `docs/EMPIREDROP_INTEGRATION.md`
+- `docs/empiredrop_partner_openapi_2.0.1.yaml`
+- `docs/EMPIREDROP_VALIDATION.md`
+- `docs/GAMING_DESKTOP.png`
+- `docs/GAMING_MOBILE.png`
+- `docs/HEALTH_DESKTOP.png`
+- `docs/HEALTH_MOBILE.png`
+- `docs/HISTORY_MOBILE(1).png`
+- `docs/HISTORY_MOBILE.png`
+- `docs/LIMBO_MOBILE.png`
+- `docs/PERFORMANCE.md`
+- `docs/PLINKO_DESKTOP.png`
+- `docs/POKER_DESKTOP.png`
+- `docs/POKER_MOBILE.png`
+- `docs/PREVIEW_DESKTOP.png`
+- `docs/PREVIEW_MOBILE.png`
+- `docs/redlogo(3).png`
+- `docs/REDPOINTS.md`
+- `docs/SHUFFLE_400_ADMIN_TIMEZONE_FIX_2026-11-10.md`
+- `docs/V12_ADMIN_RELIABILITY_AND_FEATURE_REMOVAL.md`
+- `docs/V12_VALIDATION_REPORT.md`
+- `docs/V14_PUBLIC_RACES_AND_GAMING.md`
+- `docs/V15_DESIGN_CALENDAR_GAMING.md`
+- `docs/V16_UNIFORMITY_AND_RELIABILITY.md`
+- `docs/V17_TIMER_CARD_REFINEMENT.md`
+- `docs/VALIDATION.md`
+
+## private
+
+- `private/admin_store.seed.json`
+- `private/settings.json`
+
+## data
+
+- `data/state.json`
+- `data/state.json.lock`
+

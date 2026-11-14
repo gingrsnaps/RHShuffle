@@ -155,8 +155,17 @@
   }
   form.addEventListener('input',()=>{preview();state();});
   form.addEventListener('change',()=>{preview();state();});
+  let submitting = false;
   form.addEventListener('submit',event=>{
-    if (status) status.textContent = event.submitter?.value === 'publish' ? 'Saving and verifying public prizes…' : 'Saving draft…';
+    if (submitting) { event.preventDefault(); return; }
+    submitting = true;
+    form.setAttribute('aria-busy','true');
+    const publish = event.submitter?.value === 'publish';
+    if (status) status.textContent = publish ? 'Saving and verifying public prizes…' : 'Saving draft…';
+    for (const button of form.querySelectorAll('[data-payout-submit]')) {
+      button.disabled = true;
+      if (button === event.submitter) button.textContent = publish ? 'Publishing…' : 'Saving…';
+    }
   });
   preview();state();
 })();

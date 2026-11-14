@@ -33,6 +33,9 @@ services:
       - key: APP_STATE_KEY
         value: redhunllef
         scope: RUN_TIME
+      - key: RH_SPACES_ENABLE
+        value: "0"
+        scope: RUN_TIME
       - key: PORT
         value: "8080"
         scope: RUN_TIME

@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.13-modern-calendar-gaming-v15",
+  "release": "2026.11.14-timer-card-refinement-v17",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -9,8 +9,8 @@
   "shuffle_positions": 15,
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "Unified race typography, quiet source handling, Community Leaderboard-first RedPoints dashboard and dialog profile tools",
-  "admin_experience": "Direct provider workspaces and shared Eastern calendar controls for Shuffle and EmpireDrop",
+  "public_experience": "Matching Shuffle and EmpireDrop race summaries with natural-height, wide timer cards, unified countdown typography and quiet public fallback states",
+  "admin_experience": "V16 reliability controls retained; no provider, payout or administrator workflow changes in this visual refinement",
   "live_deployment_verified": false,
   "bundled_state_is_snapshot": true
 }

@@ -46,10 +46,10 @@
   {% if superadmin %}
   {{ action_feedback('empireRewards') }}
   <form method="post" action="/admin/empiredrop/rewards" class="stack admin-sticky-form" data-dirty>
-    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="reward_revision" value="{{ rewards.revision }}">
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="reward_revision" value="{{ rewards.revision }}"><input type="hidden" name="submission_id" value="{{ empire_reward_submission_id }}">
     <div class="field compact-field"><label for="empireRewardsCurrency">Prize currency</label><select id="empireRewardsCurrency" name="currency"><option value="EUR" {% if rewards.currency=='EUR' %}selected{% endif %}>EUR (€)</option><option value="USD" {% if rewards.currency=='USD' %}selected{% endif %}>USD ($)</option></select></div>
     <div class="prize-grid">{% for n in range(1,11) %}<div class="field"><label for="empirePrize{{ n }}">Place {{ n }}</label><input id="empirePrize{{ n }}" name="prize_{{ n }}" type="number" inputmode="decimal" min="0" max="1000000" step="0.01" required value="{{ rewards.prizes[n|string] }}"></div>{% endfor %}</div>
-    <div class="admin-save-bar"><div><strong id="empireRewardSaveState">No unsaved changes</strong><small>Publishing replaces the public Top 10 prize schedule after the server verifies the write.</small></div><button type="submit" name="save_mode" value="draft" class="button">Save draft</button><button type="submit" name="save_mode" value="publish" class="button primary">Save &amp; publish</button></div>
+    <div class="admin-save-bar"><div><strong id="empireRewardSaveState">No unsaved changes</strong><small>Publishing replaces the public Top 10 prize schedule after the server verifies the write.</small></div><button type="submit" name="save_mode" value="draft" class="button" data-payout-submit>Save draft</button><button type="submit" name="save_mode" value="publish" class="button primary" data-payout-submit>Save &amp; publish</button></div>
   </form>
   {% else %}<p class="small muted">Only the Superadmin can change payout amounts.</p>{% endif %}
 </section>

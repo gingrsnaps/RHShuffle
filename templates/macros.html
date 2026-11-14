@@ -10,3 +10,11 @@
 {% macro action_feedback(target) -%}
 {% if admin_receipt and admin_receipt.target==target %}<p id="feedback-{{ target }}" class="notice success form-feedback saved-receipt" role="status" tabindex="-1"><strong>Saved.</strong> {{ admin_receipt.message }} <small>{{ fmt_et(admin_receipt.at) }}</small></p>{% endif %}
 {%- endmacro %}
+{% macro public_race_summary(container_id, label_id, badge_id, badge_class, badge_text, countdown_id, window_id, window_text, pool_id, pool_text, places, hidden=false, aria_label='Race schedule') -%}
+<aside id="{{ container_id }}" class="race-clock panel public-race-summary"{% if hidden %} hidden{% endif %} aria-label="{{ aria_label }}">
+  <div class="race-summary-top"><span class="eyebrow" id="{{ label_id }}">RACE SCHEDULE</span><span id="{{ badge_id }}" class="badge {{ badge_class }}">{{ badge_text }}</span></div>
+  <div id="{{ countdown_id }}" class="clock race-countdown" aria-live="off">—</div>
+  <p id="{{ window_id }}" class="muted race-date-range">{{ window_text }}</p>
+  <div class="clock-footer"><span>Prize pool <strong class="accent" id="{{ pool_id }}">{{ pool_text }}</strong></span><span>{{ places }} paid places</span></div>
+</aside>
+{%- endmacro %}

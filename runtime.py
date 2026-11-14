@@ -36,6 +36,7 @@ class Runtime:
         self.jobs = {name: dict(state="starting", next_check=0, duration_ms=0, http_status=None,
                                retry_after=0, attempt_at=0, error="", not_before=0,
                                requested=0, completed=0, runs=0, completed_at=0, result="waiting",
+                               failure_streak=0, request_meta={}, provider_reason=None,
                                checked_scope="", checked_start=0, checked_end=0, checked_channel="")
                      for name in self.events}
 
@@ -144,7 +145,7 @@ class Runtime:
             self.jobs[name].update(state="checking", attempt_at=now, next_check=0,
                                    runs=self.jobs[name]["runs"]+1)
         error, status, retry, warning, result, revision = "", None, 0, "", "waiting", None
-        failure_code = None
+        failure_code, request_meta = None, {}
         try:
             with self.store.job(name) as acquired:
                 revision, admin = self.sync()
@@ -172,6 +173,7 @@ class Runtime:
                         LOG.info("SHUFFLE Checking saved window %s -> %s.", fmt_et(site["start_time"]), fmt_et(min(site["end_time"], now)))
                         incoming = normalize(self.providers.shuffle(site), site, self.config.raw_fallback)
                         status = self.providers.last_http_status()
+                        request_meta = self.providers.last_request_meta()
                         value = calculate({**empty(site), **incoming, "updated_at":int(time.time()), "attempt_at":now, "ok":True}, admin, self.config)
                         # Warn once when incomplete campaign/amount records change.
                         # Store only counts, never source values or usernames.
@@ -183,7 +185,10 @@ class Runtime:
                              invalid != sum(n for reason, n in previous.get('rejected', {}).items()
                                             if reason != 'other campaign'))):
                             self.activity_log.record('shuffle', 'warning', 'data_quality',
-                                                     code='partial', count=missing + invalid)
+                                                     code='partial', count=value.get('count', len(value.get('rows', []))),
+                                                     received=value.get('received', 0), accepted=value.get('accepted', 0),
+                                                     excluded=max(0, value.get('received', 0)-value.get('accepted', 0)),
+                                                     unscoped=missing)
                         value["changed_at"] = value["updated_at"] if previous["rows"] != value["rows"] else previous.get("changed_at", 0)
                         value["previous_top"] = previous["rows"][:15] if previous["rows"][:15] != value["rows"][:15] else previous.get("previous_top", [])
                         warning = value["warning"]
@@ -214,6 +219,7 @@ class Runtime:
             error = str(exc) if isinstance(exc, (ProviderError, StoreError, ValueError)) else "Internal check failed (" + type(exc).__name__ + ")."
             status, retry = getattr(exc, "status", None), getattr(exc, "retry_after", 0)
             failure_code = getattr(exc, "kind", "unknown")
+            request_meta = self.providers.last_request_meta() if name == "shuffle" else {}
             superseded, result = False, "failed"
             with self.lock:
                 superseded = revision is not None and revision != self.revision
@@ -243,8 +249,17 @@ class Runtime:
         finally:
             duration = round((time.monotonic() - began) * 1000)
             with self.lock:
+                previous_streak = int(self.jobs[name].get("failure_streak", 0) or 0)
+                failure_streak = previous_streak + 1 if error else 0
+                # Repeated provider failures back off without spawning overlapping
+                # checks. A successful response immediately restores normal cadence.
+                effective_retry = max(int(retry or 0),
+                                      min(480, INTERVAL * (2 ** min(3, max(0, failure_streak - 1))))) if error else 0
                 self.jobs[name].update(state="delayed" if error else "scheduled", error=error, http_status=status,
-                                       duration_ms=duration, retry_after=retry, result=result,
+                                       duration_ms=duration, retry_after=effective_retry, result=result,
+                                       failure_streak=failure_streak,
+                                       request_meta=request_meta if name == "shuffle" else {},
+                                       provider_reason=failure_code if error else None,
                                        completed=max(ticket, self.jobs[name]["completed"]), completed_at=int(time.time()))
             if warning:
                 LOG.warning("SHUFFLE %s", warning)
@@ -254,10 +269,17 @@ class Runtime:
                 # Only meaningful changes/failures; no usernames or provider bodies.
                 self.activity_log.record(name,'warning' if error else 'success',
                     'refresh_failed' if error else 'refresh_ok',duration_ms=duration,
-                    http_status=status,count=len(value.get('rows',[])) if not error and isinstance(value,dict) else None,
+                    http_status=status,
+                    count=len(value.get('rows',[])) if not error and isinstance(value,dict) else None,
+                    received=value.get('received') if not error and isinstance(value,dict) else None,
+                    accepted=value.get('accepted') if not error and isinstance(value,dict) else None,
+                    excluded=(max(0, value.get('received',0)-value.get('accepted',0))
+                             if not error and isinstance(value,dict) and name == 'shuffle' else None),
+                    unscoped=(value.get('missing_campaign',0)
+                             if not error and isinstance(value,dict) and name == 'shuffle' else None),
                     code=failure_code if error else None)
             LOG.info("%s Check took %sms. Automatic checks stay enabled.", name.upper(), duration)
-        return max(INTERVAL, retry) if error else 0
+        return effective_retry if error else 0
 
     def request_refresh(self, name=None):
         if self.started:

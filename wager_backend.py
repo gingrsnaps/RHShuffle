@@ -564,7 +564,7 @@ def create_app(root=None, testing=False):
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
-        values["providers"] = summarize_providers(values, empire_status)
+        values["providers"] = summarize_providers(values, empire_status, activity.provider_trends())
         values["durability"] = dict(mode='Spaces mirror' if runtime.store.mirror else 'Local JSON',
                                     remote=bool(runtime.store.mirror),
                                     revision=g.revision,
@@ -585,6 +585,7 @@ def create_app(root=None, testing=False):
                                change_review=change_review, review_token=review_token,
                                recovery_review=recovery_review, admin_receipt=receipt,
                                gaming_grant_id=secrets.token_hex(16),
+                               empire_reward_submission_id=secrets.token_urlsafe(18),
                                empire_admin=empire_status, section_focus=section_focus), status
 
     def admin_saved(message, tab, target):
@@ -761,7 +762,7 @@ def create_app(root=None, testing=False):
             value['gaming'] = gaming.leaders()
         value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
-        value["providers"] = summarize_providers(value, runtime.empiredrop.private_status(g.admin["site_settings"]))
+        value["providers"] = summarize_providers(value, runtime.empiredrop.private_status(g.admin["site_settings"]), activity.provider_trends())
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
         if request.args.get("tab", "players") == "players":
@@ -919,10 +920,11 @@ def create_app(root=None, testing=False):
     @app.post('/admin/empiredrop/rewards')
     @protected
     def empire_admin_rewards():
-        """Atomically save a draft or publish ten independent rank prizes.
+        """Idempotently save a draft or publish ten independent rank prizes.
 
-        This form has its own revision counter. Unrelated Shuffle, account or
-        integration changes no longer invalidate an open payout editor.
+        The payout editor has its own revision and per-form submission token.
+        Double-clicks, browser retries and unchanged submissions cannot create
+        duplicate state revisions or duplicate publication events.
         """
         require_csrf()
         if not g.superadmin:
@@ -930,32 +932,52 @@ def create_app(root=None, testing=False):
         try:
             expected = int(request.form.get('reward_revision', '0'))
             mode = request.form.get('save_mode', 'draft')
+            submission_id = str(request.form.get('submission_id', '')).strip()
             if mode not in {'draft', 'publish'}:
                 raise ValueError('Choose Save draft or Save and publish.')
+            if not re.fullmatch(r'[A-Za-z0-9_-]{16,80}', submission_id):
+                raise ValueError('This payout form expired. Reload and try again.')
+            duplicate = unchanged = False
+            value = None
             with runtime.store.connection(transaction=True) as conn:
-                published = validate_rewards(conn['admin'].get('empiredrop_rewards', {}))
-                current = validate_rewards(conn['admin'].get('empiredrop_rewards_draft',
-                                                             conn['admin'].get('empiredrop_rewards', {})))
-                if expected != current['revision']:
-                    raise Conflict('EmpireDrop prizes changed in another tab. Reload and review the saved values.')
-                payload = dict(
-                    currency=request.form.get('currency', 'EUR'),
-                    enabled=mode == 'publish',
-                    prizes={str(n): request.form.get('prize_' + str(n), '') for n in range(1, 11)},
-                    revision=current['revision'] + 1,
-                    updated_at=int(time.time()),
-                    updated_by=g.user,
-                )
-                value = validate_rewards(payload)
-                runtime.store.backup_in(conn, 'before-empiredrop-payout-change',
-                                        {'empiredrop_rewards': published,
-                                         'empiredrop_rewards_draft': current})
-                conn['admin']['empiredrop_rewards_draft'] = copy.deepcopy(value)
-                if mode == 'publish':
-                    conn['admin']['empiredrop_rewards'] = copy.deepcopy(value)
-                conn['admin']['settings_revision'] = int(conn['admin'].get('settings_revision', 1)) + 1
-                conn['admin']['updated_at'] = int(time.time())
-                conn['revision'] += 1
+                last_submission = str(conn['admin'].get('empiredrop_reward_last_submission') or '')
+                if last_submission and hmac.compare_digest(last_submission, submission_id):
+                    duplicate = True
+                else:
+                    published = validate_rewards(conn['admin'].get('empiredrop_rewards', {}))
+                    current = validate_rewards(conn['admin'].get('empiredrop_rewards_draft',
+                                                                 conn['admin'].get('empiredrop_rewards', {})))
+                    if expected != current['revision']:
+                        raise Conflict('EmpireDrop prizes changed in another tab. Reload and review the saved values.')
+                    payload = dict(
+                        currency=request.form.get('currency', 'EUR'),
+                        enabled=mode == 'publish',
+                        prizes={str(n): request.form.get('prize_' + str(n), '') for n in range(1, 11)},
+                        revision=current['revision'] + 1,
+                        updated_at=int(time.time()),
+                        updated_by=g.user,
+                    )
+                    value = validate_rewards(payload)
+                    target = published if mode == 'publish' else current
+                    unchanged = (
+                        target.get('currency') == value.get('currency') and
+                        target.get('prizes') == value.get('prizes') and
+                        bool(target.get('enabled')) == bool(value.get('enabled'))
+                    )
+                    if not unchanged:
+                        runtime.store.backup_in(conn, 'before-empiredrop-payout-change',
+                                                {'empiredrop_rewards': published,
+                                                 'empiredrop_rewards_draft': current})
+                        conn['admin']['empiredrop_rewards_draft'] = copy.deepcopy(value)
+                        if mode == 'publish':
+                            conn['admin']['empiredrop_rewards'] = copy.deepcopy(value)
+                        conn['admin']['empiredrop_reward_last_submission'] = submission_id
+                        conn['admin']['settings_revision'] = int(conn['admin'].get('settings_revision', 1)) + 1
+                        conn['admin']['updated_at'] = int(time.time())
+                        conn['revision'] += 1
+            if duplicate or unchanged:
+                return admin_saved('No prize changes were detected. The published schedule was left unchanged.',
+                                   'empiredrop', 'empireRewards')
             runtime.sync()
             _, persisted_admin = runtime.store.admin()
             persisted = validate_rewards(persisted_admin.get('empiredrop_rewards_draft',
@@ -967,7 +989,7 @@ def create_app(root=None, testing=False):
             if mode == 'publish' and public_prizes != expected_public:
                 raise StoreError('The payout was saved but the public projection did not refresh. Reload before retrying.')
             safe_activity('admin', 'success', 'empire_rewards_published' if mode == 'publish' else 'empire_rewards_draft',
-                            code='empire_rewards', count=10)
+                          code='empire_rewards', count=10)
             message = (
                 'EmpireDrop prizes saved and published on the public Top 10.'
                 if mode == 'publish' else
@@ -976,7 +998,7 @@ def create_app(root=None, testing=False):
             return admin_saved(message, 'empiredrop', 'empireRewards')
         except (ValueError, Conflict, StoreError) as exc:
             safe_activity('admin', 'warning', 'empire_rewards_save_failed',
-                            code='conflict' if isinstance(exc, Conflict) else 'validation')
+                          code='conflict' if isinstance(exc, Conflict) else 'validation')
             return render_admin('empiredrop', errors={'empiredrop': str(exc)},
                                 status=409 if isinstance(exc, Conflict) else 422)
 
@@ -1111,6 +1133,7 @@ def create_app(root=None, testing=False):
         except ValueError:
             return json_error('Choose valid event filters.',422)
         return jsonify(events=result, summary=activity.summary(request.args.get('service','all'),request.args.get('level','all')),
+                       provider_trends=activity.provider_trends(),
                        retention='Last 300 events; reset on server restart')
 
     @app.get('/admin/operations/export')
@@ -1128,12 +1151,16 @@ def create_app(root=None, testing=False):
             lines = ['RedHunllef operational activity (sanitized)',
                      'Generated: '+report['generated_at'], report['retention'], '']
             for event in report['events']:
-                lines.append('%s | %-10s | %-7s | %-18s | class=%s | HTTP %s | %s ms | %s entries | %sx' % (
+                lines.append('%s | %-10s | %-7s | %-24s | class=%s | HTTP %s | %s ms | ranked=%s | received=%s | accepted=%s | excluded=%s | unscoped=%s | %sx' % (
                     datetime.fromtimestamp(event['at'], timezone.utc).isoformat(),event['service'],event['level'],event['event'],
                     event.get('code') or '-',
                     event['http_status'] if event['http_status'] is not None else '-',
                     event['duration_ms'] if event['duration_ms'] is not None else '-',
                     event['count'] if event['count'] is not None else '-',
+                    event.get('received') if event.get('received') is not None else '-',
+                    event.get('accepted') if event.get('accepted') is not None else '-',
+                    event.get('excluded') if event.get('excluded') is not None else '-',
+                    event.get('unscoped') if event.get('unscoped') is not None else '-',
                     event.get('occurrences', 1)))
             return Response('\n'.join(lines)+'\n',mimetype='text/plain',
                             headers={'Content-Disposition':'attachment; filename=redhunllef-operations.txt'})

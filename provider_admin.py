@@ -31,7 +31,7 @@ def _component(health, key):
                  if isinstance(x, dict) and x.get('key') == key), {})
 
 
-def summarize_providers(status, empire):
+def summarize_providers(status, empire, trends=None):
     """Return two uniform cards with explicit source-quality indicators.
 
     status: output of Runtime.status() (admin only)
@@ -49,13 +49,18 @@ def summarize_providers(status, empire):
     missing = _int(quality.get('missing_campaign'))
     rejected = quality.get('rejected') or {}
     rejected_total = sum(_int(n) for n in rejected.values()) if isinstance(rejected, dict) else 0
+    excluded_total = max(0, received - accepted)
+    ranked = _int(status.get('count'))
+    trends = trends or {}
+    s_trend = trends.get('shuffle') or {}
+    e_trend = trends.get('empiredrop') or {}
     s_issues = []
     if not _int(shuffle.get('last_success')):
         s_issues.append('No verified Shuffle response yet.')
     if missing:
-        s_issues.append(f'{missing:,} record(s) lack campaign metadata; verify campaign scoping before relying on totals.')
-    if rejected_total:
-        s_issues.append(f'{rejected_total:,} record(s) were excluded by validation or campaign filtering.')
+        s_issues.append(f'{missing:,} source record(s) lack campaign metadata.')
+    if excluded_total:
+        s_issues.append(f'{excluded_total:,} source record(s) were excluded by validation or campaign filtering.')
     if shuffle.get('error'):
         http_status = shuffle.get('http_status')
         s_issues.append(
@@ -78,12 +83,17 @@ def summarize_providers(status, empire):
         'last_success': _int(shuffle.get('last_success')),
         'last_attempt': _int(shuffle.get('attempt_at')),
         'refresh_seconds': 60,
-        'participants': _int(status.get('count')),
+        'participants': ranked,
         'loaded': len(rows) if isinstance(rows, list) else 0,
         'metric': 'Weighted wager',
         'scope': ('Shuffle window: ' + str((status.get('site') or {}).get('start_et') or 'Not configured') + ' → ' +
                   str((status.get('site') or {}).get('end_et') or 'Not configured')),
-        'quality': f'{accepted:,} accepted / {received:,} received' if received else 'Waiting for source records',
+        'quality': (f'{ranked:,} ranked player(s) from {received:,} source record(s) · '
+                    f'{accepted:,} accepted · {excluded_total:,} excluded · {missing:,} without campaign metadata'
+                    if received else 'Waiting for source records'),
+        'trend': s_trend,
+        'request_meta': shuffle.get('request_meta') or {},
+        'provider_reason': shuffle.get('provider_reason'),
         'issues': s_issues, 'action': '/admin/leaderboards/shuffle',
         'details': '/admin/leaderboards/shuffle/players',
     }
@@ -120,6 +130,9 @@ def summarize_providers(status, empire):
         'quality': (f'{len(erows):,} verified position(s) / provider cap {meta["ranks_limit"]}'
                     if isinstance(erows, list) and type(meta.get('ranks_limit')) is int
                     else 'Awaiting provider ranking confirmation'),
+        'trend': e_trend,
+        'request_meta': {},
+        'provider_reason': empire.get('error_kind'),
         'issues': e_issues, 'action': '/admin/leaderboards/empiredrop',
         'details': '/admin/leaderboards/empiredrop/source',
     }

@@ -30,3 +30,12 @@ App Platform local JSON is temporary across replacement or redeployment. Export 
 ## Private package warning
 
 The private archives include production credentials and a saved-state snapshot. Keep the archive and repository private.
+
+## V17 timer-card refinement
+
+V17 keeps the shared Shuffle and EmpireDrop countdown system while restoring a wider, natural-height timer card
+scale and card geometry. It also prevents duplicate EmpireDrop payout writes,
+serializes Shuffle current/history requests, adds bounded retry backoff, and
+shows precise sanitized request/data-quality information in Admin.
+
+See `docs/V17_TIMER_CARD_REFINEMENT.md` for the visual correction and `docs/V16_UNIFORMITY_AND_RELIABILITY.md` for the retained reliability work.
