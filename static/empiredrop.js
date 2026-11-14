@@ -169,7 +169,7 @@
 
   document.addEventListener('empiredrop:update', event => render(event.detail));
   countdownTimer = setInterval(updateCountdowns, 1000);
-  window.addEventListener('pagehide', () => clearInterval(countdownTimer), {once:true});
+  globalThis.addEventListener?.('pagehide', () => clearInterval(countdownTimer), {once:true});
 
   try {
     const bootstrap = JSON.parse(document.body.dataset.bootstrap || '{}');

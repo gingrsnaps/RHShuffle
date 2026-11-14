@@ -99,7 +99,7 @@ class AdminReliabilityV13(unittest.TestCase):
         source = (ROOT / 'wager_backend.py').read_text(encoding='utf-8')
         expectations = {
             'admin_shuffle_page': "workspace('shuffle')",
-            'admin_shuffle_schedule_page': "workspace('race')",
+            'admin_shuffle_schedule_page': "workspace('race', 'schedule')",
             'admin_shuffle_players_page': "workspace('players')",
             'admin_empiredrop_page': "workspace('empiredrop')",
             'admin_settings_page': "workspace('settings')",

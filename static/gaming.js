@@ -321,6 +321,21 @@
       communityRanks = nextRanks;
     }
   }
+
+  document.querySelector(".gaming-community-tabs")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-community-view]");
+    if (!button) return;
+    const view = button.dataset.communityView;
+    document.querySelectorAll("[data-community-view]").forEach(node => {
+      const active = node === button;
+      node.classList.toggle("is-active", active);
+      node.setAttribute("aria-selected", String(active));
+    });
+    document.querySelectorAll("[data-community-panel]").forEach(panel => {
+      panel.hidden = panel.dataset.communityPanel !== view;
+    });
+  });
+
   id("gamingGameFilters")?.addEventListener("click", event => {
     const button = event.target.closest("[data-community-filter]");
     if (!button) return;
@@ -389,12 +404,19 @@
     id("pointsReset").textContent = unclaimed
       ? "Save your name to play."
       : "Resets " + next.season.end_et;
-    id("gamingProfile").hidden = !next.needs_profile;
+    
+    const profileDialog = id("gamingProfile");
+    if (profileDialog) {
+      const shouldPrompt = next.needs_profile && profileDialog.dataset.autostart === "true";
+      if (!next.needs_profile && profileDialog.open) profileDialog.close();
+      else if (shouldPrompt && !profileDialog.open && typeof profileDialog.showModal === "function") profileDialog.showModal();
+    }
+    if (id("openGamingProfile")) id("openGamingProfile").hidden = !next.needs_profile;
     if (id("gamingNetworkNotice")) {
       id("gamingNetworkNotice").hidden = !next.play_blocked;
       id("gamingNetworkReason").textContent = next.play_blocked?.message || "";
     }
-    id("gamingIdentity").hidden = next.needs_profile;
+    if (id("gamingIdentity")) id("gamingIdentity").hidden = next.needs_profile;
     id("gamingPlayerName").textContent = next.name;
     const publicChoice = id('gamingPublicVisibility');
     if (publicChoice && document.activeElement !== publicChoice) publicChoice.checked = Boolean(next.public_visibility || next.needs_profile);
@@ -1303,6 +1325,7 @@
         public_visibility: Boolean(id('gamingPublicVisibility')?.checked),
       });
       renderWallet(value.wallet);
+      if (!value.wallet.needs_profile && id("gamingProfile")?.open) id("gamingProfile").close();
       message();
     } catch (error) {
       message(error.message);
@@ -1313,17 +1336,20 @@
   function openRecovery() {
     const panel = id("gamingRecovery");
     if (!panel) return;
-    panel.open = true;
-    panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (typeof panel.showModal === "function" && !panel.open) panel.showModal();
     id("gamingRecoveryCode")?.focus();
+  }
+  function openProfile() {
+    const panel = id("gamingProfile");
+    if (!panel) return;
+    if (typeof panel.showModal === "function" && !panel.open) panel.showModal();
+    id("gamingUsername").value = wallet?.name || "";
+    id("gamingUsername")?.focus();
   }
   id("openGamingRecovery")?.addEventListener("click", openRecovery);
   id("openGamingRecoveryIdentity")?.addEventListener("click", openRecovery);
-  id("editGamingName")?.addEventListener("click", () => {
-    id("gamingProfile").hidden = false;
-    id("gamingUsername").value = wallet?.name || "";
-    id("gamingUsername").focus();
-  });
+  id("openGamingProfile")?.addEventListener("click", openProfile);
+  id("editGamingName")?.addEventListener("click", openProfile);
   id("gamingCreateRecovery")?.addEventListener("click", async (event) => {
     const button = event.currentTarget;
     button.disabled = true;
@@ -1360,7 +1386,7 @@
     try {
       const value = await api("/gaming/api/recover", { code });
       renderWallet(value.wallet);
-      id("gamingRecovery").open = false;
+      id("gamingRecovery")?.close();
       id("gamingRecoveryCode").value = "";
       id("gamingCopyRecovery").hidden = true;
       message();

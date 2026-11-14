@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.13-admin-pages-payouts-v13",
+  "release": "2026.11.13-modern-calendar-gaming-v15",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -8,23 +8,9 @@
   "private_config_warning": "The private packages contain unencrypted production credentials and saved private state. Keep them private.",
   "shuffle_positions": 15,
   "empiredrop_positions": 10,
-  "race_window": {
-    "timezone": "America/New_York",
-    "start_epoch": 1794351600,
-    "end_epoch": 1794956400,
-    "display": "Nov 10, 2026 6:00 PM EST to Nov 17, 2026 6:00 PM EST"
-  },
-  "admin_repair": "Undefined macro imports, canonical workspaces, safe optional history fields, no-store admin HTML and request-ID exception logging",
-  "empiredrop_payouts": "Dedicated draft/publish records; atomic read-back and public projection verification; fail-safe structured logging",
-  "runtime_dependencies": [
-    "Flask==3.1.3",
-    "Werkzeug==3.1.9",
-    "requests==2.34.2",
-    "waitress==3.0.2",
-    "tzdata==2026.6"
-  ],
-  "source_validation": "Python compilation, StrictUndefined rendering of all admin workspaces, JavaScript syntax, route/form audit and payout transaction tests",
+  "timezone": "America/New_York",
+  "public_experience": "Unified race typography, quiet source handling, Community Leaderboard-first RedPoints dashboard and dialog profile tools",
+  "admin_experience": "Direct provider workspaces and shared Eastern calendar controls for Shuffle and EmpireDrop",
   "live_deployment_verified": false,
-  "live_verification_note": "A live DigitalOcean deployment must still be smoke-tested after upload.",
   "bundled_state_is_snapshot": true
 }

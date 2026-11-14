@@ -99,7 +99,7 @@ test('all ten API entries appear publicly when payouts are NOT announced (initia
     assert.equal(h.slots[`${place}:wager`].textContent,board.rows[place-1].wager);
     assert.equal(h.slots[`${place}:prize`].textContent,'Not announced');
   }
-  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 10 of 10 leaderboard positions/);
+  assert.equal(h.elements.empireRankingCoverage.textContent,'');
   assert.equal(h.elements.empirePoolTotal.textContent,'Not announced');
   assert.deepEqual(h.errors,[]);
 });
@@ -130,34 +130,31 @@ test('later API refresh replaces every visible slot, not just first place',()=>{
   h.update({rows:rows(7),prizes:blankPrizes,race_meta:{ranks_limit:10},label:'New race results'});
   for(let n=1;n<=7;n++) assert.equal(h.slots[`${n}:name`].textContent,rows(7)[n-1].username);
   for(let n=8;n<=10;n++) assert.equal(h.slots[`${n}:name`].textContent,'Open position');
-  assert.equal(h.elements.empireMessage.textContent,'New race results');
+  assert.equal(h.elements.empireMessage.textContent,'');
+  assert.equal(h.elements.empireMessage.hidden,true);
 });
 
 test('empty results are safe and provider limit is not invented',()=>{
   const h=harness({rows:[],prizes:blankPrizes,label:'Awaiting standings'});
   assert.equal(h.slots['1:name'].textContent,'Open position');
   assert.equal(h.slots['10:name'].textContent,'Open position');
-  assert.match(h.elements.empireRankingCoverage.textContent,/Showing 0 of 10 leaderboard positions/);
+  assert.match(h.elements.empireRankingCoverage.textContent,/Open positions will appear/);
+  assert.equal(h.elements.empireMessage.textContent,'Standings are temporarily unavailable.');
 });
 
-test('last successful update and next provider check tick independently from page refresh',()=>{
+test('public provider switching stays quiet while countdown continues',()=>{
   const now = Math.floor(Date.now()/1000);
   const h = harness({rows:rows(10),label:'Updated · EmpireDrop race',updated_at:now-10,
-    next_check_at:now+240,refresh_interval:300,prizes:blankPrizes,race_meta:{ranks_limit:10}});
+    next_check_at:now+240,refresh_interval:300,prizes:blankPrizes,race_meta:{ranks_limit:10},
+    schedule:{start_time:now-30,end_time:now+3600,start_et:'Today',end_et:'Later'}});
   h.selectEmpire();
-  assert.equal(h.elements.empireSourceStatus.hidden,false);
-  assert.equal(h.elements.shuffleSourceStatus.hidden,true);
-  assert.match(h.elements.empireSourceTime.textContent,/Updated 1\ds ago/);
-  assert.match(h.elements.empireNextCheck.textContent,/Next provider check in 2[34]\ds/);
-  assert.match(h.elements.empireChecked.textContent,/Last successful update:/);
+  assert.equal(h.elements.empireBoard.hidden,false);
+  assert.equal(h.elements.shuffleBoard.hidden,true);
+  assert.equal(h.elements.empireMessage.hidden,true);
+  assert.match(h.elements.empireCountdown.textContent,/0d/);
   h.tick();
-  assert.match(h.elements.empireNextCheck.textContent,/Next provider check in/);
-  h.update({rows:rows(10),label:'Updates delayed · last verified results',updated_at:now-10,
-    next_check_at:now+350,refresh_interval:600,prizes:blankPrizes,race_meta:{ranks_limit:10}});
-  assert.match(h.elements.empireSourceLabel.textContent,/updates delayed/);
-  assert.match(h.elements.empireSourceTime.textContent,/Updated 1\ds ago/);
   h.selectShuffle();
-  assert.equal(h.elements.empireSourceStatus.hidden,true);
-  assert.equal(h.elements.shuffleSourceStatus.hidden,false);
+  assert.equal(h.elements.empireBoard.hidden,true);
+  assert.equal(h.elements.shuffleBoard.hidden,false);
   assert.deepEqual(h.errors,[]);
 });

@@ -645,12 +645,22 @@ def create_app(root=None, testing=False):
     @app.get('/admin/leaderboards/shuffle/schedule')
     @protected
     def admin_shuffle_schedule_page():
-        return workspace('race')
+        return workspace('race', 'schedule')
 
     @app.get('/admin/leaderboards/shuffle/players')
     @protected
     def admin_shuffle_players_page():
         return workspace('players')
+
+    @app.get('/admin/leaderboards/shuffle/prizes')
+    @protected
+    def admin_shuffle_prizes_page():
+        return workspace('race', 'prizes')
+
+    @app.get('/admin/leaderboards/shuffle/source')
+    @protected
+    def admin_shuffle_source_page():
+        return workspace('shuffle', 'shuffleSource')
 
     @app.get('/admin/leaderboards/empiredrop')
     @protected
@@ -715,7 +725,8 @@ def create_app(root=None, testing=False):
     required_actions = {
         '/admin', '/admin/section/<section>', '/admin/action', '/admin/logout',
         '/admin/leaderboards/shuffle', '/admin/leaderboards/shuffle/schedule',
-        '/admin/leaderboards/shuffle/players', '/admin/leaderboards/empiredrop',
+        '/admin/leaderboards/shuffle/players', '/admin/leaderboards/shuffle/prizes',
+        '/admin/leaderboards/shuffle/source', '/admin/leaderboards/empiredrop',
         '/admin/leaderboards/empiredrop/schedule', '/admin/leaderboards/empiredrop/payouts',
         '/admin/leaderboards/empiredrop/source', '/admin/gaming', '/admin/settings',
         '/admin/recovery', '/admin/activity',

@@ -1,6 +1,6 @@
 {# Shared presentation layer, independent provider behavior. #}
 {% set provider = data.providers.empiredrop %}
-<section class="panel form-panel provider-panel" aria-labelledby="empireAdminTitle">
+<section class="panel form-panel provider-panel empire-section empire-source-overview" aria-labelledby="empireAdminTitle">
   {% include 'admin_provider_summary.html' %}
   <div class="provider-actions">
     <form method="post" action="/admin/empiredrop/refresh"><input type="hidden" name="csrf" value="{{ csrf() }}"><button class="button primary" type="submit">Request EmpireDrop refresh</button></form>
@@ -14,7 +14,7 @@
   {{ action_feedback('empireRefresh') }}
   <p id="empireTestResult" class="small muted" role="status" aria-live="polite"></p>
 </section>
-<section class="panel form-panel provider-panel" aria-labelledby="empirePlayersHeading">
+<section class="panel form-panel provider-panel empire-section empire-standings" aria-labelledby="empirePlayersHeading">
   <div class="section-title"><div><p class="eyebrow">EMPIREDROP · PROVIDER RANKS</p><h2 id="empirePlayersHeading">Current Top 10</h2><p class="muted">Names are already anonymized by EmpireDrop. Public IDs help identify the same player between updates.</p></div><span class="tag">{{ empire_admin.private_rewards.total if empire_admin.private_rewards.enabled else 'Prizes not announced' }}</span></div>
   <div class="field"><label for="empireAdminSearch">Find a player or public ID</label><input id="empireAdminSearch" data-provider-search="empireAdminRows" type="search" placeholder="Filter the returned rankings" autocomplete="off"><small>Search covers only positions returned by the provider.</small></div>
   <div class="table-scroll" tabindex="0" role="region" aria-label="EmpireDrop ranked players">
@@ -23,25 +23,22 @@
   </div>
   <p class="small muted">Official ranks (including ties) are preserved. Deposit races and raffles are labeled correctly; we never present their totals as wagered currency.</p>
 </section>
-<section class="panel form-panel" aria-labelledby="empireDatesTitle">
-  <p class="eyebrow">EMPIREDROP ONLY</p><h2 id="empireDatesTitle">Race schedule</h2>
-  <p>Local schedule: <strong>{{ 'Automatic Tuesday 6 PM Eastern' if empire_admin.schedule.mode == 'weekly' else 'Custom dates' }}</strong>.</p>
-  <p class="muted">{{ empire_admin.schedule.start_et }} → {{ empire_admin.schedule.end_et }}. Daylight saving is handled automatically.</p>
-  {% if superadmin %}
-  {{ action_feedback('empireSchedule') }}
-  <form method="post" action="/admin/empiredrop/schedule" class="stack" data-dirty>
-    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}">
-    <div class="field"><label for="empireMode">EmpireDrop schedule</label><select id="empireMode" name="mode"><option value="weekly" {% if empire_admin.schedule.mode=='weekly' %}selected{% endif %}>Auto-repeat Tuesday 6 PM Eastern (recommended)</option><option value="custom" {% if empire_admin.schedule.mode=='custom' %}selected{% endif %}>Custom start/end</option></select></div>
-    <div class="form-grid">
-      <div class="field"><label for="empireStart">Custom start · Eastern</label><input id="empireStart" name="start_et" type="datetime-local" value="{{ empire_admin.schedule.start_input }}"></div>
-      <div class="field"><label for="empireEnd">Custom end · Eastern</label><input id="empireEnd" name="end_et" type="datetime-local" value="{{ empire_admin.schedule.end_input }}"></div>
-    </div>
-    <p class="notice warning">Official partner races use the dates configured on EmpireDrop. To use the date range above, select <strong>Weekly/custom date window (deprecated endpoint)</strong> in the API section below. EmpireDrop may retire that endpoint; the website will preserve its last verified results if that happens.</p><p class="small muted">Only EmpireDrop is affected. Shuffle's dates, rankings and prize amounts stay unchanged.</p>
-    <button class="button primary" type="submit">Save EmpireDrop schedule</button>
-  </form>
-  {% else %}<p class="small muted">Only the Superadmin may change race dates.</p>{% endif %}
+<section class="panel form-panel empire-section empire-schedule" id="empireSchedule" aria-labelledby="empireDatesTitle">
+  <div class="section-title"><div><p class="eyebrow">EMPIREDROP SCHEDULE</p><h2 id="empireDatesTitle">Schedule</h2><p class="muted">EmpireDrop’s selected race controls the official standings window. The website display window can be aligned below.</p></div><span class="badge">Eastern Time</span></div>
+  <div class="official-schedule-card" data-official-start="{{ empire_admin.race_meta.get('start_time',0) }}" data-official-end="{{ empire_admin.race_meta.get('end_time',0) }}">
+    <div><span class="eyebrow">OFFICIAL PROVIDER RACE</span><strong>{{ empire_admin.race_meta.get('name') or empire_admin.race_meta.get('slug') or 'No race selected' }}</strong><small>{{ fmt_et(empire_admin.race_meta.get('start_time')) if empire_admin.race_meta.get('start_time') else 'Start not returned' }} → {{ fmt_et(empire_admin.race_meta.get('end_time')) if empire_admin.race_meta.get('end_time') else 'End not returned' }}</small></div>
+    {% if empire_admin.race_meta.get('slug') %}<span class="tag">{{ empire_admin.race_meta.get('slug') }}</span>{% endif %}
+  </div>
+  {% if superadmin %}{{ action_feedback('empireSchedule') }}
+  <form method="post" action="/admin/empiredrop/schedule" class="stack admin-sticky-form" data-dirty data-calendar-form="empiredrop">
+    <input type="hidden" name="csrf" value="{{ csrf() }}"><input type="hidden" name="revision" value="{{ revision }}"><input type="hidden" name="mode" value="custom"><input type="hidden" id="empireStart" name="start_et" value="{{ empire_admin.schedule.start_input }}"><input type="hidden" id="empireEnd" name="end_et" value="{{ empire_admin.schedule.end_input }}">
+    <div class="section-title compact"><div><h3>Website display window</h3><p class="small muted">This controls the countdown and local administration only. It does not change the race inside EmpireDrop.</p></div><button class="button small js-only" id="syncEmpireSchedule" type="button">Sync provider dates</button></div>
+    <div class="calendar-grid"><div class="calendar-field"><span class="calendar-label">Start</span><label for="empireStartDate">Date</label><input id="empireStartDate" data-calendar-date="start" type="date" value="{{ empire_admin.schedule.start_input[:10] }}" required><label for="empireStartTime">Time</label><input id="empireStartTime" data-calendar-time="start" type="time" value="{{ empire_admin.schedule.start_input[11:16] }}" step="300" required></div><div class="calendar-arrow" aria-hidden="true">→</div><div class="calendar-field"><span class="calendar-label">End</span><label for="empireEndDate">Date</label><input id="empireEndDate" data-calendar-date="end" type="date" value="{{ empire_admin.schedule.end_input[:10] }}" required><label for="empireEndTime">Time</label><input id="empireEndTime" data-calendar-time="end" type="time" value="{{ empire_admin.schedule.end_input[11:16] }}" step="300" required></div></div>
+    <div class="calendar-preview"><span>Eastern Time</span><strong data-calendar-preview>Choose a valid start and end.</strong><small data-calendar-utc></small></div><p id="empireScheduleMismatch" class="notice warning" hidden>The website display window does not match the official EmpireDrop race. Sync the dates before publishing public schedule text.</p>
+    <div class="admin-save-bar"><div><strong>Website schedule draft</strong><small>Official provider dates remain authoritative for rankings.</small></div><button class="button primary" type="submit">Save display schedule</button></div>
+  </form>{% else %}<p class="small muted">Only the Superadmin may change the website display dates.</p>{% endif %}
 </section>
-<section class="panel form-panel" id="empireRewards" aria-labelledby="empireRewardsTitle">
+<section class="panel form-panel empire-section empire-rewards" id="empireRewards" aria-labelledby="empireRewardsTitle">
   {% set rewards = empire_admin.private_rewards %}
   <div class="section-title"><div><p class="eyebrow">EMPIREDROP · TOP 10</p><h2 id="empireRewardsTitle">Prize schedule</h2><p class="muted">Save a private draft, review the pool, then publish it to the public leaderboard.</p></div><span class="tag" data-state="{{ 'healthy' if rewards.published and rewards.published_enabled else 'warning' }}">{{ 'Published' if rewards.published and rewards.published_enabled else 'Draft' if not rewards.published else 'Not announced' }}</span></div>
   <div class="admin-payout-summary"><div><span class="small muted">Draft pool</span><strong id="empireRewardTotal">{{ rewards.total }}</strong></div><div><span class="small muted">Public pool</span><strong>{{ rewards.published_total if rewards.published_enabled else 'Not announced' }}</strong></div><div><span class="small muted">Last saved</span><strong>{{ fmt_et(rewards.updated_at) if rewards.updated_at else 'Never' }}</strong>{% if rewards.updated_by %}<small>by {{ rewards.updated_by }}</small>{% endif %}</div></div>
@@ -56,7 +53,7 @@
   </form>
   {% else %}<p class="small muted">Only the Superadmin can change payout amounts.</p>{% endif %}
 </section>
-<section class="panel form-panel" id="empireBackup" aria-labelledby="empireBackupTitle">
+<section class="panel form-panel empire-section empire-source" id="empireBackup" aria-labelledby="empireBackupTitle">
   <p class="eyebrow">SAFE RECOVERY · EMPIREDROP ONLY</p><h2 id="empireBackupTitle">Settings backup</h2>
   <p class="small muted">Export or restore the EmpireDrop race slug, schedule and local prizes. This file contains no API keys or player accounts. To back up saved standings and all accounts, download a full private recovery export under Settings.</p>
   {% if superadmin %}
@@ -88,7 +85,7 @@
   {% else %}<p class="small muted">Credential replacement is Superadmin-only.</p>{% endif %}
 </section>
 {# Races API: these are two specific documented GET paths, distinct from the legacy wager adapter. #}
-<section class="panel form-panel" id="empireRaceDetails" aria-labelledby="empireRacesTitle">
+<section class="panel form-panel empire-section empire-source" id="empireRaceDetails" aria-labelledby="empireRacesTitle">
   <p class="eyebrow">OFFICIAL DEVELOPER ROUTES · EMPIREDROP</p>
   <h2 id="empireRacesTitle">Race API &amp; selection</h2>
   <p class="small muted">OpenAPI v2.0.1: <code>GET https://api.empiredrop.com/api/v1/affiliate-partner/races</code> lists currently running races; <code>GET /api/v1/affiliate-partner/races/{slug}</code> returns ranking[]. Both use mandatory X-Public-Key and X-Private-Key headers. The old /race/affiliates/{publicKey} endpoint is deprecated.</p>

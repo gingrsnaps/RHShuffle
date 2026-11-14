@@ -6,7 +6,7 @@
     <div class="race-hero-copy">
       <p class="eyebrow"><span class="dot"></span> REDHUNLLEF COMMUNITY RACE</p>
       <h1 id="raceTitle">RedHunllef Wager Race</h1>
-      <p id="raceDescription" class="lead">Follow the weekly standings, compare both races, and see who finishes in the paid positions.</p>
+      <p id="raceDescription" class="lead">Compete in the weekly race and climb the standings.</p>
       <div class="provider-tabs public-provider-tabs" role="tablist" aria-label="Choose a leaderboard provider">
         <button id="shuffleTab" class="button active" type="button" role="tab" aria-selected="true" aria-controls="shuffleBoard">Shuffle · Top 15</button>
         <button id="empireTab" class="button" type="button" role="tab" aria-selected="false" aria-controls="empireBoard" tabindex="-1">EmpireDrop · Top 10</button>
@@ -41,7 +41,7 @@
   </section>
 
   <section id="leaderboard" class="public-leaderboards" aria-labelledby="leaderboardTitle">
-    <div class="section-title leaderboard-heading"><div><p class="eyebrow">WEEKLY STANDINGS</p><h2 id="leaderboardTitle">The leaderboard<span class="accent">.</span></h2></div><a id="providerJoinLink" class="button small" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener noreferrer sponsored">Join the race ↗</a></div>
+    <div class="section-title leaderboard-heading"><div><p class="eyebrow">WEEKLY STANDINGS</p><h2 id="leaderboardTitle">Weekly standings</h2></div><a id="providerJoinLink" class="button small" href="{{ data.site.sponsor_url }}" target="_blank" rel="noopener noreferrer sponsored">Join the race ↗</a></div>
 
     <div id="shuffleBoard" role="tabpanel" aria-labelledby="shuffleTab">
       <p id="leaderboardMessage" class="notice public-fallback" role="status" {% if data.rows %}hidden{% endif %}>Standings are temporarily unavailable.</p>
@@ -69,7 +69,7 @@
     <noscript><p class="notice">Reload to see the latest saved standings.</p></noscript>
   </section>
 
-  <section class="panel public-games-cta" aria-labelledby="gamesCtaTitle"><div><p class="eyebrow">REDPOINTS ARCADE</p><h2 id="gamesCtaTitle">See who is playing now.</h2><p class="muted">See recent community activity and weekly RedPoints leaders.</p></div><a class="button primary" href="/gaming">Open Gaming →</a></section>
+  <section class="panel public-games-cta" aria-labelledby="gamesCtaTitle"><div><p class="eyebrow">REDPOINTS GAMES</p><h2 id="gamesCtaTitle">Play with the community.</h2><p class="muted">See who is playing and follow the weekly RedPoints leaderboard.</p></div><a class="button primary" href="/gaming">Open RedPoints Games →</a></section>
 </main>
 {% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static',filename='empiredrop.css',v=asset_version) }}">{% endblock %}

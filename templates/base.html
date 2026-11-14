@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#160e14"><title>{% block title %}RedHunllef · Wager Race{% endblock %}</title>
 <link rel="icon" href="{{ url_for('static', filename='redlogo.ico') }}">
-<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='v14-modern.css',v=asset_version) }}"></head>
+<link rel="stylesheet" href="{{ url_for('static',filename='style.css',v=asset_version) }}">{% block styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='experience.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='public-control.css',v=asset_version) }}">{% block final_styles %}{% endblock %}<link rel="stylesheet" href="{{ url_for('static',filename='v11-system.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='v14-modern.css',v=asset_version) }}"><link rel="stylesheet" href="{{ url_for('static',filename='v15-system.css',v=asset_version) }}"></head>
 <body data-release="{{ release }}" {% block attributes %}{% endblock %}>
 {# Login and error pages do not receive the public leaderboard data object. #}
 {% set public_site = data.site if data is defined and data.site is defined else {} %}
@@ -11,14 +11,14 @@
   <div class="shell header-inner public-header-inner">
     <a class="brand public-brand" href="/" aria-label="RedHunllef homepage">
       <img src="{{ url_for('static',filename='redlogo.png') }}" alt="" width="38" height="38">
-      <span><strong data-site-text="site_name">{{ public_site.site_name|default('RedHunllef') }}</strong><span class="brand-sub">WAGER RACES &amp; REDPOINTS</span></span>
+      <span><strong data-site-text="site_name">{{ public_site.site_name|default('RedHunllef') }}</strong><span class="brand-sub">WAGER RACES · REDPOINTS</span></span>
     </a>
     <button type="button" class="public-mobile-toggle" id="publicMenuToggle" aria-controls="publicPrimaryNav" aria-expanded="false" aria-label="Open site navigation"><span aria-hidden="true">☰</span><span>Menu</span></button>
     <nav class="public-navigation" id="publicPrimaryNav" aria-label="Main navigation">
       {% block navigation %}
       <div class="public-nav-links">
         <a class="section-nav" href="/#leaderboard" {% if request.endpoint=='index' %}aria-current="page"{% endif %}>Leaderboards</a>
-        <a class="section-nav" href="/gaming" {% if request.endpoint in ['gaming_home','gaming_game','gaming_fairness'] %}aria-current="page"{% endif %}>Games</a>
+        <a class="section-nav" href="/gaming" {% if request.endpoint in ['gaming_home','gaming_game','gaming_fairness'] %}aria-current="page"{% endif %}>RedPoints Games</a>
         <a class="section-nav" href="/history" {% if request.endpoint=='public_history' %}aria-current="page"{% endif %}>History</a>
       </div>
       <div class="public-nav-right">

@@ -682,14 +682,21 @@ class EmpireDropBoard:
         race_settings = self._race_settings()
         source = race_settings['source_mode']
         meta = saved.get('race_meta') or {}
+        # The selected slug remains authoritative for standings. The independent
+        # website schedule controls only the public countdown and presentation,
+        # so admins can use the same Eastern calendar workflow as Shuffle. The
+        # provider window remains available for comparison and one-click sync.
         display_schedule = {k:site[k] for k in ('start_time','end_time','start_et','end_et','mode')}
         if source == 'races' and race_settings['race_window_policy'] == 'provider':
             valid = bool(meta.get('start_time') and meta.get('end_time'))
-            display_schedule = dict(mode='provider',
-                start_time=meta['start_time'] if valid else 0,
-                end_time=meta['end_time'] if valid else 0,
-                start_et=fmt_et(meta['start_time']) if valid else 'Race dates not yet confirmed',
-                end_et=fmt_et(meta['end_time']) if valid else '')
+            display_schedule.update(
+                mode='provider',
+                display_mode='local',
+                provider_start_time=meta['start_time'] if valid else 0,
+                provider_end_time=meta['end_time'] if valid else 0,
+                provider_start_et=fmt_et(meta['start_time']) if valid else '',
+                provider_end_et=fmt_et(meta['end_time']) if valid else '',
+            )
         rewards = self._rewards()
         visible = [dict(rank=r['rank'], username=mask_public_username(r['username']),wager=r['wager']) for r in rows]
         visible = list(payout_for_rows(visible,rewards))
