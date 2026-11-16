@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.14-shuffle-first-mobile-v19"
+RELEASE = "2026.11.16-compact-mobile-lists-v20"
 INTERVAL = 60
 
 

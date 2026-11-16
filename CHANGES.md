@@ -1,13 +1,8 @@
-# RedHunllef V19 changes
+# RedHunllef V20 changes
 
-- Bare `/` now always opens the Shuffle Top 15 leaderboard.
-- Explicit `/?provider=empiredrop` links still open EmpireDrop and remain shareable.
-- Removed persistent public-provider selection from localStorage.
-- Added server-rendered initial provider state to prevent provider flashes.
-- Converted public leaderboard and History tables into mobile result cards.
-- Reordered mobile podiums to first, second, third.
-- Shows only the active provider brand card on phones.
-- Added focus trapping and scroll locking to public and administrator mobile menus.
-- Improved mobile countdown, Gaming, calendars, prize grids, participant views and logs.
-- Consolidated V14–V16 release CSS into `static/v19-system.css`.
-- Preserved Shuffle, EmpireDrop, payout, Gaming and RedPoints backend behavior.
+- Replaced separate square mobile placement cards with one compact grouped standings list.
+- Reordered the mobile podium to show first place first, with second and third side by side on normal phones.
+- Reduced mobile hero and countdown spacing without changing the provider schedule logic.
+- Applied grouped mobile lists to History and administrator standings.
+- Converted mobile operational logs to one timeline panel with row separators.
+- Preserved Shuffle Top 15, EmpireDrop Top 10, prizes, provider APIs, Gaming, RedPoints and administrator workflows.

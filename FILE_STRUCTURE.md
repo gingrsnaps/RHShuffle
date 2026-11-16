@@ -1,4 +1,4 @@
-# RedHunllef V19 file structure
+# RedHunllef V20 file structure
 
 ```text
 .gitignore
@@ -111,7 +111,7 @@ static/redlogo.ico
 static/redlogo.png
 static/style.css
 static/v11-system.css
-static/v19-system.css
+static/v20-system.css
 storage.py
 store_schema.py
 telemetry.py
@@ -202,3 +202,6 @@ tools/visual_acceptance_v16.py
 wager_backend.py
 weekly_history.py
 ```
+
+- `docs/V20_COMPACT_MOBILE_LISTS.md` — compact mobile standings and grouped-list design.
+- `tools/visual_acceptance_v20.py` — optional live 390px mobile overflow and compact-row check.

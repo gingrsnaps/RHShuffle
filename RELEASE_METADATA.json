@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.14-shuffle-first-mobile-v19",
+  "release": "2026.11.16-compact-mobile-lists-v20",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -9,8 +9,8 @@
   "shuffle_positions": 15,
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "Shuffle-first URL behavior, explicit EmpireDrop deep links, responsive leaderboard cards, stable countdowns and mobile navigation.",
-  "admin_experience": "Mobile drawer, sticky provider tasks, stacked calendars, responsive prize editors, participant cards and readable operational logs.",
+  "public_experience": "Shuffle-first provider flow with compact grouped mobile standings, a first-place-led podium, stable countdown cards and mobile-safe History.",
+  "admin_experience": "Mobile drawer, grouped responsive player lists, stacked calendars, compact logs, responsive prize editors and direct provider workspaces.",
   "live_deployment_verified": false,
   "bundled_state_is_snapshot": true
 }

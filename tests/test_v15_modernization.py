@@ -9,7 +9,7 @@ def text(path):
 def test_v15_style_loads_last_and_public_copy_is_uniform():
     base = text('templates/base.html')
     index = text('templates/index.html')
-    assert 'v19-system.css' in base
+    assert 'v20-system.css' in base
     assert 'RedPoints Games' in base
     assert 'RedHunllef Wager Race' in index
     assert index.count('Powered By') == 2
@@ -58,7 +58,7 @@ def test_admin_routes_are_direct_and_focused():
 
 
 def test_public_operational_noise_remains_hidden():
-    css = text('static/v19-system.css')
+    css = text('static/v20-system.css')
     index = text('templates/index.html')
     assert '.source-status' in css
     assert 'Standings are temporarily unavailable.' in index

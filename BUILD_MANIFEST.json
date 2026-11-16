@@ -1,14 +1,14 @@
 {
-  "version": 11,
-  "release": "2026.11.14-shuffle-first-mobile-v19",
-  "purpose": "Runtime files required for the V19 Shuffle-first URL behavior, mobile public/admin layouts, provider integrations, public Gaming, verified payout workflows and DigitalOcean deployment.",
+  "version": 12,
+  "release": "2026.11.16-compact-mobile-lists-v20",
+  "purpose": "Runtime files required for the V20 compact grouped mobile standings, provider integrations, public Gaming, verified payout workflows and DigitalOcean deployment.",
   "files": {
     "Procfile": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83",
     "admin_navigation.py": "b58ecd17420d447221ba29936a7009bb3a1a62cc7db3a699edfd0fbd188b04b7",
     "app.yaml": "b45c13542462efaaec41c0168f1e2b519c6408b11268e7cf69aa832dba0a60c7",
     "baccarat.py": "e859c61a9a101b9e51da02524e5b18d3a915397e2d476f2dbe8899202f88c154",
     "blackjack.py": "3ea903b34d6329a05bb113ac591db64fbc80d59fa2875f8fae8eee08fbb8abc7",
-    "config.py": "ff79505af8741c5a059b00ab975ca1b6bd8c8e5521389735c1d63853196dcd4d",
+    "config.py": "182556a3d67d56bbd1e73e9c40516a4075c154abedda138fbdc7c446c7a7b05a",
     "empiredrop.py": "34b5f215df86784b0d7b4a64398d0893ded2db7698fbbccc46df8f96ba0b3452",
     "empiredrop_deploy_keys.py": "b7cf2a1172540434abf87902b6e9a6b700364d57289a1f884098009e5b560c32",
     "empiredrop_features.py": "518761555d3ecf3b721c7cfb0f22d2bb531fe87046e45cdd4afbb39861bb7284",
@@ -59,7 +59,6 @@
     "static/redlogo.png": "671545b962e3ad7a4e2b9d1b0a4db070f2e278b16c358d8c4c142c8b86956186",
     "static/style.css": "7e2f72ffda8b17c54edf2838d199a7dff80e68644b3000edd531e6706cdfaadc",
     "static/v11-system.css": "626d720a5783c2b1b6b576949e8ae36ba9337d7788de44e9017ae365ff2b427f",
-    "static/v19-system.css": "b60c56cff3c32609966488f0c86f421fb8fc9f69826ebe0595fbd47c0703b1fb",
     "storage.py": "9440eefe4ff688b788189648c513a7b4955f489c5168ca56392a6566ceee9ddf",
     "store_schema.py": "5ccf9a649f92afff624e572203a1dfd940435dc6e1248ed3e0768887aeb5fec2",
     "telemetry.py": "8dd8c4f3c782da94a2c1a2df99ccf771e7e688543e2c1748e7af475cd994e005",
@@ -75,7 +74,7 @@
     "templates/admin_race.html": "0216d4ccdddbe5f3dca2dfec1588dab6490e9ba04583d24cdfb4b6b5d9f1e6c2",
     "templates/admin_settings.html": "0961266898c7325dcd6824a971aa0e37df12abc6e9a7ca86077ca4df252dfd6a",
     "templates/admin_shuffle.html": "6276b1c98baa52bc235db7e0dc98b2f19d4799982fbf0eb5b1d17ba617b6e80c",
-    "templates/base.html": "05d706ad03facd30c0fd63dc24c283576c6c33ed3ad3860e6e197d25087e8ac6",
+    "templates/base.html": "a629b128bdee7fa6ce0733940e3404abec822e50ff1fe744aba4e903845aa77a",
     "templates/change_review.html": "c5469e3b96c979eaf815c6599180de30ef81c83112d786e468ccbb056cc17450",
     "templates/error.html": "be1f1fee8e2dac72a7ef8f9e896d9fea8383458d93a105abdcf60f904c6f2832",
     "templates/gaming.html": "e3cbd7e03acaf485076cceb191b675968bd21cdf7f37524cef389a05c4dd61b0",
@@ -88,6 +87,7 @@
     "templates/macros.html": "7a77db08398a2781cedac09786ed3c22026f648b34b48acf8860cf742196596e",
     "templates/recovery_panel.html": "6c263b9e21cf5cb746c7f9170c37b6c0d89e4774df8a30aa579f85cdc626fdb6",
     "wager_backend.py": "067e93514c7ad02265c492d73f530c69797e71959dbc5201e64cd0011ec123cb",
-    "weekly_history.py": "dac409a7db91758ba70156445f58eb4714f9d348a262b2e901a880638aa8d5b1"
+    "weekly_history.py": "dac409a7db91758ba70156445f58eb4714f9d348a262b2e901a880638aa8d5b1",
+    "static/v20-system.css": "1015c5977f3d952f846cc96dd4d8b430436ca09950da6e2964fc84042c42b5df"
   }
 }

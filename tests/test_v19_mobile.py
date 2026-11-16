@@ -8,13 +8,13 @@ def test_provider_default_is_url_only():
     assert "searchParams.get('provider')" in js
     assert "requested === 'empiredrop' ? empireTab : shuffleTab" in js
 
-def test_v19_css_loaded_and_old_layers_consolidated():
+def test_current_css_loaded_and_old_layers_consolidated():
     base=(ROOT/'templates/base.html').read_text()
-    assert 'v19-system.css' in base
+    assert 'v20-system.css' in base
     assert 'v14-modern.css' not in base
     assert 'v15-system.css' not in base
     assert 'v16-system.css' not in base
-    css=(ROOT/'static/v19-system.css').read_text()
+    css=(ROOT/'static/v20-system.css').read_text()
     assert '.responsive-results thead{display:none}' in css
     assert '.admin-responsive-table thead{display:none}' in css
     assert 'body[data-page="admin"] .calendar-field' in css
@@ -35,4 +35,4 @@ def test_public_menu_has_mobile_focus_and_scroll_management():
 
 def test_release_updated():
     config=(ROOT/'config.py').read_text()
-    assert '2026.11.14-shuffle-first-mobile-v19' in config
+    assert '2026.11.16-compact-mobile-lists-v20' in config

@@ -12,7 +12,7 @@ class V17TimerCardTests(unittest.TestCase):
         self.assertIn('class="clock race-countdown"', macro)
 
     def test_timer_cards_use_natural_height_shuffle_proportions(self):
-        css = (ROOT / "static" / "v19-system.css").read_text(encoding="utf-8")
+        css = (ROOT / "static" / "v20-system.css").read_text(encoding="utf-8")
         self.assertIn("align-items:center", css)
         self.assertIn("--race-summary-card-width:520px", css)
         self.assertIn("width:min(100%,var(--race-summary-card-width))", css)
@@ -26,7 +26,7 @@ class V17TimerCardTests(unittest.TestCase):
         self.assertNotIn("grid-template-rows:auto minmax(3.7rem,auto)", css)
 
     def test_both_countdowns_keep_identical_typography(self):
-        css = (ROOT / "static" / "v19-system.css").read_text(encoding="utf-8")
+        css = (ROOT / "static" / "v20-system.css").read_text(encoding="utf-8")
         self.assertIn("#shuffleRaceClock .race-countdown", css)
         self.assertIn("#empireRaceClock .race-countdown", css)
         self.assertIn("font-size:var(--race-countdown-size)!important", css)

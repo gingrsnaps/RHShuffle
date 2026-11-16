@@ -1,9 +1,9 @@
 {
-  "release": "2026.11.14-shuffle-first-mobile-v19",
-  "format": "redhunllef-manifest-12",
+  "release": "2026.11.16-compact-mobile-lists-v20",
+  "format": "redhunllef-manifest-13",
   "package_kind": "full",
   "private_config_included": true,
-  "file_count": 199,
+  "file_count": 206,
   "files": [
     {
       "path": ".gitignore",
@@ -11,14 +11,39 @@
       "sha256": "0b5da62e47b620031033e896e8d421e3218e78074ad72d87c6ce1a46de1dda81"
     },
     {
+      "path": ".pytest_cache/.gitignore",
+      "size_bytes": 37,
+      "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+    },
+    {
+      "path": ".pytest_cache/CACHEDIR.TAG",
+      "size_bytes": 191,
+      "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+    },
+    {
+      "path": ".pytest_cache/README.md",
+      "size_bytes": 302,
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+    },
+    {
+      "path": ".pytest_cache/v/cache/lastfailed",
+      "size_bytes": 395,
+      "sha256": "4dbf8fb64763b931700b23d8ba67385a98b32a428498d68fdd8c17ac09e421e9"
+    },
+    {
+      "path": ".pytest_cache/v/cache/nodeids",
+      "size_bytes": 12809,
+      "sha256": "2dff4bb0b37a7a977f59952b45386b21c01306287beac96c6a4e186f4b62211e"
+    },
+    {
       "path": "BUILD_MANIFEST.json",
-      "size_bytes": 8512,
-      "sha256": "01d87c6d4d3abbff43a6a1c132358b154f069028a095650e03dfde2106fa7e91"
+      "size_bytes": 8489,
+      "sha256": "1b4d22231091fc9706af621360b20317467c2d49542032071b1fc46594bb8f51"
     },
     {
       "path": "CHANGES.md",
-      "size_bytes": 816,
-      "sha256": "16fae34d17dcfc5fc94faa97ff855fd1870c6c036d35fc1ff6f059bdb980c60c"
+      "size_bytes": 584,
+      "sha256": "00e4fe63b87a6f5dfca5de84d3c725144987c36e774323ebff77cfc1b471b1b7"
     },
     {
       "path": "DEPLOYMENT_EMPIREDROP_RACES.md",
@@ -42,13 +67,13 @@
     },
     {
       "path": "FILE_STRUCTURE.md",
-      "size_bytes": 5007,
-      "sha256": "52ef8e428e6392b9702e40fc0a57231518179c598f7993f6d7fd992a8d9cc512"
+      "size_bytes": 5197,
+      "sha256": "228c620e59b8c6f6f4b6bc0c373485dd6bed1273e068be6850ca5b629b1aa04f"
     },
     {
       "path": "FULL_CODE_BLOCKS.md",
-      "size_bytes": 34,
-      "sha256": "5cbe287f144d499cf8ac4f42127d91877195cfffa1bd9f4865c19b7f8478a641"
+      "size_bytes": 37,
+      "sha256": "9d542573beb68b1270ccfbb955fa8cad6df07a0e4a40595adbfc1887fe7e6622"
     },
     {
       "path": "Procfile",
@@ -57,23 +82,23 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 795,
-      "sha256": "dd1acef4356543d2773a3de82b9aee161bee505e47e61b9ad9177fd84162ae15"
+      "size_bytes": 495,
+      "sha256": "1828058842ac17f401ac1f17df43b7eef3cbe81a33aa36a94a57f41e4acc3c9a"
     },
     {
       "path": "RELEASE_METADATA.json",
-      "size_bytes": 981,
-      "sha256": "17bbd74150650d7a84146a9c67c91cff833dd572be517e121768e160dc56b52b"
+      "size_bytes": 997,
+      "sha256": "94ba541c77ba9aeb7daefa033ec7820dc6abef06d55e343ac03947b4b5faddb1"
     },
     {
       "path": "START_HERE.md",
-      "size_bytes": 700,
-      "sha256": "6d859024f9628bc9550aa14b381da8c1ac74200a53808e4841af839a1db5190b"
+      "size_bytes": 530,
+      "sha256": "f532d35e5f6971a1279738d8e3d61ccfad6ee5e9cb86152dc6196f014537a36c"
     },
     {
       "path": "UPDATE.md",
-      "size_bytes": 395,
-      "sha256": "2974225b1c7fb65455fc40dece0b0cca35e3601fb4dd752f821541813c39d6f6"
+      "size_bytes": 249,
+      "sha256": "59368519197b273799517ade6e194d09aa3d3f1e07b894fcc63ad6b72dfbec2c"
     },
     {
       "path": "admin_navigation.py",
@@ -98,17 +123,12 @@
     {
       "path": "config.py",
       "size_bytes": 10887,
-      "sha256": "ff79505af8741c5a059b00ab975ca1b6bd8c8e5521389735c1d63853196dcd4d"
+      "sha256": "182556a3d67d56bbd1e73e9c40516a4075c154abedda138fbdc7c446c7a7b05a"
     },
     {
       "path": "data/state.json",
       "size_bytes": 11197,
       "sha256": "97e56e38f5c4bbd0ee43b0fb51a73f3c688daba1ce102eb644b74ae0a4d75064"
-    },
-    {
-      "path": "data/state.json.lock",
-      "size_bytes": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "path": "docs/ADMIN_GAMING.png",
@@ -264,6 +284,11 @@
       "path": "docs/V19_SHUFFLE_FIRST_MOBILE.md",
       "size_bytes": 860,
       "sha256": "0edffbe62b0cd9df3cbb1f87b3e534eead37f5ee4af08e77b22002866f3247a3"
+    },
+    {
+      "path": "docs/V20_COMPACT_MOBILE_LISTS.md",
+      "size_bytes": 939,
+      "sha256": "9d7b4d88f6e2d4a4bef728ccbea4e676f35bc4c28089b3570dbf33e88d57f7d5"
     },
     {
       "path": "docs/VALIDATION.md",
@@ -551,9 +576,9 @@
       "sha256": "626d720a5783c2b1b6b576949e8ae36ba9337d7788de44e9017ae365ff2b427f"
     },
     {
-      "path": "static/v19-system.css",
-      "size_bytes": 36489,
-      "sha256": "b60c56cff3c32609966488f0c86f421fb8fc9f69826ebe0595fbd47c0703b1fb"
+      "path": "static/v20-system.css",
+      "size_bytes": 46603,
+      "sha256": "1015c5977f3d952f846cc96dd4d8b430436ca09950da6e2964fc84042c42b5df"
     },
     {
       "path": "storage.py",
@@ -633,7 +658,7 @@
     {
       "path": "templates/base.html",
       "size_bytes": 4398,
-      "sha256": "05d706ad03facd30c0fd63dc24c283576c6c33ed3ad3860e6e197d25087e8ac6"
+      "sha256": "a629b128bdee7fa6ce0733940e3404abec822e50ff1fe744aba4e903845aa77a"
     },
     {
       "path": "templates/change_review.html",
@@ -723,7 +748,7 @@
     {
       "path": "tests/fixtures/v16_countdown_uniformity.html",
       "size_bytes": 1866,
-      "sha256": "8707190435d872838100fa5dd0c4f39b3ea58239749365aa145cb68896fab730"
+      "sha256": "b43df8364eed7c6efa9bcf6ec868679dadbf7bceec03a69cf9130f796e7f8557"
     },
     {
       "path": "tests/gaming_motion.cjs",
@@ -918,7 +943,7 @@
     {
       "path": "tests/test_v15_modernization.py",
       "size_bytes": 2497,
-      "sha256": "72fa24ca43a55b727bde8483ad5e281ebfd26b6c7a90cfeb6f3c0bd752acbb27"
+      "sha256": "a39fd98b7fab02de56e4dc5d8925cceb5271f55a87455aa70d58bc3a11693f25"
     },
     {
       "path": "tests/test_v16_asset_budget.py",
@@ -928,12 +953,12 @@
     {
       "path": "tests/test_v16_reliability.py",
       "size_bytes": 3507,
-      "sha256": "9d587cc2ab301d1ba37fb46bf58fd8233cdb1465d8abfe4fbe22c45afaba6952"
+      "sha256": "0b83ceeacf5301fe3be49760e86929f333eaff96e531ac0cd9d7236fad31e2a6"
     },
     {
       "path": "tests/test_v17_timer_card.py",
       "size_bytes": 1860,
-      "sha256": "d0100fe1936318ed0b4a4c2c928b7821c709ea3b7afe5007434125735921efc9"
+      "sha256": "740397c9cc719b1cca82b4f85fa8b3327160c7edde94592a4e3093ea25af3281"
     },
     {
       "path": "tests/test_v18_empiredrop_publish.py",
@@ -942,8 +967,13 @@
     },
     {
       "path": "tests/test_v19_mobile.py",
-      "size_bytes": 1600,
-      "sha256": "90fa5b127fee7620d7922579957542e6cbc391fd8e55f75e909eb53e17ca0ad7"
+      "size_bytes": 1604,
+      "sha256": "a2edfb998ac8f9b04dc8e8cda0f09b7d840f702c714f6af7bb61f512c5a5ea1f"
+    },
+    {
+      "path": "tests/test_v20_mobile_lists.py",
+      "size_bytes": 1409,
+      "sha256": "abbba9d1256c23fee26db55e77420b1256b3fa473b1d9448ab374d33a15bd2d2"
     },
     {
       "path": "tests/test_weekly_history.py",
@@ -989,6 +1019,11 @@
       "path": "tools/visual_acceptance_v16.py",
       "size_bytes": 2128,
       "sha256": "093af133c223c7a6278579a23744e474bbf0e1f278362fa25fdd24b8803ff870"
+    },
+    {
+      "path": "tools/visual_acceptance_v20.py",
+      "size_bytes": 2189,
+      "sha256": "65b0c92d2aa7acfa015ad882b2636a6db8efe1559c2052bf96de94c5ae3e9341"
     },
     {
       "path": "wager_backend.py",
