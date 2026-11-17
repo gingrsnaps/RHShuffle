@@ -1,16 +1,5 @@
-# EmpireDrop race deployment — V18
+# EmpireDrop race behavior — V21
 
-V18 keeps the official EmpireDrop partner-race integration and fixes the payout
-publication action. The public leaderboard uses the selected official race slug
-and both API-key headers. Locally advertised Top 10 prizes are independent from
-EmpireDrop payments.
+EmpireDrop standings use the official partner race API and selected slug. The RedHunllef website display window is independent and is set to Oct 27, 2026 6:00 PM EDT → Nov 28, 2026 6:00 PM EST in the bundled state.
 
-After deployment:
-
-1. Open Admin → Leaderboards → EmpireDrop → Prizes.
-2. Confirm the public pool is `$2,000.00` and the status is **Published**.
-3. Change a value only if needed, then click **Save & publish** once.
-4. Confirm the public Top 10 displays the rank-specific values.
-
-The browser now records the clicked publish action before disabling the buttons,
-so the request cannot silently fall back to a draft save.
+Admin shows provider-owned race dates separately so a mismatch remains visible. Saving the website schedule never switches the integration to the deprecated date-range API.

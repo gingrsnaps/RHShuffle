@@ -1,9 +1,9 @@
 {
-  "release": "2026.11.16-compact-mobile-lists-v20",
-  "format": "redhunllef-manifest-13",
+  "release": "2026.11.17-persisted-race-windows-v21",
+  "format": "redhunllef-manifest-14",
   "package_kind": "full",
   "private_config_included": true,
-  "file_count": 206,
+  "file_count": 208,
   "files": [
     {
       "path": ".gitignore",
@@ -27,38 +27,38 @@
     },
     {
       "path": ".pytest_cache/v/cache/lastfailed",
-      "size_bytes": 395,
-      "sha256": "4dbf8fb64763b931700b23d8ba67385a98b32a428498d68fdd8c17ac09e421e9"
+      "size_bytes": 518,
+      "sha256": "ac29a067654176ae0f574d168718ba557ff3aca62c74a09c638929b54c28e19e"
     },
     {
       "path": ".pytest_cache/v/cache/nodeids",
-      "size_bytes": 12809,
-      "sha256": "2dff4bb0b37a7a977f59952b45386b21c01306287beac96c6a4e186f4b62211e"
+      "size_bytes": 13429,
+      "sha256": "efde81b45850fb5c13dec3e7aa924faa2c5f688d8417ce4b04a2521b1480c8b3"
     },
     {
       "path": "BUILD_MANIFEST.json",
-      "size_bytes": 8489,
-      "sha256": "1b4d22231091fc9706af621360b20317467c2d49542032071b1fc46594bb8f51"
+      "size_bytes": 8507,
+      "sha256": "7b8bb720dc7f8f3ecf4fb614e5d7e0538210f569356345ffeeafbad6d8551de9"
     },
     {
       "path": "CHANGES.md",
-      "size_bytes": 584,
-      "sha256": "00e4fe63b87a6f5dfca5de84d3c725144987c36e774323ebff77cfc1b471b1b7"
+      "size_bytes": 397,
+      "sha256": "d71736db444ffb424e973bd0a3397806a1d4c3d7b8c282cd835c3c16194f839f"
     },
     {
       "path": "DEPLOYMENT_EMPIREDROP_RACES.md",
-      "size_bytes": 726,
-      "sha256": "2750018cbedf2a981e6a7e7ab0c67b58df0f306a26ed5d75fd03cd7756d077ae"
+      "size_bytes": 427,
+      "sha256": "bd7666c44a1c3791ff5fbbf06823f7cb6881c9baa2ff256e216a453f52945cef"
     },
     {
       "path": "DEPLOYMENT_OPTIMIZED.md",
-      "size_bytes": 553,
-      "sha256": "63ed205ebcde0f44a3d087ce9a638378f97a1e2b1edd950466740aadae8b8b09"
+      "size_bytes": 446,
+      "sha256": "2cebd052f022eade881f5c36890a144a0a51ca7f4cd013488be722700c2a2421"
     },
     {
       "path": "DEPLOY_DIGITALOCEAN.md",
-      "size_bytes": 711,
-      "sha256": "7ec090b3afd342ce9240ea7d967018b3d47e08846d0ddc798f32d1f9433d2e29"
+      "size_bytes": 562,
+      "sha256": "49565658d8d5d6789a0915703d11f1e17c7dfefd434707a7a966906be10ec4e3"
     },
     {
       "path": "EMPIREDROP_CHANGELOG_2026-11-10.md",
@@ -82,23 +82,23 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 495,
-      "sha256": "1828058842ac17f401ac1f17df43b7eef3cbe81a33aa36a94a57f41e4acc3c9a"
+      "size_bytes": 208,
+      "sha256": "2e650115b7555305e3edcc8b63a69ca22c18665156af9d01a87b0ce8ad32890e"
     },
     {
       "path": "RELEASE_METADATA.json",
-      "size_bytes": 997,
-      "sha256": "94ba541c77ba9aeb7daefa033ec7820dc6abef06d55e343ac03947b4b5faddb1"
+      "size_bytes": 1217,
+      "sha256": "c81c7636a3a1cf810815b956add5d02426cc75335205872e90c49da51391752f"
     },
     {
       "path": "START_HERE.md",
-      "size_bytes": 530,
-      "sha256": "f532d35e5f6971a1279738d8e3d61ccfad6ee5e9cb86152dc6196f014537a36c"
+      "size_bytes": 463,
+      "sha256": "5eadb5909cf42d71c78d94dc7444ac43389a096ca5803a92a189fbb4851d9c41"
     },
     {
       "path": "UPDATE.md",
-      "size_bytes": 249,
-      "sha256": "59368519197b273799517ade6e194d09aa3d3f1e07b894fcc63ad6b72dfbec2c"
+      "size_bytes": 138,
+      "sha256": "77257a2d245053badfd7f83f261db703993e01b402c32f729d9fdb188f7b3666"
     },
     {
       "path": "admin_navigation.py",
@@ -122,13 +122,13 @@
     },
     {
       "path": "config.py",
-      "size_bytes": 10887,
-      "sha256": "182556a3d67d56bbd1e73e9c40516a4075c154abedda138fbdc7c446c7a7b05a"
+      "size_bytes": 10889,
+      "sha256": "6f6c608870b2dca5ecafc18817c9173465861a88ddedecbe1bb4683345703a54"
     },
     {
       "path": "data/state.json",
-      "size_bytes": 11197,
-      "sha256": "97e56e38f5c4bbd0ee43b0fb51a73f3c688daba1ce102eb644b74ae0a4d75064"
+      "size_bytes": 11200,
+      "sha256": "47a4afb96b7bd29ee9366a40e855fc946d5684e1b67c28bc6970371b10119242"
     },
     {
       "path": "docs/ADMIN_GAMING.png",
@@ -291,6 +291,11 @@
       "sha256": "9d7b4d88f6e2d4a4bef728ccbea4e676f35bc4c28089b3570dbf33e88d57f7d5"
     },
     {
+      "path": "docs/V21_RACE_WINDOWS.md",
+      "size_bytes": 654,
+      "sha256": "2eafbfe0c84ade637713d2c97afb7d720d6d023e2e1232e04a410e427caf770a"
+    },
+    {
       "path": "docs/VALIDATION.md",
       "size_bytes": 1009,
       "sha256": "948189d1a60371319ab7cd799778f203a372316760622f667a48b6b71996f294"
@@ -362,13 +367,13 @@
     },
     {
       "path": "private/admin_store.seed.json",
-      "size_bytes": 7799,
-      "sha256": "0205b0647af749d32f64a66a1da0c4d50ef1e2cb2d25c8a7d3cdda42f12ea0d6"
+      "size_bytes": 7828,
+      "sha256": "26e6932edbe86935091609f65069e73d6784395d5c1f290a7a0a1507699ab73f"
     },
     {
       "path": "private/settings.json",
       "size_bytes": 2176,
-      "sha256": "23b03422595a0590c3f31a97f474f10b543b6b23bce9e35850ddae2693e55ddf"
+      "sha256": "f9b31bfeb8497082965795e26814794829ba780ed4242589446aaa0978ef746a"
     },
     {
       "path": "provider_admin.py",
@@ -802,8 +807,8 @@
     },
     {
       "path": "tests/test_admin_reliability_v13.py",
-      "size_bytes": 6792,
-      "sha256": "c673594040709af604139b6930ed1d3df80e4a976da8c55c4338146888f32c00"
+      "size_bytes": 6849,
+      "sha256": "0567440a342f3b8abd4251761fd7b8db98b5cec8bcd8e3eff591d6cedf62ed8f"
     },
     {
       "path": "tests/test_admin_uniform.py",
@@ -972,8 +977,13 @@
     },
     {
       "path": "tests/test_v20_mobile_lists.py",
-      "size_bytes": 1409,
-      "sha256": "abbba9d1256c23fee26db55e77420b1256b3fa473b1d9448ab374d33a15bd2d2"
+      "size_bytes": 1411,
+      "sha256": "c890032f85158982e588c9aaefa4775ea66386caaf9903b782dd09bfcd1ec229"
+    },
+    {
+      "path": "tests/test_v21_schedule_windows.py",
+      "size_bytes": 1836,
+      "sha256": "3c61ea3ab8b65fa1381c5ad2693e7169e58dc09475dfd711e076c30395411b5c"
     },
     {
       "path": "tests/test_weekly_history.py",
@@ -1027,8 +1037,8 @@
     },
     {
       "path": "wager_backend.py",
-      "size_bytes": 87503,
-      "sha256": "067e93514c7ad02265c492d73f530c69797e71959dbc5201e64cd0011ec123cb"
+      "size_bytes": 89204,
+      "sha256": "af88c4267afc6a5b087c0e617cbfd16d6fdf3aef269efda017112bf5fc12ea7a"
     },
     {
       "path": "weekly_history.py",

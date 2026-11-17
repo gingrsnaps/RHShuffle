@@ -1,7 +1,7 @@
 {
   "format": 1,
   "key": "redhunllef",
-  "revision": 4,
+  "revision": 5,
   "admin": {
     "version": 7,
     "secret_key": "0f471b557fe98828d7ae45022198fe6b7f32d2f5eaa43f0d8dd2e87bd8ef7d57",
@@ -18,8 +18,8 @@
       "site_name": "RedHunllef",
       "race_title": "RedHunllef Wager Race",
       "race_description": "Track the top weighted wagerers for RedHunllef's active race.",
-      "start_time": 1794351600,
-      "end_time": 1794956400,
+      "start_time": 1794956400,
+      "end_time": 1795561200,
       "refresh_seconds": 60,
       "leaderboard_size": 15,
       "prizes": {
@@ -61,15 +61,15 @@
       }
     ],
     "banned_ips": [],
-    "updated_at": 1794641460,
-    "settings_revision": 3,
+    "updated_at": 1794957431,
+    "settings_revision": 4,
     "data_revision": 1,
     "race_history": [],
     "superadmin": "gingrsnaps",
     "empiredrop_race": {
       "mode": "custom",
-      "start_time": 1794351600,
-      "end_time": 1794956400
+      "start_time": 1793138400,
+      "end_time": 1795906800
     },
     "empiredrop_races": {
       "source_mode": "races",
@@ -85,7 +85,7 @@
       "race_wager_field": "total",
       "race_currency": "EUR",
       "race_wager_divisor": "100",
-      "race_window_policy": "local",
+      "race_window_policy": "provider",
       "race_start_field": "race.start_date",
       "race_end_field": "race.end_date",
       "race_verified_fields": true
@@ -132,7 +132,7 @@
   },
   "live": {
     "shuffle": {
-      "key": "ac27227b805c4ffdc84dd180",
+      "key": "5fc6d3d6224d3e83fced5d15",
       "source": [],
       "red_source": [],
       "rows": [],

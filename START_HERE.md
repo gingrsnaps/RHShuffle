@@ -1,16 +1,8 @@
-# Start here — RedHunllef V20
+# Start here — V21
 
-Deploy the FastDeploy archive to DigitalOcean and keep the Full archive as the private development backup. Export the newest recovery checkpoint before replacing the running source.
-
-DigitalOcean settings:
-
-```text
-Source Directory: /
-Build Command: leave blank
-Run Command: python wager_backend.py
-HTTP Port: 8080
-Health Check: /healthz
-RH_SPACES_ENABLE: 0
-```
-
-V20 changes only presentation, responsive layout and release tests. Shuffle and EmpireDrop data paths remain the V19 implementations.
+1. Keep this repository private.
+2. Deploy with an empty custom build command and `python wager_backend.py`.
+3. Use `RH_SPACES_ENABLE=0` unless Spaces is intentionally configured.
+4. Verify Shuffle shows Nov 17–24, 2026 at 6 PM Eastern.
+5. Verify EmpireDrop website schedule shows Oct 27–Nov 28, 2026 at 6 PM Eastern.
+6. EmpireDrop official provider dates remain tied to the selected slug and may differ from the website display window.

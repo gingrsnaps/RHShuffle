@@ -13,8 +13,10 @@ from operations_log import ActivityLog
 from empiredrop_features import DEFAULT_REWARDS, rewards_public, validate_rewards
 
 ROOT = Path(__file__).resolve().parents[1]
-START = 1794351600
-END = 1794956400
+START = 1794956400
+END = 1795561200
+EMPIRE_START = 1793138400
+EMPIRE_END = 1795906800
 
 
 def route_inventory():
@@ -110,14 +112,14 @@ class AdminReliabilityV13(unittest.TestCase):
         for name, marker in expectations.items():
             self.assertIn(marker, functions[name])
 
-    def test_bundled_dates_are_november_10_through_17_eastern(self):
+    def test_bundled_dates_match_v21_requested_windows(self):
         state = json.loads((ROOT / 'data/state.json').read_text(encoding='utf-8'))
         seed = json.loads((ROOT / 'private/admin_store.seed.json').read_text(encoding='utf-8'))
         settings = json.loads((ROOT / 'private/settings.json').read_text(encoding='utf-8'))
         for site in (state['admin']['site_settings'], seed['site_settings'], settings):
             self.assertEqual((site['start_time'], site['end_time']), (START, END))
         for admin in (state['admin'], seed):
-            self.assertEqual((admin['empiredrop_race']['start_time'], admin['empiredrop_race']['end_time']), (START, END))
+            self.assertEqual((admin['empiredrop_race']['start_time'], admin['empiredrop_race']['end_time']), (EMPIRE_START, EMPIRE_END))
 
     def test_root_requirements_and_deployment_markers_exist(self):
         for name in ('requirements.txt', 'runtime.txt', 'wager_backend.py', 'app.yaml', 'BUILD_MANIFEST.json'):

@@ -1,12 +1,3 @@
-# RedHunllef V20
+# RedHunllef V21
 
-A private Python/Flask wager-race and RedPoints application for DigitalOcean App Platform. V20 provides Shuffle-first public navigation, Shuffle Top 15, EmpireDrop Top 10, independent prizes, public RedPoints activity, direct administrator workspaces and compact mobile standings.
-
-## Run
-
-```bash
-python -m pip install -r requirements.txt
-python wager_backend.py
-```
-
-Keep this source private. The private packages contain production credentials and a bundled state snapshot.
+Run with `python wager_backend.py`. This release preserves the V20 compact mobile experience and pins the requested Shuffle and EmpireDrop website schedules. See `docs/V21_RACE_WINDOWS.md`.

@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.16-compact-mobile-lists-v20",
+  "release": "2026.11.17-persisted-race-windows-v21",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -9,8 +9,20 @@
   "shuffle_positions": 15,
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "Shuffle-first provider flow with compact grouped mobile standings, a first-place-led podium, stable countdown cards and mobile-safe History.",
-  "admin_experience": "Mobile drawer, grouped responsive player lists, stacked calendars, compact logs, responsive prize editors and direct provider workspaces.",
+  "public_experience": "V20 compact mobile standings with persisted V21 race windows.",
+  "admin_experience": "V20 responsive Admin plus verified schedule persistence for both providers.",
   "live_deployment_verified": false,
-  "bundled_state_is_snapshot": true
+  "bundled_state_is_snapshot": true,
+  "shuffle_window": {
+    "start_epoch": 1794956400,
+    "end_epoch": 1795561200,
+    "start_et": "Nov 17, 2026 06:00 PM EST",
+    "end_et": "Nov 24, 2026 06:00 PM EST"
+  },
+  "empiredrop_display_window": {
+    "start_epoch": 1793138400,
+    "end_epoch": 1795906800,
+    "start_et": "Oct 27, 2026 06:00 PM EDT",
+    "end_et": "Nov 28, 2026 06:00 PM EST"
+  }
 }

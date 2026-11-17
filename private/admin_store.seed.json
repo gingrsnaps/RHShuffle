@@ -13,8 +13,8 @@
     "site_name": "RedHunllef",
     "race_title": "RedHunllef Wager Race",
     "race_description": "Track the top weighted wagerers for RedHunllef's active race.",
-    "start_time": 1794351600,
-    "end_time": 1794956400,
+    "start_time": 1794956400,
+    "end_time": 1795561200,
     "refresh_seconds": 60,
     "leaderboard_size": 15,
     "prizes": {
@@ -224,11 +224,11 @@
     ],
     "updated_at": 1786043029
   },
-  "updated_at": 1794641460,
+  "updated_at": 1794957431,
   "empiredrop_race": {
     "mode": "custom",
-    "start_time": 1794351600,
-    "end_time": 1794956400
+    "start_time": 1793138400,
+    "end_time": 1795906800
   },
   "empiredrop_races": {
     "source_mode": "races",
@@ -244,7 +244,7 @@
     "race_wager_field": "total",
     "race_currency": "EUR",
     "race_wager_divisor": "100",
-    "race_window_policy": "local",
+    "race_window_policy": "provider",
     "race_start_field": "race.start_date",
     "race_end_field": "race.end_date",
     "race_verified_fields": true
@@ -286,5 +286,6 @@
     "revision": 2,
     "updated_at": 1794641460,
     "updated_by": "gingrsnaps"
-  }
+  },
+  "settings_revision": 1
 }

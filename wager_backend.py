@@ -908,14 +908,23 @@ def create_app(root=None, testing=False):
             race_options['race_window_policy'] = 'provider'
             candidate['empiredrop_races'] = validate_race_settings(race_options)
             runtime.commit(candidate, expected)
+            # Read the committed JSON back before reporting success. This catches
+            # deployment/state mismatches instead of telling an admin that dates
+            # were saved when the persisted window differs.
+            _, persisted_admin = runtime.store.admin()
+            persisted_window = persisted_admin.get('empiredrop_race') or {}
+            if (persisted_window.get('mode') != value.get('mode') or
+                    int(persisted_window.get('start_time', 0)) != int(value.get('start_time', 0)) or
+                    int(persisted_window.get('end_time', 0)) != int(value.get('end_time', 0))):
+                raise StoreError('EmpireDrop schedule verification failed after save. Existing data was retained; reload before retrying.')
             runtime.empiredrop.request_refresh()
             safe_activity('admin','info','settings_saved',code='empire_schedule')
             return admin_saved(
-                'EmpireDrop local schedule saved. Official provider standings and dates remain authoritative.',
+                'EmpireDrop website schedule saved and verified: ' + fmt_et(value['start_time']) + ' → ' + fmt_et(value['end_time']) + '. Official provider standings remain slug-based.',
                 'empiredrop', 'empireSchedule')
-        except (ValueError, Conflict) as exc:
+        except (ValueError, Conflict, StoreError) as exc:
             return render_admin('empiredrop', errors={'empiredrop':str(exc)},
-                                status=409 if isinstance(exc, Conflict) else 422)
+                                status=500 if isinstance(exc, StoreError) else 409 if isinstance(exc, Conflict) else 422)
 
     @app.post('/admin/empiredrop/rewards')
     @protected
@@ -1434,6 +1443,15 @@ def create_app(root=None, testing=False):
             candidate["audit_log"].append(dict(ts_et=fmt_et(candidate["updated_at"]), admin_user=g.user, action=action_name, detail=detail))
             candidate["audit_log"] = candidate["audit_log"][-250:]
             runtime.commit(candidate, expected, snapshot=snapshot, reason=reason)
+            if action_name == 'save_race':
+                # Verify the atomically committed race window before confirming
+                # the save in the browser. The provider worker will use these
+                # exact persisted epoch seconds for its next request.
+                _, persisted_admin = runtime.store.admin()
+                persisted_site = persisted_admin.get('site_settings') or {}
+                if (int(persisted_site.get('start_time', 0)) != int(site['start_time']) or
+                        int(persisted_site.get('end_time', 0)) != int(site['end_time'])):
+                    raise StoreError('Shuffle schedule verification failed after save. Existing data was retained; reload before retrying.')
             if action_name in {"password", "reset_password"}:
                 _, current = account(candidate["users"], g.user)
                 session["auth_version"] = current["auth_version"]
@@ -1452,9 +1470,10 @@ def create_app(root=None, testing=False):
                       'add_account':'accounts', 'remove_account':'accounts', 'reset_password':'accounts',
                       'restore':'backups'}.get(action_name, 'accessControls')
             return admin_saved(detail, tab if tab in TABS else 'overview', target)
-        except (ValueError, Conflict) as exc:
+        except (ValueError, Conflict, StoreError) as exc:
             return render_admin(tab, dict(request.form) if tab == "race" else None,
-                                errors={"form":str(exc)}, status=409 if isinstance(exc, Conflict) else 422)
+                                errors={"form":str(exc)},
+                                status=500 if isinstance(exc, StoreError) else 409 if isinstance(exc, Conflict) else 422)
 
     missing_admin_actions = required_actions - {rule.rule for rule in app.url_map.iter_rules()}
     if missing_admin_actions:

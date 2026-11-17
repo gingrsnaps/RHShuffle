@@ -1,17 +1,9 @@
-# Optimized DigitalOcean deployment — V18
+# V21 FastDeploy
 
-Use the FastDeploy archive for DigitalOcean App Platform. Its source root
-contains `requirements.txt`, `runtime.txt`, `wager_backend.py`, `app.yaml`, and
-`BUILD_MANIFEST.json`.
+Deploy from the repository root with an empty custom build command and `python wager_backend.py`.
 
-Settings:
+Bundled windows:
+- Shuffle: Nov 17, 2026 6:00 PM EST → Nov 24, 2026 6:00 PM EST.
+- EmpireDrop website display: Oct 27, 2026 6:00 PM EDT → Nov 28, 2026 6:00 PM EST.
 
-- Source Directory: `/`
-- Custom Build Command: blank
-- Run Command: `python wager_backend.py`
-- HTTP Port: `8080`
-- Health Check: `/healthz`
-- `RH_SPACES_ENABLE=0` unless Spaces is intentionally configured
-
-Use **Force Rebuild and Deploy** so the V18 release and corrected payout
-JavaScript replace cached V17 assets.
+EmpireDrop standings remain tied to the selected official provider race slug. Use `RH_SPACES_ENABLE=0` unless durable Spaces state is intentionally configured.
