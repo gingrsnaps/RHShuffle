@@ -8,6 +8,13 @@
   const set = (selector, value) => {
     for (const node of document.querySelectorAll(selector)) node.textContent = String(value);
   };
+  const tickNextChecks = () => {
+    const now = Math.floor(Date.now()/1000);
+    document.querySelectorAll('[data-provider-next-check]').forEach(node => {
+      const stamp = Number(node.dataset.nextCheck || 0);
+      node.textContent = stamp > now ? `in ${stamp-now}s` : stamp ? 'Checking now…' : 'Check queued';
+    });
+  };
   function render(payload) {
     if (!payload?.providers) return;
     for (const name of ['shuffle','empiredrop']) {
@@ -18,9 +25,12 @@
         node.textContent = item.status;
       }
       const fields = {last_success:fmt(item.last_success),last_attempt:item.last_attempt ? fmt(item.last_attempt) : 'Not attempted',
-        participants:item.participants,quality:item.quality,metric:item.metric,cadence:`Every ${item.refresh_seconds} seconds`};
+        last_changed:item.last_changed ? fmt(item.last_changed) : 'No recorded change yet',
+        participants:item.participants,filled:`${item.filled ?? item.participants}/15`,quality:item.quality,metric:item.metric,cadence:`Every ${item.refresh_seconds} seconds`};
       for (const [key,value] of Object.entries(fields))
         set(`[data-provider-field="${name}:${key}"]`, value);
+      document.querySelectorAll(`[data-provider-next-check="${name}"]`).forEach(node => { node.dataset.nextCheck = String(item.next_check || 0); });
+      tickNextChecks();
       const wrapper = document.querySelector(`[data-provider-issues="${name}"]`);
       if (wrapper) {
         const issues = Array.isArray(item.issues) ? item.issues : [];
@@ -42,5 +52,7 @@
         row.hidden = Boolean(query && !row.textContent.toLocaleLowerCase().includes(query));
     });
   });
+  tickNextChecks();
+  setInterval(tickNextChecks, 1000);
   globalThis.RedProviderCards = {render};
 })();

@@ -90,6 +90,8 @@ def clean_history(value):
             raise ValueError('Invalid history HTTP status.')
         if type(row.get('failures', 0)) is not int or not 0 <= row.get('failures', 0) <= 100:
             raise ValueError('Invalid history retry count.')
+        if not isinstance(row.get('verified', False), bool):
+            raise ValueError('Invalid historical verification flag.')
         if row.get('origin', 'shuffle') not in {'shuffle', 'snapshot'}:
             raise ValueError('Invalid history result origin.')
         rows = row.get('rows')
@@ -164,7 +166,7 @@ class WeeklyHistory:
         # Old exports can contain fewer than 25 places and were not necessarily
         # captured after the cutoff. Clearly mark them as provisional snapshots.
         rows = [p for p in rows if isinstance(p.get('username'), str) and len(p['username']) <= 64]
-        return dict(updated_at=at, origin='snapshot', count=len(rows),
+        return dict(updated_at=at, origin='snapshot', verified=False, count=len(rows),
                     rows=[dict(rank=n, username=p['username'], weighted_wager=str(decimal_amount(p['weighted_wager'])))
                           for n, p in enumerate(rows[:25], 1)],
                     warning='Saved race snapshot; the final top 25 is awaiting confirmation from Shuffle.')
@@ -209,7 +211,7 @@ class WeeklyHistory:
                         'This week is queued for its first automatic check.') if not checked else ''))
             weeks.append({**period, 'status':status, 'message':message,
                 'updated_at':checked, 'updated_et':fmt_et(checked) if checked else 'Awaiting first result',
-                'retry_at':row.get('retry_at', 0), 'origin':row.get('origin', 'shuffle'),
+                'retry_at':row.get('retry_at', 0), 'origin':row.get('origin', 'shuffle'), 'verified':bool(row.get('verified', False)),
                 'count':row.get('count') if checked else None,
                 'prizes_known':checked > 0 and row.get('prizes') is not None,
                 'rows':[dict(rank=p['rank'], username=p['username'][:2] + '******',
@@ -247,15 +249,17 @@ class WeeklyHistory:
             previous = cache.get(period['id'], {})
             if previous.get('scope') != scope:
                 previous = {}
-            # Newly closed weeks recheck hourly for settlement corrections;
-            # older completed weeks recheck daily. No API call per page view.
-            refresh = 3600 if now - period['end_time'] < 86400 else 86400
-            if previous.get('retry_at', 0) > now or (not force and previous.get('updated_at') and
-                    not previous.get('error') and previous.get('origin') != 'snapshot' and now - previous['updated_at'] < refresh):
+            # A completed week freezes after its first verified provider result.
+            # Only an explicit administrator refresh rechecks it. This prevents
+            # historical backfills from competing with the active 60-second race.
+            if previous.get('retry_at', 0) > now:
+                continue
+            if (not force and previous.get('verified') and previous.get('updated_at') and
+                    not previous.get('error') and previous.get('origin') == 'shuffle'):
                 continue
             record = {**period, 'scope':scope, 'updated_at':0, 'attempt_at':now,
                       'retry_at':0, 'count':0, 'rows':[], 'prizes':prizes,
-                      'error':'', 'warning':'', **previous}
+                      'error':'', 'warning':'', 'verified':False, **previous}
             record['attempt_at'] = now
             if not record['updated_at']:
                 record.update(self.saved_result(period, admin, site))
@@ -270,7 +274,7 @@ class WeeklyHistory:
                 rows, _, count = rank(incoming['source'], overrides, self.config.aggregation, 25)
                 record.update(rows=[dict(rank=p['rank'], username=p['username'], weighted_wager=p['weighted_wager']) for p in rows],
                               count=count, prizes=prizes, updated_at=now, error='', retry_at=0,
-                              problem='unknown', http_status=200, failures=0, origin='shuffle',
+                              problem='unknown', http_status=200, failures=0, origin='shuffle', verified=True,
                               warning=incoming['warning'][:500])
                 LOG.info('HISTORY Saved %s to %s; %s qualifying players.', period['start_et'], period['end_et'], count)
             except (ProviderError, ValueError) as exc:
@@ -296,7 +300,7 @@ class WeeklyHistory:
                     old = cache.get(pending['id'], {})
                     if old.get('scope') != pscope: old = {}
                     queued = {**pending, 'scope':pscope, 'updated_at':0, 'attempt_at':0,
-                              'count':0, 'rows':[], 'prizes':pprizes, 'warning':'', **old}
+                              'count':0, 'rows':[], 'prizes':pprizes, 'warning':'', 'verified':False, **old}
                     if not queued['updated_at']: queued.update(self.saved_result(pending, admin, psite))
                     queued.update(error=PROBLEMS[code], problem=code, http_status=status,
                                   retry_at=max(queued.get('retry_at', 0), now + pause))

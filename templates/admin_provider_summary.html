@@ -11,6 +11,9 @@
     <article><span>Last verified</span><strong data-provider-field="{{ provider.key }}:last_success" {% if provider.key=='empiredrop' %}id="empireAdminConfirmed"{% endif %}>{{ fmt_et(provider.last_success) if provider.last_success else 'Not verified yet' }}</strong></article>
     <article><span>Last attempted</span><strong data-provider-field="{{ provider.key }}:last_attempt" {% if provider.key=='empiredrop' %}id="empireAdminAttempted"{% endif %}>{{ fmt_et(provider.last_attempt) if provider.last_attempt else 'Not attempted' }}</strong></article>
     <article><span>Ranked players</span><strong data-provider-field="{{ provider.key }}:participants">{{ provider.participants }}</strong></article>
+    {% if provider.key == 'shuffle' %}<article><span>Top 15 filled</span><strong data-provider-field="shuffle:filled">{{ provider.filled }}/15</strong></article>{% endif %}
+    <article><span>Last leaderboard change</span><strong data-provider-field="{{ provider.key }}:last_changed">{{ fmt_et(provider.last_changed) if provider.last_changed else 'No recorded change yet' }}</strong></article>
+    <article><span>Next check</span><strong data-provider-field="{{ provider.key }}:next_check" data-provider-next-check="{{ provider.key }}" data-next-check="{{ provider.next_check or 0 }}">{{ fmt_et(provider.next_check) if provider.next_check else 'Check queued' }}</strong></article>
     <article><span>Recent reliability</span><strong>{% if provider.trend.sample %}{{ provider.trend.successes }}/{{ provider.trend.sample }} successful · {{ provider.trend.success_rate }}%{% else %}Waiting for checks{% endif %}</strong></article>
   </div>
   {% if provider.key=='empiredrop' %}<p class="small muted">Worker: <strong id="empireAdminChecking">{{ 'Checking provider' if empire_admin.checking else 'Waiting for next check' }}</strong></p>{% endif %}

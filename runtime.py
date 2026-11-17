@@ -9,7 +9,7 @@ import time
 from config import INTERVAL, RELEASE
 from integrations import Providers, ProviderError
 from storage import Store, StoreError, Conflict
-from race import calculate, empty, freshness, normalize, phase, rank, token
+from race import calculate, empty, freshness, normalize, phase, rank, token, top_snapshot
 from race_support import fmt_et, money, race_key
 from weekly_history import WeeklyHistory
 from empiredrop import EmpireDropBoard
@@ -28,6 +28,7 @@ class Runtime:
         if self.shuffle.get("key") != race_key(self.admin["site_settings"]):
             self.shuffle = empty(self.admin["site_settings"])
         self.restore_edits()
+        self.ensure_top15(self.shuffle)
         self.kick = self.store.live("kick") or dict(updated_at=0, attempt_at=0, error="", live=False)
         self.events = {name: threading.Event() for name in ("shuffle", "kick")}
         self.threads, self.started = {}, False
@@ -50,6 +51,15 @@ class Runtime:
             edits = [{**row, "rank": ranks.get(row["username"])} for row in edits]
         self.shuffle["edits"] = edits
 
+    def ensure_top15(self, value, previous=None):
+        """Attach one validated, versioned Top 15 to a live Shuffle snapshot."""
+        previous_rows = (previous or {}).get("rows", [])[:15]
+        rows, revision = top_snapshot(value.get("rows", []), previous_rows, 15)
+        value["rows"] = rows + list(value.get("rows", []))[15:]
+        value["top15_revision"] = revision
+        value.setdefault("top15_changed_at", value.get("changed_at", value.get("updated_at", 0)))
+        return value
+
     def sync(self):
         revision, admin = self.store.admin()
         with self.lock:
@@ -58,6 +68,7 @@ class Runtime:
                 saved = self.store.live("shuffle")
                 self.shuffle = saved if saved and saved.get("key") == race_key(admin["site_settings"]) else empty(admin["site_settings"])
                 self.restore_edits()
+                self.ensure_top15(self.shuffle)
             return self.revision, copy.deepcopy(self.admin)
 
     def commit(self, admin, expected, *, snapshot=None, reason=None):
@@ -74,19 +85,31 @@ class Runtime:
                     total_prize=money(sum(Decimal(v) for v in site["prizes"].values())), race_state=phase(site))
         # Projection is an explicit allowlist. Provider source rows, raw totals,
         # admin names, password hashes, and keys cannot reach the public API.
-        rows = [dict(rank=r["rank"], username=r["username"][:2] + "******", wager=r["wager"]) for r in value["rows"][:15]]
+        rows = [dict(rank=r["rank"], username=r["username"][:2] + "******", wager=r["wager"],
+                     movement=r.get("movement"), new_entry=bool(r.get("new_entry")))
+                for r in value["rows"][:15]]
         if phase(site) in {"upcoming", "unconfigured"}:
             rows = []
+        ranked = {row["rank"]: row for row in rows}
+        top15 = [ranked.get(rank) or dict(rank=rank, username="Open position", wager="$0.00",
+                                          movement=None, new_entry=False, open=True)
+                 for rank in range(1, 16)]
         available = bool(kick.get("updated_at") and not kick.get("error") and time.time() - kick["updated_at"] <= 180
                          and kick.get("channel") == site["kick_channel_slug"])
         stream = {k: kick.get(k) for k in ("live", "title", "viewers", "updated_at")}
         stream["available"] = available
         fresh = freshness(value)
         fresh.pop("error", None)
-        return dict(release=RELEASE, server_time=int(time.time()), interval=INTERVAL, site=site, rows=rows,
-                    empiredrop=self.empiredrop.public(site),
+        empire = self.empiredrop.public(site)
+        public_revision = token([site, top15, empire.get("rows", []), empire.get("prizes", {}),
+                                 empire.get("schedule", {}), empire.get("history", []),
+                                 {k:stream.get(k) for k in ("live","title","viewers","available")}])
+        return dict(release=RELEASE, server_time=int(time.time()), interval=INTERVAL, site=site, rows=rows, top15=top15,
+                    shuffle_revision=value.get("top15_revision") or token(rows),
+                    shuffle_changed_at=value.get("top15_changed_at", value.get("changed_at", 0)),
+                    empiredrop=empire,
                     leaderboard_message=self.empty_message(site, value),
-                    freshness=fresh, stream=stream, revision=token([site, rows, fresh, stream]))
+                    freshness=fresh, stream=stream, revision=public_revision)
 
     @staticmethod
     def empty_message(site, snapshot):
@@ -122,10 +145,14 @@ class Runtime:
                             storage="Local JSON file (automatic)", settings_revision=self.revision,
                             start_et=fmt_et(self.admin["site_settings"]["start_time"]), end_et=fmt_et(self.admin["site_settings"]["end_time"]),
                             received=self.shuffle.get("received", 0), accepted=self.shuffle.get("accepted", 0),
-                            rejected=self.shuffle.get("rejected", {}), missing_campaign=self.shuffle.get("missing_campaign", 0)))
+                            rejected=self.shuffle.get("rejected", {}), missing_campaign=self.shuffle.get("missing_campaign", 0),
+                            distinct_source_players=len({row.get("username") for row in self.shuffle.get("source", []) if isinstance(row, dict) and row.get("username")}),
+                            additional_player_rows=max(0, self.shuffle.get("accepted", 0) - len({row.get("username") for row in self.shuffle.get("source", []) if isinstance(row, dict) and row.get("username")}))))
             data["diagnostics"].update(race_state=phase(self.admin["site_settings"]),
                 campaign_filter=self.admin["site_settings"]["campaign_code_filter"], endpoint_kind=self.config.endpoint,
-                aggregation=self.config.aggregation, qualifying_players=data["count"], loaded_players=len(data["rows"]))
+                aggregation=self.config.aggregation, qualifying_players=data["count"], loaded_players=len(data["rows"]),
+                top15_filled=min(15, len(data["rows"])), top15_revision=self.shuffle.get("top15_revision", ""),
+                top15_changed_at=self.shuffle.get("top15_changed_at", self.shuffle.get("changed_at", 0)))
             data['history'] = self.history.diagnostics()
             return data
 
@@ -175,6 +202,7 @@ class Runtime:
                         status = self.providers.last_http_status()
                         request_meta = self.providers.last_request_meta()
                         value = calculate({**empty(site), **incoming, "updated_at":int(time.time()), "attempt_at":now, "ok":True}, admin, self.config)
+                        self.ensure_top15(value, previous)
                         # Warn once when incomplete campaign/amount records change.
                         # Store only counts, never source values or usernames.
                         missing = value.get('missing_campaign', 0)
@@ -189,15 +217,18 @@ class Runtime:
                                                      received=value.get('received', 0), accepted=value.get('accepted', 0),
                                                      excluded=max(0, value.get('received', 0)-value.get('accepted', 0)),
                                                      unscoped=missing)
-                        value["changed_at"] = value["updated_at"] if previous["rows"] != value["rows"] else previous.get("changed_at", 0)
-                        value["previous_top"] = previous["rows"][:15] if previous["rows"][:15] != value["rows"][:15] else previous.get("previous_top", [])
+                        top_changed = previous.get("top15_revision") != value.get("top15_revision")
+                        full_changed = previous.get("revision") != value.get("revision")
+                        value["changed_at"] = value["updated_at"] if full_changed else previous.get("changed_at", 0)
+                        value["top15_changed_at"] = value["updated_at"] if top_changed else previous.get("top15_changed_at", previous.get("changed_at", 0))
+                        value["previous_top"] = previous["rows"][:15] if top_changed else previous.get("previous_top", [])
                         warning = value["warning"]
-                        result = "empty" if not value["rows"] else "updated" if previous["rows"] != value["rows"] else "unchanged"
+                        result = "empty" if not value["rows"] else "updated" if top_changed else "unchanged"
                     with self.lock:
                         self.store.publish(name, value, revision)
                         self.shuffle = value
                     LOG.info("SHUFFLE %s; %s accepted / %s received; race %s → %s.",
-                             "Updated" if previous["rows"] != value["rows"] else "Confirmed unchanged",
+                             "Updated" if top_changed else "Confirmed unchanged",
                              value.get("accepted", 0), value.get("received", 0), fmt_et(site["start_time"]), fmt_et(site["end_time"]))
                     if not value["rows"]:
                         LOG.info("SHUFFLE %s", self.empty_message(site, value))
@@ -284,7 +315,7 @@ class Runtime:
     def request_refresh(self, name=None):
         if self.started:
             self.start()
-        targets = {}
+        targets, joined = {}, []
         for service in (name,) if name else self.events:
             with self.lock:
                 job = self.jobs[service]
@@ -293,16 +324,20 @@ class Runtime:
                 # dates. Explicit provider Retry-After/429 limits remain binding.
                 if job["checked_scope"] != scope and not job["retry_after"] and job["http_status"] != 429:
                     job["not_before"] = 0
+                # A manual request joins an in-flight provider check rather than
+                # queuing an immediate duplicate call. Otherwise repeated clicks
+                # can create a needless follow-up request after the same response.
+                if job["state"] == "checking":
+                    targets[service] = job["requested"]
+                    joined.append(service)
+                    continue
                 if not self.events[service].is_set():
                     job["requested"] += 1
                 targets[service] = job["requested"]
-                if job["state"] != "checking":
-                    job["state"] = "queued"
-                    job["next_check"] = int(time.time() + max(0, job["not_before"]-time.monotonic()))
-                # Even an active check must retain one follow-up request. The
-                # event coalesces repeated clicks without concurrent API calls.
+                job["state"] = "queued"
+                job["next_check"] = int(time.time() + max(0, job["not_before"]-time.monotonic()))
                 self.events[service].set()
-        return dict(runtime_id=self.instance_id, requests=targets)
+        return dict(runtime_id=self.instance_id, requests=targets, joined=joined)
 
     def loop(self, name):
         due = time.monotonic()

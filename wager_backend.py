@@ -297,7 +297,9 @@ def create_app(root=None, testing=False):
         value = public_snapshot()
         server_time = value.pop("server_time")
         response = jsonify(value)
-        response.set_etag(token(value))
+        # ETag follows actual public content, not moving provider timestamps.
+        # X-Server-Time still keeps countdowns accurate on a 304 response.
+        response.set_etag(str(value.get("revision") or token(value)))
         response.headers["X-Server-Time"] = str(server_time)
         return response.make_conditional(request)
 
@@ -374,7 +376,9 @@ def create_app(root=None, testing=False):
         value = dict(ok=True, wallet=gaming_wallet(), community=gaming.public_leaderboard(),
                      player_csrf=player_csrf(), release=RELEASE)
         response = jsonify(value)
-        response.set_etag(token(value))
+        # ETag follows actual public content, not moving provider timestamps.
+        # X-Server-Time still keeps countdowns accurate on a 304 response.
+        response.set_etag(str(value.get("revision") or token(value)))
         return response.make_conditional(request)
 
     @app.get('/gaming/api/public-leaderboard')
@@ -383,7 +387,9 @@ def create_app(root=None, testing=False):
         # recovery data or admin funding adjustments.
         value = dict(ok=True, **gaming.public_leaderboard(), release=RELEASE)
         response = jsonify(value)
-        response.set_etag(token(value))
+        # ETag follows actual public content, not moving provider timestamps.
+        # X-Server-Time still keeps countdowns accurate on a 304 response.
+        response.set_etag(str(value.get("revision") or token(value)))
         response.headers['Cache-Control'] = 'public, no-cache'
         return response.make_conditional(request)
 
@@ -1316,10 +1322,13 @@ def create_app(root=None, testing=False):
             if name not in {None, "shuffle", "kick"}:
                 abort(400)
             receipt = runtime.request_refresh(name)
+            joined = set(receipt.get("joined") or [])
+            message = ("A provider check is already running. This request joined the current check."
+                       if name and name in joined else
+                       "Refresh queued. Its progress and result appear below.")
             LOG.info("REFRESH Check requested for %s; provider retry delays still apply.", name or "Shuffle and Kick")
             if wants_json():
-                return jsonify(ok=True, message="Refresh queued. Its progress and result appear below.",
-                               **receipt, jobs=runtime.job_status()), 202
+                return jsonify(ok=True, message=message, **receipt, jobs=runtime.job_status()), 202
             flash("Check requested. Results update automatically.")
             return redirect(admin_link(tab if tab in TABS else "overview"), 303)
         try:

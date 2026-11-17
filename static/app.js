@@ -200,7 +200,8 @@
     lastProviderFailure = "";
   let participantVersion = "",
     redVersion = "",
-    historyVersion = "";
+    historyVersion = "",
+    shuffleRenderVersion = "";
   try {
     const boot = JSON.parse(document.body.dataset.bootstrap);
     site = boot.site;
@@ -498,6 +499,53 @@
         ?.focus({ preventScroll: true });
     if (red) filterRed();
   }
+  function updateRankMovement(node, row) {
+    if (!node) return;
+    let badge = node.querySelector("[data-rank-movement]");
+    const movement = Number(row?.movement || 0);
+    const isNew = Boolean(row?.new_entry && !row?.open);
+    const label = isNew ? "NEW" : movement > 0 ? `↑${movement}` : movement < 0 ? `↓${Math.abs(movement)}` : "";
+    if (!label) {
+      badge?.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.dataset.rankMovement = "";
+      badge.className = "rank-movement";
+      const anchor = node.querySelector(".placement, .rank") || node.firstElementChild;
+      anchor?.append(badge);
+    }
+    badge.className = `rank-movement ${isNew ? "is-new" : movement > 0 ? "is-up" : "is-down"}`;
+    badge.textContent = label;
+    badge.setAttribute("aria-label", isNew ? "New in the Top 15" : movement > 0 ? `Up ${movement} position${movement === 1 ? "" : "s"}` : `Down ${Math.abs(movement)} position${Math.abs(movement) === 1 ? "" : "s"}`);
+    clearTimeout(node._rankMovementTimer);
+    node._rankMovementTimer = setTimeout(() => badge?.remove(), 8000);
+  }
+
+  function renderShuffleTop15(value, site) {
+    const slots = Array.isArray(value.top15) && value.top15.length === 15
+      ? value.top15
+      : Array.from({length:15}, (_, index) => {
+          const rank = index + 1;
+          return (value.rows || []).find((row) => Number(row.rank) === rank) ||
+            {rank, username:"Open position", wager:"$0.00", open:true};
+        });
+    const version = JSON.stringify([value.shuffle_revision || "", site.prizes || {}]);
+    if (version === shuffleRenderVersion) return;
+    shuffleRenderVersion = version;
+    for (let rank = 1; rank <= 15; rank += 1) {
+      const row = slots[rank - 1] || {rank, username:"Open position", wager:"$0.00", open:true};
+      document.querySelectorAll(`#shuffleBoard [data-rank="${rank}"]`).forEach((node) => {
+        text(node.querySelector("[data-name]"), row.open ? "Open position" : row.username);
+        text(node.querySelector("[data-wager]"), row.open ? "$0.00" : row.wager);
+        text(node.querySelector("[data-prize]"), currency(site.prizes?.[rank]));
+        node.classList.toggle("is-open-position", Boolean(row.open));
+        updateRankMovement(node, row);
+      });
+    }
+  }
+
   function apply(value, began) {
     if (!value.site || !value.freshness || !Number.isFinite(value.server_time))
       throw new Error("The update response is incomplete.");
@@ -636,17 +684,9 @@
           " · next update in 60 seconds",
       );
     } else {
-      const rows = new Map((value.rows || []).map((row) => [row.rank, row]));
-      document.querySelectorAll("[data-rank]").forEach((node) => {
-        const n = Number(node.dataset.rank),
-          row = rows.get(n);
-        text(
-          node.querySelector("[data-name]"),
-          row?.username || "Open position",
-        );
-        text(node.querySelector("[data-wager]"), row?.wager || "$0.00");
-        text(node.querySelector("[data-prize]"), currency(site.prizes[n]));
-      });
+      // Render one complete versioned Top 15 in a single pass. Every rank
+      // from 1 through 15 is explicitly refreshed, including open positions.
+      renderShuffleTop15(value, site);
       if (value.empiredrop)
         document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site, server_time:value.server_time} }));
       text(

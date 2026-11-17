@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.17-persisted-race-windows-v21",
+  "release": "2026.11.17-shuffle-top15-v22",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -7,10 +7,12 @@
   "private_config_included": true,
   "private_config_warning": "The private packages contain unencrypted production credentials and saved private state. Keep them private.",
   "shuffle_positions": 15,
+  "shuffle_refresh_seconds": 60,
+  "shuffle_snapshot_behavior": "All ranks 1-15 publish atomically as one versioned snapshot; failures retain the last verified snapshot.",
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "V20 compact mobile standings with persisted V21 race windows.",
-  "admin_experience": "V20 responsive Admin plus verified schedule persistence for both providers.",
+  "public_experience": "V20 compact mobile standings plus V22 atomic Shuffle Top 15 refresh and brief rank movement.",
+  "admin_experience": "Backend-driven provider timing, last success vs last leaderboard change, source funnel counts and recent reliability.",
   "live_deployment_verified": false,
   "bundled_state_is_snapshot": true,
   "shuffle_window": {

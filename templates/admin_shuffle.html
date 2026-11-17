@@ -28,8 +28,12 @@
   <div class="provider-quality-grid">
     <div><span>Records returned</span><strong>{{ data.diagnostics.received }}</strong></div>
     <div><span>Records included</span><strong>{{ data.diagnostics.accepted }}</strong></div>
+    <div><span>Records excluded</span><strong>{{ [data.diagnostics.received - data.diagnostics.accepted, 0]|max }}</strong></div>
     <div><span>Campaign unverified</span><strong>{{ data.diagnostics.missing_campaign }}</strong></div>
-    <div><span>Ranked players</span><strong>{{ data.count }}</strong></div>
+    <div><span>Distinct source players</span><strong>{{ data.diagnostics.distinct_source_players }}</strong></div>
+    <div><span>Additional same-player rows</span><strong>{{ data.diagnostics.additional_player_rows }}</strong></div>
+    <div><span>Qualifying players</span><strong>{{ data.count }}</strong></div>
+    <div><span>Public Top 15 filled</span><strong>{{ data.diagnostics.top15_filled }}/15</strong></div>
   </div>
   <p class="small muted">The counts refer to source records, not necessarily distinct players. A missing campaign field does not prove referral membership; verify the scope of your Shuffle affiliate feed before using those records for payouts.</p>
   {% if data.diagnostics.rejected %}<details class="provider-advanced"><summary>Excluded source records</summary><ul>{% for reason,number in data.diagnostics.rejected.items() %}<li>{{ reason }}: {{ number }}</li>{% endfor %}</ul></details>{% endif %}

@@ -729,3 +729,13 @@ html.admin-menu-open,body.admin-menu-open{overflow:hidden;overscroll-behavior:no
   body:not([data-page="admin"]) .responsive-results td.empty::before,
   .history-page .responsive-history td.empty::before{display:none!important}
 }
+
+/* V22 live Shuffle Top 15 movement indicators. */
+#shuffleBoard .rank-movement{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:1px 5px;border-radius:999px;font-size:.62rem;font-weight:800;line-height:1.4;vertical-align:middle;letter-spacing:.02em}
+#shuffleBoard .rank-movement.is-up{color:#9ee7b0;background:#183322}
+#shuffleBoard .rank-movement.is-down{color:#efadb9;background:#381e25}
+#shuffleBoard .rank-movement.is-new{color:#f2ced5;background:#3a2830}
+#shuffleBoard .is-open-position .rank-movement{display:none}
+@media(max-width:480px){
+  #shuffleBoard .rank-movement{margin-left:4px;padding:1px 4px;font-size:.56rem}
+}

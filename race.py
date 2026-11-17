@@ -139,6 +139,37 @@ def calculate(snapshot, admin, config):
     return result
 
 
+def top_snapshot(rows, previous=None, limit=15):
+    """Validate and version one complete public leaderboard snapshot.
+
+    The returned rows always represent one coherent provider result. Movement is
+    computed from the previously published Top N using full provider usernames;
+    masking is applied later in the public projection.
+    """
+    current = [dict(row) for row in list(rows or [])[:limit]]
+    seen = set()
+    for index, row in enumerate(current, 1):
+        if row.get("rank") != index:
+            raise ValueError("Leaderboard ranks are not sequential.")
+        name = row.get("username")
+        if not isinstance(name, str) or not name.strip() or name in seen:
+            raise ValueError("Leaderboard contains an invalid or duplicate player identity.")
+        seen.add(name)
+        if decimal_amount(row.get("weighted_wager")) < 0:
+            raise ValueError("Leaderboard contains an invalid wager amount.")
+    previous_rows = list(previous or [])[:limit]
+    has_previous = bool(previous_rows)
+    old = {row.get("username"): row.get("rank") for row in previous_rows
+           if isinstance(row, dict) and isinstance(row.get("username"), str) and isinstance(row.get("rank"), int)}
+    visible = []
+    for row in current:
+        prior = old.get(row["username"])
+        visible.append({**row, "movement": (prior - row["rank"]) if prior is not None else None,
+                        "new_entry": has_previous and prior is None})
+    revision = token([[row["rank"], row["username"], row.get("weighted_wager"), row.get("wager")] for row in current])
+    return visible, revision
+
+
 def freshness(snapshot):
     stamp = snapshot.get("updated_at", 0)
     stale = bool(snapshot.get("snapshot_only") or snapshot.get("error") or (stamp and time.time() - stamp > 180))

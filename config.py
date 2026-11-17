@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.17-persisted-race-windows-v21"
+RELEASE = "2026.11.17-shuffle-top15-v22"
 INTERVAL = 60
 
 

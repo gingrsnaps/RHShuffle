@@ -35,4 +35,4 @@ def test_public_menu_has_mobile_focus_and_scroll_management():
 
 def test_release_updated():
     config=(ROOT/'config.py').read_text()
-    assert '2026.11.16-compact-mobile-lists-v20' in config
+    assert '2026.11.17-shuffle-top15-v22' in config

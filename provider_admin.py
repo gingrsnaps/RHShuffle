@@ -47,6 +47,8 @@ def summarize_providers(status, empire, trends=None):
     received = _int(quality.get('received'))
     accepted = _int(quality.get('accepted'))
     missing = _int(quality.get('missing_campaign'))
+    distinct = _int(quality.get('distinct_source_players'))
+    additional = _int(quality.get('additional_player_rows'))
     rejected = quality.get('rejected') or {}
     rejected_total = sum(_int(n) for n in rejected.values()) if isinstance(rejected, dict) else 0
     excluded_total = max(0, received - accepted)
@@ -82,18 +84,22 @@ def summarize_providers(status, empire, trends=None):
         'status': s_health.get('status', 'Waiting for source'),
         'last_success': _int(shuffle.get('last_success')),
         'last_attempt': _int(shuffle.get('attempt_at')),
+        'last_changed': _int(shuffle.get('changed_at')),
+        'next_check': _int(shuffle.get('next_check')),
         'refresh_seconds': 60,
         'participants': ranked,
+        'filled': min(15, len(rows) if isinstance(rows, list) else 0),
         'loaded': len(rows) if isinstance(rows, list) else 0,
         'metric': 'Weighted wager',
         'scope': ('Shuffle window: ' + str((status.get('site') or {}).get('start_et') or 'Not configured') + ' → ' +
                   str((status.get('site') or {}).get('end_et') or 'Not configured')),
-        'quality': (f'{ranked:,} ranked player(s) from {received:,} source record(s) · '
-                    f'{accepted:,} accepted · {excluded_total:,} excluded · {missing:,} without campaign metadata'
+        'quality': (f'{min(15, len(rows) if isinstance(rows, list) else 0)}/15 public positions filled · {ranked:,} ranked player(s) from {received:,} source record(s) · '
+                    f'{accepted:,} accepted · {excluded_total:,} excluded · {distinct:,} distinct source player(s) · {additional:,} additional same-player row(s) · {missing:,} without campaign metadata'
                     if received else 'Waiting for source records'),
         'trend': s_trend,
         'request_meta': shuffle.get('request_meta') or {},
         'provider_reason': shuffle.get('provider_reason'),
+        'funnel': {'received':received,'accepted':accepted,'excluded':excluded_total,'unscoped':missing,'ranked':ranked,'filled':min(15, len(rows) if isinstance(rows,list) else 0),'distinct':distinct,'additional':additional},
         'issues': s_issues, 'action': '/admin/leaderboards/shuffle',
         'details': '/admin/leaderboards/shuffle/players',
     }
@@ -121,6 +127,8 @@ def summarize_providers(status, empire, trends=None):
         'status': e_health.get('status', 'Waiting for source'),
         'last_success': _int(empire.get('updated_at')),
         'last_attempt': _int(empire.get('attempt_at')),
+        'last_changed': _int(empire.get('updated_at')),
+        'next_check': _int(empire.get('next_check_at')),
         'refresh_seconds': max(60, min(86400, _int(empire.get('refresh_interval')) or 300)),
         'participants': len(erows) if isinstance(erows, list) else 0,
         'loaded': len(erows) if isinstance(erows, list) else 0,
