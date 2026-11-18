@@ -37,6 +37,7 @@
 {% block content %}{% endblock %}
 {% block site_footer %}<footer class="shell footer"><span>RedHunllef <span class="muted">· Races and RedPoints.</span></span><span class="muted">{% block footer %}<a data-site-link="responsible_gambling_url" href="{{ public_site.responsible_gambling_url|default('') }}" {% if not public_site.responsible_gambling_url|default('') %}hidden{% endif %} target="_blank" rel="noopener">Play responsibly · 18+</a>{% endblock %}</span></footer>{% endblock %}
 <div id="toast" class="toast" role="status" hidden></div>
+<script src="{{ url_for('static',filename='rank-movement.js',v=asset_version) }}" defer></script>
 <script src="{{ url_for('static',filename='app.js',v=asset_version) }}" defer></script>
 <script src="{{ url_for('static',filename='experience.js',v=asset_version) }}" defer></script><script src="{{ url_for('static',filename='public-control.js',v=asset_version) }}" defer></script>{% block scripts %}{% endblock %}
 </body></html>

@@ -17,7 +17,7 @@ vm.runInNewContext(fs.readFileSync(path.join(root,'static/admin-providers.js'),'
 assert.equal(typeof sandbox.RedProviderCards.render,'function');
 sandbox.RedProviderCards.render({providers: {
   shuffle:{state:'warning',status:'Needs attention',last_success:1794375291,last_attempt:1794375510,
-           participants:0, quality:'Waiting',metric:'Weighted wager',refresh_seconds:60,issues:[]},
+           participants:0, quality:'Waiting',metric:'Weighted wager',refresh_seconds:90,issues:[]},
   empiredrop:{state:'good',status:'Connected',last_success:1794375291,last_attempt:1794375291,
            participants:10,quality:'10 verified players',metric:'Wagered',refresh_seconds:300,issues:[]}
 }});

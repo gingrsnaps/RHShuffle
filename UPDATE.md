@@ -1,1 +1,1 @@
-V21 updates the requested race windows and verifies each schedule write by reading it back from persistent JSON before reporting success.
+V24 verifies 90-second Shuffle cadence, 90-second-minimum TTL-aware EmpireDrop cadence, 45-second server-expiring placement movement, and 15-second browser state synchronization.

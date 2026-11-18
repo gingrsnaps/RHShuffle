@@ -67,7 +67,7 @@ class V16ReliabilityTests(unittest.TestCase):
         self.assertIn('with self.shuffle_lock:', integrations)
         runtime = self.text('runtime.py')
         self.assertIn('failure_streak', runtime)
-        self.assertIn('min(480, INTERVAL * (2 **', runtime)
+        self.assertIn('min(720, cadence * (2 **', runtime)
 
 
 if __name__ == '__main__':

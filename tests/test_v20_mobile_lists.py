@@ -2,7 +2,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
 def test_v20_release_and_stylesheet():
-    assert '2026.11.17-crossplatform-live-v23' in (ROOT/'config.py').read_text()
+    assert '2026.11.17-provider-cadence-v24' in (ROOT/'config.py').read_text()
     base=(ROOT/'templates/base.html').read_text()
     assert 'v20-system.css' in base
     assert 'v19-system.css' not in base

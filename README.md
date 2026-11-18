@@ -1,7 +1,7 @@
-# RedHunllef V21
+# RedHunllef V24
 
-Run with `python wager_backend.py`. This release preserves the V20 compact mobile experience and pins the requested Shuffle and EmpireDrop website schedules. See `docs/V21_RACE_WINDOWS.md`.
+Run with `python wager_backend.py`. This release preserves the current race schedules and V23 cross-platform reliability while upgrading provider cadence, placement movement timing, and live status accuracy. See `docs/V24_PROVIDER_CADENCE.md`.
 
-## V23 cross-platform live standings
+## V24 provider cadence and movement verification
 
-V23 keeps the V22 atomic Shuffle Top 15 and adds server-timestamped 30-second movement, matching EmpireDrop movement, 15-second conditional public-state checks, monotonic snapshot ordering, focus/background recovery, and countdown hardening across desktop/mobile browsers. External provider pulls keep their existing worker cadence. See `docs/V23_CROSS_PLATFORM_LIVE.md`.
+V24 changes Shuffle to a 90-second provider cadence, gives EmpireDrop a 90-second minimum while respecting provider cache TTL, and extends shared server-timed placement indicators to 45 seconds. Public state synchronization remains 15 seconds and Kick remains 60 seconds. See `docs/V24_PROVIDER_CADENCE.md`.

@@ -14,7 +14,7 @@
   "campaign_code_filter": "Red",
   "start_time": 1794956400,
   "end_time": 1795561200,
-  "refresh_seconds": 60,
+  "refresh_seconds": 90,
   "leaderboard_size": 15,
   "full_leaderboard_max": 300,
   "prizes": {

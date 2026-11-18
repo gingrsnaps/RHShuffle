@@ -15,7 +15,7 @@
     "race_description": "Track the top weighted wagerers for RedHunllef's active race.",
     "start_time": 1794956400,
     "end_time": 1795561200,
-    "refresh_seconds": 60,
+    "refresh_seconds": 90,
     "leaderboard_size": 15,
     "prizes": {
       "1": 1800.0,

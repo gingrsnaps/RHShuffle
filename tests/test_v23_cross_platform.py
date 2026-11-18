@@ -6,18 +6,21 @@ from empiredrop import attach_rank_movement
 ROOT = Path(__file__).resolve().parents[1]
 
 class V23CrossPlatformTests(unittest.TestCase):
-    def test_public_poll_is_fifteen_seconds_but_provider_interval_is_sixty(self):
+    def test_public_poll_is_fifteen_seconds_and_v24_provider_intervals_are_split(self):
         js=(ROOT/'static/app.js').read_text(encoding='utf-8')
         cfg=(ROOT/'config.py').read_text(encoding='utf-8')
         self.assertIn('const PUBLIC_POLL_MS = 15000', js)
         self.assertIn('const ADMIN_POLL_MS = 60000', js)
-        self.assertIn('INTERVAL = 60', cfg)
+        self.assertIn('SHUFFLE_INTERVAL = 90', cfg)
+        self.assertIn('KICK_INTERVAL = 60', cfg)
 
-    def test_movement_is_server_timestamped_for_thirty_seconds(self):
+    def test_movement_is_server_timestamped_with_exact_expiration(self):
         app=(ROOT/'static/app.js').read_text(encoding='utf-8')
         runtime=(ROOT/'runtime.py').read_text(encoding='utf-8')
         empire=(ROOT/'empiredrop.py').read_text(encoding='utf-8')
-        self.assertIn('const RANK_MOVEMENT_MS = 30000', app)
+        self.assertIn('movementWindowSeconds = 45', app)
+        self.assertIn('movement_expires_at', runtime)
+        self.assertIn('movement_expires_at', empire)
         self.assertIn('movement_at', runtime)
         self.assertIn('attach_rank_movement', empire)
         self.assertIn('movement_at', empire)

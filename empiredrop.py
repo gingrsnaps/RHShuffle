@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 import requests
 
+from config import EMPIREDROP_MIN_INTERVAL, RANK_MOVEMENT_SECONDS
 from integrations import ProviderError
 from empiredrop_races import (RaceAPI, RACE_DEFAULTS, validate_race_settings,
                               select_race, normalize_race, keys_only,
@@ -116,6 +117,8 @@ def attach_rank_movement(rows, previous, stamp):
             row['movement'] = old.get('movement')
             row['new_entry'] = bool(old.get('new_entry'))
             row['movement_at'] = int(old.get('movement_at', 0) or 0)
+            row['movement_expires_at'] = int(old.get('movement_expires_at', 0) or
+                                               (row['movement_at'] + RANK_MOVEMENT_SECONDS if row['movement_at'] else 0))
         sequence = old_sequence or 1
         changed_at = int((previous or {}).get('standings_changed_at', (previous or {}).get('updated_at', 0)) or 0)
     else:
@@ -127,7 +130,9 @@ def attach_rank_movement(rows, previous, stamp):
             movement = prior - rank if isinstance(prior, int) and isinstance(rank, int) else None
             row['movement'] = movement
             row['new_entry'] = bool(has_previous and prior is None)
-            row['movement_at'] = int(stamp) if (movement or row['new_entry']) else 0
+            active = bool(movement or row['new_entry'])
+            row['movement_at'] = int(stamp) if active else 0
+            row['movement_expires_at'] = int(stamp) + RANK_MOVEMENT_SECONDS if active else 0
         sequence = old_sequence + (1 if revision != old_revision else 0)
         if current and not sequence:
             sequence = 1
@@ -341,8 +346,12 @@ class EmpireDropBoard:
     def __init__(self, config, store):
         self.config, self.store = config, store
         self.lock, self.stop_event, self.wakeup = threading.RLock(), threading.Event(), threading.Event()
-        self.thread, self.interval = None, 300  # Provider example: race.cache_duration=300s
+        self.minimum_interval = EMPIREDROP_MIN_INTERVAL
         self.saved = store.live('empiredrop') or {}
+        saved_ttl = (self.saved.get('race_meta') or {}).get('cache_duration')
+        saved_ttl = saved_ttl if type(saved_ttl) is int and 0 < saved_ttl <= 86400 else 0
+        # Preserve a provider-advertised cache floor across process restarts.
+        self.thread, self.interval = None, min(3600, max(self.minimum_interval, saved_ttl))
         self.last_manual, self.queued_at, self.checking = 0.0, 0, False
         self.next_allowed = 0.0
         self.events = None  # Assigned by the app; no sensitive provider payloads are recorded.
@@ -479,7 +488,7 @@ class EmpireDropBoard:
             'winners_count': len(payload.get('winners', [])) if isinstance(payload.get('winners'), list) else 0,
         }
         # Do not hammer a provider endpoint while its ranking cache is hot.
-        self.interval = min(3600, max(60, ttl))
+        self.interval = min(3600, max(self.minimum_interval, ttl))
         return rows, meta
 
     def _fetch_window(self, site):
@@ -498,7 +507,7 @@ class EmpireDropBoard:
         ttl = info['cache_duration']
         if type(ttl) is not int or not 0 < ttl <= 86400:
             raise ProviderError('Invalid EmpireDrop cache duration.',kind='format')
-        self.interval = min(3600,max(60,ttl))
+        self.interval = min(3600,max(self.minimum_interval,ttl))
         meta = {'slug':'date-window','name':'Custom EmpireDrop wager race',
                 'start_time':start,'end_time':int(site['end_time']),
                 'currency':info['currency'],'unit':info['currency'],
@@ -750,16 +759,18 @@ class EmpireDropBoard:
         rewards = self._rewards()
         visible = [dict(rank=r['rank'], username=mask_public_username(r['username']), wager=r['wager'],
                         movement=r.get('movement'), new_entry=bool(r.get('new_entry')),
-                        movement_at=int(r.get('movement_at', 0) or 0)) for r in rows]
+                        movement_at=int(r.get('movement_at', 0) or 0),
+                        movement_expires_at=int(r.get('movement_expires_at', 0) or 0)) for r in rows]
         visible = list(payout_for_rows(visible,rewards))
         return {'rows':visible, 'prizes':rewards,
                 'label':label[:260], 'updated_at':saved.get('updated_at',0),
                 'currency':meta.get('currency',race_settings['race_currency']) if source!='legacy' else self._settings()['currency'],
                 'referral_url':REFERRAL_URL, 'race_meta':meta, 'source_mode':source,
                 'schedule':display_schedule, 'code':CODE,
-                # This is the *actual worker schedule*, not the browser's 60s poll.
-                # It updates after provider cache TTL and rate-limit backoff.
-                'refresh_interval':self.interval,
+                # This is the actual provider cadence. V24 targets 90 seconds but
+                # never checks faster than EmpireDrop's advertised cache TTL.
+                'refresh_interval':self.interval, 'minimum_refresh_interval':self.minimum_interval,
+                'movement_window_seconds':RANK_MOVEMENT_SECONDS,
                 'next_check_at':self._next_check_at(),
                 'attempt_at':saved.get('attempt_at',0),
                 'standings_revision':saved.get('standings_revision') or _standings_revision(rows),
@@ -831,7 +842,7 @@ class EmpireDropBoard:
                 self.check()
             except Exception:
                 LOG.exception('EmpireDrop local worker failure (no credential data logged).')
-            self.next_allowed = time.monotonic() + max(60,self.interval)
+            self.next_allowed = time.monotonic() + max(self.minimum_interval,self.interval)
             # A manual wakeup will be processed when the cache interval elapses.
             self.wakeup.wait(min(self.interval,5))
             self.wakeup.clear()

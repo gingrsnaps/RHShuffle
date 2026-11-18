@@ -110,7 +110,7 @@ class QOLTests(unittest.TestCase):
         private=board.private_status()
         self.assertEqual(len(public['rows']),10)
         self.assertEqual(len(private['rows']),10)
-        self.assertEqual(public['refresh_interval'],300)
+        self.assertEqual(public['refresh_interval'],90)
         self.assertEqual(public['next_check_at'],0) # not running under tests
         store.saved['empiredrop_history']=[{'rows':inputs, 'updated_at':1794300000}]
         self.assertEqual(len(board.public_history()[0]['rows']),10)

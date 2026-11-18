@@ -6,7 +6,7 @@ import secrets
 import threading
 import time
 
-from config import INTERVAL, RELEASE
+from config import INTERVAL, KICK_INTERVAL, RANK_MOVEMENT_SECONDS, RELEASE
 from integrations import Providers, ProviderError
 from storage import Store, StoreError, Conflict
 from race import calculate, empty, freshness, normalize, phase, rank, token, top_snapshot
@@ -72,6 +72,8 @@ class Runtime:
                 row["movement"] = old.get("movement")
                 row["new_entry"] = bool(old.get("new_entry"))
                 row["movement_at"] = int(old.get("movement_at", 0) or 0)
+                row["movement_expires_at"] = int(old.get("movement_expires_at", 0) or
+                                                  (row["movement_at"] + RANK_MOVEMENT_SECONDS if row["movement_at"] else 0))
             sequence = int(value.get("top15_sequence", 0) or (1 if rows else 0))
         elif previous is not None and prior_revision == revision:
             # A provider confirmation of the same Top 15 may arrive while the
@@ -83,11 +85,15 @@ class Runtime:
                 row["movement"] = old.get("movement")
                 row["new_entry"] = bool(old.get("new_entry"))
                 row["movement_at"] = int(old.get("movement_at", 0) or 0)
+                row["movement_expires_at"] = int(old.get("movement_expires_at", 0) or
+                                                  (row["movement_at"] + RANK_MOVEMENT_SECONDS if row["movement_at"] else 0))
             sequence = prior_sequence
         else:
             stamp = int(value.get("updated_at", 0) or time.time())
             for row in rows:
-                row["movement_at"] = stamp if (row.get("movement") or row.get("new_entry")) else 0
+                active = bool(row.get("movement") or row.get("new_entry"))
+                row["movement_at"] = stamp if active else 0
+                row["movement_expires_at"] = stamp + RANK_MOVEMENT_SECONDS if active else 0
             sequence = prior_sequence + (1 if revision != prior_revision else 0)
             if rows and not sequence:
                 sequence = 1
@@ -120,19 +126,22 @@ class Runtime:
         with self.lock:
             site, value, kick = copy.deepcopy(self.admin["site_settings"]), copy.deepcopy(self.shuffle), copy.deepcopy(self.kick)
             settings_revision = self.revision
+            shuffle_job = copy.deepcopy(self.jobs.get("shuffle", {}))
         site.update(start_et=fmt_et(site["start_time"]), end_et=fmt_et(site["end_time"]),
                     total_prize=money(sum(Decimal(v) for v in site["prizes"].values())), race_state=phase(site))
         # Projection is an explicit allowlist. Provider source rows, raw totals,
         # admin names, password hashes, and keys cannot reach the public API.
         rows = [dict(rank=r["rank"], username=r["username"][:2] + "******", wager=r["wager"],
                      movement=r.get("movement"), new_entry=bool(r.get("new_entry")),
-                     movement_at=int(r.get("movement_at", 0) or 0))
+                     movement_at=int(r.get("movement_at", 0) or 0),
+                     movement_expires_at=int(r.get("movement_expires_at", 0) or 0))
                 for r in value["rows"][:15]]
         if phase(site) in {"upcoming", "unconfigured"}:
             rows = []
         ranked = {row["rank"]: row for row in rows}
         top15 = [ranked.get(rank) or dict(rank=rank, username="Open position", wager="$0.00",
-                                          movement=None, new_entry=False, movement_at=0, open=True)
+                                          movement=None, new_entry=False, movement_at=0,
+                                          movement_expires_at=0, open=True)
                  for rank in range(1, 16)]
         available = bool(kick.get("updated_at") and not kick.get("error") and time.time() - kick["updated_at"] <= 180
                          and kick.get("channel") == site["kick_channel_slug"])
@@ -146,6 +155,15 @@ class Runtime:
         # are the same representation. Sequence ordering protects clients from an
         # older response arriving after a newer one.
         payload = dict(release=RELEASE, interval=INTERVAL, site=site, rows=rows, top15=top15,
+                       movement_window_seconds=RANK_MOVEMENT_SECONDS,
+                       provider_intervals=dict(shuffle=INTERVAL, kick=KICK_INTERVAL,
+                                               empiredrop_min=self.empiredrop.minimum_interval),
+                       provider_timing=dict(shuffle=dict(
+                           updated_at=int(value.get("updated_at", 0) or 0),
+                           attempt_at=int(value.get("attempt_at", 0) or 0),
+                           next_check=int(shuffle_job.get("next_check", 0) or 0),
+                           refresh_interval=INTERVAL,
+                           state=str(shuffle_job.get("state", "scheduled")))),
                        settings_revision=settings_revision,
                        shuffle_revision=value.get("top15_revision") or token(rows),
                        shuffle_sequence=int(value.get("top15_sequence", 0) or 0),
@@ -221,8 +239,13 @@ class Runtime:
                            "last_success": (self.shuffle if name == "shuffle" else self.kick).get("updated_at", 0)}
                     for name, job in self.jobs.items()}
 
+    @staticmethod
+    def cadence(name):
+        return KICK_INTERVAL if name == "kick" else INTERVAL
+
     def check(self, name):
         began, now = time.monotonic(), int(time.time())
+        cadence = self.cadence(name)
         with self.lock:
             ticket = self.jobs[name]["requested"]
             self.jobs[name].update(state="checking", attempt_at=now, next_check=0,
@@ -336,7 +359,7 @@ class Runtime:
                 if status != 429 and not retry:
                     error = ""
             if error:
-                LOG.warning("%s %s Previous data retained; retry in %ss.", name.upper(), error, max(INTERVAL, retry))
+                LOG.warning("%s %s Previous data retained; retry in %ss.", name.upper(), error, max(cadence, retry))
         finally:
             duration = round((time.monotonic() - began) * 1000)
             with self.lock:
@@ -345,7 +368,7 @@ class Runtime:
                 # Repeated provider failures back off without spawning overlapping
                 # checks. A successful response immediately restores normal cadence.
                 effective_retry = max(int(retry or 0),
-                                      min(480, INTERVAL * (2 ** min(3, max(0, failure_streak - 1))))) if error else 0
+                                      min(720, cadence * (2 ** min(3, max(0, failure_streak - 1))))) if error else 0
                 self.jobs[name].update(state="delayed" if error else "scheduled", error=error, http_status=status,
                                        duration_ms=duration, retry_after=effective_retry, result=result,
                                        failure_streak=failure_streak,
@@ -417,12 +440,15 @@ class Runtime:
                 anchor = due
                 retry = self.check(name)
                 finished = time.monotonic()
+                cadence = self.cadence(name)
                 if retry:
                     self.jobs[name]["not_before"] = finished + retry
                     due = finished + retry
                 else:
                     self.jobs[name]["not_before"] = 0
-                    due = anchor + (int(max(0, finished - anchor) // INTERVAL) + 1) * INTERVAL
+                    # Anchor to the intended schedule instead of "request finished + cadence".
+                    # A slow request therefore cannot create cumulative timer drift.
+                    due = anchor + (int(max(0, finished - anchor) // cadence) + 1) * cadence
                 if self.events[name].is_set():
                     due = finished
         finally:
@@ -446,7 +472,7 @@ class Runtime:
                 if not initial:
                     LOG.warning("%s Restarted a stopped automatic worker.", name.upper())
         if initial:
-            LOG.info("LIVE Automatic Shuffle and Kick checks started; cadence=%ss.", INTERVAL)
+            LOG.info("LIVE Automatic checks started; Shuffle=%ss, Kick=%ss.", INTERVAL, KICK_INTERVAL)
         self.history.start()
         self.empiredrop.start()
 

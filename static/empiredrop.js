@@ -12,7 +12,7 @@
   let serverOffset = 0;
   let standingsRenderVersion = '';
   let countdownTimer = null;
-  const RANK_MOVEMENT_MS = 30000;
+  let movementWindowSeconds = 45;
   const isEmpire = () => empireTab.getAttribute('aria-selected') === 'true';
   const date = unix => unix
     ? new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York', dateStyle:'medium', timeStyle:'short'}).format(new Date(unix*1000)) + ' ET'
@@ -101,31 +101,17 @@
 
   const serverNowMs = () => Date.now() + serverOffset * 1000;
   function updateMovement(anchor, row) {
-    if (!anchor?.append || !anchor?.querySelector) return;
-    let badge = anchor.querySelector('[data-rank-movement]');
-    const movement = Number(row?.movement || 0);
-    const isNew = Boolean(row?.new_entry);
-    const eventAt = Number(row?.movement_at || 0) * 1000;
-    const expiresAt = eventAt + RANK_MOVEMENT_MS;
-    const remaining = expiresAt - serverNowMs();
-    const label = isNew ? 'NEW' : movement > 0 ? `↑${movement}` : movement < 0 ? `↓${Math.abs(movement)}` : '';
-    if (!label || !eventAt || remaining <= 0) { badge?.remove?.(); return; }
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.dataset.rankMovement = '';
-      anchor.append(badge);
-    }
-    badge.className = `rank-movement ${isNew ? 'is-new' : movement > 0 ? 'is-up' : 'is-down'}`;
-    badge.textContent = label;
-    badge.dataset.expiresAt = String(expiresAt);
-    badge.setAttribute('aria-label', isNew ? 'New in the Top 10' : movement > 0 ? `Up ${movement} position${movement===1?'':'s'}` : `Down ${Math.abs(movement)} position${Math.abs(movement)===1?'':'s'}`);
-    clearTimeout(anchor._rankMovementTimer);
-    anchor._rankMovementTimer = setTimeout(() => badge?.remove?.(), Math.max(0, remaining)+25);
+    globalThis.RedRankMovement?.render(anchor, row, {
+      nowMs: serverNowMs(),
+      windowSeconds: movementWindowSeconds,
+      newAriaLabel: "New in the Top 10",
+    });
   }
 
   function render(board) {
     if (!board || !Array.isArray(board.rows)) return;
     latest = board;
+    movementWindowSeconds = Number(board.movement_window_seconds || 45);
     if (Number.isFinite(Number(board.clock_offset_ms))) serverOffset = Number(board.clock_offset_ms)/1000;
     else if (Number.isFinite(Number(board.server_time))) serverOffset = Number(board.server_time) - Date.now()/1000;
     const rows = board.rows.slice(0, 10);
@@ -193,6 +179,29 @@
     updateCountdowns();
   }
 
+  function compactDuration(totalSeconds) {
+    let seconds = Math.max(0, Math.ceil(Number(totalSeconds) || 0));
+    const minutes = Math.floor(seconds / 60);
+    seconds %= 60;
+    return minutes ? `${minutes}m ${String(seconds).padStart(2,'0')}s` : `${seconds}s`;
+  }
+
+  function updateRefreshStatus(now) {
+    const node = id('empireRefreshStatus');
+    if (!node || !latest) return;
+    const updated = Number(latest.updated_at || 0);
+    const next = Number(latest.next_check_at || 0);
+    const interval = Number(latest.refresh_interval || latest.minimum_refresh_interval || 90);
+    const ttl = Number(latest.race_meta?.cache_duration || 0);
+    const pieces = [];
+    if (updated) pieces.push(`${String(latest.label || '').startsWith('Updates delayed') ? 'Last confirmed' : 'Updated'} ${compactDuration(now-updated)} ago`);
+    else pieces.push('Waiting for first verified update');
+    if (next > now) pieces.push(`Next provider check in ${compactDuration(next-now)}`);
+    else pieces.push(`Provider cadence ${compactDuration(interval)}`);
+    if (ttl > Number(latest.minimum_refresh_interval || 90)) pieces.push(`Provider cache ${compactDuration(ttl)}`);
+    node.textContent = pieces.join(' · ');
+  }
+
   function countdownState(start, end, now) {
     if (!Number.isFinite(start) || !Number.isFinite(end) || !start || !end || end <= start)
       return {state:'unconfigured', label:'RACE SCHEDULE', text:'Set the race dates'};
@@ -213,6 +222,7 @@
     if (!latest || !id('empireCountdown')) return;
     const now = serverNowMs()/1000;
     const schedule = latest.schedule || {};
+    updateRefreshStatus(now);
     const value = countdownState(Number(schedule.start_time), Number(schedule.end_time), now);
     id('empireCountdown').textContent = value.text;
     if (id('empireClockLabel')) id('empireClockLabel').textContent = value.label;
@@ -229,9 +239,7 @@
     const tick = () => {
       if (document.hidden) return;
       updateCountdowns();
-      document.querySelectorAll?.('#empireBoard [data-rank-movement][data-expires-at]').forEach?.(badge => {
-        if (Number(badge.dataset.expiresAt || 0) <= serverNowMs()) badge.remove();
-      });
+      globalThis.RedRankMovement?.expireAll(id('empireBoard'), serverNowMs());
       const phase = ((serverNowMs()%1000)+1000)%1000;
       countdownTimer = setTimeout(tick, Math.max(100, 1025-phase));
     };

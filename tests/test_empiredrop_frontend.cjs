@@ -9,6 +9,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
+const RANK_SCRIPT = fs.readFileSync(path.join(__dirname, '..', 'static', 'rank-movement.js'), 'utf8');
 const SCRIPT = fs.readFileSync(path.join(__dirname, '..', 'static', 'empiredrop.js'), 'utf8');
 
 function harness(bootstrap) {
@@ -24,12 +25,19 @@ function harness(bootstrap) {
       this.textContent = '';
       this.attributes = {'aria-controls': panel};
       this.classList = {toggle: (name, active) => { this.active = active; }};
+      this.dataset = {};
+      this.children = [];
+      this.parent = null;
     }
     setAttribute(name, value) { this.attributes[name] = value; }
     getAttribute(name) { return this.attributes[name]; }
     addEventListener(name, fn) { handlers[this.id + ':' + name] = fn; }
     focus() { this.focused = true; }
+    append(child) { child.parent = this; this.children.push(child); }
+    remove() { if (this.parent) this.parent.children = this.parent.children.filter(x => x !== this); this.parent = null; }
     querySelector(selector) {
+      if (selector === '[data-rank-movement]') return this.children.find(x => Object.hasOwn(x.dataset, 'rankMovement')) || null;
+      if (selector === '.placement, .rank') return null;
       const match = selector.match(/^\[data-empire-place="(\d+)"\]$/);
       return match ? slots[`${match[1]}:place`] : null;
     }
@@ -60,12 +68,20 @@ function harness(bootstrap) {
       const match = selector.match(/^\[data-empire(?:-row)?-(name|wager|prize)="(\d+)"\]$/);
       return match ? slots[`${match[2]}:${match[1]}`] : null;
     },
-    querySelectorAll(selector) { return selector === '[data-empire-metric]' ? metrics : []; },
+    querySelectorAll(selector) {
+      if (selector === '[data-empire-metric]') return metrics;
+      if (selector === '#empireBoard [data-rank-movement][data-expires-at]')
+        return Object.values(slots).flatMap(x => x.children).filter(x => Object.hasOwn(x.dataset,'rankMovement') && x.dataset.expiresAt);
+      return [];
+    },
+    createElement(tag) { return new Element(tag); },
     addEventListener(name, fn) { handlers['document:' + name] = fn; },
   };
   const errors = [];
   const timers=[];
   const context = {document: doc, Date, Intl, console:{error:(...x)=>errors.push(x),warn:(...x)=>errors.push(x)},setInterval:(fn)=>{timers.push(fn);return fn;},setTimeout:(fn)=>{timers.push(fn);return fn;},clearTimeout:()=>{}};
+  context.globalThis = context;
+  vm.runInNewContext(RANK_SCRIPT, context, {filename:'static/rank-movement.js'});
   vm.runInNewContext(SCRIPT, context, {filename:'static/empiredrop.js'});
   return {slots, elements, handlers, metrics, errors,
     tick() { for (const tick of [...timers]) tick(); },
@@ -158,4 +174,20 @@ test('public provider switching stays quiet while countdown continues',()=>{
   assert.equal(h.elements.empireBoard.hidden,true);
   assert.equal(h.elements.shuffleBoard.hidden,false);
   assert.deepEqual(h.errors,[]);
+});
+
+
+test('EmpireDrop place cells receive shared 45-second up/down movement badges',()=>{
+  const now=Math.floor(Date.now()/1000);
+  const moving=rows(10);
+  moving[0].movement=2; moving[0].movement_at=now; moving[0].movement_expires_at=now+45;
+  moving[1].movement=-1; moving[1].movement_at=now; moving[1].movement_expires_at=now+45;
+  const h=harness({rows:moving,prizes:blankPrizes,race_meta:{ranks_limit:10},movement_window_seconds:45,
+    server_time:now,schedule:{start_time:now-10,end_time:now+600}});
+  const up=h.slots['1:place'].querySelector('[data-rank-movement]');
+  const down=h.slots['2:place'].querySelector('[data-rank-movement]');
+  assert.equal(up.textContent,'↑2');
+  assert.equal(down.textContent,'↓1');
+  assert.equal(up.dataset.expiresAt,String((now+45)*1000));
+  assert.equal(down.dataset.expiresAt,String((now+45)*1000));
 });

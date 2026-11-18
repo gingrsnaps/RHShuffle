@@ -733,7 +733,7 @@ html.admin-menu-open,body.admin-menu-open{overflow:hidden;overscroll-behavior:no
   .history-page .responsive-history td.empty::before{display:none!important}
 }
 
-/* V23 server-timestamped 30-second rank movement indicators. */
+/* V24 server-timestamped 45-second rank movement indicators shared by both providers. */
 #shuffleBoard .rank-movement,#empireBoard .rank-movement{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:1px 5px;border-radius:999px;font-size:.62rem;font-weight:800;line-height:1.4;vertical-align:middle;letter-spacing:.02em;white-space:nowrap}
 #shuffleBoard .rank-movement.is-up,#empireBoard .rank-movement.is-up{color:#9ee7b0;background:#183322}
 #shuffleBoard .rank-movement.is-down,#empireBoard .rank-movement.is-down{color:#efadb9;background:#381e25}
@@ -742,3 +742,7 @@ html.admin-menu-open,body.admin-menu-open{overflow:hidden;overscroll-behavior:no
 @media(max-width:480px){
   #shuffleBoard .rank-movement,#empireBoard .rank-movement{margin-left:4px;padding:1px 4px;font-size:.56rem}
 }
+
+/* V24 live provider cadence labels wrap cleanly without affecting table widths. */
+.provider-refresh-foot{gap:8px 18px;flex-wrap:wrap}
+.provider-refresh-foot span{min-width:0}

@@ -65,7 +65,7 @@ class Measurements:
 
 def health_view(runtime, measurements, status):
     """Allow-listed support report: no arbitrary provider errors or identities."""
-    from config import RELEASE
+    from config import RELEASE, INTERVAL, KICK_INTERVAL, EMPIREDROP_MIN_INTERVAL
     probe = runtime.store.readiness()
     stats = measurements.snapshot()
     storage = runtime.store.measurements.snapshot()['storage']
@@ -81,7 +81,7 @@ def health_view(runtime, measurements, status):
         state = 'warning' if error or stalled or delayed or not last else 'good'
         detail = ('Automatic worker stopped; check runtime logs.' if stalled else
                   'The provider has not confirmed a recent update. Saved data stays visible.' if state == 'warning' else
-                  'Automatic checks run every 60 seconds; values may remain unchanged.')
+                  f'Automatic checks run every {INTERVAL if key == "shuffle" else KICK_INTERVAL} seconds; values may remain unchanged.')
         cards.append(dict(key=key, label=label, state=state,
                           status='Needs attention' if state == 'warning' else 'Connected', detail=detail,
                           last_success=last, last_check=job.get('attempt_at', 0),
@@ -90,7 +90,7 @@ def health_view(runtime, measurements, status):
     # EmpireDrop is an independent source with provider-controlled cache TTL.
     empire = runtime.empiredrop.private_status()
     age = time.time() - (empire.get('updated_at') or 0) if empire.get('updated_at') else None
-    interval = max(60, int(empire.get('refresh_interval') or 300))
+    interval = max(EMPIREDROP_MIN_INTERVAL, int(empire.get('refresh_interval') or EMPIREDROP_MIN_INTERVAL))
     failed = bool(empire.get('error')) or not empire.get('running')
     state = 'warning' if failed or age is None or age > interval*2+60 else 'good'
     cards.append(dict(key='empiredrop',label='EmpireDrop',state=state,

@@ -8,8 +8,14 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.17-crossplatform-live-v23"
-INTERVAL = 60
+RELEASE = "2026.11.17-provider-cadence-v24"
+# Provider cadences are intentionally independent. INTERVAL remains the
+# Shuffle alias for compatibility with existing deployment/test overrides.
+SHUFFLE_INTERVAL = 90
+KICK_INTERVAL = 60
+EMPIREDROP_MIN_INTERVAL = 90
+RANK_MOVEMENT_SECONDS = 45
+INTERVAL = SHUFFLE_INTERVAL
 
 
 class Config:
@@ -111,7 +117,7 @@ class Config:
         self.limit = min(10000, max(100, int(os.getenv("FULL_LEADERBOARD_MAX", "300"))))
         site = dict(site_name="RedHunllef", race_title="RedHunllef Wager Race",
                     race_description="Your wagers. Your place. The race is on.", start_time=0, end_time=0,
-                    refresh_seconds=60, leaderboard_size=15, prizes={str(k): str(v) for k, v in DEFAULT_PRIZES.items()},
+                    refresh_seconds=SHUFFLE_INTERVAL, leaderboard_size=15, prizes={str(k): str(v) for k, v in DEFAULT_PRIZES.items()},
                     kick_channel_slug="redhunllef", campaign_code_filter="Red", sponsor_name="Shuffle.com",
                     sponsor_url="https://shuffle.com/?r=Red", stream_url="https://kick.com/redhunllef",
                     community_name="Red Community", community_url="", responsible_gambling_url="https://www.ncpgambling.org/")

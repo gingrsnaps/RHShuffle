@@ -162,8 +162,8 @@ def validate_site(site) -> dict:
     for key in ("start_time", "end_time"):
         if isinstance(site.get(key), bool) or not isinstance(site.get(key), int):
             errors["end_et"] = "Race timestamps must be whole epoch seconds."
-    if integer(site.get("refresh_seconds")) != 60:
-        errors["refresh_seconds"] = "Automatic updates run every 60 seconds."
+    if integer(site.get("refresh_seconds")) != 90:
+        errors["refresh_seconds"] = "Automatic Shuffle updates run every 90 seconds."
     if not re.fullmatch(r"[a-z0-9_-]{2,25}", str(site.get("kick_channel_slug") or "")):
         errors["kick_channel_slug"] = "Use a Kick channel name of 2–25 letters, numbers, underscores, or hyphens."
     for key in URL_FIELDS:
@@ -190,7 +190,7 @@ def canonical_site(source, defaults) -> dict:
     clean["leaderboard_size"] = 15
     # Old saved intervals migrate to the required cadence; race dates and
     # financial values retain their saved meanings.
-    clean["refresh_seconds"] = 60
+    clean["refresh_seconds"] = 90
     raw = clean.get("prizes")
     raw = raw if isinstance(raw, dict) else {}
     clean["prizes"] = {

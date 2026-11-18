@@ -185,7 +185,6 @@
   const isAdmin = document.body.dataset.page === "admin";
   const PUBLIC_POLL_MS = 15000;
   const ADMIN_POLL_MS = 60000;
-  const RANK_MOVEMENT_MS = 30000;
   const pollInterval = isAdmin ? ADMIN_POLL_MS : PUBLIC_POLL_MS;
   let site = {},
     offset = 0,
@@ -199,6 +198,8 @@
   let pollAgain = false,
     lastWork = "",
     receipt = null;
+  let movementWindowSeconds = 45,
+    shuffleTiming = {};
   let publicCache = null,
     publicETag = "",
     lastPublicRuntime = "",
@@ -215,10 +216,27 @@
   } catch {}
   const serverNowMs = () => Date.now() + offset;
   function expireRankMovements() {
-    const now = serverNowMs();
-    document.querySelectorAll("[data-rank-movement][data-expires-at]").forEach((badge) => {
-      if (Number(badge.dataset.expiresAt || 0) <= now) badge.remove();
-    });
+    globalThis.RedRankMovement?.expireAll(document, serverNowMs());
+  }
+  function compactDuration(totalSeconds) {
+    let seconds = Math.max(0, Math.ceil(Number(totalSeconds) || 0));
+    const minutes = Math.floor(seconds / 60);
+    seconds %= 60;
+    return minutes ? `${minutes}m ${String(seconds).padStart(2, "0")}s` : `${seconds}s`;
+  }
+  function updateShuffleRefreshStatus(now) {
+    const node = id("shuffleRefreshStatus");
+    if (!node) return;
+    const updated = Number(shuffleTiming.updated_at || sourceAt || 0);
+    const next = Number(shuffleTiming.next_check || 0);
+    const state = String(shuffleTiming.state || "");
+    const pieces = [];
+    if (updated) pieces.push(`Updated ${compactDuration(now - updated)} ago`);
+    else pieces.push("Waiting for first verified update");
+    if (state === "checking") pieces.push("Provider check running");
+    else if (next > now) pieces.push(`Next provider check in ${compactDuration(next - now)}`);
+    else pieces.push(`Provider cadence ${compactDuration(shuffleTiming.refresh_interval || 90)}`);
+    node.textContent = pieces.join(" · ");
   }
   function clock() {
     if (document.hidden) return;
@@ -267,6 +285,7 @@
         id("sourceTime"),
         "Updated " + Math.max(0, Math.floor(now - sourceAt)) + "s ago",
       );
+    updateShuffleRefreshStatus(now);
     for (const [name, job] of Object.entries(jobs)) {
       const remaining = Math.max(0, Math.ceil(job.next_check - now));
       text(
@@ -514,32 +533,11 @@
     if (red) filterRed();
   }
   function updateRankMovement(node, row) {
-    if (!node) return;
-    let badge = node.querySelector("[data-rank-movement]");
-    const movement = Number(row?.movement || 0);
-    const isNew = Boolean(row?.new_entry && !row?.open);
-    const eventAt = Number(row?.movement_at || 0) * 1000;
-    const expiresAt = eventAt + RANK_MOVEMENT_MS;
-    const remaining = expiresAt - serverNowMs();
-    const label = isNew ? "NEW" : movement > 0 ? `↑${movement}` : movement < 0 ? `↓${Math.abs(movement)}` : "";
-    if (!label || !eventAt || remaining <= 0) {
-      badge?.remove();
-      clearTimeout(node._rankMovementTimer);
-      return;
-    }
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.dataset.rankMovement = "";
-      badge.className = "rank-movement";
-      const anchor = node.querySelector(".placement, .rank") || node.firstElementChild;
-      anchor?.append(badge);
-    }
-    badge.className = `rank-movement ${isNew ? "is-new" : movement > 0 ? "is-up" : "is-down"}`;
-    badge.textContent = label;
-    badge.dataset.expiresAt = String(expiresAt);
-    badge.setAttribute("aria-label", isNew ? "New in the Top 15" : movement > 0 ? `Up ${movement} position${movement === 1 ? "" : "s"}` : `Down ${Math.abs(movement)} position${Math.abs(movement) === 1 ? "" : "s"}`);
-    clearTimeout(node._rankMovementTimer);
-    node._rankMovementTimer = setTimeout(() => badge?.remove(), Math.max(0, remaining) + 25);
+    globalThis.RedRankMovement?.render(node, row, {
+      nowMs: serverNowMs(),
+      windowSeconds: movementWindowSeconds,
+      newAriaLabel: "New in the Top 15",
+    });
   }
 
   function renderShuffleTop15(value, site) {
@@ -581,6 +579,13 @@
     site = value.site;
     offset = value.server_time * 1000 - (began + Date.now()) / 2;
     sourceAt = value.freshness.updated_at;
+    movementWindowSeconds = Number(value.movement_window_seconds || 45);
+    shuffleTiming = value.provider_timing?.shuffle || {
+      updated_at: sourceAt,
+      refresh_interval: Number(value.interval || 90),
+      next_check: 0,
+      state: "scheduled",
+    };
     text(id("sponsorName"), site.sponsor_name);
     text(id("poolTotal"), site.total_prize);
     text(id("playerCount"), value.count);
@@ -710,14 +715,14 @@
         id("browserCheck"),
         "Dashboard checked " +
           date(value.server_time) +
-          " · next update in 60 seconds",
+          " · next dashboard poll in 60 seconds",
       );
     } else {
       // Render one complete versioned Top 15 in a single pass. Every rank
       // from 1 through 15 is explicitly refreshed, including open positions.
       renderShuffleTop15(value, site);
       if (value.empiredrop)
-        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site:value.site, server_time:value.server_time, clock_offset_ms:offset, snapshot_sequence:value.snapshot_sequence, runtime_id:value.runtime_id} }));
+        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, movement_window_seconds:value.movement_window_seconds, shuffle_site:value.site, server_time:value.server_time, clock_offset_ms:offset, snapshot_sequence:value.snapshot_sequence, runtime_id:value.runtime_id} }));
       text(
         id("streamStatus"),
         !value.stream?.available

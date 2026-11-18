@@ -44,7 +44,7 @@ class ProviderDashboardTests(unittest.TestCase):
         common = set(result['shuffle']) - {'filled', 'funnel'}
         self.assertEqual(common, set(result['empiredrop']))
         self.assertNotIn('funnel', result['empiredrop'])
-        self.assertEqual(result['shuffle']['refresh_seconds'],60)
+        self.assertEqual(result['shuffle']['refresh_seconds'],90)
         self.assertEqual(result['empiredrop']['refresh_seconds'],300)
         self.assertEqual(result['empiredrop']['metric'],'Wagered')
         self.assertTrue(any('campaign metadata' in text for text in result['shuffle']['issues']))

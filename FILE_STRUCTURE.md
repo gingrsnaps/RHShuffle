@@ -106,6 +106,7 @@ static/holdem.css
 static/plinko.js
 static/public-control.css
 static/public-control.js
+static/rank-movement.js
 static/receipt-verifier.js
 static/redlogo.ico
 static/redlogo.png

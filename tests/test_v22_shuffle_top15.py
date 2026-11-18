@@ -64,11 +64,11 @@ class V22Top15Tests(unittest.TestCase):
         self.assertIn('value.top15', js)
         self.assertIn('shuffle_revision', js)
 
-    def test_runtime_keeps_backoff_but_restores_sixty_seconds_after_success(self):
+    def test_runtime_keeps_backoff_but_restores_anchored_provider_cadence_after_success(self):
         source = (ROOT/'runtime.py').read_text(encoding='utf-8')
         self.assertIn('effective_retry = max', source)
         self.assertIn('if error else 0', source)
-        self.assertIn('due = anchor + (int(max(0, finished - anchor) // INTERVAL) + 1) * INTERVAL', source)
+        self.assertIn('due = anchor + (int(max(0, finished - anchor) // cadence) + 1) * cadence', source)
 
     def test_verified_history_is_frozen_until_forced(self):
         source = (ROOT/'weekly_history.py').read_text(encoding='utf-8')

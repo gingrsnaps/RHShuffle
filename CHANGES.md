@@ -1,4 +1,13 @@
-# V21 changes
+## V24
+
+- Shuffle provider checks now run on an anchored 90-second healthy cadence; Kick remains 60 seconds.
+- EmpireDrop uses a 90-second minimum and respects a longer provider `race.cache_duration`.
+- Placement ↑/↓ and NEW indicators now persist for 45 server-timed seconds.
+- Shuffle and EmpireDrop now share one placement-indicator renderer and exact server expiration timestamps.
+- Public provider-status lines show last-confirmed age and next provider check while browser state sync remains 15 seconds.
+- Added V24 cadence/movement regression coverage and preserved atomic last-known-good publication.
+
+## V21
 
 - Updated Shuffle window to Nov 17–24, 2026 at 6 PM Eastern.
 - Updated EmpireDrop website window to Oct 27–Nov 28, 2026 at 6 PM Eastern.
