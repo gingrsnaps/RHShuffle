@@ -11,7 +11,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 class V24ProviderCadenceTests(unittest.TestCase):
     def test_release_and_cadence_contract(self):
-        self.assertEqual(RELEASE,'2026.11.17-provider-cadence-v24')
+        self.assertEqual(RELEASE,'2026.11.17-live-standings-v25')
         self.assertEqual(INTERVAL,90)
         self.assertEqual(KICK_INTERVAL,60)
         self.assertEqual(EMPIREDROP_MIN_INTERVAL,90)

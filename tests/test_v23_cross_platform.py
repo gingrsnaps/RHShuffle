@@ -27,7 +27,7 @@ class V23CrossPlatformTests(unittest.TestCase):
 
     def test_shuffle_unchanged_snapshot_preserves_original_event_time_in_source(self):
         runtime=(ROOT/'runtime.py').read_text(encoding='utf-8')
-        self.assertIn('row["movement_at"] = int(old.get("movement_at", 0) or 0)', runtime)
+        self.assertIn('preserve_movement_event(row, saved.get(row.get("username"), {}), RANK_MOVEMENT_SECONDS)', runtime)
         self.assertIn('if previous is not None and prior_revision == revision', runtime)
         self.assertIn('value["top15_sequence"] = sequence', runtime)
 

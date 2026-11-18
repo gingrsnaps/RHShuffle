@@ -128,7 +128,7 @@ def create_app(root=None, testing=False):
     def wants_json():
         """Keep fetch failures machine-readable; native pages still render HTML."""
         return request.path.startswith("/gaming/api/") or request.accept_mimetypes.best == "application/json" or request.path in {
-            "/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/admin/operations/events", "/admin/operations/export", "/healthz", "/readyz"
+            "/data", "/public-state", "/public-standings", "/history-state", "/config", "/stream", "/admin/status", "/admin/gaming/status", "/admin/empiredrop/status", "/admin/diagnostics", "/admin/health-report", "/admin/operations/events", "/admin/operations/export", "/healthz", "/readyz"
         }
 
     def json_error(message, status, code=None):
@@ -201,7 +201,7 @@ def create_app(root=None, testing=False):
             "Cache-Control":"public, max-age=31536000, immutable" if request.path.startswith("/static/") and request.args.get("v") == assets else "no-store"})
         if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
-        if request.path in {"/public-state", "/gaming/api/public-leaderboard"} and response.status_code in {200, 304}:
+        if request.path in {"/public-state", "/public-standings", "/gaming/api/public-leaderboard"} and response.status_code in {200, 304}:
             response.headers["Cache-Control"] = "public, no-cache"
         if request.path.startswith("/admin"):
             response.headers["X-Robots-Tag"] = "noindex, nofollow"
@@ -210,7 +210,7 @@ def create_app(root=None, testing=False):
                                 secure=app.session_interface.get_cookie_secure(app), httponly=True, samesite="Lax")
             if request.cookies.get("rh_raider"):
                 response.delete_cookie("rh_raider", secure=app.session_interface.get_cookie_secure(app), samesite="Lax")
-        if request.path not in {"/data", "/public-state", "/history-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/gaming/api/")):
+        if request.path not in {"/data", "/public-state", "/public-standings", "/history-state", "/config", "/stream", "/admin/status", "/healthz", "/readyz"} and not request.path.startswith(("/static/", "/gaming/api/")):
             with auth_lock:
                 access_log.appendleft(dict(time=int(time.time()), method=request.method, path=request.path[:120], status=response.status_code,
                                            ip=g.client_ip, ms=round((time.perf_counter()-g.began)*1000)))
@@ -303,6 +303,19 @@ def create_app(root=None, testing=False):
         response.headers["X-Server-Time"] = str(server_time)
         response.headers["X-Snapshot-Sequence"] = str(value.get("snapshot_sequence", 0))
         response.headers["X-Runtime-Id"] = str(value.get("runtime_id", ""))
+        return response.make_conditional(request)
+
+    @app.get("/public-standings")
+    def public_standings():
+        """Five-second, no-refresh standings feed. Provider APIs are not called here."""
+        value = runtime.public_standings()
+        server_time = value.pop("server_time")
+        response = jsonify(value)
+        response.set_etag(token(value))
+        response.headers["X-Server-Time"] = str(server_time)
+        response.headers["X-Runtime-Id"] = str(value.get("runtime_id", ""))
+        response.headers["X-Shuffle-Standings-Sequence"] = str((value.get("shuffle") or {}).get("standings_sequence", 0))
+        response.headers["X-EmpireDrop-Standings-Sequence"] = str((value.get("empiredrop") or {}).get("standings_sequence", 0))
         return response.make_conditional(request)
 
     def guest():
@@ -572,6 +585,7 @@ def create_app(root=None, testing=False):
         values['health'] = health_view(runtime, measurements, values)
         values["checkpoint"] = recovery_status() if g.superadmin else None
         empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
+        values.setdefault("movement_diagnostics", {})["empiredrop"] = empire_status.get("movement_diagnostics", {})
         values["providers"] = summarize_providers(values, empire_status, activity.provider_trends())
         values["durability"] = dict(mode='Spaces mirror' if runtime.store.mirror else 'Local JSON',
                                     remote=bool(runtime.store.mirror),
@@ -770,7 +784,9 @@ def create_app(root=None, testing=False):
             value['gaming'] = gaming.leaders()
         value['health'] = health_view(runtime, measurements, value)
         value["checkpoint"] = recovery_status() if g.superadmin else None
-        value["providers"] = summarize_providers(value, runtime.empiredrop.private_status(g.admin["site_settings"]), activity.provider_trends())
+        empire_status = runtime.empiredrop.private_status(g.admin["site_settings"])
+        value.setdefault("movement_diagnostics", {})["empiredrop"] = empire_status.get("movement_diagnostics", {})
+        value["providers"] = summarize_providers(value, empire_status, activity.provider_trends())
         rows, edits = value.pop("rows"), value.pop("edits")
         # Other tabs have no participant table; keep their minute responses small.
         if request.args.get("tab", "players") == "players":

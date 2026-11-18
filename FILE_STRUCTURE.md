@@ -1,4 +1,4 @@
-# RedHunllef V20 file structure
+# RedHunllef V25 file structure
 
 ```text
 .gitignore
@@ -22,7 +22,6 @@ baccarat.py
 blackjack.py
 config.py
 data/state.json
-data/state.json.lock
 docs/ADMIN_GAMING.png
 docs/ADMIN_RELIABILITY_V13.md
 docs/BACCARAT_MOBILE.png
@@ -54,6 +53,12 @@ docs/V16_UNIFORMITY_AND_RELIABILITY.md
 docs/V17_TIMER_CARD_REFINEMENT.md
 docs/V18_EMPIREDROP_PRIZE_PUBLISH_FIX.md
 docs/V19_SHUFFLE_FIRST_MOBILE.md
+docs/V20_COMPACT_MOBILE_LISTS.md
+docs/V21_RACE_WINDOWS.md
+docs/V22_SHUFFLE_TOP15_REFRESH.md
+docs/V23_CROSS_PLATFORM_LIVE.md
+docs/V24_PROVIDER_CADENCE.md
+docs/V25_LIVE_STANDINGS.md
 docs/VALIDATION.md
 docs/empiredrop_partner_openapi_2.0.1.yaml
 docs/redlogo(3).png
@@ -65,6 +70,7 @@ fairness.py
 gaming.py
 holdem.py
 integrations.py
+movement.py
 operations_log.py
 poker.py
 presentation.py
@@ -103,6 +109,7 @@ static/history.js
 static/holdem-fairness.js
 static/holdem-ui.js
 static/holdem.css
+static/live-standings.js
 static/plinko.js
 static/public-control.css
 static/public-control.js
@@ -191,6 +198,14 @@ tests/test_v16_reliability.py
 tests/test_v17_timer_card.py
 tests/test_v18_empiredrop_publish.py
 tests/test_v19_mobile.py
+tests/test_v20_mobile_lists.py
+tests/test_v21_schedule_windows.py
+tests/test_v22_shuffle_top15.py
+tests/test_v23_cross_platform.py
+tests/test_v24_provider_cadence.py
+tests/test_v24_rank_movement_frontend.cjs
+tests/test_v25_live_standings.py
+tests/test_v25_live_standings_frontend.cjs
 tests/test_weekly_history.py
 tools/admin_acceptance_v13.py
 tools/deployment_diagnostics.py
@@ -200,9 +215,18 @@ tools/live_smoke_v14.py
 tools/live_smoke_v19.py
 tools/verify_redpoints.py
 tools/visual_acceptance_v16.py
+tools/visual_acceptance_v20.py
 wager_backend.py
 weekly_history.py
 ```
 
-- `docs/V20_COMPACT_MOBILE_LISTS.md` — compact mobile standings and grouped-list design.
-- `tools/visual_acceptance_v20.py` — optional live 390px mobile overflow and compact-row check.
+## V25 live-standings files
+
+- `movement.py` — shared server movement-event construction and safe public/admin projections.
+- `static/live-standings.js` — 5-second conditional local standings synchronization with atomic in-place rendering.
+- `static/rank-movement.js` — shared `NEW`, `↑N`, and `↓N` renderer with exact server expiration.
+- `docs/V25_LIVE_STANDINGS.md` — timing contract, ordering, recovery, and diagnostics.
+- `tests/test_v25_live_standings.py` — backend sequence/movement/feed contracts.
+- `tests/test_v25_live_standings_frontend.cjs` — open-page no-refresh update path.
+
+The project still launches only with `python wager_backend.py`; JSON persistence remains the default and no database service is required.

@@ -1,1 +1,1 @@
-V24 verifies 90-second Shuffle cadence, 90-second-minimum TTL-aware EmpireDrop cadence, 45-second server-expiring placement movement, and 15-second browser state synchronization.
+V25 adds true no-refresh standings updates through a dedicated 5-second local-server feed while preserving 90-second Shuffle provider acquisition, TTL-aware EmpireDrop acquisition, 60-second Kick checks, 15-second full-state synchronization, and exact 45-second server-expiring placement movement events.

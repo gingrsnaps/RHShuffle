@@ -22,6 +22,10 @@
     <tbody id="empireAdminRows">{% for row in empire_admin.rows[:10] %}<tr><td class="rank" data-label="Rank">{{ row.rank }}</td><td data-label="Player"><strong>{{ row.username }}</strong></td><td class="small" data-label="Public player ID">{{ row.user_id or '—' }}</td><td class="number" data-label="Race total">{{ row.wager }}</td><td class="number" data-label="Advertised prize">{{ row.prize }}</td></tr>{% else %}<tr><td colspan="5" class="empty">No ranked players returned. This can be normal before a race starts or after it closes.</td></tr>{% endfor %}</tbody></table>
   </div>
   <p class="small muted">Official ranks (including ties) are preserved. Deposit races and raffles are labeled correctly; we never present their totals as wagered currency.</p>
+  <details class="provider-advanced movement-diagnostics"><summary>Recent placement movement diagnostics</summary>
+    <p class="small muted">Process-local diagnostic history. Failed provider checks never create movement events.</p>
+    <ol class="movement-event-list" data-movement-events="empiredrop">{% for event in empire_admin.movement_diagnostics.events %}<li data-event-id="{{ event.event_id }}"><strong>{{ event.username }}</strong><span>{{ 'NEW at #' ~ event.current_rank if event.direction == 'new' else '#' ~ event.previous_rank ~ ' → #' ~ event.current_rank ~ ' · ' ~ ('↑' if event.direction == 'up' else '↓') ~ event.places }}</span><small>{{ fmt_et(event.changed_at) }}</small></li>{% else %}<li class="empty">No placement changes recorded in this process yet.</li>{% endfor %}</ol>
+  </details>
 </section>
 <section class="panel form-panel empire-section empire-schedule" id="empireSchedule" aria-labelledby="empireDatesTitle">
   <div class="section-title"><div><p class="eyebrow">EMPIREDROP SCHEDULE</p><h2 id="empireDatesTitle">Schedule</h2><p class="muted">EmpireDrop’s selected race controls the official standings window. The website display window can be aligned below.</p></div><span class="badge">Eastern Time</span></div>

@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.17-provider-cadence-v24",
+  "release": "2026.11.17-live-standings-v25",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -8,11 +8,11 @@
   "private_config_warning": "The private packages contain unencrypted production credentials and saved private state. Keep them private.",
   "shuffle_positions": 15,
   "shuffle_refresh_seconds": 90,
-  "shuffle_snapshot_behavior": "All ranks 1-15 publish atomically as one ordered snapshot; failures retain the last verified snapshot; movement events carry an exact 45-second server expiration.",
+  "shuffle_snapshot_behavior": "All ranks 1-15 publish atomically; successful snapshots receive independent standings/movement sequences; failures retain the last verified snapshot; placement events expire at an exact server timestamp.",
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "V24 shared 45-second server-expiring placement movement, non-ellipsizing countdowns, 15-second public sync and provider-aware live refresh status.",
-  "admin_experience": "Backend-driven provider timing, last success vs last leaderboard change, source funnel counts and recent reliability.",
+  "public_experience": "V25 no-refresh in-place standings through a dedicated 5-second conditional local feed, explicit 45-second server movement events, larger placement badges, value-change highlighting, and server-synchronized countdowns.",
+  "admin_experience": "Backend-driven provider timing plus standings/movement sequence diagnostics and the last 20 process-local placement events.",
   "live_deployment_verified": false,
   "bundled_state_is_snapshot": true,
   "shuffle_window": {
@@ -37,5 +37,18 @@
   "public_poll_seconds": 15,
   "empiredrop_refresh_policy": "90-second minimum; longer provider race.cache_duration remains authoritative",
   "kick_refresh_seconds": 60,
-  "browser_public_state_poll_seconds": 15
+  "browser_public_state_poll_seconds": 15,
+  "live_standings_poll_seconds": 5,
+  "live_standings_endpoint": "/public-standings",
+  "live_standings_behavior": "Browser reads only verified local snapshots; provider APIs are never called from the browser. Older same-runtime provider sequences are ignored.",
+  "movement_event_schema": [
+    "event_id",
+    "kind",
+    "direction",
+    "places",
+    "previous_rank",
+    "current_rank",
+    "changed_at",
+    "expires_at"
+  ]
 }

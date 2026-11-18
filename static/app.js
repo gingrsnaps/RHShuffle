@@ -183,7 +183,7 @@
 
   if (!document.body.dataset.feed) return;
   const isAdmin = document.body.dataset.page === "admin";
-  const PUBLIC_POLL_MS = 15000;
+  const PUBLIC_POLL_MS = 15000; // Full public state; standings use the dedicated 5s feed.
   const ADMIN_POLL_MS = 60000;
   const pollInterval = isAdmin ? ADMIN_POLL_MS : PUBLIC_POLL_MS;
   let site = {},
@@ -548,7 +548,7 @@
           return (value.rows || []).find((row) => Number(row.rank) === rank) ||
             {rank, username:"Open position", wager:"$0.00", open:true};
         });
-    const version = JSON.stringify([value.shuffle_revision || "", site.prizes || {}]);
+    const version = JSON.stringify([value.shuffle_revision || "", value.shuffle_sequence || 0, value.shuffle_movement_sequence || 0, site.prizes || {}]);
     if (version === shuffleRenderVersion) return;
     shuffleRenderVersion = version;
     for (let rank = 1; rank <= 15; rank += 1) {

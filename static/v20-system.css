@@ -1,5 +1,5 @@
-/* Consolidated from v14-modern.css. */
-/* V14 public race system: one quiet hierarchy for both providers. */
+
+
 body:not([data-page="admin"]) {
   --public-card: #1b1820;
   --public-card-raised: #211d27;
@@ -152,7 +152,7 @@ body:not([data-page="admin"]) .leaderboard-foot {display:none!important}
 }
 
 
-/* Consolidated from v15-system.css. */
+
 :root{
   --rh-bg:#0d0b10;--rh-surface:#17151c;--rh-surface-2:#1d1921;--rh-surface-3:#241d25;
   --rh-border:#332c35;--rh-border-strong:#55404a;--rh-text:#f6f2f5;--rh-muted:#aaa0ad;
@@ -173,12 +173,12 @@ body:not([data-page="admin"]) .accent{color:#ff758d}
 .public-leaderboards .leaderboard-heading h2{font-size:var(--rh-section-title)!important}.public-podium .podium-card{border-radius:var(--rh-radius)!important}.public-podium .podium-card.place-1{transform:translateY(-6px)}
 .public-table th,.public-table td{font-variant-numeric:tabular-nums}.public-fallback{font-size:.9rem;padding:13px 15px}
 
-/* RedPoints Games */
+
 .gaming-page{padding-top:44px;padding-bottom:64px}.gaming-heading-v15{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,380px);align-items:end;gap:28px;margin-bottom:24px}.gaming-title-block h1{margin:7px 0 10px}.gaming-subtitle{margin:0;color:var(--rh-muted);font-size:1.05rem}.gaming-account-card{padding:18px 20px;display:grid;gap:10px}.gaming-balance-line{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.gaming-balance-line span{font-size:.72rem;color:var(--rh-muted);font-weight:750;letter-spacing:.08em}.gaming-balance-line strong{font-size:2rem;font-variant-numeric:tabular-nums}.gaming-account-card .gaming-identity{margin:0;padding:8px 0 0;border-top:1px solid var(--rh-border);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.gaming-account-card .gaming-identity small{margin-left:auto}.game-toolbar{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:20px}.compact-game-switcher{display:flex;align-items:center;gap:8px;margin-left:auto}.compact-game-switcher label{font-size:.78rem;color:var(--rh-muted)}.compact-game-switcher select{width:auto;min-width:160px}.round-state{margin-left:auto;font-size:.78rem;color:var(--rh-muted)}
 .gaming-community-v15{margin:24px 0 34px}.gaming-community-heading{align-items:end}.gaming-community-heading h2{margin:4px 0 8px}.gaming-community-tabs{display:inline-flex;padding:4px;background:#141218;border:1px solid var(--rh-border);border-radius:11px;margin:0 0 12px}.gaming-community-tabs button{border:0;background:transparent;color:var(--rh-muted);padding:9px 14px;border-radius:8px;font-weight:700}.gaming-community-tabs button.is-active{background:var(--rh-accent-soft);color:#fff}.gaming-filter-bar{margin:0 0 16px;display:flex;gap:7px;overflow:auto;padding-bottom:4px}.gaming-filter-bar button{white-space:nowrap}.gaming-community-grid-v15{grid-template-columns:1fr}.gaming-community-grid-v15>section{min-height:330px}.games-launcher-heading{display:flex;align-items:end;justify-content:space-between;margin:38px 0 16px}.games-launcher-heading h2{margin:4px 0 0}.game-cards-v15{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.game-cards-v15 .game-card{min-height:220px;padding:18px}.game-season{margin-top:24px}
 .gaming-dialog{width:min(600px,calc(100vw - 28px));border:1px solid var(--rh-border-strong);border-radius:18px;background:#17141b;color:var(--rh-text);padding:0;box-shadow:0 30px 100px #000b}.gaming-dialog::backdrop{background:rgba(5,4,7,.78);backdrop-filter:blur(6px)}.gaming-dialog-content{padding:30px}.gaming-dialog-content h2{margin:5px 0 9px}.gaming-dialog-close{position:absolute;right:12px;top:10px}.gaming-dialog-close button{border:0;background:transparent;color:#d6ccd5;font-size:1.6rem;cursor:pointer}.gaming-public-choice{display:grid!important;grid-template-columns:28px 1fr;gap:12px;align-items:start;padding:14px;border:1px solid var(--rh-border);border-radius:12px;background:#131117}.gaming-public-choice input{width:20px;height:20px;margin-top:2px}.gaming-public-choice small{display:block;margin-top:4px;color:var(--rh-muted)}
 
-/* Admin calendar and focused workspaces */
+
 body[data-page="admin"]{--admin-bg:#0e0d12;--admin-panel:#18161e;--admin-panel-2:#201b23;--admin-border:#352e38;--admin-soft:#a9a0ad;background:var(--admin-bg)}
 body[data-page="admin"] .admin-page-heading h1{letter-spacing:-.04em}body[data-page="admin"] .panel{border-radius:14px}body[data-page="admin"] .form-panel{padding:22px}
 .calendar-presets{display:flex;flex-wrap:wrap;gap:7px}.calendar-grid{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center}.calendar-field{display:grid;grid-template-columns:1fr 140px;gap:8px 10px;padding:16px;border:1px solid var(--admin-border);border-radius:13px;background:#15131a}.calendar-field .calendar-label{grid-column:1/-1;font-size:.72rem;font-weight:800;letter-spacing:.09em;color:#d4c8d2;text-transform:uppercase}.calendar-field label{font-size:.72rem;color:var(--admin-soft);align-self:end}.calendar-field input{width:100%}.calendar-arrow{font-size:1.35rem;color:#7f737f}.calendar-preview{display:grid;gap:4px;margin-top:12px;padding:14px 16px;border:1px solid #463840;border-radius:12px;background:#1d171d}.calendar-preview span{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--admin-soft)}.calendar-preview strong{font-size:1rem}.calendar-preview small{color:var(--admin-soft)}.calendar-preview.is-invalid{border-color:#9c563e}.official-schedule-card{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:16px 0;padding:17px;border:1px solid #4b3942;border-radius:13px;background:#1c171d}.official-schedule-card strong,.official-schedule-card small{display:block}.official-schedule-card small{margin-top:5px;color:var(--admin-soft)}.section-title.compact{margin-top:8px}.field-error{color:#ff9b83}
@@ -190,16 +190,14 @@ body[data-page="admin"] .provider-actions{display:flex;gap:8px;flex-wrap:wrap}bo
 @media(max-width:640px){.gaming-page{padding-top:28px}.gaming-account-card{padding:14px}.gaming-balance-line strong{font-size:1.65rem}.game-toolbar{align-items:stretch;flex-wrap:wrap}.compact-game-switcher{order:3;width:100%;margin:0}.compact-game-switcher select{flex:1}.round-state{margin-left:0}.gaming-community-heading{align-items:start}.gaming-activity-count{min-width:auto}.game-cards-v15{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.game-cards-v15 .game-card{min-height:180px;padding:13px}.calendar-field{grid-template-columns:1fr}.calendar-field .calendar-label{grid-column:1}.official-schedule-card{align-items:flex-start;flex-direction:column}.public-podium .podium-card.place-1{transform:none}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
 
-/* Focused admin task views */
+
 .admin-workspace[data-focus=""] .shuffle-source-section{display:none}
 .admin-workspace[data-focus="schedule"] .shuffle-prize-section{display:none}
 .admin-workspace[data-focus=""] .empire-schedule,.admin-workspace[data-focus=""] .empire-rewards,.admin-workspace[data-focus=""] .empire-source{display:none}
 
 
-/* Consolidated from v16-system.css. */
-/* V17 timer-card refinement: preserve the V16 shared summary contract while
-   restoring the wider, natural-height Shuffle card proportions, stable provider
-   switching, compact Admin diagnostics and stable numeric layouts. */
+
+
 :root{
   --race-countdown-size:clamp(2rem,3.35vw,3.2rem);
   --race-countdown-line:1.05;
@@ -283,8 +281,7 @@ body:not([data-page="admin"]) .public-table .number{
   font-variant-numeric:tabular-nums lining-nums;
 }
 
-/* Admin: meaningful provider summaries without turning ordinary retries into
-   giant warning panels. */
+
 body[data-page="admin"] .provider-request-fingerprint{
   margin-top:14px;
   border:1px solid var(--admin-border);
@@ -360,16 +357,14 @@ body[data-page="admin"] form[aria-busy="true"] [data-payout-submit]{
 }
 
 
-/* Focused admin task views */
+
 .admin-workspace[data-focus=""] .shuffle-source-section{display:none}
 .admin-workspace[data-focus="schedule"] .shuffle-prize-section{display:none}
 .admin-workspace[data-focus=""] .empire-schedule,.admin-workspace[data-focus=""] .empire-rewards,.admin-workspace[data-focus=""] .empire-source{display:none}
 
 
-/* Consolidated from v16-system.css. */
-/* V17 timer-card refinement: preserve the V16 shared summary contract while
-   restoring the wider, natural-height Shuffle card proportions, stable provider
-   switching, compact Admin diagnostics and stable numeric layouts. */
+
+
 :root{
   --race-countdown-size:clamp(2.05rem,4.25vw,3.45rem);
   --race-countdown-line:1.05;
@@ -450,8 +445,7 @@ body:not([data-page="admin"]) .public-table .number{
   font-variant-numeric:tabular-nums lining-nums;
 }
 
-/* Admin: meaningful provider summaries without turning ordinary retries into
-   giant warning panels. */
+
 body[data-page="admin"] .provider-request-fingerprint{
   margin-top:14px;
   border:1px solid var(--admin-border);
@@ -526,7 +520,7 @@ body[data-page="admin"] form[aria-busy="true"] [data-payout-submit]{
   body:not([data-page="admin"]) .public-provider-tabs .button{transition:none!important}
 }
 
-/* V20 compact grouped standings and mobile-first release. */
+
 :root{
   --mobile-gutter:16px;
   --touch-target:44px;
@@ -562,7 +556,7 @@ body:not([data-page="admin"]) .responsive-results td[data-label],
   body:not([data-page="admin"]) .leaderboard-heading{gap:10px;align-items:flex-start}
   body:not([data-page="admin"]) .leaderboard-heading .button{width:auto;max-width:100%;justify-content:center;align-self:flex-start}
 
-  /* The podium keeps one strong first-place card and a compact two-card second row. */
+  
   body:not([data-page="admin"]) .public-podium{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   body:not([data-page="admin"]) .public-podium .podium-card{padding:15px!important;border-radius:15px!important;min-height:0!important}
   body:not([data-page="admin"]) .public-podium .podium-card.place-1{grid-column:1/-1;order:1!important}
@@ -578,12 +572,12 @@ body:not([data-page="admin"]) .responsive-results td[data-label],
   body:not([data-page="admin"]) .public-podium .place-2 .podium-values>div:last-child,
   body:not([data-page="admin"]) .public-podium .place-3 .podium-values>div:last-child{text-align:left}
 
-  /* Positions four onward are one compact rounded list, not a wall of cards. */
+  
   body:not([data-page="admin"]) .public-table{padding:0!important;overflow:hidden!important;background:#19171e!important;border:1px solid #3d343f!important;border-radius:var(--compact-list-radius)!important;box-shadow:0 12px 30px #0002}
   body:not([data-page="admin"]) .public-table .responsive-results{display:block;min-width:0!important;width:100%;border-spacing:0}
   body:not([data-page="admin"]) .responsive-results thead{display:none}
   body:not([data-page="admin"]) .responsive-results tbody{display:block}
-  body:not([data-page="admin"]) .responsive-results tr{display:grid;grid-template-columns:38px minmax(0,1fr) max-content;grid-template-rows:auto auto;gap:2px 10px;align-items:center;min-height:var(--compact-list-row);padding:11px 14px;border:0;border-bottom:1px solid #302a33;border-radius:0;background:transparent}
+  body:not([data-page="admin"]) .responsive-results tr{display:grid;grid-template-columns:68px minmax(0,1fr) max-content;grid-template-rows:auto auto;gap:2px 10px;align-items:center;min-height:var(--compact-list-row);padding:11px 14px;border:0;border-bottom:1px solid #302a33;border-radius:0;background:transparent}
   body:not([data-page="admin"]) .responsive-results tr:last-child{border-bottom:0}
   body:not([data-page="admin"]) .responsive-results tr:hover{background:#ffffff04}
   body:not([data-page="admin"]) .responsive-results td{display:block!important;width:auto!important;padding:0!important;border:0!important;min-width:0;text-align:left!important}
@@ -609,14 +603,14 @@ body:not([data-page="admin"]) .responsive-results td[data-label],
   body:not([data-page="admin"]) .public-podium .podium-card.place-1{grid-column:auto}
   body:not([data-page="admin"]) .public-podium .podium-values{grid-template-columns:1fr 1fr}
   body:not([data-page="admin"]) .public-podium .podium-values>div:last-child{text-align:right}
-  body:not([data-page="admin"]) .responsive-results tr{grid-template-columns:32px minmax(0,1fr) max-content;gap:2px 8px;padding:10px 11px;min-height:66px}
+  body:not([data-page="admin"]) .responsive-results tr{grid-template-columns:62px minmax(0,1fr) max-content;gap:2px 8px;padding:10px 11px;min-height:66px}
   body:not([data-page="admin"]) .responsive-results td.rank{grid-row:1/3}
   body:not([data-page="admin"]) .responsive-results td[data-label="Player"]{grid-column:2/4;grid-row:1;align-self:end}
   body:not([data-page="admin"]) .responsive-results td[data-label="Wagered"]{grid-column:2;grid-row:2;justify-self:start;font-size:.84rem}
   body:not([data-page="admin"]) .responsive-results td[data-label="Prize"]{grid-column:3;grid-row:2;justify-self:end;font-size:.67rem}
 }
 
-/* Mobile public navigation. */
+
 @media(max-width:980px){
   body:not([data-page="admin"]) .public-navigation[data-open="true"]{max-height:calc(100dvh - 78px);overflow:auto;overscroll-behavior:contain;box-shadow:0 18px 50px #000a}
   body:not([data-page="admin"]) .public-navigation a,
@@ -624,7 +618,7 @@ body:not([data-page="admin"]) .responsive-results td[data-label],
   body:not([data-page="admin"]) .public-more[open] .public-more-panel{position:static;box-shadow:none;margin-top:7px;width:100%}
 }
 
-/* History uses the same compact grouped-list language as live standings. */
+
 @media(max-width:700px){
   .history-page .history-results{padding:15px;background:transparent;border:0}
   .history-page .table-scroll{overflow:hidden;border:1px solid #3d343f;border-radius:var(--compact-list-radius);background:#19171e}
@@ -649,7 +643,7 @@ body:not([data-page="admin"]) .responsive-results td[data-label],
   .history-page .responsive-history td[data-label="Recorded prize"]{grid-column:3;grid-row:2;font-size:.66rem}
 }
 
-/* Gaming touch layouts. */
+
 @media(max-width:760px){
   .gaming-page{padding-top:24px}
   .gaming-heading-v15{gap:14px}
@@ -674,7 +668,7 @@ body:not([data-page="admin"]) .responsive-results td[data-label],
 }
 @media(max-width:360px){.game-cards-v15{grid-template-columns:1fr!important}}
 
-/* Admin phone shell, calendars, prize editors and grouped responsive lists. */
+
 @media(max-width:790px){
   body[data-page="admin"] .admin-topbar{position:sticky;top:0;z-index:40}
   body[data-page="admin"] .admin-subnav{position:sticky;top:62px;z-index:30;margin-inline:-15px;padding:8px 15px;background:#111017f5;box-shadow:0 8px 18px #0005;scrollbar-width:none}
@@ -733,16 +727,5 @@ html.admin-menu-open,body.admin-menu-open{overflow:hidden;overscroll-behavior:no
   .history-page .responsive-history td.empty::before{display:none!important}
 }
 
-/* V24 server-timestamped 45-second rank movement indicators shared by both providers. */
-#shuffleBoard .rank-movement,#empireBoard .rank-movement{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:1px 5px;border-radius:999px;font-size:.62rem;font-weight:800;line-height:1.4;vertical-align:middle;letter-spacing:.02em;white-space:nowrap}
-#shuffleBoard .rank-movement.is-up,#empireBoard .rank-movement.is-up{color:#9ee7b0;background:#183322}
-#shuffleBoard .rank-movement.is-down,#empireBoard .rank-movement.is-down{color:#efadb9;background:#381e25}
-#shuffleBoard .rank-movement.is-new,#empireBoard .rank-movement.is-new{color:#f2ced5;background:#3a2830}
-#shuffleBoard .is-open-position .rank-movement{display:none}
-@media(max-width:480px){
-  #shuffleBoard .rank-movement,#empireBoard .rank-movement{margin-left:4px;padding:1px 4px;font-size:.56rem}
-}
 
-/* V24 live provider cadence labels wrap cleanly without affecting table widths. */
-.provider-refresh-foot{gap:8px 18px;flex-wrap:wrap}
-.provider-refresh-foot span{min-width:0}
+#shuffleBoard .placement,#empireBoard .placement,#shuffleBoard td.rank,#empireBoard td.rank{white-space:nowrap}#shuffleBoard .place-number,#empireBoard .place-number{display:inline-block;min-width:2.25ch;font-variant-numeric:tabular-nums}#shuffleBoard .placement,#empireBoard .placement{display:inline-flex;align-items:center;gap:7px;min-width:max-content}#shuffleBoard td.rank,#empireBoard td.rank{min-width:76px}#shuffleBoard .rank-movement,#empireBoard .rank-movement{display:inline-flex;align-items:center;justify-content:center;margin-left:7px;padding:2px 7px;border:1px solid transparent;border-radius:999px;font-size:.78rem;font-weight:850;line-height:1.35;vertical-align:middle;white-space:nowrap;font-variant-numeric:tabular-nums;will-change:transform,opacity}#shuffleBoard .placement .rank-movement,#empireBoard .placement .rank-movement{margin-left:0}#shuffleBoard .rank-movement.is-up,#empireBoard .rank-movement.is-up{color:#aef0bf;background:#173a24;border-color:#285d39}#shuffleBoard .rank-movement.is-down,#empireBoard .rank-movement.is-down{color:#ffbac6;background:#401d27;border-color:#6b2c3b}#shuffleBoard .rank-movement.is-new,#empireBoard .rank-movement.is-new{color:#f6d4dc;background:#402a34;border-color:#674552}#shuffleBoard .is-open-position .rank-movement{display:none}#shuffleBoard .rank-movement.is-entering,#empireBoard .rank-movement.is-entering{animation:rankMovementEnter .46s cubic-bezier(.2,.85,.25,1)}@keyframes rankMovementEnter{0%{opacity:0;transform:translateY(6px) scale(.9)}55%{opacity:1;transform:translateY(-2px) scale(1.04)}100%{opacity:1;transform:none}}.live-value-changed{animation:liveValueChanged 1s ease-out}@keyframes liveValueChanged{0%{background-color:#69314188}100%{background-color:transparent}}.live-sync-status{display:inline-flex;align-items:center;gap:6px;color:#c8bec8}.live-sync-dot{width:7px;height:7px;border-radius:50%;background:#72d98e;box-shadow:0 0 0 3px #72d98e20;flex:none}.live-sync-status.is-delayed{color:#dca6af}.live-sync-status.is-delayed .live-sync-dot{background:#d68a98;box-shadow:0 0 0 3px #d68a9820}.provider-refresh-foot{gap:8px 18px;flex-wrap:wrap}.provider-refresh-foot span{min-width:0}@media(max-width:760px){#shuffleBoard td.rank,#empireBoard td.rank{min-width:0;display:flex!important;flex-direction:column;align-items:flex-start;gap:5px}#shuffleBoard .rank-movement,#empireBoard .rank-movement{margin-left:0;padding:2px 6px;font-size:.69rem}}@media(max-width:360px){#shuffleBoard .rank-movement,#empireBoard .rank-movement{font-size:.65rem;padding:2px 5px}}body[data-page=admin] .movement-event-list{display:grid;gap:7px;margin:12px 0 0;padding:0;list-style:none}body[data-page=admin] .movement-event-list li{display:grid;grid-template-columns:minmax(120px,1fr) minmax(150px,1.5fr) auto;gap:10px;align-items:center;padding:9px 11px;border:1px solid var(--admin-border);border-radius:10px;background:#ffffff03}body[data-page=admin] .movement-event-list li strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}body[data-page=admin] .movement-event-list li span{font-variant-numeric:tabular-nums}body[data-page=admin] .movement-event-list li small{color:var(--admin-soft);white-space:nowrap}body[data-page=admin] .movement-event-list li.empty{display:block;color:var(--admin-soft)}@media(max-width:640px){body[data-page=admin] .movement-event-list li{grid-template-columns:1fr;gap:4px}body[data-page=admin] .movement-event-list li small{white-space:normal}}

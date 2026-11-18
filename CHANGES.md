@@ -1,3 +1,15 @@
+## V25
+
+- Added a dedicated conditional `/public-standings` feed for no-refresh leaderboard updates every 5 seconds without increasing provider API traffic.
+- Added independent standings and movement sequences so a genuine placement event cannot be skipped by ordinary render/revision optimizations.
+- Added explicit server movement events containing event ID, previous/current rank, direction, places moved, changed time, and exact 45-second expiration.
+- Shuffle and EmpireDrop now update open pages atomically in-place; rank swaps cannot temporarily duplicate a player.
+- Larger dedicated `NEW` / `↑N` / `↓N` placement badges and mobile rank space make movement visible instead of squeezed into the old rank column.
+- Changed names and wager/prize values receive a short non-repeating visual highlight; wager-only changes never create a placement arrow.
+- Background/focus/pageshow recovery immediately polls the saved standings and removes movement events that already expired.
+- Admin provider summaries expose standings sequence, movement sequence/count, and the last 20 process-local placement events for diagnostics.
+- Added live-chain regression coverage for open-page updates, shared movement rendering, masked-name identity safety, failure baselines, and 5-second local synchronization.
+
 ## V24
 
 - Shuffle provider checks now run on an anchored 90-second healthy cadence; Kick remains 60 seconds.

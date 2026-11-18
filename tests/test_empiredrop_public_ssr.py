@@ -54,7 +54,7 @@ class InitialHTMLTests(unittest.TestCase):
         rows[2]['rank']=2
         rows[1]['username']='Q<unsafe>'
         html=render(rows, limit=3)
-        self.assertIn('data-empire-place="3">02',html)
+        self.assertIn('data-empire-place="3"><span class="place-number" data-place-number>02</span>',html)
         self.assertIn('Q&lt;unsafe&gt;',html)
         self.assertNotIn('Q<unsafe>',html)
 

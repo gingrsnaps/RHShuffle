@@ -10,6 +10,7 @@ from config import INTERVAL, KICK_INTERVAL, RANK_MOVEMENT_SECONDS, RELEASE
 from integrations import Providers, ProviderError
 from storage import Store, StoreError, Conflict
 from race import calculate, empty, freshness, normalize, phase, rank, token, top_snapshot
+from movement import preserve_movement_event, stamp_movement_event, public_movement_event, admin_event_record
 from race_support import fmt_et, money, race_key
 from weekly_history import WeeklyHistory
 from empiredrop import EmpireDropBoard
@@ -38,6 +39,7 @@ class Runtime:
         self._public_signature = ""
         self._public_sequence = 0
         self.activity_log = None  # Injected after construction by Flask.
+        self._movement_events = []  # Last 20 admin-only Shuffle movement events.
         self.jobs = {name: dict(state="starting", next_check=0, duration_ms=0, http_status=None,
                                retry_after=0, attempt_at=0, error="", not_before=0,
                                requested=0, completed=0, runs=0, completed_at=0, result="waiting",
@@ -56,53 +58,77 @@ class Runtime:
         self.shuffle["edits"] = edits
 
     def ensure_top15(self, value, previous=None):
-        """Attach one validated, ordered Top 15 with non-restarting movement metadata."""
+        """Attach one validated, ordered Top 15 with non-restarting movement events."""
         source_rows = list(value.get("rows", []))
         previous_rows = (previous or {}).get("rows", [])[:15]
         rows, revision = top_snapshot(source_rows, previous_rows, 15)
         prior_revision = (previous or {}).get("top15_revision", "")
         prior_sequence = int((previous or {}).get("top15_sequence", 0) or 0)
+        prior_movement_sequence = int((previous or {}).get("top15_movement_sequence", 0) or 0)
+        prior_movement_count = int((previous or {}).get("top15_movement_count", 0) or 0)
 
         if previous is None and value.get("top15_revision") == revision:
             # Startup/reload of an already-saved snapshot must not invent a new
-            # movement window or erase one that still has a valid server timestamp.
+            # movement window or erase one that still has a server timestamp.
             saved = {r.get("username"): r for r in source_rows[:15] if isinstance(r, dict)}
             for row in rows:
-                old = saved.get(row.get("username"), {})
-                row["movement"] = old.get("movement")
-                row["new_entry"] = bool(old.get("new_entry"))
-                row["movement_at"] = int(old.get("movement_at", 0) or 0)
-                row["movement_expires_at"] = int(old.get("movement_expires_at", 0) or
-                                                  (row["movement_at"] + RANK_MOVEMENT_SECONDS if row["movement_at"] else 0))
+                preserve_movement_event(row, saved.get(row.get("username"), {}), RANK_MOVEMENT_SECONDS)
             sequence = int(value.get("top15_sequence", 0) or (1 if rows else 0))
+            movement_sequence = int(value.get("top15_movement_sequence", 0) or 0)
+            movement_count = int(value.get("top15_movement_count", 0) or 0)
         elif previous is not None and prior_revision == revision:
-            # A provider confirmation of the same Top 15 may arrive while the
-            # 30-second indicator is still visible. Preserve the original event
-            # timestamp instead of restarting the browser timer.
+            # Re-confirming identical standings preserves the original event.
             saved = {r.get("username"): r for r in previous_rows if isinstance(r, dict)}
             for row in rows:
-                old = saved.get(row.get("username"), {})
-                row["movement"] = old.get("movement")
-                row["new_entry"] = bool(old.get("new_entry"))
-                row["movement_at"] = int(old.get("movement_at", 0) or 0)
-                row["movement_expires_at"] = int(old.get("movement_expires_at", 0) or
-                                                  (row["movement_at"] + RANK_MOVEMENT_SECONDS if row["movement_at"] else 0))
-            sequence = prior_sequence
+                preserve_movement_event(row, saved.get(row.get("username"), {}), RANK_MOVEMENT_SECONDS)
+            sequence = prior_sequence or (1 if rows else 0)
+            movement_sequence = prior_movement_sequence
+            movement_count = prior_movement_count
         else:
             stamp = int(value.get("updated_at", 0) or time.time())
+            movement_count = 0
             for row in rows:
-                active = bool(row.get("movement") or row.get("new_entry"))
-                row["movement_at"] = stamp if active else 0
-                row["movement_expires_at"] = stamp + RANK_MOVEMENT_SECONDS if active else 0
+                stamp_movement_event(row, "shuffle", row.get("username", ""), stamp, RANK_MOVEMENT_SECONDS)
+                if row.get("movement_event_id"):
+                    movement_count += 1
             sequence = prior_sequence + (1 if revision != prior_revision else 0)
             if rows and not sequence:
                 sequence = 1
+            movement_sequence = prior_movement_sequence + (1 if movement_count else 0)
+            if movement_count and not movement_sequence:
+                movement_sequence = 1
 
         value["rows"] = rows + source_rows[15:]
         value["top15_revision"] = revision
         value["top15_sequence"] = sequence
+        value["top15_movement_sequence"] = movement_sequence
+        value["top15_movement_count"] = movement_count
         value.setdefault("top15_changed_at", value.get("changed_at", value.get("updated_at", 0)))
         return value
+
+    def _record_shuffle_movements(self, rows):
+        """Keep a tiny process-local admin history; never expose full names publicly."""
+        with self.lock:
+            known = {item.get("event_id") for item in self._movement_events}
+            for row in list(rows or [])[:15]:
+                record = admin_event_record("shuffle", row)
+                if not record or record["event_id"] in known:
+                    continue
+                record["username"] = str(row.get("username") or "")
+                self._movement_events.append(record)
+                known.add(record["event_id"])
+            self._movement_events = self._movement_events[-20:]
+
+    def movement_diagnostics(self):
+        with self.lock:
+            return {
+                "shuffle": {
+                    "standings_sequence": int(self.shuffle.get("top15_sequence", 0) or 0),
+                    "movement_sequence": int(self.shuffle.get("top15_movement_sequence", 0) or 0),
+                    "movement_count": int(self.shuffle.get("top15_movement_count", 0) or 0),
+                    "events": copy.deepcopy(list(reversed(self._movement_events))),
+                }
+            }
 
     def sync(self):
         revision, admin = self.store.admin()
@@ -133,15 +159,18 @@ class Runtime:
         # admin names, password hashes, and keys cannot reach the public API.
         rows = [dict(rank=r["rank"], username=r["username"][:2] + "******", wager=r["wager"],
                      movement=r.get("movement"), new_entry=bool(r.get("new_entry")),
+                     previous_rank=r.get("previous_rank"),
                      movement_at=int(r.get("movement_at", 0) or 0),
-                     movement_expires_at=int(r.get("movement_expires_at", 0) or 0))
+                     movement_expires_at=int(r.get("movement_expires_at", 0) or 0),
+                     movement_event_id=str(r.get("movement_event_id") or ""),
+                     movement_event=public_movement_event(r))
                 for r in value["rows"][:15]]
         if phase(site) in {"upcoming", "unconfigured"}:
             rows = []
         ranked = {row["rank"]: row for row in rows}
         top15 = [ranked.get(rank) or dict(rank=rank, username="Open position", wager="$0.00",
                                           movement=None, new_entry=False, movement_at=0,
-                                          movement_expires_at=0, open=True)
+                                          movement_expires_at=0, movement_event_id="", movement_event=None, open=True)
                  for rank in range(1, 16)]
         available = bool(kick.get("updated_at") and not kick.get("error") and time.time() - kick["updated_at"] <= 180
                          and kick.get("channel") == site["kick_channel_slug"])
@@ -167,6 +196,8 @@ class Runtime:
                        settings_revision=settings_revision,
                        shuffle_revision=value.get("top15_revision") or token(rows),
                        shuffle_sequence=int(value.get("top15_sequence", 0) or 0),
+                       shuffle_movement_sequence=int(value.get("top15_movement_sequence", 0) or 0),
+                       shuffle_movement_count=int(value.get("top15_movement_count", 0) or 0),
                        shuffle_changed_at=value.get("top15_changed_at", value.get("changed_at", 0)),
                        empiredrop=empire,
                        leaderboard_message=self.empty_message(site, value),
@@ -184,6 +215,37 @@ class Runtime:
                        # timestamp quantization on fast local/public-state requests.
                        server_time=time.time())
         return payload
+
+    def public_standings(self):
+        """Small live-feed projection used by open leaderboard pages every five seconds."""
+        value = self.public()
+        empire = value.get("empiredrop") or {}
+        shuffle = {
+            "standings_revision": value.get("shuffle_revision", ""),
+            "standings_sequence": int(value.get("shuffle_sequence", 0) or 0),
+            "movement_sequence": int(value.get("shuffle_movement_sequence", 0) or 0),
+            "movement_count": int(value.get("shuffle_movement_count", 0) or 0),
+            "changed_at": int(value.get("shuffle_changed_at", 0) or 0),
+            "updated_at": int((value.get("provider_timing") or {}).get("shuffle", {}).get("updated_at", 0) or 0),
+            "next_check_at": int((value.get("provider_timing") or {}).get("shuffle", {}).get("next_check", 0) or 0),
+            "refresh_interval": INTERVAL,
+            "top15": copy.deepcopy(value.get("top15") or []),
+            "prizes": copy.deepcopy((value.get("site") or {}).get("prizes") or {}),
+            "total_prize": (value.get("site") or {}).get("total_prize", "$0.00"),
+        }
+        empire_public = {key: copy.deepcopy(empire.get(key)) for key in (
+            "rows", "prizes", "standings_revision", "standings_sequence", "movement_sequence",
+            "movement_count", "standings_changed_at", "updated_at", "next_check_at",
+            "refresh_interval", "minimum_refresh_interval", "race_meta", "label")}
+        return {
+            "release": RELEASE,
+            "runtime_id": self.instance_id,
+            "movement_window_seconds": RANK_MOVEMENT_SECONDS,
+            "sync_interval_seconds": 5,
+            "shuffle": shuffle,
+            "empiredrop": empire_public,
+            "server_time": time.time(),
+        }
 
     @staticmethod
     def empty_message(site, snapshot):
@@ -226,8 +288,12 @@ class Runtime:
                 campaign_filter=self.admin["site_settings"]["campaign_code_filter"], endpoint_kind=self.config.endpoint,
                 aggregation=self.config.aggregation, qualifying_players=data["count"], loaded_players=len(data["rows"]),
                 top15_filled=min(15, len(data["rows"])), top15_revision=self.shuffle.get("top15_revision", ""),
+                top15_sequence=int(self.shuffle.get("top15_sequence", 0) or 0),
+                top15_movement_sequence=int(self.shuffle.get("top15_movement_sequence", 0) or 0),
+                top15_movement_count=int(self.shuffle.get("top15_movement_count", 0) or 0),
                 top15_changed_at=self.shuffle.get("top15_changed_at", self.shuffle.get("changed_at", 0)))
             data['history'] = self.history.diagnostics()
+            data['movement_diagnostics'] = self.movement_diagnostics()
             return data
 
     def job_status(self):
@@ -307,6 +373,8 @@ class Runtime:
                         value["previous_top"] = previous["rows"][:15] if top_changed else previous.get("previous_top", [])
                         warning = value["warning"]
                         result = "empty" if not value["rows"] else "updated" if top_changed else "unchanged"
+                    if name == "shuffle" and top_changed:
+                        self._record_shuffle_movements(value.get("rows", [])[:15])
                     with self.lock:
                         self.store.publish(name, value, revision)
                         self.shuffle = value

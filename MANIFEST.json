@@ -1,9 +1,9 @@
 {
-  "release": "2026.11.17-provider-cadence-v24",
-  "format": "redhunllef-manifest-17",
+  "release": "2026.11.17-live-standings-v25",
+  "format": "redhunllef-manifest-18",
   "package_kind": "full",
   "private_config_included": true,
-  "file_count": 211,
+  "file_count": 221,
   "files": [
     {
       "path": ".gitignore",
@@ -11,14 +11,39 @@
       "sha256": "0b5da62e47b620031033e896e8d421e3218e78074ad72d87c6ce1a46de1dda81"
     },
     {
+      "path": ".pytest_cache/.gitignore",
+      "size_bytes": 37,
+      "sha256": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd"
+    },
+    {
+      "path": ".pytest_cache/CACHEDIR.TAG",
+      "size_bytes": 191,
+      "sha256": "37dc88ef9a0abeddbe81053a6dd8fdfb13afb613045ea1eb4a5c815a74a3bde4"
+    },
+    {
+      "path": ".pytest_cache/README.md",
+      "size_bytes": 302,
+      "sha256": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad"
+    },
+    {
+      "path": ".pytest_cache/v/cache/lastfailed",
+      "size_bytes": 2,
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    {
+      "path": ".pytest_cache/v/cache/nodeids",
+      "size_bytes": 1184,
+      "sha256": "f66dd4933a347868989afa48e98c220c8e7f4e7411ee69007fe2fdbcd8a7c4ec"
+    },
+    {
       "path": "BUILD_MANIFEST.json",
-      "size_bytes": 8687,
-      "sha256": "b1e91ac017fb9ddd516fbf775da4e71b0be01d7f9172e8a4dafdb249fd030306"
+      "size_bytes": 8892,
+      "sha256": "22427ed12fe297dcd5267561a8a68f7e4efda40cbe56fd3dfd0437a46eb0b922"
     },
     {
       "path": "CHANGES.md",
-      "size_bytes": 2377,
-      "sha256": "eb96cf916ad8f834547b813ff0a35f5c367345903a986c0338543e2239ad2351"
+      "size_bytes": 3680,
+      "sha256": "825c6a888bb49a4b8e951203e77c63a9cb9fc7518df59fa4802be0cf7b224da5"
     },
     {
       "path": "DEPLOYMENT_EMPIREDROP_RACES.md",
@@ -42,13 +67,13 @@
     },
     {
       "path": "FILE_STRUCTURE.md",
-      "size_bytes": 5221,
-      "sha256": "f9a0b89c4fa6b97e2550fcc2e634d4a910e5e68620af1b354078fb6c55f800b9"
+      "size_bytes": 6287,
+      "sha256": "c8dfd806b57ae3d6b00eafa17078d43814f0b62ae3b091e8571d5f7368b1e65f"
     },
     {
       "path": "FULL_CODE_BLOCKS.md",
-      "size_bytes": 199,
-      "sha256": "8584dd002bfb9b30d6f2b4647f5046925803d56ab0bc092c8d78d51d134e325c"
+      "size_bytes": 286,
+      "sha256": "60fe780121a00548b393cc02d83c7d08341de3f063874d04f4d135eb168338ad"
     },
     {
       "path": "Procfile",
@@ -57,23 +82,23 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 622,
-      "sha256": "2b49a3b17eb464b20c5397a955cdbb4bac47ba24016a2ca8d62066eb0d2ecbcc"
+      "size_bytes": 1005,
+      "sha256": "64e1efc32b8deb1db64633e1f2909d414f1ab4f1bb4c5c491ee8c69623ad5c5a"
     },
     {
       "path": "RELEASE_METADATA.json",
-      "size_bytes": 2252,
-      "sha256": "960bfc3ca6f7f2d0c0b78c0ea7f9eb6a446acd357afb3dea07eb31464d37a915"
+      "size_bytes": 2800,
+      "sha256": "268f0837dac6ba74b72365f30ab86b9f1ea4885f27ab1dfeffeca432f49eebf3"
     },
     {
       "path": "START_HERE.md",
-      "size_bytes": 722,
-      "sha256": "4e06ad6cccfc87ac6d35a97f32526ed64976f90f846090aaa09717dc5ce1c239"
+      "size_bytes": 1046,
+      "sha256": "1a6e331c5d8d7fd2319d46f0063d1a986809d1af5d973cbed8169f8a71ab60b5"
     },
     {
       "path": "UPDATE.md",
-      "size_bytes": 179,
-      "sha256": "143038cba0e700a333eba1706d67a520434673844cdb35cdc818753387e4eca5"
+      "size_bytes": 305,
+      "sha256": "23b14232f99464f84a5af5ac14e1fdd03c1e8e1265cceddf55e73e226a2cc17f"
     },
     {
       "path": "admin_navigation.py",
@@ -97,8 +122,8 @@
     },
     {
       "path": "config.py",
-      "size_bytes": 11155,
-      "sha256": "e4245bab0d1e51b008ed39d2c32a7c8340c607fc86eb25f18f0959102ca4e224"
+      "size_bytes": 11153,
+      "sha256": "1254e2ae0b1dbafa95ab2d607ecf24763e243ed5636004a146d89d55efe041ef"
     },
     {
       "path": "data/state.json",
@@ -137,8 +162,8 @@
     },
     {
       "path": "docs/EMPIREDROP_INTEGRATION.md",
-      "size_bytes": 5599,
-      "sha256": "76f120b80aca76d1a085c68dbce800512d45faf8f22bc5b08476215e7c1b72a8"
+      "size_bytes": 5674,
+      "sha256": "d689193d93dd2677cb64e5d27fff63713c68d1fa00a80429c1ee7d6338890cbb"
     },
     {
       "path": "docs/EMPIREDROP_VALIDATION.md",
@@ -286,6 +311,11 @@
       "sha256": "8ce6db5809c4ca992012b2bf0fb37f7013ead289201e0b7c1504fd149bedb590"
     },
     {
+      "path": "docs/V25_LIVE_STANDINGS.md",
+      "size_bytes": 2513,
+      "sha256": "282ae0214f9df56b8997d9153fcd1e2b852718fab055cf4e2657db4b6b5a5fbe"
+    },
+    {
       "path": "docs/VALIDATION.md",
       "size_bytes": 1009,
       "sha256": "948189d1a60371319ab7cd799778f203a372316760622f667a48b6b71996f294"
@@ -302,8 +332,8 @@
     },
     {
       "path": "empiredrop.py",
-      "size_bytes": 48090,
-      "sha256": "0ce6d82d1f7532d37497e81698d5d6984fc8ae155371aacdbd710d3cdffabafc"
+      "size_bytes": 49980,
+      "sha256": "d609b5c89d63c72bacf7422dd533df7e7ac6ddb3c7dcab4c503d808d7c72ea0d"
     },
     {
       "path": "empiredrop_deploy_keys.py",
@@ -341,6 +371,11 @@
       "sha256": "1877fde4296c7b5c0074d169e8b88843a0700d72fecc30a3f2b39f5a3cfe8aad"
     },
     {
+      "path": "movement.py",
+      "size_bytes": 4120,
+      "sha256": "08e39714c23a8c1665302ae90de4f14b322ec2a3413169cae9caa084a579bf37"
+    },
+    {
       "path": "operations_log.py",
       "size_bytes": 6892,
       "sha256": "9b2e8f6438247fd291cd83162bac2f44c32034f522e306cc2fda4fc8877ac23d"
@@ -367,8 +402,8 @@
     },
     {
       "path": "provider_admin.py",
-      "size_bytes": 7930,
-      "sha256": "4cd09eed03136f88e3419e1a1b8c35111b53e10614808672c40ad4ae396dd195"
+      "size_bytes": 8379,
+      "sha256": "2ae7194ffe1a86a59bd060f8702c04764f187d608c4ae9e0b8b58fbad5db2721"
     },
     {
       "path": "race.py",
@@ -402,8 +437,8 @@
     },
     {
       "path": "runtime.py",
-      "size_bytes": 30088,
-      "sha256": "c526a3264c39722c42024ef3bec50b08c46cc61530ef66326104f5e4580ae206"
+      "size_bytes": 34057,
+      "sha256": "227d8240dace43197a0ec542fff4597744fe879669c2301eb603994fb061c7a2"
     },
     {
       "path": "runtime.txt",
@@ -452,8 +487,8 @@
     },
     {
       "path": "static/admin-providers.js",
-      "size_bytes": 3051,
-      "sha256": "ec92069aae9ea15d0c6461b1813cfc0942b18956feb517c32f689500d54ae2ff"
+      "size_bytes": 4600,
+      "sha256": "b2f4c6fdb95fd6e65fd439b5f4ac3686e49192329471ed4e6b37af7e8cbbd604"
     },
     {
       "path": "static/admin-workspace.css",
@@ -467,8 +502,8 @@
     },
     {
       "path": "static/app.js",
-      "size_bytes": 34788,
-      "sha256": "b1940898cd43b1b4dd51ff87d8052c75722a68b4eac4680684e7f1af4426abf7"
+      "size_bytes": 34914,
+      "sha256": "e135602bcbfbde28d3ee1fe529499762873cbe05b32d957b46f38de8590ac36a"
     },
     {
       "path": "static/empiredrop.css",
@@ -477,8 +512,8 @@
     },
     {
       "path": "static/empiredrop.js",
-      "size_bytes": 11977,
-      "sha256": "1c4341d145f59fc6c62a337b7834a10cba306a81513f262ca3156ec7d55a8037"
+      "size_bytes": 12218,
+      "sha256": "4cef0fd05948e0b3e5bdedd185e2ab187857c213d2118d3941c5474b941f1cb3"
     },
     {
       "path": "static/experience.css",
@@ -531,6 +566,11 @@
       "sha256": "c3cc930bc5d76a9770f91c797cdf10832a213b106a34ebd24c96dd0bffb3cf68"
     },
     {
+      "path": "static/live-standings.js",
+      "size_bytes": 11642,
+      "sha256": "4387e66e40b97620032d655856b01f458ac69ccbb2a4c6ee4da59d963ed5e536"
+    },
+    {
       "path": "static/plinko.js",
       "size_bytes": 8568,
       "sha256": "8ee550267718142b16da78242c08ae113594b7e1e735bdc8caf63dd2b06b8cf6"
@@ -547,8 +587,8 @@
     },
     {
       "path": "static/rank-movement.js",
-      "size_bytes": 2711,
-      "sha256": "2c631f09ceaf8ce22e6d9a640c20511c52fa36a2892f2c91d1caa130e10ce4ad"
+      "size_bytes": 4904,
+      "sha256": "178a7061eccb6a4c4805bcc9e5dd1213af2a6dc97e012f7221499b1464d0c9c5"
     },
     {
       "path": "static/receipt-verifier.js",
@@ -577,8 +617,8 @@
     },
     {
       "path": "static/v20-system.css",
-      "size_bytes": 47746,
-      "sha256": "06f2b2709f87c8fcbb9daaf94f66f20d96ff9a43af1b59f46661468ccdb1ee89"
+      "size_bytes": 48690,
+      "sha256": "7f056f3c24c57ada787648d6857135d5f4c62aba19f471adcca0a71596851cb9"
     },
     {
       "path": "storage.py",
@@ -612,8 +652,8 @@
     },
     {
       "path": "templates/admin_empiredrop.html",
-      "size_bytes": 24135,
-      "sha256": "966983971a40b1a4007e6312a661fcd9f481c536746267d95708e4c83185e293"
+      "size_bytes": 24952,
+      "sha256": "3d4b0968d334b21000f988e8d1f045c3276d527af3f246a329d4a93210ba3bda"
     },
     {
       "path": "templates/admin_gaming.html",
@@ -637,8 +677,8 @@
     },
     {
       "path": "templates/admin_provider_summary.html",
-      "size_bytes": 3743,
-      "sha256": "93401661c54b3691896b9fea9313ae70480bd1aab04457e92f31dd9bf97a842f"
+      "size_bytes": 4172,
+      "sha256": "bb966f17c705465f95603c5a8a7c90373deeea643b45e24b0e494a6bb5f1d04a"
     },
     {
       "path": "templates/admin_race.html",
@@ -652,8 +692,8 @@
     },
     {
       "path": "templates/admin_shuffle.html",
-      "size_bytes": 5046,
-      "sha256": "b1fb6ffadbeadae97557284df8524d133bd4bb37b1e9fea7631d9e92a55c69f7"
+      "size_bytes": 5860,
+      "sha256": "2c2a6bb2bf69cfe915e6f7f39a058520572135b31da099351edf9749f2565cf0"
     },
     {
       "path": "templates/base.html",
@@ -697,8 +737,8 @@
     },
     {
       "path": "templates/index.html",
-      "size_bytes": 10767,
-      "sha256": "a97d00d398e9791aa6b480e9f560e31c1ec7e2da971d1903e93e2b665c44f357"
+      "size_bytes": 11369,
+      "sha256": "798fd8ef851fb4fc238fa134d0d51551b5089660f0eafc9e3f555c97d560d7ed"
     },
     {
       "path": "templates/login.html",
@@ -857,8 +897,8 @@
     },
     {
       "path": "tests/test_empiredrop_public_ssr.py",
-      "size_bytes": 2592,
-      "sha256": "d96ba3a80ace80c39b2ee3251dfb1f7d61db4f415e258995c9b9b60fe6a25ed6"
+      "size_bytes": 2644,
+      "sha256": "780fd672c89a6eb492ef3b7d1ab7b0fbc4916252beb09926552d077d485c6f13"
     },
     {
       "path": "tests/test_empiredrop_qol.py",
@@ -967,13 +1007,13 @@
     },
     {
       "path": "tests/test_v19_mobile.py",
-      "size_bytes": 1600,
-      "sha256": "18931327fb4c9cc10fa0117e1f9cf00f9f3ca8f14227651243eb1d9eb5f729ec"
+      "size_bytes": 1598,
+      "sha256": "23d154fda8b29688192631b3a0a548dd7ea11073727b9e6802c84bc56dba2be8"
     },
     {
       "path": "tests/test_v20_mobile_lists.py",
-      "size_bytes": 1405,
-      "sha256": "89d7866e57d43da3c7f525e14988b75c4005232ff06f3a2920ec31467bba6fb7"
+      "size_bytes": 1458,
+      "sha256": "36148ec69dcdbf59225888c0582fc89203ddb80284a5de478b65b12f606604bb"
     },
     {
       "path": "tests/test_v21_schedule_windows.py",
@@ -987,18 +1027,28 @@
     },
     {
       "path": "tests/test_v23_cross_platform.py",
-      "size_bytes": 3894,
-      "sha256": "bd4b2d3215481a26df954f96eb4dc29903e00c9201512704df945d4e6d92a2a6"
+      "size_bytes": 3925,
+      "sha256": "ebabdac9762154857109109de1d6cde4d80fe4e4e302be20c1f68524ae145b74"
     },
     {
       "path": "tests/test_v24_provider_cadence.py",
-      "size_bytes": 4070,
-      "sha256": "d327e27c34a35a697893d3b4b88702fd55ab51a7c5d005cfe09a29c15cbefba9"
+      "size_bytes": 4068,
+      "sha256": "7cdb9bd304ace91cb7f93d49dffc261741fccec7bebe508555017bc4f933fffd"
     },
     {
       "path": "tests/test_v24_rank_movement_frontend.cjs",
       "size_bytes": 3167,
       "sha256": "86f61451d5f4b8f5c80c182c8f3c3301cbdf6c777a206a29e71a825de7ad2de2"
+    },
+    {
+      "path": "tests/test_v25_live_standings.py",
+      "size_bytes": 6307,
+      "sha256": "244ca652280c02db471d51ee6df24374a1a80284a349fe9803dd71b61a58b8c5"
+    },
+    {
+      "path": "tests/test_v25_live_standings_frontend.cjs",
+      "size_bytes": 5419,
+      "sha256": "03e391a2fef90ed008debf4b444450836f7549286bb70d85e431ce06964e9794"
     },
     {
       "path": "tests/test_weekly_history.py",
@@ -1052,8 +1102,8 @@
     },
     {
       "path": "wager_backend.py",
-      "size_bytes": 90129,
-      "sha256": "c6642725009c6afe9483a89398dd3a09a6cbb3c6a2b9c17ced957fec84d8a623"
+      "size_bytes": 91214,
+      "sha256": "81d961094da4ab6a97fa0a0a4781a1c6570b69ce2e183bbe029918ab75277c48"
     },
     {
       "path": "weekly_history.py",

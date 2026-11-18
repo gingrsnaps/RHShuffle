@@ -119,7 +119,7 @@
     const configured = rewards.enabled === true;
     const providerLimit = Number(board.race_meta?.ranks_limit);
     const displayLimit = Number.isInteger(providerLimit) && providerLimit > 0 ? Math.min(10, providerLimit) : 10;
-    const renderVersion = JSON.stringify([board.standings_revision || '', board.standings_sequence || 0, rewards, providerLimit, rows.length]);
+    const renderVersion = JSON.stringify([board.standings_revision || '', board.standings_sequence || 0, board.movement_sequence || 0, rewards, providerLimit, rows.length]);
     const standingsChanged = renderVersion !== standingsRenderVersion;
 
     if (standingsChanged) for (let position=1; position<=10; position++) {
@@ -138,7 +138,9 @@
       if (name) name.textContent = row?.username || (unreported ? 'Unavailable' : 'Open position');
       if (amount) amount.textContent = row?.wager || '—';
       if (place) {
-        place.textContent = String(row?.rank ?? position).padStart(2, '0');
+        const number = place.querySelector('[data-place-number]');
+        if (number) number.textContent = String(row?.rank ?? position).padStart(2, '0');
+        else if (!place.querySelector('[data-rank-movement]')) place.textContent = String(row?.rank ?? position).padStart(2, '0');
         updateMovement(place, row);
       }
       if (prize) {

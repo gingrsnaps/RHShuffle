@@ -22,6 +22,7 @@ import requests
 
 from config import EMPIREDROP_MIN_INTERVAL, RANK_MOVEMENT_SECONDS
 from integrations import ProviderError
+from movement import preserve_movement_event, stamp_movement_event, public_movement_event, admin_event_record
 from empiredrop_races import (RaceAPI, RACE_DEFAULTS, validate_race_settings,
                               select_race, normalize_race, keys_only,
                               extract_race_rows, time_value, normalize_legacy_window)
@@ -113,12 +114,7 @@ def attach_rank_movement(rows, previous, stamp):
 
     if previous_rows and revision == old_revision:
         for row in current:
-            old = old_by_id.get(_standing_identity(row), {})
-            row['movement'] = old.get('movement')
-            row['new_entry'] = bool(old.get('new_entry'))
-            row['movement_at'] = int(old.get('movement_at', 0) or 0)
-            row['movement_expires_at'] = int(old.get('movement_expires_at', 0) or
-                                               (row['movement_at'] + RANK_MOVEMENT_SECONDS if row['movement_at'] else 0))
+            preserve_movement_event(row, old_by_id.get(_standing_identity(row), {}), RANK_MOVEMENT_SECONDS)
         sequence = old_sequence or 1
         changed_at = int((previous or {}).get('standings_changed_at', (previous or {}).get('updated_at', 0)) or 0)
     else:
@@ -130,9 +126,7 @@ def attach_rank_movement(rows, previous, stamp):
             movement = prior - rank if isinstance(prior, int) and isinstance(rank, int) else None
             row['movement'] = movement
             row['new_entry'] = bool(has_previous and prior is None)
-            active = bool(movement or row['new_entry'])
-            row['movement_at'] = int(stamp) if active else 0
-            row['movement_expires_at'] = int(stamp) + RANK_MOVEMENT_SECONDS if active else 0
+            stamp_movement_event(row, 'empiredrop', _standing_identity(row), stamp, RANK_MOVEMENT_SECONDS)
         sequence = old_sequence + (1 if revision != old_revision else 0)
         if current and not sequence:
             sequence = 1
@@ -355,6 +349,29 @@ class EmpireDropBoard:
         self.last_manual, self.queued_at, self.checking = 0.0, 0, False
         self.next_allowed = 0.0
         self.events = None  # Assigned by the app; no sensitive provider payloads are recorded.
+        self._movement_events = []  # Process-local admin-only diagnostics, max 20 events.
+
+    def _record_movements(self, rows):
+        with self.lock:
+            known = {item.get('event_id') for item in self._movement_events}
+            for row in rows:
+                record = admin_event_record('empiredrop', row)
+                if not record or record['event_id'] in known:
+                    continue
+                record['username'] = str(row.get('username') or '')
+                record['user_id'] = str(row.get('user_id') or '')
+                self._movement_events.append(record)
+                known.add(record['event_id'])
+            self._movement_events = self._movement_events[-20:]
+
+    def movement_diagnostics(self):
+        with self.lock:
+            return {
+                'standings_sequence': int(self.saved.get('standings_sequence', 0) or 0),
+                'movement_sequence': int(self.saved.get('movement_sequence', 0) or 0),
+                'movement_count': int(self.saved.get('movement_count', 0) or 0),
+                'events': copy.deepcopy(list(reversed(self._movement_events))),
+            }
 
     def _settings(self):
         _, admin = self.store.admin()
@@ -638,11 +655,18 @@ class EmpireDropBoard:
                     self.events.record('empiredrop','success','refresh_ok',count=len(rows),
                                        http_status=200, duration_ms=round((time.monotonic()-began)*1000))
                 rows, standings_revision, standings_sequence, standings_changed_at = attach_rank_movement(rows, old, now)
+                old_movement_sequence = int(old.get('movement_sequence', 0) or 0)
+                new_events = [row for row in rows if row.get('movement_event_id') and int(row.get('movement_at', 0) or 0) == now]
+                movement_sequence = old_movement_sequence + (1 if new_events else 0)
+                movement_count = len(new_events) if standings_revision != old.get('standings_revision') else int(old.get('movement_count', 0) or 0)
+                self._record_movements(new_events)
                 next_value = {'scope':scope, 'rows':rows, 'updated_at':now,
                               'attempt_at':now, 'error':'', 'error_kind':'',
                               'race_meta':race_meta, 'rewards':self._rewards(),
                               'standings_revision':standings_revision,
                               'standings_sequence':standings_sequence,
+                              'movement_sequence':movement_sequence,
+                              'movement_count':movement_count,
                               'standings_changed_at':standings_changed_at}
             # Do not overwrite a newly changed schedule while HTTP was in flight.
             if self._scope(self._schedule()) != scope:
@@ -759,15 +783,18 @@ class EmpireDropBoard:
         rewards = self._rewards()
         visible = [dict(rank=r['rank'], username=mask_public_username(r['username']), wager=r['wager'],
                         movement=r.get('movement'), new_entry=bool(r.get('new_entry')),
+                        previous_rank=r.get('previous_rank'),
                         movement_at=int(r.get('movement_at', 0) or 0),
-                        movement_expires_at=int(r.get('movement_expires_at', 0) or 0)) for r in rows]
+                        movement_expires_at=int(r.get('movement_expires_at', 0) or 0),
+                        movement_event_id=str(r.get('movement_event_id') or ''),
+                        movement_event=public_movement_event(r)) for r in rows]
         visible = list(payout_for_rows(visible,rewards))
         return {'rows':visible, 'prizes':rewards,
                 'label':label[:260], 'updated_at':saved.get('updated_at',0),
                 'currency':meta.get('currency',race_settings['race_currency']) if source!='legacy' else self._settings()['currency'],
                 'referral_url':REFERRAL_URL, 'race_meta':meta, 'source_mode':source,
                 'schedule':display_schedule, 'code':CODE,
-                # This is the actual provider cadence. V24 targets 90 seconds but
+                # This is the actual provider cadence. V25 targets a 90-second minimum but
                 # never checks faster than EmpireDrop's advertised cache TTL.
                 'refresh_interval':self.interval, 'minimum_refresh_interval':self.minimum_interval,
                 'movement_window_seconds':RANK_MOVEMENT_SECONDS,
@@ -775,6 +802,8 @@ class EmpireDropBoard:
                 'attempt_at':saved.get('attempt_at',0),
                 'standings_revision':saved.get('standings_revision') or _standings_revision(rows),
                 'standings_sequence':int(saved.get('standings_sequence', 0) or (1 if rows else 0)),
+                'movement_sequence':int(saved.get('movement_sequence', 0) or 0),
+                'movement_count':int(saved.get('movement_count', 0) or 0),
                 'standings_changed_at':int(saved.get('standings_changed_at', saved.get('updated_at', 0)) or 0),
                 'history':self.public_history()}
 
@@ -812,7 +841,8 @@ class EmpireDropBoard:
                          'published_enabled': self._rewards()['enabled']},
                      refresh_interval=self.interval,
                      running=bool(self.thread and self.thread.is_alive()),
-                     checking=self.checking, queued_at=self.queued_at)
+                     checking=self.checking, queued_at=self.queued_at,
+                     movement_diagnostics=self.movement_diagnostics())
         return state
 
     def request_refresh(self):

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from race_support import DEFAULT_PRIZES, canonical_site, read_json
 
-RELEASE = "2026.11.17-provider-cadence-v24"
+RELEASE = "2026.11.17-live-standings-v25"
 # Provider cadences are intentionally independent. INTERVAL remains the
 # Shuffle alias for compatibility with existing deployment/test overrides.
 SHUFFLE_INTERVAL = 90

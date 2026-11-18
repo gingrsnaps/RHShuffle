@@ -35,4 +35,4 @@ def test_public_menu_has_mobile_focus_and_scroll_management():
 
 def test_release_updated():
     config=(ROOT/'config.py').read_text()
-    assert '2026.11.17-provider-cadence-v24' in config
+    assert '2026.11.17-live-standings-v25' in config

@@ -2,7 +2,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
 def test_v20_release_and_stylesheet():
-    assert '2026.11.17-provider-cadence-v24' in (ROOT/'config.py').read_text()
+    assert '2026.11.17-live-standings-v25' in (ROOT/'config.py').read_text()
     base=(ROOT/'templates/base.html').read_text()
     assert 'v20-system.css' in base
     assert 'v19-system.css' not in base
@@ -14,7 +14,8 @@ def test_public_mobile_standings_are_grouped_not_square_cards():
     assert 'border-radius:0;background:transparent' in css
     assert 'grid-template-columns:38px minmax(0,1fr) max-content' in css
     assert 'content:"Prize · "' in css
-    assert css.count('/* V20 compact grouped standings and mobile-first release. */') == 1
+    assert 'grid-template-columns:68px minmax(0,1fr) max-content' in css
+    assert 'grid-template-columns:62px minmax(0,1fr) max-content' in css
 
 def test_mobile_podium_prioritizes_first_place():
     css=(ROOT/'static/v20-system.css').read_text()
