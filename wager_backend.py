@@ -301,6 +301,8 @@ def create_app(root=None, testing=False):
         # X-Server-Time still keeps countdowns accurate on a 304 response.
         response.set_etag(str(value.get("revision") or token(value)))
         response.headers["X-Server-Time"] = str(server_time)
+        response.headers["X-Snapshot-Sequence"] = str(value.get("snapshot_sequence", 0))
+        response.headers["X-Runtime-Id"] = str(value.get("runtime_id", ""))
         return response.make_conditional(request)
 
     def guest():

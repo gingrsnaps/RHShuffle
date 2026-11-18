@@ -52,6 +52,7 @@ function harness(bootstrap) {
   }
   for (let i=0; i<2; i++) metrics.push(new Element('metric'+i));
   const doc = {
+    documentElement: {dataset:{}},
     body: {dataset: {bootstrap: JSON.stringify({empiredrop: bootstrap})}},
     getElementById(id) { return elements[id] || null; },
     querySelector(selector) {
@@ -64,10 +65,10 @@ function harness(bootstrap) {
   };
   const errors = [];
   const timers=[];
-  const context = {document: doc, Date, Intl, console:{error:(...x)=>errors.push(x),warn:(...x)=>errors.push(x)},setInterval:(fn)=>{timers.push(fn);return null;}};
+  const context = {document: doc, Date, Intl, console:{error:(...x)=>errors.push(x),warn:(...x)=>errors.push(x)},setInterval:(fn)=>{timers.push(fn);return fn;},setTimeout:(fn)=>{timers.push(fn);return fn;},clearTimeout:()=>{}};
   vm.runInNewContext(SCRIPT, context, {filename:'static/empiredrop.js'});
   return {slots, elements, handlers, metrics, errors,
-    tick() { for (const tick of timers) tick(); },
+    tick() { for (const tick of [...timers]) tick(); },
     update(detail) { assert.equal(typeof handlers['document:empiredrop:update'], 'function'); handlers['document:empiredrop:update']({detail}); },
     selectEmpire() { handlers['empireTab:click'](); },
     selectShuffle() { handlers['shuffleTab:click'](); }};
@@ -97,10 +98,10 @@ test('all ten API entries appear publicly when payouts are NOT announced (initia
   for (let place=1;place<=10;place++) {
     assert.equal(h.slots[`${place}:name`].textContent,board.rows[place-1].username, `Missing player at place ${place}`);
     assert.equal(h.slots[`${place}:wager`].textContent,board.rows[place-1].wager);
-    assert.equal(h.slots[`${place}:prize`].textContent,'Not announced');
+    assert.equal(h.slots[`${place}:prize`].textContent,'To be announced');
   }
   assert.equal(h.elements.empireRankingCoverage.textContent,'');
-  assert.equal(h.elements.empirePoolTotal.textContent,'Not announced');
+  assert.equal(h.elements.empirePoolTotal.textContent,'To be announced');
   assert.deepEqual(h.errors,[]);
 });
 

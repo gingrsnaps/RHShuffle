@@ -1,5 +1,5 @@
 {
-  "release": "2026.11.17-shuffle-top15-v22",
+  "release": "2026.11.17-crossplatform-live-v23",
   "entry_point": "python wager_backend.py",
   "python_version": "3.13.12",
   "build_command": "automatic DigitalOcean Python buildpack; custom build command must remain blank",
@@ -8,10 +8,10 @@
   "private_config_warning": "The private packages contain unencrypted production credentials and saved private state. Keep them private.",
   "shuffle_positions": 15,
   "shuffle_refresh_seconds": 60,
-  "shuffle_snapshot_behavior": "All ranks 1-15 publish atomically as one versioned snapshot; failures retain the last verified snapshot.",
+  "shuffle_snapshot_behavior": "All ranks 1-15 publish atomically as one ordered snapshot; failures retain the last verified snapshot; movement events are server timestamped for 30 seconds.",
   "empiredrop_positions": 10,
   "timezone": "America/New_York",
-  "public_experience": "V20 compact mobile standings plus V22 atomic Shuffle Top 15 refresh and brief rank movement.",
+  "public_experience": "V20 compact mobile standings plus V23 30-second server-timestamped movement, non-ellipsizing countdowns and cross-browser state synchronization.",
   "admin_experience": "Backend-driven provider timing, last success vs last leaderboard change, source funnel counts and recent reliability.",
   "live_deployment_verified": false,
   "bundled_state_is_snapshot": true,
@@ -26,5 +26,9 @@
     "end_epoch": 1795906800,
     "start_et": "Oct 27, 2026 06:00 PM EDT",
     "end_et": "Nov 28, 2026 06:00 PM EST"
-  }
+  },
+  "public_state_poll_seconds": 15,
+  "movement_indicator_seconds": 30,
+  "countdown_clock": "Server-synchronized fractional UTC time; countdowns recalculate from authoritative end timestamps on every render.",
+  "snapshot_ordering": "Process runtime id plus monotonic public snapshot sequence; stale same-runtime responses are ignored."
 }

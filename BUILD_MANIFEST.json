@@ -1,15 +1,15 @@
 {
-  "version": 13,
-  "release": "2026.11.17-shuffle-top15-v22",
-  "purpose": "Runtime files required for V22 atomic Shuffle Top 15 refresh, V21 race windows, compact mobile standings, provider integrations, public Gaming and DigitalOcean deployment.",
+  "version": 14,
+  "release": "2026.11.17-crossplatform-live-v23",
+  "purpose": "Runtime files required for V23 cross-platform live-state reliability, server-timestamped 30-second placement movement, authoritative countdowns, atomic provider standings, V21 race windows, provider integrations, public Gaming and DigitalOcean deployment.",
   "files": {
     "Procfile": "bcd054c38b5885dcf501be6763dbc12226edafe9320dc058cd820f563d035d83",
     "admin_navigation.py": "b58ecd17420d447221ba29936a7009bb3a1a62cc7db3a699edfd0fbd188b04b7",
     "app.yaml": "b45c13542462efaaec41c0168f1e2b519c6408b11268e7cf69aa832dba0a60c7",
     "baccarat.py": "e859c61a9a101b9e51da02524e5b18d3a915397e2d476f2dbe8899202f88c154",
     "blackjack.py": "3ea903b34d6329a05bb113ac591db64fbc80d59fa2875f8fae8eee08fbb8abc7",
-    "config.py": "b8cc1cae602731bf257e860e5239635a64e51755636c77079febb9f3d8056158",
-    "empiredrop.py": "34b5f215df86784b0d7b4a64398d0893ded2db7698fbbccc46df8f96ba0b3452",
+    "config.py": "5add101333e5b6366701ee6ade88f16e653dad8be1601c592e85c82c92bf9f91",
+    "empiredrop.py": "e323983df90216cf9129d658c696814a835cb549e3a5033f68ce7924e9691cd3",
     "empiredrop_deploy_keys.py": "b7cf2a1172540434abf87902b6e9a6b700364d57289a1f884098009e5b560c32",
     "empiredrop_features.py": "518761555d3ecf3b721c7cfb0f22d2bb531fe87046e45cdd4afbb39861bb7284",
     "empiredrop_races.py": "c636f72e709796315f061cdc8c56813dd38e61c1a8d7cbfa2bac5dc139a71a30",
@@ -25,7 +25,7 @@
     "race_support.py": "3b115fc83fc18f79695996787113693bd80593418cfc3ba3a5ccf8ad18824f96",
     "release_check.py": "fb7143c9c4be374ad81b3b0df7a8cd7cada24e649934d9804ec1b69f5e190db2",
     "requirements.txt": "88ef5de1c188158f15949336cebb79dfcf2ab7d9df5c3f2debbc0c643eb80554",
-    "runtime.py": "9f30f1a1b67883494e476ec4ed22cdcf25c27bb41dd3bb747137b8194e705e13",
+    "runtime.py": "1ef07cfae48ae334ca962fa8fc07e8cceb3929b6bd76e3ea37a7f1f26d620496",
     "runtime.txt": "25dce2482c93ab6271d90809cd8ab8474830723459d2d0b51ce75bf7a72be92d",
     "shuffle_deploy_key.py": "db967baa6f904b4a30c93e429b9f90ac000575c0a8398c9cc0c6553eb8f4ddbb",
     "spaces_state.py": "030dc52c6f774b5e3c0bb97b4f291cdc1fa0c9e70708eb4473d02c6a0e6f0bfb",
@@ -38,9 +38,9 @@
     "static/admin-providers.js": "ec92069aae9ea15d0c6461b1813cfc0942b18956feb517c32f689500d54ae2ff",
     "static/admin-workspace.css": "b795913004e96567a22143f0109d40d34739babf9bdafa80b65e28393bdbd3ed",
     "static/admin-workspace.js": "40fb0c34815c45297c418cf969e32a3ccc8867c7410506f3e4aebec081dd913c",
-    "static/app.js": "06a2f81f26d47b18ddc93c288f7c7574028ba61db3faf51b2c16238787913605",
+    "static/app.js": "e131831001c5dfa0659324b25097a13cc4495d255e878fc954b086fc41957cfa",
     "static/empiredrop.css": "ebbc3b6bf3c35084ae6085d78c58ee8dd2c36191e1e7d40c6e28ad96e0f89551",
-    "static/empiredrop.js": "236efd138872e0696fb29be653277231b9a876bc8403897666ec76aa47a79fac",
+    "static/empiredrop.js": "c68a2ddc466f27f882964fb36b2ade35b1b6ac2c7fa5d0ee2b1cfa15de6aa48a",
     "static/experience.css": "39dc0c669101783ab7e3de8a26e9b96a235af6d0d6db6d11177232d2e4003cd9",
     "static/experience.js": "65b1af95d44c1128de2b21fb800c375d0a1fff4837d80cb3349027d5f767f50d",
     "static/fairness.js": "3c895dc1311a016a83a9fc631e7ece37c9de9d5dd9b073354353d9b771abbe38",
@@ -86,8 +86,8 @@
     "templates/login.html": "569a7023dbcb632ac9dd356660b23ea8e08b7d946b3905122c063cdb09b01a25",
     "templates/macros.html": "7a77db08398a2781cedac09786ed3c22026f648b34b48acf8860cf742196596e",
     "templates/recovery_panel.html": "6c263b9e21cf5cb746c7f9170c37b6c0d89e4774df8a30aa579f85cdc626fdb6",
-    "wager_backend.py": "990edbf55b2084dd85f9db5b21da846c1891b5db3bba935e9ab54f20b83dcf59",
+    "wager_backend.py": "c6642725009c6afe9483a89398dd3a09a6cbb3c6a2b9c17ced957fec84d8a623",
     "weekly_history.py": "ff9cd7cf436af3f248df8af4c6984e001e862c1b372fa42ab14d7fc1fc08d10f",
-    "static/v20-system.css": "261ad82fb44600366b440f0a793460052c47853f85e7d70e0bdc5a94db762e2e"
+    "static/v20-system.css": "3c5be9df6c219e99b62566daad95129432c4c0a74b193762d29223211d148b3a"
   }
 }

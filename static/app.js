@@ -183,6 +183,10 @@
 
   if (!document.body.dataset.feed) return;
   const isAdmin = document.body.dataset.page === "admin";
+  const PUBLIC_POLL_MS = 15000;
+  const ADMIN_POLL_MS = 60000;
+  const RANK_MOVEMENT_MS = 30000;
+  const pollInterval = isAdmin ? ADMIN_POLL_MS : PUBLIC_POLL_MS;
   let site = {},
     offset = 0,
     sourceAt = 0,
@@ -197,6 +201,8 @@
     receipt = null;
   let publicCache = null,
     publicETag = "",
+    lastPublicRuntime = "",
+    lastPublicSequence = -1,
     lastProviderFailure = "";
   let participantVersion = "",
     redVersion = "",
@@ -207,9 +213,17 @@
     site = boot.site;
     offset = boot.server_time * 1000 - Date.now();
   } catch {}
+  const serverNowMs = () => Date.now() + offset;
+  function expireRankMovements() {
+    const now = serverNowMs();
+    document.querySelectorAll("[data-rank-movement][data-expires-at]").forEach((badge) => {
+      if (Number(badge.dataset.expiresAt || 0) <= now) badge.remove();
+    });
+  }
   function clock() {
     if (document.hidden) return;
-    const now = (Date.now() + offset) / 1000;
+    const now = serverNowMs() / 1000;
+    expireRankMovements();
     const state =
       !site.start_time || site.end_time <= site.start_time
         ? "unconfigured"
@@ -504,9 +518,13 @@
     let badge = node.querySelector("[data-rank-movement]");
     const movement = Number(row?.movement || 0);
     const isNew = Boolean(row?.new_entry && !row?.open);
+    const eventAt = Number(row?.movement_at || 0) * 1000;
+    const expiresAt = eventAt + RANK_MOVEMENT_MS;
+    const remaining = expiresAt - serverNowMs();
     const label = isNew ? "NEW" : movement > 0 ? `↑${movement}` : movement < 0 ? `↓${Math.abs(movement)}` : "";
-    if (!label) {
+    if (!label || !eventAt || remaining <= 0) {
       badge?.remove();
+      clearTimeout(node._rankMovementTimer);
       return;
     }
     if (!badge) {
@@ -518,9 +536,10 @@
     }
     badge.className = `rank-movement ${isNew ? "is-new" : movement > 0 ? "is-up" : "is-down"}`;
     badge.textContent = label;
+    badge.dataset.expiresAt = String(expiresAt);
     badge.setAttribute("aria-label", isNew ? "New in the Top 15" : movement > 0 ? `Up ${movement} position${movement === 1 ? "" : "s"}` : `Down ${Math.abs(movement)} position${Math.abs(movement) === 1 ? "" : "s"}`);
     clearTimeout(node._rankMovementTimer);
-    node._rankMovementTimer = setTimeout(() => badge?.remove(), 8000);
+    node._rankMovementTimer = setTimeout(() => badge?.remove(), Math.max(0, remaining) + 25);
   }
 
   function renderShuffleTop15(value, site) {
@@ -549,6 +568,16 @@
   function apply(value, began) {
     if (!value.site || !value.freshness || !Number.isFinite(value.server_time))
       throw new Error("The update response is incomplete.");
+    if (!isAdmin && Number.isFinite(Number(value.snapshot_sequence)) && value.runtime_id) {
+      const sequence = Number(value.snapshot_sequence);
+      if (lastPublicRuntime === value.runtime_id && sequence < lastPublicSequence) return false;
+      if (lastPublicRuntime !== value.runtime_id) {
+        lastPublicRuntime = value.runtime_id;
+        lastPublicSequence = -1;
+        shuffleRenderVersion = "";
+      }
+      lastPublicSequence = Math.max(lastPublicSequence, sequence);
+    }
     site = value.site;
     offset = value.server_time * 1000 - (began + Date.now()) / 2;
     sourceAt = value.freshness.updated_at;
@@ -688,7 +717,7 @@
       // from 1 through 15 is explicitly refreshed, including open positions.
       renderShuffleTop15(value, site);
       if (value.empiredrop)
-        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site: value.site, server_time:value.server_time} }));
+        document.dispatchEvent(new CustomEvent('empiredrop:update', { detail: {...value.empiredrop, shuffle_site:value.site, server_time:value.server_time, clock_offset_ms:offset, snapshot_sequence:value.snapshot_sequence, runtime_id:value.runtime_id} }));
       text(
         id("streamStatus"),
         !value.stream?.available
@@ -833,11 +862,11 @@
       );
     } finally {
       busy = false;
-      if (!next) next = began + 60000;
+      if (!next) next = began + pollInterval;
       else if (next <= began)
-        next += 60000 * (Math.floor((began - next) / 60000) + 1);
+        next += pollInterval * (Math.floor((began - next) / pollInterval) + 1);
       if (next <= Date.now())
-        next += 60000 * (Math.floor((Date.now() - next) / 60000) + 1);
+        next += pollInterval * (Math.floor((Date.now() - next) / pollInterval) + 1);
       const urgent =
         Date.now() < urgentUntil && Object.values(jobs).some(checkingSoon);
       const delay = pollAgain
@@ -889,10 +918,15 @@
     }
   });
   function startPublicClock() {
-    clearInterval(clockTimer);
+    clearTimeout(clockTimer);
     if (document.hidden) return;
-    clock();
-    clockTimer = setInterval(clock, 1000);
+    const tick = () => {
+      if (document.hidden) return;
+      clock();
+      const phase = ((serverNowMs() % 1000) + 1000) % 1000;
+      clockTimer = setTimeout(tick, Math.max(100, 1025 - phase));
+    };
+    tick();
   }
   document.addEventListener("visibilitychange", () => {
     clearTimeout(timer);
@@ -903,12 +937,19 @@
     }
   });
   window.addEventListener("pageshow", (event) => {
+    startPublicClock();
     if (event.persisted) {
       next = 0;
       poll();
     }
   });
+  window.addEventListener("focus", () => {
+    if (document.hidden) return;
+    startPublicClock();
+    next = 0;
+    poll();
+  });
   startPublicClock();
-  window.addEventListener("pagehide", () => clearInterval(clockTimer), {once:true});
+  window.addEventListener("pagehide", () => clearTimeout(clockTimer), {once:true});
   poll();
 })();

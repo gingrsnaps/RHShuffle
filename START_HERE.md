@@ -7,6 +7,6 @@
 5. Verify EmpireDrop website schedule shows Oct 27–Nov 28, 2026 at 6 PM Eastern.
 6. EmpireDrop official provider dates remain tied to the selected slug and may differ from the website display window.
 
-## V22 validation
+## V23 validation
 
 After deployment, verify Shuffle Admin shows the current Nov 17–24 race, a backend-driven next-check countdown, and the number of Top 15 positions filled. The public page should update all ranks 1–15 together on each changed snapshot.

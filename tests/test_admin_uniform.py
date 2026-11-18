@@ -38,7 +38,12 @@ class ProviderDashboardTests(unittest.TestCase):
         data, empire = self.fixtures()
         result = summarize_providers(data, empire)
         self.assertEqual(set(result), {'shuffle','empiredrop'})
-        self.assertEqual(set(result['shuffle']), set(result['empiredrop']))
+        # Provider cards share the safe operational contract. Shuffle also
+        # exposes aggregate funnel/Top-15 coverage because that provider gives
+        # source-record validation counts; EmpireDrop does not invent them.
+        common = set(result['shuffle']) - {'filled', 'funnel'}
+        self.assertEqual(common, set(result['empiredrop']))
+        self.assertNotIn('funnel', result['empiredrop'])
         self.assertEqual(result['shuffle']['refresh_seconds'],60)
         self.assertEqual(result['empiredrop']['refresh_seconds'],300)
         self.assertEqual(result['empiredrop']['metric'],'Wagered')

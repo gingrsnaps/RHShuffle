@@ -10,6 +10,7 @@ const sandbox = {
   document: { querySelectorAll: forSelector, querySelector:()=>null },
   globalThis: null,
   Intl, Date, String, Object,
+  setInterval:()=>0, clearInterval:()=>{},
 };
 sandbox.globalThis=sandbox;
 vm.runInNewContext(fs.readFileSync(path.join(root,'static/admin-providers.js'),'utf8'),sandbox);

@@ -33,6 +33,10 @@ class Runtime:
         self.events = {name: threading.Event() for name in ("shuffle", "kick")}
         self.threads, self.started = {}, False
         self.instance_id = secrets.token_hex(8)
+        # Process-local monotonic public snapshot ordering. The runtime id makes a
+        # restart explicit so browsers never compare a new process with an old one.
+        self._public_signature = ""
+        self._public_sequence = 0
         self.activity_log = None  # Injected after construction by Flask.
         self.jobs = {name: dict(state="starting", next_check=0, duration_ms=0, http_status=None,
                                retry_after=0, attempt_at=0, error="", not_before=0,
@@ -52,11 +56,45 @@ class Runtime:
         self.shuffle["edits"] = edits
 
     def ensure_top15(self, value, previous=None):
-        """Attach one validated, versioned Top 15 to a live Shuffle snapshot."""
+        """Attach one validated, ordered Top 15 with non-restarting movement metadata."""
+        source_rows = list(value.get("rows", []))
         previous_rows = (previous or {}).get("rows", [])[:15]
-        rows, revision = top_snapshot(value.get("rows", []), previous_rows, 15)
-        value["rows"] = rows + list(value.get("rows", []))[15:]
+        rows, revision = top_snapshot(source_rows, previous_rows, 15)
+        prior_revision = (previous or {}).get("top15_revision", "")
+        prior_sequence = int((previous or {}).get("top15_sequence", 0) or 0)
+
+        if previous is None and value.get("top15_revision") == revision:
+            # Startup/reload of an already-saved snapshot must not invent a new
+            # movement window or erase one that still has a valid server timestamp.
+            saved = {r.get("username"): r for r in source_rows[:15] if isinstance(r, dict)}
+            for row in rows:
+                old = saved.get(row.get("username"), {})
+                row["movement"] = old.get("movement")
+                row["new_entry"] = bool(old.get("new_entry"))
+                row["movement_at"] = int(old.get("movement_at", 0) or 0)
+            sequence = int(value.get("top15_sequence", 0) or (1 if rows else 0))
+        elif previous is not None and prior_revision == revision:
+            # A provider confirmation of the same Top 15 may arrive while the
+            # 30-second indicator is still visible. Preserve the original event
+            # timestamp instead of restarting the browser timer.
+            saved = {r.get("username"): r for r in previous_rows if isinstance(r, dict)}
+            for row in rows:
+                old = saved.get(row.get("username"), {})
+                row["movement"] = old.get("movement")
+                row["new_entry"] = bool(old.get("new_entry"))
+                row["movement_at"] = int(old.get("movement_at", 0) or 0)
+            sequence = prior_sequence
+        else:
+            stamp = int(value.get("updated_at", 0) or time.time())
+            for row in rows:
+                row["movement_at"] = stamp if (row.get("movement") or row.get("new_entry")) else 0
+            sequence = prior_sequence + (1 if revision != prior_revision else 0)
+            if rows and not sequence:
+                sequence = 1
+
+        value["rows"] = rows + source_rows[15:]
         value["top15_revision"] = revision
+        value["top15_sequence"] = sequence
         value.setdefault("top15_changed_at", value.get("changed_at", value.get("updated_at", 0)))
         return value
 
@@ -81,18 +119,20 @@ class Runtime:
     def public(self):
         with self.lock:
             site, value, kick = copy.deepcopy(self.admin["site_settings"]), copy.deepcopy(self.shuffle), copy.deepcopy(self.kick)
+            settings_revision = self.revision
         site.update(start_et=fmt_et(site["start_time"]), end_et=fmt_et(site["end_time"]),
                     total_prize=money(sum(Decimal(v) for v in site["prizes"].values())), race_state=phase(site))
         # Projection is an explicit allowlist. Provider source rows, raw totals,
         # admin names, password hashes, and keys cannot reach the public API.
         rows = [dict(rank=r["rank"], username=r["username"][:2] + "******", wager=r["wager"],
-                     movement=r.get("movement"), new_entry=bool(r.get("new_entry")))
+                     movement=r.get("movement"), new_entry=bool(r.get("new_entry")),
+                     movement_at=int(r.get("movement_at", 0) or 0))
                 for r in value["rows"][:15]]
         if phase(site) in {"upcoming", "unconfigured"}:
             rows = []
         ranked = {row["rank"]: row for row in rows}
         top15 = [ranked.get(rank) or dict(rank=rank, username="Open position", wager="$0.00",
-                                          movement=None, new_entry=False, open=True)
+                                          movement=None, new_entry=False, movement_at=0, open=True)
                  for rank in range(1, 16)]
         available = bool(kick.get("updated_at") and not kick.get("error") and time.time() - kick["updated_at"] <= 180
                          and kick.get("channel") == site["kick_channel_slug"])
@@ -101,15 +141,31 @@ class Runtime:
         fresh = freshness(value)
         fresh.pop("error", None)
         empire = self.empiredrop.public(site)
-        public_revision = token([site, top15, empire.get("rows", []), empire.get("prizes", {}),
-                                 empire.get("schedule", {}), empire.get("history", []),
-                                 {k:stream.get(k) for k in ("live","title","viewers","available")}])
-        return dict(release=RELEASE, server_time=int(time.time()), interval=INTERVAL, site=site, rows=rows, top15=top15,
-                    shuffle_revision=value.get("top15_revision") or token(rows),
-                    shuffle_changed_at=value.get("top15_changed_at", value.get("changed_at", 0)),
-                    empiredrop=empire,
-                    leaderboard_message=self.empty_message(site, value),
-                    freshness=fresh, stream=stream, revision=public_revision)
+        # Build the complete non-clock payload first. Its signature includes every
+        # public field, so a strong ETag can never claim that different JSON bytes
+        # are the same representation. Sequence ordering protects clients from an
+        # older response arriving after a newer one.
+        payload = dict(release=RELEASE, interval=INTERVAL, site=site, rows=rows, top15=top15,
+                       settings_revision=settings_revision,
+                       shuffle_revision=value.get("top15_revision") or token(rows),
+                       shuffle_sequence=int(value.get("top15_sequence", 0) or 0),
+                       shuffle_changed_at=value.get("top15_changed_at", value.get("changed_at", 0)),
+                       empiredrop=empire,
+                       leaderboard_message=self.empty_message(site, value),
+                       freshness=fresh, stream=stream)
+        signature = token(payload)
+        with self.lock:
+            if signature != self._public_signature:
+                self._public_signature = signature
+                self._public_sequence += 1
+            sequence = self._public_sequence
+            runtime_id = self.instance_id
+        payload.update(runtime_id=runtime_id, snapshot_sequence=sequence,
+                       revision=f"{runtime_id}-{sequence}-{signature}",
+                       # Fractional seconds reduce countdown skew caused by integer
+                       # timestamp quantization on fast local/public-state requests.
+                       server_time=time.time())
+        return payload
 
     @staticmethod
     def empty_message(site, snapshot):
@@ -192,9 +248,13 @@ class Runtime:
                 if name == "shuffle":
                     with self.lock:
                         previous = copy.deepcopy(self.shuffle)
+                    top_changed = False
                     if phase(site) in {"upcoming", "unconfigured"}:
                         value = empty(site)
                         value["attempt_at"] = now
+                        self.ensure_top15(value, previous)
+                        top_changed = previous.get("top15_revision") != value.get("top15_revision")
+                        value["top15_changed_at"] = now if top_changed else previous.get("top15_changed_at", 0)
                         result = phase(site)
                     else:
                         LOG.info("SHUFFLE Checking saved window %s -> %s.", fmt_et(site["start_time"]), fmt_et(min(site["end_time"], now)))

@@ -89,6 +89,52 @@ def scope_id(site):
     return hashlib.sha256(json.dumps(payload).encode('ascii')).hexdigest()[:24]
 
 
+def _standing_identity(row):
+    """Stable internal identity for movement comparisons; never exposed directly."""
+    value = row.get('user_id') or row.get('username') or ''
+    return str(value).strip().casefold()
+
+
+def _standings_revision(rows):
+    payload = [[r.get('rank'), _standing_identity(r), r.get('wager')]
+               for r in list(rows or [])[:EMPIRE_PLACES] if isinstance(r, dict)]
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(',', ':')).encode('utf-8')).hexdigest()[:20]
+
+
+def attach_rank_movement(rows, previous, stamp):
+    """Version one verified EmpireDrop standings set and timestamp movement once."""
+    current = [dict(row) for row in list(rows or [])[:EMPIRE_PLACES]]
+    previous_rows = list((previous or {}).get('rows', []) or [])[:EMPIRE_PLACES]
+    revision = _standings_revision(current)
+    old_revision = (previous or {}).get('standings_revision') or _standings_revision(previous_rows)
+    old_sequence = int((previous or {}).get('standings_sequence', 0) or 0)
+    old_by_id = {_standing_identity(row): row for row in previous_rows if _standing_identity(row)}
+
+    if previous_rows and revision == old_revision:
+        for row in current:
+            old = old_by_id.get(_standing_identity(row), {})
+            row['movement'] = old.get('movement')
+            row['new_entry'] = bool(old.get('new_entry'))
+            row['movement_at'] = int(old.get('movement_at', 0) or 0)
+        sequence = old_sequence or 1
+        changed_at = int((previous or {}).get('standings_changed_at', (previous or {}).get('updated_at', 0)) or 0)
+    else:
+        has_previous = bool(previous_rows)
+        old_ranks = {_standing_identity(row): row.get('rank') for row in previous_rows if _standing_identity(row)}
+        for row in current:
+            prior = old_ranks.get(_standing_identity(row))
+            rank = row.get('rank')
+            movement = prior - rank if isinstance(prior, int) and isinstance(rank, int) else None
+            row['movement'] = movement
+            row['new_entry'] = bool(has_previous and prior is None)
+            row['movement_at'] = int(stamp) if (movement or row['new_entry']) else 0
+        sequence = old_sequence + (1 if revision != old_revision else 0)
+        if current and not sequence:
+            sequence = 1
+        changed_at = int(stamp) if revision != old_revision else int((previous or {}).get('standings_changed_at', 0) or 0)
+    return current, revision, sequence, changed_at
+
+
 def validate_settings(value):
     """Validate a user-approved provider contract without accepting any keys."""
     if not isinstance(value, dict) or set(value) - EDITABLE:
@@ -582,9 +628,13 @@ class EmpireDropBoard:
                 if self.events:
                     self.events.record('empiredrop','success','refresh_ok',count=len(rows),
                                        http_status=200, duration_ms=round((time.monotonic()-began)*1000))
+                rows, standings_revision, standings_sequence, standings_changed_at = attach_rank_movement(rows, old, now)
                 next_value = {'scope':scope, 'rows':rows, 'updated_at':now,
                               'attempt_at':now, 'error':'', 'error_kind':'',
-                              'race_meta':race_meta, 'rewards':self._rewards()}
+                              'race_meta':race_meta, 'rewards':self._rewards(),
+                              'standings_revision':standings_revision,
+                              'standings_sequence':standings_sequence,
+                              'standings_changed_at':standings_changed_at}
             # Do not overwrite a newly changed schedule while HTTP was in flight.
             if self._scope(self._schedule()) != scope:
                 return old
@@ -698,7 +748,9 @@ class EmpireDropBoard:
                 provider_end_et=fmt_et(meta['end_time']) if valid else '',
             )
         rewards = self._rewards()
-        visible = [dict(rank=r['rank'], username=mask_public_username(r['username']),wager=r['wager']) for r in rows]
+        visible = [dict(rank=r['rank'], username=mask_public_username(r['username']), wager=r['wager'],
+                        movement=r.get('movement'), new_entry=bool(r.get('new_entry')),
+                        movement_at=int(r.get('movement_at', 0) or 0)) for r in rows]
         visible = list(payout_for_rows(visible,rewards))
         return {'rows':visible, 'prizes':rewards,
                 'label':label[:260], 'updated_at':saved.get('updated_at',0),
@@ -710,6 +762,9 @@ class EmpireDropBoard:
                 'refresh_interval':self.interval,
                 'next_check_at':self._next_check_at(),
                 'attempt_at':saved.get('attempt_at',0),
+                'standings_revision':saved.get('standings_revision') or _standings_revision(rows),
+                'standings_sequence':int(saved.get('standings_sequence', 0) or (1 if rows else 0)),
+                'standings_changed_at':int(saved.get('standings_changed_at', saved.get('updated_at', 0)) or 0),
                 'history':self.public_history()}
 
     def private_status(self, unused_shuffle_site=None):

@@ -201,7 +201,7 @@ body[data-page="admin"] .provider-actions{display:flex;gap:8px;flex-wrap:wrap}bo
    restoring the wider, natural-height Shuffle card proportions, stable provider
    switching, compact Admin diagnostics and stable numeric layouts. */
 :root{
-  --race-countdown-size:clamp(2.05rem,4.25vw,3.45rem);
+  --race-countdown-size:clamp(2rem,3.35vw,3.2rem);
   --race-countdown-line:1.05;
   --race-summary-card-width:520px;
 }
@@ -230,8 +230,11 @@ body:not([data-page="admin"]) #empireRaceClock .race-countdown{
   letter-spacing:-.055em!important;
   font-variant-numeric:tabular-nums lining-nums;
   white-space:nowrap!important;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  width:100%;
+  max-width:100%;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  font-feature-settings:"tnum" 1;
   margin:16px 0 9px!important;
   min-height:0;
   display:block;
@@ -730,12 +733,12 @@ html.admin-menu-open,body.admin-menu-open{overflow:hidden;overscroll-behavior:no
   .history-page .responsive-history td.empty::before{display:none!important}
 }
 
-/* V22 live Shuffle Top 15 movement indicators. */
-#shuffleBoard .rank-movement{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:1px 5px;border-radius:999px;font-size:.62rem;font-weight:800;line-height:1.4;vertical-align:middle;letter-spacing:.02em}
-#shuffleBoard .rank-movement.is-up{color:#9ee7b0;background:#183322}
-#shuffleBoard .rank-movement.is-down{color:#efadb9;background:#381e25}
-#shuffleBoard .rank-movement.is-new{color:#f2ced5;background:#3a2830}
+/* V23 server-timestamped 30-second rank movement indicators. */
+#shuffleBoard .rank-movement,#empireBoard .rank-movement{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;padding:1px 5px;border-radius:999px;font-size:.62rem;font-weight:800;line-height:1.4;vertical-align:middle;letter-spacing:.02em;white-space:nowrap}
+#shuffleBoard .rank-movement.is-up,#empireBoard .rank-movement.is-up{color:#9ee7b0;background:#183322}
+#shuffleBoard .rank-movement.is-down,#empireBoard .rank-movement.is-down{color:#efadb9;background:#381e25}
+#shuffleBoard .rank-movement.is-new,#empireBoard .rank-movement.is-new{color:#f2ced5;background:#3a2830}
 #shuffleBoard .is-open-position .rank-movement{display:none}
 @media(max-width:480px){
-  #shuffleBoard .rank-movement{margin-left:4px;padding:1px 4px;font-size:.56rem}
+  #shuffleBoard .rank-movement,#empireBoard .rank-movement{margin-left:4px;padding:1px 4px;font-size:.56rem}
 }

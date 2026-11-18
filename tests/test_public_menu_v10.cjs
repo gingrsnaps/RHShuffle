@@ -9,10 +9,13 @@ class Element {
   setAttribute(key,value){this.attrs[key]=value}
   getAttribute(key){return this.attrs[key]}
   contains(){return false}
+  querySelector(){return null}
   focus(){this.focused=true}
 }
 const toggle=new Element(),nav=new Element(),more=new Element();
 const doc = new Element();
+doc.documentElement = {classList:{add(){},remove(){}}};
+doc.body = {classList:{add(){},remove(){}}};
 doc.getElementById = id=>({publicMenuToggle:toggle,publicPrimaryNav:nav,publicMore:more})[id];
 let narrow = true;
 const mq = new Element();

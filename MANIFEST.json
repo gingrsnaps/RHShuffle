@@ -1,9 +1,9 @@
 {
-  "release": "2026.11.17-shuffle-top15-v22",
-  "format": "redhunllef-manifest-15",
+  "release": "2026.11.17-crossplatform-live-v23",
+  "format": "redhunllef-manifest-16",
   "package_kind": "full",
   "private_config_included": true,
-  "file_count": 205,
+  "file_count": 207,
   "files": [
     {
       "path": ".gitignore",
@@ -12,13 +12,13 @@
     },
     {
       "path": "BUILD_MANIFEST.json",
-      "size_bytes": 8492,
-      "sha256": "6020285ee5f732f97b77782ca01927efc9561b45bd6bc1710ca56afded675991"
+      "size_bytes": 8581,
+      "sha256": "5c01891e8f4bb515dd4a52650e8b5e6ddcd06aeefd4d7d5266ccf9493fe55f4c"
     },
     {
       "path": "CHANGES.md",
-      "size_bytes": 806,
-      "sha256": "b8a91d9f96ab088295a6ad0ad06d5a9a5afa2ab18a90c98a9597b7baa5a7f0b5"
+      "size_bytes": 1771,
+      "sha256": "7054fe6f687132bc59facec92ac759e5ad8effafba24547f09ba90127f11e3b6"
     },
     {
       "path": "DEPLOYMENT_EMPIREDROP_RACES.md",
@@ -48,7 +48,7 @@
     {
       "path": "FULL_CODE_BLOCKS.md",
       "size_bytes": 37,
-      "sha256": "e8794a2415f1be7a7450946938e9a9e355044ccc4127dc29e8c80133c62138f8"
+      "sha256": "bce5e8404d3f3baf3a8597a5a3a86654544cb312f56ef1f274e7154c8ab5d49e"
     },
     {
       "path": "Procfile",
@@ -57,18 +57,18 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 560,
-      "sha256": "f86dfe17086e8242759d4da640fa60cdcc0ab550b1cfaa0ee768d4fc3346d971"
+      "size_bytes": 619,
+      "sha256": "04c964907d05e5c32cb671e079cfaceb0fa8d99408c98536afcea2b7737361de"
     },
     {
       "path": "RELEASE_METADATA.json",
-      "size_bytes": 1453,
-      "sha256": "65931c4e27ba91af54a61fb042e62dd72e49a3bd4456808e6405b4b137cbce2a"
+      "size_bytes": 1901,
+      "sha256": "51d44b0b45e52fd14ed8a8c303719d904802bbd28804765affa59ba8a28cc660"
     },
     {
       "path": "START_HERE.md",
       "size_bytes": 722,
-      "sha256": "2148fe91a487815442a58ffde97be81766436ca507c90f484bf3db463ac66efd"
+      "sha256": "22c2bcb7f6db69a6eee1a66085e5b167a0b8f46cc78141b0ffb853290be49fd6"
     },
     {
       "path": "UPDATE.md",
@@ -97,8 +97,8 @@
     },
     {
       "path": "config.py",
-      "size_bytes": 10880,
-      "sha256": "b8cc1cae602731bf257e860e5239635a64e51755636c77079febb9f3d8056158"
+      "size_bytes": 10885,
+      "sha256": "5add101333e5b6366701ee6ade88f16e653dad8be1601c592e85c82c92bf9f91"
     },
     {
       "path": "data/state.json",
@@ -276,6 +276,11 @@
       "sha256": "d56c8745640c5cfc3b02608f99aa7e446a693f154b1f7603fee417ca698593d8"
     },
     {
+      "path": "docs/V23_CROSS_PLATFORM_LIVE.md",
+      "size_bytes": 2113,
+      "sha256": "f6315b78e6ab7f5e01df97317ed6c9c3e4d424b636a4255002365b5dc6b8f945"
+    },
+    {
       "path": "docs/VALIDATION.md",
       "size_bytes": 1009,
       "sha256": "948189d1a60371319ab7cd799778f203a372316760622f667a48b6b71996f294"
@@ -292,8 +297,8 @@
     },
     {
       "path": "empiredrop.py",
-      "size_bytes": 43843,
-      "sha256": "34b5f215df86784b0d7b4a64398d0893ded2db7698fbbccc46df8f96ba0b3452"
+      "size_bytes": 47137,
+      "sha256": "e323983df90216cf9129d658c696814a835cb549e3a5033f68ce7924e9691cd3"
     },
     {
       "path": "empiredrop_deploy_keys.py",
@@ -392,8 +397,8 @@
     },
     {
       "path": "runtime.py",
-      "size_bytes": 24804,
-      "sha256": "9f30f1a1b67883494e476ec4ed22cdcf25c27bb41dd3bb747137b8194e705e13"
+      "size_bytes": 28235,
+      "sha256": "1ef07cfae48ae334ca962fa8fc07e8cceb3929b6bd76e3ea37a7f1f26d620496"
     },
     {
       "path": "runtime.txt",
@@ -457,8 +462,8 @@
     },
     {
       "path": "static/app.js",
-      "size_bytes": 32947,
-      "sha256": "06a2f81f26d47b18ddc93c288f7c7574028ba61db3faf51b2c16238787913605"
+      "size_bytes": 34719,
+      "sha256": "e131831001c5dfa0659324b25097a13cc4495d255e878fc954b086fc41957cfa"
     },
     {
       "path": "static/empiredrop.css",
@@ -467,8 +472,8 @@
     },
     {
       "path": "static/empiredrop.js",
-      "size_bytes": 9464,
-      "sha256": "236efd138872e0696fb29be653277231b9a876bc8403897666ec76aa47a79fac"
+      "size_bytes": 11829,
+      "sha256": "c68a2ddc466f27f882964fb36b2ade35b1b6ac2c7fa5d0ee2b1cfa15de6aa48a"
     },
     {
       "path": "static/experience.css",
@@ -562,8 +567,8 @@
     },
     {
       "path": "static/v20-system.css",
-      "size_bytes": 47270,
-      "sha256": "261ad82fb44600366b440f0a793460052c47853f85e7d70e0bdc5a94db762e2e"
+      "size_bytes": 47543,
+      "sha256": "3c5be9df6c219e99b62566daad95129432c4c0a74b193762d29223211d148b3a"
     },
     {
       "path": "storage.py",
@@ -792,8 +797,8 @@
     },
     {
       "path": "tests/test_admin_uniform.py",
-      "size_bytes": 6414,
-      "sha256": "b109d674985a845d797dfbeed0dcb2360d39795675c308deb41f3a093a27f5c8"
+      "size_bytes": 6748,
+      "sha256": "a9b09e70b0ce9fcde5f24596489292251ad4e19919191446b935bd4d52128842"
     },
     {
       "path": "tests/test_app.py",
@@ -837,8 +842,8 @@
     },
     {
       "path": "tests/test_empiredrop_frontend.cjs",
-      "size_bytes": 7820,
-      "sha256": "a68fc913a3868947c8fd7c796283e4480c87f4125974aebc191a4011bf0e5c59"
+      "size_bytes": 7928,
+      "sha256": "93e843cadb52052c42f1259fe2151acfc86e0b7bfc3c49c4ba49d63c15bef411"
     },
     {
       "path": "tests/test_empiredrop_public_ssr.py",
@@ -897,8 +902,8 @@
     },
     {
       "path": "tests/test_public_menu_v10.cjs",
-      "size_bytes": 1563,
-      "sha256": "e5b7465604e723cdc8a7784058b9ec224a9e210b3da035e23294855c6455c53f"
+      "size_bytes": 1695,
+      "sha256": "1a5c543332a90d0c222dc25afebdd6024417d8652fbc05668c7b0495f5f692a5"
     },
     {
       "path": "tests/test_redpoints.py",
@@ -907,8 +912,8 @@
     },
     {
       "path": "tests/test_shuffle_admin_browser.cjs",
-      "size_bytes": 2073,
-      "sha256": "52f61540a7a5fb090eb6090ea8978ee8bace8a0337cce7776ae9259ae1f369ef"
+      "size_bytes": 2116,
+      "sha256": "dc7459fb0cc4ebbdf4065473bb6266b79d6140ef93a4733f010cda2561567b73"
     },
     {
       "path": "tests/test_shuffle_admin_hotfix.py",
@@ -952,13 +957,13 @@
     },
     {
       "path": "tests/test_v19_mobile.py",
-      "size_bytes": 1597,
-      "sha256": "94113653c4beaab390313e0484f45615c68705a0dc2b9c3487cf8776c63fd2de"
+      "size_bytes": 1602,
+      "sha256": "b0ad5c8af59874027b755713042927207b68c7aec5c644de386d309de5fcabf0"
     },
     {
       "path": "tests/test_v20_mobile_lists.py",
-      "size_bytes": 1402,
-      "sha256": "38eb93536aa9a8357996a6c2ee74e52b9bd1f09c6c80ef1471e787036f31eb74"
+      "size_bytes": 1407,
+      "sha256": "b5f0ee8b4fd9c1bd5cef5b86a749db5d183f8bb134365665554d53eb867c195b"
     },
     {
       "path": "tests/test_v21_schedule_windows.py",
@@ -969,6 +974,11 @@
       "path": "tests/test_v22_shuffle_top15.py",
       "size_bytes": 3999,
       "sha256": "262e8aca1771a77a8400c3ddb5644ac7c19ce6130b9e1c1f2b169317e15e077d"
+    },
+    {
+      "path": "tests/test_v23_cross_platform.py",
+      "size_bytes": 3725,
+      "sha256": "f90482ad5a692a004125b8b75fa55090e01096e31a768c13cc3dd67a8cbf1952"
     },
     {
       "path": "tests/test_weekly_history.py",
@@ -1022,8 +1032,8 @@
     },
     {
       "path": "wager_backend.py",
-      "size_bytes": 89964,
-      "sha256": "990edbf55b2084dd85f9db5b21da846c1891b5db3bba935e9ab54f20b83dcf59"
+      "size_bytes": 90129,
+      "sha256": "c6642725009c6afe9483a89398dd3a09a6cbb3c6a2b9c17ced957fec84d8a623"
     },
     {
       "path": "weekly_history.py",
